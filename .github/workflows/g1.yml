@@ -5,6 +5,7 @@ on:
     paths:
       - 'crates/pin-core/**'
       - '.github/workflows/g1.yml'
+      - 'tools/g1_unicode_data.py'
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
   pure:
     if: startsWith(github.head_ref, 'feat/g1-') && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write
@@ -28,6 +29,8 @@ jobs:
           persist-credentials: false
       - name: Select exact Rust
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Fetch pinned Unicode conformance data
+        run: python tools/g1_unicode_data.py "$RUNNER_TEMP/g1-unicode"
       - name: Check pure code and prepare diagnostics
         shell: python
         run: |
@@ -40,17 +43,18 @@ jobs:
               ['cargo', 'check', '-p', 'pin-core'],
               ['cargo', 'test', '--locked', '-p', 'pin-core', '--no-fail-fast', '--', '--nocapture'],
               ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--no-fail-fast'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--', '--ignored', '--nocapture'],
               ['cargo', 'clippy', '--locked', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
               ['cargo', 'doc', '--locked', '-p', 'pin-core', '--no-deps'],
           ]
-          env = dict(os.environ, RUSTDOCFLAGS='-D warnings')
+          env = dict(os.environ, RUSTDOCFLAGS='-D warnings', PIN_UNICODE_DATA=str(pathlib.Path(os.environ['RUNNER_TEMP']) / 'g1-unicode'))
           for index, command in enumerate(commands):
               with (root / f'{index}.log').open('w') as output:
                   result = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, env=env)
               text = (root / f'{index}.log').read_text()
               reports.append(f"### {' '.join(command)}\nExit: {result.returncode}\n```text\n{text[-8000:]}\n```\n")
               failed |= result.returncode != 0
-          files = sorted(glob.glob('crates/pin-core/src/codec/*.rs') + glob.glob('crates/pin-core/tests/g1_*.rs') + ['crates/pin-core/src/' + name + '.rs' for name in ['analysis', 'error', 'index', 'memory', 'normalize', 'oracle', 'query', 'rank']])
+          files = sorted(glob.glob('crates/pin-core/src/codec/*.rs') + glob.glob('crates/pin-core/tests/g1_*.rs') + ['crates/pin-core/src/' + name + '.rs' for name in ['analysis', 'error', 'index', 'memory', 'normalize', 'normalize_conformance', 'oracle', 'query', 'rank']])
           lock_patch = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
           reports.append('### Cargo-generated lockfile delta\n```diff\n' + lock_patch + '\n```\n')
           (root / 'lock.patch').write_text(lock_patch)
@@ -90,6 +94,12 @@ jobs:
         with:
           name: g1-diagnostics-${{ github.run_id }}
           path: ${{ runner.temp }}/g1-report/
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g1-unicode-${{ github.run_id }}
+          path: ${{ runner.temp }}/g1-unicode/
           retention-days: 7
       - name: Enforce check results
         if: always()

@@ -5,7 +5,9 @@
 use crate::budget::MemoryBudget;
 use crate::error::{Error, Result};
 use crate::memory::reserve;
-use unicode_normalization::char::{canonical_combining_class as class, compose, decompose_canonical};
+use unicode_normalization::char::{
+    canonical_combining_class as class, compose, decompose_canonical,
+};
 
 #[derive(Clone, Copy)]
 struct Scalar {
@@ -38,15 +40,17 @@ impl Nfc {
     {
         if class(value) == 0 && !self.pending.is_empty() {
             self.compose();
-            if self.pending.len() == 1 && class(self.pending[0].value) == 0 {
-                if let Some(joined) = compose(self.pending[0].value, value) {
-                    self.pending[0].value = joined;
-                    return Ok(());
-                }
+            if self.pending.len() == 1
+                && class(self.pending[0].value) == 0
+                && let Some(joined) = compose(self.pending[0].value, value)
+            {
+                self.pending[0].value = joined;
+                return Ok(());
             }
             self.emit(emit, budget)?;
         }
-        let order = u32::try_from(self.pending.len()).map_err(|_| Error::Limit("combining sequence"))?;
+        let order =
+            u32::try_from(self.pending.len()).map_err(|_| Error::Limit("combining sequence"))?;
         reserve(&mut self.pending, 1, u32::MAX as usize, budget)?;
         self.pending.push(Scalar { value, order });
         Ok(())
@@ -67,11 +71,11 @@ impl Nfc {
         for read in 1..self.pending.len() {
             let scalar = self.pending[read];
             let current = class(scalar.value);
-            if previous == 0 || previous < current {
-                if let Some(joined) = compose(self.pending[0].value, scalar.value) {
-                    self.pending[0].value = joined;
-                    continue;
-                }
+            if (previous == 0 || previous < current)
+                && let Some(joined) = compose(self.pending[0].value, scalar.value)
+            {
+                self.pending[0].value = joined;
+                continue;
             }
             self.pending[write] = scalar;
             write += 1;
@@ -113,7 +117,11 @@ fn fold(value: char) -> Result<char> {
     })
 }
 
-pub(crate) fn profile_text(text: &str, limit: usize, budget: &mut MemoryBudget) -> Result<(String, usize)> {
+pub(crate) fn profile_text(
+    text: &str,
+    limit: usize,
+    budget: &mut MemoryBudget,
+) -> Result<(String, usize)> {
     let mut bytes = Vec::new();
     reserve(&mut bytes, text.len().min(limit), limit, budget)?;
     if text.is_ascii() {
@@ -122,7 +130,10 @@ pub(crate) fn profile_text(text: &str, limit: usize, budget: &mut MemoryBudget) 
         }
         bytes.extend(text.bytes().map(|byte| byte.to_ascii_lowercase()));
         let peak = budget.used();
-        return Ok((String::from_utf8(bytes).map_err(|_| Error::InvalidDocument)?, peak));
+        return Ok((
+            String::from_utf8(bytes).map_err(|_| Error::InvalidDocument)?,
+            peak,
+        ));
     }
     let mut first = Nfc::default();
     let mut second = Nfc::default();
@@ -134,7 +145,8 @@ pub(crate) fn profile_text(text: &str, limit: usize, budget: &mut MemoryBudget) 
         Ok(())
     };
     {
-        let mut folded = |value: char, budget: &mut MemoryBudget| second.push(fold(value)?, &mut output, budget);
+        let mut folded =
+            |value: char, budget: &mut MemoryBudget| second.push(fold(value)?, &mut output, budget);
         for value in text.chars() {
             first.push(value, &mut folded, budget)?;
         }
@@ -144,7 +156,10 @@ pub(crate) fn profile_text(text: &str, limit: usize, budget: &mut MemoryBudget) 
     let peak = budget.used();
     first.release(budget)?;
     second.release(budget)?;
-    Ok((String::from_utf8(bytes).map_err(|_| Error::InvalidDocument)?, peak))
+    Ok((
+        String::from_utf8(bytes).map_err(|_| Error::InvalidDocument)?,
+        peak,
+    ))
 }
 
 #[cfg(test)]
@@ -155,16 +170,29 @@ mod tests {
     #[test]
     fn nfc_matches_independent_iterator_for_every_scalar() {
         for code in 0..=0x10ffff {
-            let Some(value) = char::from_u32(code) else { continue };
+            let Some(value) = char::from_u32(code) else {
+                continue;
+            };
             let mut budget = MemoryBudget::new(4096);
             let mut state = Nfc::default();
             let mut actual = String::new();
-            let mut emit = |value, _: &mut MemoryBudget| { actual.push(value); Ok(()) };
+            let mut emit = |value, _: &mut MemoryBudget| {
+                actual.push(value);
+                Ok(())
+            };
             state.push(value, &mut emit, &mut budget).unwrap();
             state.finish(&mut emit, &mut budget).unwrap();
-            assert_eq!(actual, value.to_string().nfc().collect::<String>(), "{code:x}");
+            assert_eq!(
+                actual,
+                value.to_string().nfc().collect::<String>(),
+                "{code:x}"
+            );
             state.release(&mut budget).unwrap();
             assert_eq!(budget.used(), 0);
         }
     }
 }
+
+#[cfg(test)]
+#[path = "normalize_conformance.rs"]
+mod conformance;
