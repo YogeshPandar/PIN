@@ -54,11 +54,7 @@ impl RootTid {
     ///
     /// # Errors
     /// Rejects PostgreSQL's invalid block sentinel and offsets outside `layout`.
-    pub const fn new(
-        block: u32,
-        offset: u16,
-        layout: HeapLayout,
-    ) -> Result<Self, IdentityError> {
+    pub const fn new(block: u32, offset: u16, layout: HeapLayout) -> Result<Self, IdentityError> {
         if block == u32::MAX {
             return Err(IdentityError::InvalidBlock);
         }
@@ -95,11 +91,7 @@ impl VisibleTid {
     ///
     /// # Errors
     /// Has the same domain errors as `RootTid::new`.
-    pub const fn new(
-        block: u32,
-        offset: u16,
-        layout: HeapLayout,
-    ) -> Result<Self, IdentityError> {
+    pub const fn new(block: u32, offset: u16, layout: HeapLayout) -> Result<Self, IdentityError> {
         match RootTid::new(block, offset, layout) {
             Ok(tid) => Ok(Self(tid)),
             Err(error) => Err(error),
@@ -151,9 +143,18 @@ macro_rules! identifier {
     };
 }
 
-identifier!(SegmentId, "A source identifier within one relation generation.");
-identifier!(Incarnation, "A document incarnation; never inferred from a bare TID.");
-identifier!(Generation, "A checked generation counter; not a transaction timestamp.");
+identifier!(
+    SegmentId,
+    "A source identifier within one relation generation."
+);
+identifier!(
+    Incarnation,
+    "A document incarnation; never inferred from a bare TID."
+);
+identifier!(
+    Generation,
+    "A checked generation counter; not a transaction timestamp."
+);
 
 /// A database-local physical relation locator and its durable Pin generation.
 /// Caller must provide the effective tablespace OID, not a zero default marker.
@@ -210,9 +211,18 @@ mod tests {
         let layout = HeapLayout::new(128).unwrap();
         assert_eq!(HeapLayout::new(0), Err(IdentityError::InvalidLayout));
         assert_eq!(HeapLayout::new(513), Err(IdentityError::InvalidLayout));
-        assert_eq!(RootTid::new(0, 0, layout), Err(IdentityError::InvalidOffset));
-        assert_eq!(RootTid::new(0, 129, layout), Err(IdentityError::InvalidOffset));
-        assert_eq!(RootTid::new(u32::MAX, 1, layout), Err(IdentityError::InvalidBlock));
+        assert_eq!(
+            RootTid::new(0, 0, layout),
+            Err(IdentityError::InvalidOffset)
+        );
+        assert_eq!(
+            RootTid::new(0, 129, layout),
+            Err(IdentityError::InvalidOffset)
+        );
+        assert_eq!(
+            RootTid::new(u32::MAX, 1, layout),
+            Err(IdentityError::InvalidBlock)
+        );
         for block in [0, 1, 255, 256, u32::MAX - 1] {
             for offset in 1..=layout.max_offset() {
                 let tid = RootTid::new(block, offset, layout).unwrap();

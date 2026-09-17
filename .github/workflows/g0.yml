@@ -41,13 +41,19 @@ jobs:
           persist-credentials: false
       - name: Select exact Rust
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
-      - name: Check pure contracts
-        run: |
-          test -f Cargo.lock
-          cargo fmt --all --check
-          cargo test --locked -p pin-core
-          cargo clippy --locked -p pin-core --all-targets -- -D warnings
-          cargo doc --locked -p pin-core --no-deps
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Test pure contracts
+        if: success() || failure()
+        run: cargo test --locked -p pin-core -- --nocapture
+      - name: Lint pure contracts
+        if: success() || failure()
+        run: cargo clippy --locked -p pin-core --all-targets -- -D warnings
+      - name: Build API documentation
+        if: success() || failure()
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo doc --locked -p pin-core --no-deps
 
   postgres:
     runs-on: ubuntu-24.04

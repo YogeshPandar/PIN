@@ -72,7 +72,11 @@ fn step(mut s: State, action: Action, reconcile: bool, remove_retired: bool) -> 
             s.retired = true;
         }
         Action::Reuse if s.vacuum_authorized && !s.reused => {
-            let current_live = if s.merge_published { s.new_live } else { s.old_live };
+            let current_live = if s.merge_published {
+                s.new_live
+            } else {
+                s.old_live
+            };
             let reachable_old_live = remove_retired && s.reader && s.old_live;
             if current_live || reachable_old_live {
                 return None;
@@ -85,9 +89,13 @@ fn step(mut s: State, action: Action, reconcile: bool, remove_retired: bool) -> 
 }
 
 fn invariant(s: State) -> bool {
-    let current_live = if s.merge_published { s.new_live } else { s.old_live };
+    let current_live = if s.merge_published {
+        s.new_live
+    } else {
+        s.old_live
+    };
     (!s.published || s.fragments == 3)
-        && (!s.reused || (!current_live && !(s.reader && s.old_live)))
+        && !(s.reused && (current_live || (s.reader && s.old_live)))
 }
 
 fn explore(reconcile: bool, remove_retired: bool) -> (usize, Option<Vec<Action>>) {
@@ -114,7 +122,10 @@ fn explore(reconcile: bool, remove_retired: bool) -> (usize, Option<Vec<Action>>
 #[test]
 fn publication_requires_both_fragments() {
     for fragments in 0..3 {
-        let state = State { fragments, ..State::default() };
+        let state = State {
+            fragments,
+            ..State::default()
+        };
         assert!(step(state, Action::Publish, true, true).is_none());
     }
 }
@@ -122,18 +133,30 @@ fn publication_requires_both_fragments() {
 #[test]
 fn checked_model_explores_every_reachable_state() {
     let (states, counterexample) = explore(true, true);
+    println!("publication model explored {states} states");
     assert!(states > 50, "model stopped exploring: {states}");
-    assert!(counterexample.is_none(), "protocol violation: {counterexample:?}");
+    assert!(
+        counterexample.is_none(),
+        "protocol violation: {counterexample:?}"
+    );
 }
 
 #[test]
 fn stale_merge_copy_has_a_counterexample() {
     let (_, counterexample) = explore(false, true);
-    assert!(counterexample.is_some(), "model must detect lost deletion reconciliation");
+    println!("stale merge counterexample: {counterexample:?}");
+    assert!(
+        counterexample.is_some(),
+        "model must detect lost deletion reconciliation"
+    );
 }
 
 #[test]
 fn active_only_vacuum_has_a_counterexample() {
     let (_, counterexample) = explore(true, false);
-    assert!(counterexample.is_some(), "model must detect stale retired-reader liveness");
+    println!("retired-source counterexample: {counterexample:?}");
+    assert!(
+        counterexample.is_some(),
+        "model must detect stale retired-reader liveness"
+    );
 }
