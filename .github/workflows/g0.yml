@@ -2,7 +2,7 @@ name: G0 boundary
 
 on:
   push:
-    branches: [main, feat/g0-host-boundary]
+    branches: [main, 'feat/**']
   pull_request:
   workflow_dispatch:
 
@@ -14,33 +14,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  resolve:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/g0-host-boundary'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - name: Select exact Rust
-        run: rustup toolchain install 1.98.1 --profile minimal
-      - name: Bootstrap Cargo.lock once
-        shell: bash
-        run: |
-          set -euo pipefail
-          if test -f Cargo.lock; then exit 0; fi
-          cargo generate-lockfile
-          git add -- Cargo.lock
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build: record Cargo-generated dependency lock'
-          git push origin HEAD:feat/g0-host-boundary
-
   pure:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
       - name: Select exact Rust
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Check protocol oracle and source contracts
+        run: |
+          python3 -m unittest discover -s tests -v
+          python3 tools/check_contracts.py
+          bash -n tools/pg_smoke.sh
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Test pure contracts
@@ -57,6 +44,7 @@ jobs:
 
   postgres:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -92,3 +80,26 @@ jobs:
           cargo build --locked -p pin-pg
           cd crates/pin-pg
           cargo pgrx install --pg-config "$PGRX_PG_CONFIG_PATH"
+          git diff --exit-code -- ../../Cargo.lock
+      - name: Test normal installation and lifecycle
+        run: bash tools/pg_smoke.sh
+      - name: Lint host boundary
+        run: cargo clippy --locked -p pin-pg --features test-hooks --all-targets -- -D warnings
+      - name: Install guarded error probes
+        working-directory: crates/pin-pg
+        run: |
+          cargo pgrx install --features test-hooks --pg-config "$PGRX_PG_CONFIG_PATH"
+          git diff --exit-code -- ../../Cargo.lock
+      - name: Test error boundaries and hook permissions
+        env:
+          PIN_G0_TEST_HOOKS: '1'
+        run: bash tools/pg_smoke.sh
+      - name: Preserve disposable cluster logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: g0-postgres-logs
+          path: .artifacts/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
