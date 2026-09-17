@@ -198,3 +198,4 @@ pub fn encode(
         writer.put(term.as_bytes())?;
     }
     Ok(writer.len())
+}
