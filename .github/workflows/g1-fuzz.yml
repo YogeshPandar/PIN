@@ -51,7 +51,7 @@ jobs:
           for index, target in enumerate(['query', 'codecs', 'analysis']):
               corpus = pathlib.Path('fuzz/corpus') / target
               shutil.copytree(pathlib.Path('fuzz/seeds') / target, corpus, dirs_exist_ok=True)
-              command = ['cargo', '+nightly-2026-09-17', 'fuzz', 'run', target, '--', '-runs=100000', '-max_len=4096', f'-seed={4701 + index}', '-timeout=5', '-rss_limit_mb=1024']
+              command = ['cargo', '+nightly-2026-09-17', 'fuzz', 'run', target, '--target', 'x86_64-unknown-linux-gnu', '--', '-runs=100000', '-max_len=4096', f'-seed={4701 + index}', '-timeout=5', '-rss_limit_mb=1024']
               with (root / f'{target}.log').open('w') as output:
                   try:
                       result = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, env=env, timeout=300)
