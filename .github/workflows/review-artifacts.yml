@@ -1,0 +1,36 @@
+name: Review artifacts
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Preserve exact source
+        run: |
+          mkdir -p "$RUNNER_TEMP/pin-review"
+          git rev-parse HEAD > "$RUNNER_TEMP/pin-review/source-commit.txt"
+          git archive --format=tar.gz --output="$RUNNER_TEMP/pin-review/source.tar.gz" HEAD
+      - name: Select formatter
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt
+      - name: Generate review-only formatting patch
+        run: |
+          cargo fmt --all
+          git diff --binary > "$RUNNER_TEMP/pin-review/format.patch"
+          git ls-files -z | tar --null -T - -czf "$RUNNER_TEMP/pin-review/formatted-source.tar.gz"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pin-review/
+          retention-days: 7
+          if-no-files-found: error
