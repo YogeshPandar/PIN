@@ -38,7 +38,8 @@ jobs:
           failed = False
           commands = [
               ['cargo', 'check', '-p', 'pin-core'],
-              ['cargo', 'test', '--locked', '-p', 'pin-core', '--', '--nocapture'],
+              ['cargo', 'test', '--locked', '-p', 'pin-core', '--no-fail-fast', '--', '--nocapture'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--no-fail-fast'],
               ['cargo', 'clippy', '--locked', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
               ['cargo', 'doc', '--locked', '-p', 'pin-core', '--no-deps'],
           ]
@@ -49,7 +50,7 @@ jobs:
               text = (root / f'{index}.log').read_text()
               reports.append(f"### {' '.join(command)}\nExit: {result.returncode}\n```text\n{text[-8000:]}\n```\n")
               failed |= result.returncode != 0
-          files = sorted(glob.glob('crates/pin-core/src/codec/*.rs') + glob.glob('crates/pin-core/tests/g1_*.rs') + ['crates/pin-core/src/' + name + '.rs' for name in ['analysis', 'error', 'memory', 'oracle', 'query']])
+          files = sorted(glob.glob('crates/pin-core/src/codec/*.rs') + glob.glob('crates/pin-core/tests/g1_*.rs') + ['crates/pin-core/src/' + name + '.rs' for name in ['analysis', 'error', 'index', 'memory', 'normalize', 'oracle', 'query', 'rank']])
           lock_patch = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
           reports.append('### Cargo-generated lockfile delta\n```diff\n' + lock_patch + '\n```\n')
           (root / 'lock.patch').write_text(lock_patch)
