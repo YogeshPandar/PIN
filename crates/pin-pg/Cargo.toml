@@ -1,0 +1,28 @@
+[package]
+name = "pin-pg"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+name = "pin"
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["pg18"]
+pg18 = ["pgrx/pg18", "pgrx-pg-sys/pg18"]
+test-hooks = []
+
+[dependencies]
+pin-core.workspace = true
+pgrx.workspace = true
+pgrx-pg-sys.workspace = true
+
+[build-dependencies]
+cc.workspace = true
+
+[lints]
+workspace = true

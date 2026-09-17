@@ -1,0 +1,88 @@
+name: G0 boundary
+
+on:
+  push:
+    branches: [main, feat/g0-host-boundary]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g0-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  resolve:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/g0-host-boundary'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Bootstrap Cargo.lock once
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -f Cargo.lock; then exit 0; fi
+          cargo generate-lockfile
+          git add -- Cargo.lock
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build: record Cargo-generated dependency lock'
+          git push origin HEAD:feat/g0-host-boundary
+
+  pure:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Check pure contracts
+        run: |
+          test -f Cargo.lock
+          cargo fmt --all --check
+          cargo test --locked -p pin-core
+          cargo clippy --locked -p pin-core --all-targets -- -D warnings
+          cargo doc --locked -p pin-core --no-deps
+
+  postgres:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential clang libclang-dev bison flex pkg-config libreadline-dev zlib1g-dev libssl-dev libicu-dev
+      - name: Build exact PostgreSQL source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init "$RUNNER_TEMP/postgres-src"
+          git -C "$RUNNER_TEMP/postgres-src" remote add origin https://github.com/postgres/postgres.git
+          git -C "$RUNNER_TEMP/postgres-src" fetch --depth 1 origin 724edf9bde9d356724ad384a2e196edc3c9f80f7
+          git -C "$RUNNER_TEMP/postgres-src" checkout --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/postgres-src" rev-parse HEAD)" = 724edf9bde9d356724ad384a2e196edc3c9f80f7
+          cd "$RUNNER_TEMP/postgres-src"
+          ./configure --prefix="$RUNNER_TEMP/pg18" --enable-cassert --with-openssl
+          make -j2
+          make install
+          echo "$RUNNER_TEMP/pg18/bin" >> "$GITHUB_PATH"
+          echo "PGRX_PG_CONFIG_PATH=$RUNNER_TEMP/pg18/bin/pg_config" >> "$GITHUB_ENV"
+      - name: Compile extension with matching tooling
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f Cargo.lock
+          cargo install cargo-pgrx --version 0.19.2 --locked
+          cargo pgrx init --pg18 "$PGRX_PG_CONFIG_PATH"
+          cargo build --locked -p pin-pg
+          cd crates/pin-pg
+          cargo pgrx install --pg-config "$PGRX_PG_CONFIG_PATH"

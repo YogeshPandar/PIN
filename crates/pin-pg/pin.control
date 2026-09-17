@@ -1,0 +1,7 @@
+comment = 'Pin G0 host-boundary prototype; indexing is disabled'
+default_version = '0.0.0'
+module_pathname = '$libdir/pin'
+relocatable = false
+schema = 'pin'
+superuser = true
+trusted = false
