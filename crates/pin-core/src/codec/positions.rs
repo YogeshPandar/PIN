@@ -68,7 +68,8 @@ impl Iterator for PositionIter<'_> {
             if !self.first && delta == 0 {
                 return Err(Error::new(offset, ErrorKind::InvalidOrder));
             }
-            self.previous.checked_add(delta)
+            self.previous
+                .checked_add(delta)
                 .ok_or(Error::new(offset, ErrorKind::Overflow))
         });
         match next {
@@ -87,8 +88,8 @@ impl std::iter::FusedIterator for PositionIter<'_> {}
 
 // validates before writing; output size is exact and no allocation occurs.
 pub fn encode(positions: &[u32], output: &mut [u8], max_positions: u32) -> Result<usize> {
-    let count = u32::try_from(positions.len())
-        .map_err(|_| Error::new(0, ErrorKind::LimitExceeded))?;
+    let count =
+        u32::try_from(positions.len()).map_err(|_| Error::new(0, ErrorKind::LimitExceeded))?;
     if count > max_positions {
         return Err(Error::new(0, ErrorKind::LimitExceeded));
     }
@@ -98,7 +99,8 @@ pub fn encode(positions: &[u32], output: &mut [u8], max_positions: u32) -> Resul
         if index != 0 && position <= previous {
             return Err(Error::new(index, ErrorKind::InvalidOrder));
         }
-        bytes = bytes.checked_add(var_u32_len(position - previous))
+        bytes = bytes
+            .checked_add(var_u32_len(position - previous))
             .ok_or(Error::new(index, ErrorKind::Overflow))?;
         previous = position;
     }

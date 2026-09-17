@@ -264,19 +264,58 @@ fn deterministic_malformed_payloads_never_panic() {
 
 #[test]
 fn prefix_intervals_match_a_linear_byte_order_oracle() {
-    let mut terms = ["a", "a\0", "ab", "abe", "β", "βeta", "βζ", "東京", "東海道", "\u{10ffff}", "\u{10ffff}a"];
+    let mut terms = [
+        "a",
+        "a\0",
+        "ab",
+        "abe",
+        "β",
+        "βeta",
+        "βζ",
+        "東京",
+        "東海道",
+        "\u{10ffff}",
+        "\u{10ffff}a",
+    ];
     terms.sort_unstable();
-    let limits = DictionaryLimits { max_bytes: 4096, max_terms: 32, max_term_bytes: 32 };
+    let limits = DictionaryLimits {
+        max_bytes: 4096,
+        max_terms: 32,
+        max_term_bytes: 32,
+    };
     let mut bytes = [0; 4096];
     let len = dictionary::encode(7, &terms, &mut bytes, limits).unwrap();
     let dictionary = Dictionary::parse(&bytes[..len], limits).unwrap();
-    for prefix in ["", "!", "a", "a\0", "abc", "abe", "z", "β", "βe", "東", "東京", "\u{10ffff}", "\u{10ffff}z"] {
-        let begin = terms.iter().position(|term| *term >= prefix).unwrap_or(terms.len());
-        let count = terms[begin..].iter().take_while(|term| term.starts_with(prefix)).count();
+    for prefix in [
+        "",
+        "!",
+        "a",
+        "a\0",
+        "abc",
+        "abe",
+        "z",
+        "β",
+        "βe",
+        "東",
+        "東京",
+        "\u{10ffff}",
+        "\u{10ffff}z",
+    ] {
+        let begin = terms
+            .iter()
+            .position(|term| *term >= prefix)
+            .unwrap_or(terms.len());
+        let count = terms[begin..]
+            .iter()
+            .take_while(|term| term.starts_with(prefix))
+            .count();
         for limit in 0..=terms.len() {
             let actual = dictionary.prefix(prefix, limit as u32);
             if count > limit {
-                assert_eq!(actual.unwrap_err().kind, pin_core::codec::ErrorKind::LimitExceeded);
+                assert_eq!(
+                    actual.unwrap_err().kind,
+                    pin_core::codec::ErrorKind::LimitExceeded
+                );
             } else {
                 assert_eq!(actual.unwrap(), begin as u32..(begin + count) as u32);
             }

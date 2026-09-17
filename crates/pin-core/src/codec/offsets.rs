@@ -2,9 +2,9 @@
 // set operations use fixed scratch; subtraction never invents universe members.
 // contract: https://doc.rust-lang.org/std/primitive.u64.html#method.trailing_zeros
 
-use crate::identity::HeapLayout;
 use super::bytes::{Reader, Writer};
 use super::{Error, ErrorKind, Result};
+use crate::identity::HeapLayout;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Encoding {
@@ -21,7 +21,10 @@ pub struct OffsetSet {
 
 impl OffsetSet {
     pub fn new(layout: HeapLayout) -> Self {
-        Self { words: [0; 8], domain: layout.max_offset() }
+        Self {
+            words: [0; 8],
+            domain: layout.max_offset(),
+        }
     }
 
     pub fn len(&self) -> u16 {
@@ -54,7 +57,11 @@ impl OffsetSet {
     }
 
     pub fn iter(&self) -> OffsetIter<'_> {
-        OffsetIter { words: &self.words, word: 0, pending: self.words[0] }
+        OffsetIter {
+            words: &self.words,
+            word: 0,
+            pending: self.words[0],
+        }
     }
 
     fn combine(&self, other: &Self, op: fn(u64, u64) -> u64) -> Result<Self> {
@@ -122,11 +129,17 @@ impl OffsetSet {
         let mut writer = Writer::new(output);
         writer.u16(self.domain)?;
         writer.u16(self.len())?;
-        writer.u8(match encoding { Encoding::Sparse => 0, Encoding::Bitmap => 1, Encoding::Runs => 2 })?;
+        writer.u8(match encoding {
+            Encoding::Sparse => 0,
+            Encoding::Bitmap => 1,
+            Encoding::Runs => 2,
+        })?;
         writer.u8(0)?;
         match encoding {
             Encoding::Sparse => {
-                for offset in self.iter() { writer.u16(offset)?; }
+                for offset in self.iter() {
+                    writer.u16(offset)?;
+                }
             }
             Encoding::Bitmap => {
                 for byte in 0..usize::from(self.domain).div_ceil(8) {
@@ -199,12 +212,15 @@ impl OffsetSet {
                     if start == 0 || len == 0 || (previous != 0 && start <= previous + 1) {
                         return Err(Error::new(reader.offset() - 4, ErrorKind::InvalidOrder));
                     }
-                    let end = start.checked_add(len - 1)
+                    let end = start
+                        .checked_add(len - 1)
                         .ok_or(Error::new(reader.offset() - 4, ErrorKind::Overflow))?;
                     if end > result.domain {
                         return Err(Error::new(reader.offset() - 4, ErrorKind::InvalidValue));
                     }
-                    for offset in start..=end { result.insert(offset)?; }
+                    for offset in start..=end {
+                        result.insert(offset)?;
+                    }
                     previous = end;
                 }
             }

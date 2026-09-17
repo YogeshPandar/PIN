@@ -102,7 +102,9 @@ impl Analyzed {
         self.retained_bytes
     }
 
-    pub const fn peak_bytes(&self) -> usize { self.peak_bytes }
+    pub const fn peak_bytes(&self) -> usize {
+        self.peak_bytes
+    }
 
     pub fn token(&self, index: usize) -> Option<Token<'_>> {
         self.tokens.get(index).map(|range| Token {

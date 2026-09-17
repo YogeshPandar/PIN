@@ -4,8 +4,8 @@
 pub mod bytes;
 pub mod dictionary;
 pub mod offsets;
-pub mod records;
 pub mod positions;
+pub mod records;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ErrorKind {

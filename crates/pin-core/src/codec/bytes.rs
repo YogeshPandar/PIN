@@ -25,16 +25,21 @@ impl<'a> Reader<'a> {
 
     // returns a borrowed extent; overflow and truncation leave the cursor unchanged.
     pub fn take(&mut self, len: usize) -> Result<&'a [u8]> {
-        let end = self.offset.checked_add(len)
+        let end = self
+            .offset
+            .checked_add(len)
             .ok_or(Error::new(self.offset, ErrorKind::Overflow))?;
-        let value = self.bytes.get(self.offset..end)
+        let value = self
+            .bytes
+            .get(self.offset..end)
             .ok_or(Error::new(self.offset, ErrorKind::Truncated))?;
         self.offset = end;
         Ok(value)
     }
 
     pub fn array<const N: usize>(&mut self) -> Result<[u8; N]> {
-        self.take(N)?.try_into()
+        self.take(N)?
+            .try_into()
             .map_err(|_| Error::new(self.offset, ErrorKind::Truncated))
     }
 
@@ -103,9 +108,13 @@ impl<'a> Writer<'a> {
     }
 
     pub fn put(&mut self, value: &[u8]) -> Result<()> {
-        let end = self.offset.checked_add(value.len())
+        let end = self
+            .offset
+            .checked_add(value.len())
             .ok_or(Error::new(self.offset, ErrorKind::Overflow))?;
-        let target = self.bytes.get_mut(self.offset..end)
+        let target = self
+            .bytes
+            .get_mut(self.offset..end)
             .ok_or(Error::new(self.offset, ErrorKind::Truncated))?;
         target.copy_from_slice(value);
         self.offset = end;
@@ -144,5 +153,9 @@ impl<'a> Writer<'a> {
 }
 
 pub const fn var_u32_len(value: u32) -> usize {
-    if value == 0 { 1 } else { (32 - value.leading_zeros()).div_ceil(7) as usize }
+    if value == 0 {
+        1
+    } else {
+        (32 - value.leading_zeros()).div_ceil(7) as usize
+    }
 }
