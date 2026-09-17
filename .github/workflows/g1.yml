@@ -75,7 +75,8 @@ jobs:
         if: always() && github.actor == 'YogeshPandar'
         run: |
           if ! git diff --quiet -- crates/pin-core/src/codec crates/pin-core/src/analysis.rs crates/pin-core/src/error.rs crates/pin-core/src/index.rs crates/pin-core/src/memory.rs crates/pin-core/src/normalize.rs crates/pin-core/src/normalize_conformance.rs crates/pin-core/src/oracle.rs crates/pin-core/src/query.rs crates/pin-core/src/rank.rs crates/pin-core/tests/g1_codecs.rs crates/pin-core/tests/g1_formats.rs crates/pin-core/tests/g1_index.rs crates/pin-core/tests/g1_rank.rs crates/pin-core/tests/g1_semantics.rs crates/pin-core/tests/g1_unicode.rs; then
-            git show HEAD^:.github/workflows/g1.yml > .github/workflows/g1.yml
+            git fetch --no-tags --depth=1 origin b42ddbc8a29c78d54e39fb60e852adcc325f1d14
+            git show b42ddbc8a29c78d54e39fb60e852adcc325f1d14:.github/workflows/g1.yml > .github/workflows/g1.yml
             git config user.name 'Yogesh Pandar'
             git config user.email '84430077+YogeshPandar@users.noreply.github.com'
             git add .github/workflows/g1.yml crates/pin-core/src/codec crates/pin-core/src/analysis.rs crates/pin-core/src/error.rs crates/pin-core/src/index.rs crates/pin-core/src/memory.rs crates/pin-core/src/normalize.rs crates/pin-core/src/normalize_conformance.rs crates/pin-core/src/oracle.rs crates/pin-core/src/query.rs crates/pin-core/src/rank.rs crates/pin-core/tests/g1_codecs.rs crates/pin-core/tests/g1_formats.rs crates/pin-core/tests/g1_index.rs crates/pin-core/tests/g1_rank.rs crates/pin-core/tests/g1_semantics.rs crates/pin-core/tests/g1_unicode.rs
