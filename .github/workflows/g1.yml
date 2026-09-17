@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: true
+          persist-credentials: false
       - name: Select exact Rust
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
       - name: Fetch pinned Unicode conformance data
@@ -71,16 +71,6 @@ jobs:
               body = body[:59000] + '\n\nReport truncated; complete files are in the workflow artifact.'
           (root / 'report.md').write_text(body)
           (root / 'status').write_text('1' if failed else '0')
-      - name: Commit formatter output
-        if: always() && github.actor == 'YogeshPandar'
-        run: |
-          if ! git diff --quiet -- crates/pin-core/src/codec crates/pin-core/src/analysis.rs crates/pin-core/src/error.rs crates/pin-core/src/index.rs crates/pin-core/src/memory.rs crates/pin-core/src/normalize.rs crates/pin-core/src/normalize_conformance.rs crates/pin-core/src/oracle.rs crates/pin-core/src/query.rs crates/pin-core/src/rank.rs crates/pin-core/tests/g1_codecs.rs crates/pin-core/tests/g1_formats.rs crates/pin-core/tests/g1_index.rs crates/pin-core/tests/g1_rank.rs crates/pin-core/tests/g1_semantics.rs crates/pin-core/tests/g1_unicode.rs; then
-            git config user.name 'Yogesh Pandar'
-            git config user.email '84430077+YogeshPandar@users.noreply.github.com'
-            git add crates/pin-core/src/codec crates/pin-core/src/analysis.rs crates/pin-core/src/error.rs crates/pin-core/src/index.rs crates/pin-core/src/memory.rs crates/pin-core/src/normalize.rs crates/pin-core/src/normalize_conformance.rs crates/pin-core/src/oracle.rs crates/pin-core/src/query.rs crates/pin-core/src/rank.rs crates/pin-core/tests/g1_codecs.rs crates/pin-core/tests/g1_formats.rs crates/pin-core/tests/g1_index.rs crates/pin-core/tests/g1_rank.rs crates/pin-core/tests/g1_semantics.rs crates/pin-core/tests/g1_unicode.rs
-            git commit -m 'style(g1): apply rustfmt'
-            git push origin "HEAD:${{ github.head_ref }}"
-          fi
       - name: Publish review-only diagnostics
         env:
           GH_TOKEN: ${{ github.token }}
