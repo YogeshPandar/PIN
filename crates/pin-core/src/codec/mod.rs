@@ -2,6 +2,9 @@
 // contracts: docs/g1-format.md and docs/g1-api-evidence.md.
 
 pub mod bytes;
+pub mod dictionary;
+pub mod offsets;
+pub mod records;
 pub mod positions;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
