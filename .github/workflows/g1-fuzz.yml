@@ -1,0 +1,86 @@
+name: G1 fuzz
+
+on:
+  pull_request:
+    paths:
+      - 'crates/pin-core/**'
+      - 'fuzz/**'
+      - '.github/workflows/g1-fuzz.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g1-fuzz-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    if: startsWith(github.head_ref, 'feat/g1-') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Select pinned fuzz toolchain
+        run: |
+          rustup toolchain install nightly-2026-09-17 --profile minimal --component rust-src
+          rustup toolchain install 1.98.1 --profile minimal --component rustfmt
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/cargo-fuzz.tar.gz" https://github.com/rust-fuzz/cargo-fuzz/releases/download/0.13.2/cargo-fuzz-0.13.2-x86_64-unknown-linux-musl.tar.gz
+          echo "b5b704018b63e0f151c17a057ac53b5111e1db545d1b9f72fee79f08a545931c  $RUNNER_TEMP/cargo-fuzz.tar.gz" | sha256sum --check
+          mkdir -p "$RUNNER_TEMP/cargo-fuzz-bin"
+          tar -xzf "$RUNNER_TEMP/cargo-fuzz.tar.gz" -C "$RUNNER_TEMP/cargo-fuzz-bin"
+          find "$RUNNER_TEMP/cargo-fuzz-bin" -type f -name cargo-fuzz -exec cp '{}' "$HOME/.cargo/bin/cargo-fuzz" \;
+          cargo +nightly-2026-09-17 fuzz --version
+      - name: Fuzz checked formats and independent semantics
+        shell: python
+        run: |
+          import glob, json, os, pathlib, shutil, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'g1-fuzz'
+          root.mkdir(exist_ok=True)
+          reports = []
+          failed = False
+          lock = pathlib.Path('fuzz/Cargo.lock')
+          if not lock.exists():
+              subprocess.run(['cargo', '+nightly-2026-09-17', 'generate-lockfile', '--manifest-path', 'fuzz/Cargo.toml'], check=True)
+              failed = True
+          subprocess.run(['cargo', '+nightly-2026-09-17', 'fetch', '--locked', '--manifest-path', 'fuzz/Cargo.toml'], check=True)
+          env = dict(os.environ, CARGO_NET_OFFLINE='true')
+          for index, target in enumerate(['query', 'codecs', 'analysis']):
+              corpus = pathlib.Path('fuzz/corpus') / target
+              shutil.copytree(pathlib.Path('fuzz/seeds') / target, corpus, dirs_exist_ok=True)
+              command = ['cargo', '+nightly-2026-09-17', 'fuzz', 'run', target, '--', '-runs=100000', '-max_len=4096', f'-seed={4701 + index}', '-timeout=5', '-rss_limit_mb=1024']
+              with (root / f'{target}.log').open('w') as output:
+                  try:
+                      result = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, env=env, timeout=300)
+                      code = result.returncode
+                  except subprocess.TimeoutExpired:
+                      code = 124
+              reports.append({'target': target, 'exit': code, 'command': command})
+              failed |= code != 0
+          shutil.copy2(lock, root / 'Cargo.lock')
+          delta = subprocess.check_output(['git', 'diff', '--', 'fuzz/Cargo.lock'], text=True)
+          (root / 'lock.patch').write_text(delta)
+          failed |= bool(delta)
+          files = sorted(glob.glob('fuzz/fuzz_targets/*.rs'))
+          result = subprocess.run(['rustfmt', '+1.98.1', '--edition', '2024', *files])
+          patch = subprocess.check_output(['git', 'diff', '--', *files], text=True)
+          (root / 'format.patch').write_text(patch)
+          failed |= result.returncode != 0 or bool(patch)
+          reports.append({'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()})
+          (root / 'report.json').write_text(json.dumps(reports, indent=2) + '\n')
+          (root / 'status').write_text('1' if failed else '0')
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g1-fuzz-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/g1-fuzz/
+            fuzz/artifacts/
+            fuzz/corpus/
+          retention-days: 7
+      - name: Enforce checks
+        if: always()
+        run: exit "$(cat "$RUNNER_TEMP/g1-fuzz/status")"
