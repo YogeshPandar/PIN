@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 
 pub mod budget;
+pub mod codec;
 pub mod identity;
 
 /// The PostgreSQL major version targeted by the G0 boundary.
