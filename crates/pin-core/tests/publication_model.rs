@@ -1,8 +1,8 @@
-//! Bounded publication and slot-reuse model, not a PostgreSQL locking or WAL proof.
-//! Source contracts and independently checked graph size: docs/api-evidence.md.
+//! bounded model of publication, retired-source liveness, and slot reuse.
+//! this models protocol preconditions, not postgresql locks, wal, or mvcc.
 #![forbid(unsafe_code)]
 
-use std::collections::{HashMap, hash_map::Entry};
+use std::collections::{HashMap, VecDeque, hash_map::Entry};
 
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 struct State {
@@ -18,7 +18,7 @@ struct State {
     reused: bool,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Action {
     WriteFirst,
     WriteSecond,
@@ -48,6 +48,7 @@ const ACTIONS: [Action; 11] = [
 ];
 
 fn step(mut s: State, action: Action, reconcile: bool, remove_retired: bool) -> Option<State> {
+    let previous = s;
     match action {
         Action::WriteFirst if !s.published => s.fragments |= 1,
         Action::WriteSecond if !s.published => s.fragments |= 2,
@@ -85,7 +86,7 @@ fn step(mut s: State, action: Action, reconcile: bool, remove_retired: bool) -> 
         }
         _ => return None,
     }
-    Some(s)
+    (s != previous).then_some(s)
 }
 
 fn invariant(s: State) -> bool {
@@ -97,71 +98,67 @@ fn invariant(s: State) -> bool {
     (!s.published || s.fragments == 3) && !(s.reused && (current_live || (s.reader && s.old_live)))
 }
 
-struct Node {
-    state: State,
-    predecessor: Option<(usize, Action)>,
-}
-
 struct Exploration {
-    nodes: Vec<Node>,
-    transitions: usize,
-    actions_seen: [bool; ACTIONS.len()],
-    violation: Option<usize>,
+    states: Vec<u16>,
+    edges: [usize; ACTIONS.len()],
+    counterexample: Option<Vec<Action>>,
 }
 
-impl Exploration {
-    fn counterexample(&self) -> Option<Vec<Action>> {
-        let mut cursor = self.violation?;
-        let mut path = Vec::new();
-        while let Some((previous, action)) = self.nodes[cursor].predecessor {
-            path.push(action);
-            cursor = previous;
-        }
-        path.reverse();
-        Some(path)
-    }
+fn state_key(s: State) -> u16 {
+    let flags = [
+        s.published,
+        s.retired,
+        s.reader,
+        s.vacuum_authorized,
+        s.old_live,
+        s.new_live,
+        s.merge_started,
+        s.merge_published,
+        s.reused,
+    ];
+    flags
+        .iter()
+        .enumerate()
+        .fold(u16::from(s.fragments), |key, (bit, flag)| {
+            key | (u16::from(*flag) << (bit + 2))
+        })
 }
 
 fn explore(reconcile: bool, remove_retired: bool) -> Exploration {
-    let initial = State::default();
-    let mut seen = HashMap::from([(initial, 0)]);
-    let mut result = Exploration {
-        nodes: vec![Node {
-            state: initial,
-            predecessor: None,
-        }],
-        transitions: 0,
-        actions_seen: [false; ACTIONS.len()],
-        violation: None,
-    };
-    let mut cursor = 0;
-    while cursor < result.nodes.len() {
-        let state = result.nodes[cursor].state;
+    let mut parents = HashMap::from([(State::default(), None)]);
+    let mut queue = VecDeque::from([State::default()]);
+    let mut edges = [0; ACTIONS.len()];
+    let mut counterexample = None;
+    while let Some(state) = queue.pop_front() {
         if !invariant(state) {
-            result.violation = Some(cursor);
-            return result;
+            // reconstruct one trace instead of cloning a path for every edge.
+            let mut path = Vec::new();
+            let mut cursor = state;
+            while let Some((previous, action)) = parents[&cursor] {
+                path.push(action);
+                cursor = previous;
+            }
+            path.reverse();
+            counterexample = Some(path);
+            break;
         }
         for (index, action) in ACTIONS.into_iter().enumerate() {
-            let Some(next) = step(state, action, reconcile, remove_retired) else {
-                continue;
-            };
-            if next == state {
-                continue;
-            }
-            result.transitions += 1;
-            result.actions_seen[index] = true;
-            if let Entry::Vacant(entry) = seen.entry(next) {
-                entry.insert(result.nodes.len());
-                // retain one predecessor per state, not one copied path per edge.
-                result.nodes.push(Node {
-                    state: next,
-                    predecessor: Some((cursor, action)),
-                });
+            if let Some(next) = step(state, action, reconcile, remove_retired) {
+                edges[index] += 1;
+                if let Entry::Vacant(entry) = parents.entry(next) {
+                    entry.insert(Some((state, action)));
+                    queue.push_back(next);
+                }
             }
         }
-        cursor += 1;
     }
-    result
+    let mut states: Vec<_> = parents.keys().copied().map(state_key).collect();
+    states.sort_unstable();
+    Exploration {
+        states,
+        edges,
+        counterexample,
+    }
 }
 
 #[test]
@@ -177,26 +174,32 @@ fn publication_requires_both_fragments() {
 
 #[test]
 fn checked_model_explores_every_reachable_state() {
-    let graph = explore(true, true);
-    assert!(graph.violation.is_none(), "{:?}", graph.counterexample());
-    assert_eq!(graph.nodes.len(), 37);
-    assert_eq!(graph.transitions, 76);
-    assert!(graph.actions_seen.into_iter().all(|seen| seen));
-    assert!(graph.nodes.iter().any(|n| {
-        n.state.reader && n.state.retired && n.state.reused && !n.state.old_live
-    }));
+    let result = explore(true, true);
+    let expected: Vec<u16> = include_str!("fixtures/publication-states.txt")
+        .split_whitespace()
+        .map(|key| key.parse().unwrap())
+        .collect();
+    // the independent packed-state fixed-point oracle generates this fixture.
+    assert_eq!(result.states, expected);
+    assert_eq!(result.edges, [2, 2, 1, 7, 16, 8, 6, 9, 4, 12, 9]);
+    assert!(result.counterexample.is_none(), "{:?}", result.counterexample);
+    println!(
+        "publication model: {} states, {} edges",
+        result.states.len(),
+        result.edges.iter().sum::<usize>()
+    );
 }
 
 fn assert_counterexample(reconcile: bool, remove_retired: bool) {
-    let graph = explore(reconcile, remove_retired);
-    let path = graph.counterexample().expect("negative control must fail");
-    let mut state = State::default();
-    for action in &path {
-        assert!(invariant(state), "trace continued after a violation");
-        state = step(state, *action, reconcile, remove_retired).expect("valid trace step");
+    let trace = explore(reconcile, remove_retired).counterexample.unwrap();
+    let mut broken = State::default();
+    let mut corrected = Some(broken);
+    for action in trace {
+        broken = step(broken, action, reconcile, remove_retired).unwrap();
+        corrected = corrected.and_then(|state| step(state, action, true, true));
     }
-    assert!(!invariant(state));
-    println!("counterexample: {path:?}");
+    assert!(!invariant(broken));
+    assert!(corrected.is_none_or(invariant));
 }
 
 #[test]
@@ -207,4 +210,13 @@ fn stale_merge_copy_has_a_counterexample() {
 #[test]
 fn active_only_vacuum_has_a_counterexample() {
     assert_counterexample(true, false);
+}
+
+#[test]
+fn idempotent_operations_do_not_count_as_coverage() {
+    let state = State {
+        fragments: 1,
+        ..State::default()
+    };
+    assert!(step(state, Action::WriteFirst, true, true).is_none());
 }
