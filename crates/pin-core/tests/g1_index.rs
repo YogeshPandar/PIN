@@ -99,10 +99,10 @@ fn resource_errors_are_explicit_and_search_errors_are_fused() {
     assert!(index.search(&query("a"), SearchLimits { memory_bytes: 0, ..SearchLimits::default() }).is_err());
     let mut observed_error = false;
     for work in 1..100 {
-        if let Ok(mut search) = index.search(&query("a"), SearchLimits { work_steps: work, ..SearchLimits::default() }) {
-            if search.next().is_some_and(|result| result.is_err()) {
-                assert!(search.next().is_none()); assert!(search.next().is_none()); observed_error = true; break;
-            }
+        if let Ok(mut search) = index.search(&query("a"), SearchLimits { work_steps: work, ..SearchLimits::default() })
+            && search.next().is_some_and(|result| result.is_err())
+        {
+            assert!(search.next().is_none()); assert!(search.next().is_none()); observed_error = true; break;
         }
     }
     assert!(observed_error);
