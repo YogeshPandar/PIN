@@ -11,6 +11,9 @@ pub enum Error {
     InvalidProfile,
     InvalidDocument,
     DuplicateDocument,
+    ForeignRelation,
+    InvalidParameters,
+    InvalidState,
     InvalidStatistics,
     NonFiniteScore,
     Budget(BudgetError),
@@ -18,11 +21,15 @@ pub enum Error {
 }
 
 impl From<BudgetError> for Error {
-    fn from(error: BudgetError) -> Self { Self::Budget(error) }
+    fn from(error: BudgetError) -> Self {
+        Self::Budget(error)
+    }
 }
 
 impl From<codec::Error> for Error {
-    fn from(error: codec::Error) -> Self { Self::Codec(error) }
+    fn from(error: codec::Error) -> Self {
+        Self::Codec(error)
+    }
 }
 
 impl std::fmt::Display for Error {

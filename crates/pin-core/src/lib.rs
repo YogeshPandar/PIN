@@ -8,9 +8,11 @@ pub mod budget;
 pub mod codec;
 pub mod error;
 pub mod identity;
+pub mod index;
 mod memory;
 pub mod oracle;
 pub mod query;
+pub mod rank;
 
 /// The PostgreSQL major version targeted by the G0 boundary.
 pub const POSTGRES_MAJOR: u32 = 18;
