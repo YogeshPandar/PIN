@@ -294,12 +294,24 @@ pub fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
     loop {
         let page = load_posting(store, block, term)?;
         let next = posting_next(&page, journal.tail, &mut remaining)?;
-        meta.set_rewrite_journal(next.map(|head| RewriteJournal { head, ..journal }))?;
         let free = Page::free(block, meta.free_head()?)?;
-        meta.set_free_head(block)?;
-        // advance the journal and add the page to the free list exactly once.
-        store.commit(&[&meta, &free])?;
-        reclaimed += 1;
+        let Some(second_block) = next else {
+            meta.set_rewrite_journal(None)?;
+            meta.set_free_head(block)?;
+            store.commit(&[&meta, &free])?;
+            reclaimed += 1;
+            store.event(Stage::SegmentReclaimed)?;
+            return Ok(reclaimed);
+        };
+
+        let second = load_posting(store, second_block, term)?;
+        let next = posting_next(&second, journal.tail, &mut remaining)?;
+        let second_free = Page::free(second_block, block)?;
+        meta.set_rewrite_journal(next.map(|head| RewriteJournal { head, ..journal }))?;
+        meta.set_free_head(second_block)?;
+        // two retired pages plus the journal fit one atomic three-page WAL batch.
+        store.commit(&[&meta, &free, &second_free])?;
+        reclaimed += 2;
         store.event(Stage::SegmentReclaimed)?;
         match next {
             Some(next) => block = next,
