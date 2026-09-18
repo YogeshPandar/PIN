@@ -201,7 +201,8 @@ Authority: PostgreSQL 18 [scanning](https://www.postgresql.org/docs/18/index-sca
 and [locking](https://www.postgresql.org/docs/18/index-locking.html), pinned
 [`index_getbitmap`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/index/indexam.c#L757-L783),
 Rust 1.98.1 [`Vec::try_reserve_exact`](https://doc.rust-lang.org/1.98.1/std/vec/struct.Vec.html#method.try_reserve_exact),
-[`slice::get`](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.get), and
+[`slice::get`](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.get),
+[`slice::split_at_mut`](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.split_at_mut), and
 [conditional chains](https://doc.rust-lang.org/reference/expressions/if-expr.html#let-chain).
 Rechecked on 18 September 2026, including the immutable bitmap dispatch source.
 
@@ -215,10 +216,13 @@ operation, PostgreSQL pointer retention, disk format or WAL change is introduced
 Private decoder offsets replace self-referential borrows. Actual vector capacities
 bound cursor pages and continuation scratch. A cursor-budget failure falls back
 only before I/O/emission; host errors propagate without replay. Separate active
-term occurrences retain independent cursor positions. A stale owner copy refreshes
-once when an appended slot exceeds its count, without hiding genuine corruption.
+term occurrences retain independent cursor positions while immutable dictionary
+metadata is resolved once per unique active term. Direct one- and two-term roots
+avoid continuation-stack interpretation; disjoint cursor mutation uses checked
+indices plus `split_at_mut`. A stale owner copy refreshes once when an appended
+slot exceeds its count, without hiding genuine corruption.
 
-Evidence: the 13 G4 Rust regression tests passed with all 80 non-ignored core tests,
+Evidence: the original 13 G4 Rust regression tests passed with all 80 non-ignored core tests,
 core Clippy and rustdoc at `6020d5bc50288c6dc029d76f974284a22db83756` in G0
 boundary run 179. The job also exposed the corrected host closure formatting.
 SQL equality and restart checks are wired through `tools/g2_qualification.sh`.
