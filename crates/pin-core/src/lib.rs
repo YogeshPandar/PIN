@@ -5,6 +5,7 @@
 
 pub mod analysis;
 pub mod budget;
+pub mod candidate;
 pub mod codec;
 pub mod error;
 pub mod identity;
