@@ -86,7 +86,7 @@ pub fn vacuum<S: PageStore>(
                     return Err(Error::InvalidState);
                 }
                 if owner.publication != Publication::Published || !owner.live {
-                    reclaim(store, &mut meta, block)?;
+                    reclaim(store, &mut meta, block, false)?;
                     stats.reclaimed_pages += 1;
                     stats.free_pages += 1;
                 }
@@ -98,7 +98,7 @@ pub fn vacuum<S: PageStore>(
         for block in 1..stats.pages {
             if load_any(store, block)?.kind() == PageKind::Zero {
                 check_unreferenced(store, block, stats.pages)?;
-                reclaim(store, &mut meta, block)?;
+                reclaim(store, &mut meta, block, true)?;
                 stats.reclaimed_pages += 1;
                 stats.free_pages += 1;
             }
@@ -107,8 +107,18 @@ pub fn vacuum<S: PageStore>(
     Ok(stats)
 }
 
-fn reclaim<S: PageStore>(store: &mut S, meta: &mut Page, block: u32) -> Result<()> {
-    let page = Page::free(block, meta.free_head()?)?;
+fn reclaim<S: PageStore>(
+    store: &mut S,
+    meta: &mut Page,
+    block: u32,
+    zero: bool,
+) -> Result<()> {
+    let next = meta.free_head()?;
+    let page = if zero {
+        Page::free_from_zero(block, next)?
+    } else {
+        Page::free(block, next)?
+    };
     meta.set_free_head(block)?;
     store.commit(&[meta, &page])?;
     store.event(Stage::PageReclaimed)
