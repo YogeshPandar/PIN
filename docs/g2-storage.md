@@ -31,7 +31,26 @@ only a heuristic, not measured selectivity. No result-sized Rust set is allocate
 - `g2_candidates.rs` checks conservative coverage against the independent G1
   oracle, negation, phrases, repeated anchors, empty documents and budget failure.
 
-Compilation, integration, crash qualification and independent review remain pending.
-The storage implementation must preserve incarnation-qualified publication and
-liveness, use generic WAL page copies, and never require a background worker for
-accepted inserts. Synchronous scans, VM counts, compaction and ranking stay gated.
+The G2 CI qualification now exercises the host boundary rather than only the pure
+store model. It forces sequential and bitmap plans and compares exact row identities
+for own writes, savepoint rollback, aborted inserts, speculative `ON CONFLICT`,
+HOT-eligible updates, indexed-column updates, VACUUM, and physical slot reuse.
+A repeatable-read reader is held while independent writer transactions commit, so
+newly published index candidates must still be rejected by PostgreSQL visibility.
+
+The test-hooks build also pauses each insertion publication stage after its durable
+write and performs an immediate postmaster stop. Recovery restarts the same cluster,
+checks bitmap-versus-sequential equality, runs index-cleanup VACUUM, and verifies that
+the aborted document never becomes a visible match. A normal fast restart is checked
+before the crash matrix as a separate persistence path.
+
+Relevant PostgreSQL 18 contracts:
+- https://www.postgresql.org/docs/18/index-scanning.html for bitmap candidates and rechecks.
+- https://www.postgresql.org/docs/18/index-locking.html for MVCC index/VACUUM interaction.
+- https://www.postgresql.org/docs/18/generic-wal.html for registered page-image mutation.
+- https://www.postgresql.org/docs/18/routine-vacuuming.html for index cleanup and reuse.
+- https://www.postgresql.org/docs/18/app-pg-ctl.html for fast and immediate server stops.
+
+These fixtures are acceptance evidence only after the matching CI run passes. The
+storage implementation still keeps synchronous scans, VM counts, compaction, ranking,
+parallel execution, and standby-time Pin index reads gated.
