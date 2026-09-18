@@ -7,11 +7,13 @@
 mod compact;
 pub mod document;
 pub mod page;
+mod query;
 mod reader;
 mod vacuum;
 mod writer;
 
 pub use compact::{CompactStats, compact, recover as recover_compaction};
+pub use query::scan_query;
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
 pub use writer::{initialize, insert};

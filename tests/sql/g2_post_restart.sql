@@ -30,3 +30,9 @@ BEGIN
     END IF;
 END;
 $$;
+
+-- g4 boolean results survive both the ordinary restart and the crash matrix.
+SELECT pg_temp.g2_expect('public.g4_docs', 'a AND b', ARRAY[4]::bigint[]);
+SELECT pg_temp.g2_expect('public.g4_docs', '"a a"', ARRAY[6]::bigint[]);
+SELECT pg_temp.g2_expect('public.g4_scale', 'a AND b',
+    ARRAY(SELECT id::bigint FROM generate_series(1, 4000) AS id WHERE id % 7 = 0 AND id % 5 <> 0));

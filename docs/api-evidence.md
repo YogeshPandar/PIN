@@ -190,3 +190,45 @@ independent enumeration, negative controls, and limits. Rust reference APIs are
 [`VecDeque`](https://doc.rust-lang.org/1.98.1/std/collections/struct.VecDeque.html), and
 [`Option::is_none_or`](https://doc.rust-lang.org/1.98.1/std/option/enum.Option.html#method.is_none_or).
 The fixture does not certify an implemented PostgreSQL WAL or pin protocol.
+
+## G4QUERY01: streaming bitmap query execution
+
+Modules: `pin-core/src/mutable/{query,page,reader}.rs` and `pin-pg/src/am.rs`.
+The preceding G0 entries are historical; current storage contracts are in
+[g2-storage.md](g2-storage.md) and [g3-storage.md](g3-storage.md).
+
+Authority: PostgreSQL 18 [scanning](https://www.postgresql.org/docs/18/index-scanning.html)
+and [locking](https://www.postgresql.org/docs/18/index-locking.html), pinned
+[`index_getbitmap`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/index/indexam.c#L757-L783),
+Rust 1.98.1 [`Vec::try_reserve_exact`](https://doc.rust-lang.org/1.98.1/std/vec/struct.Vec.html#method.try_reserve_exact),
+[`slice::get`](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.get),
+[`slice::split_at_mut`](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.split_at_mut), and
+[conditional chains](https://doc.rust-lang.org/reference/expressions/if-expr.html#let-chain).
+Rechecked on 18 September 2026, including the immutable bitmap dispatch source.
+
+The executor intersects/unions stable owner identities, never approximate
+negation or reusable heap coordinates. Every emitted candidate retains the
+existing `BitmapSink` heap recheck. PostgreSQL keeps MVCC authority; the returned
+count is statistical, not a visible result count. The same G3 shared barrier
+covers private posting-page copies through the last candidate. No new unsafe
+operation, PostgreSQL pointer retention, disk format or WAL change is introduced.
+
+Private decoder offsets replace self-referential borrows. Actual vector capacities
+bound cursor pages and continuation scratch. A cursor-budget failure falls back
+only before I/O/emission; host errors propagate without replay. Separate active
+term occurrences retain independent cursor positions while immutable dictionary
+metadata is resolved once per unique active term. Direct one- and two-term roots
+avoid continuation-stack interpretation; disjoint cursor mutation uses checked
+indices plus `split_at_mut`. A stale owner copy refreshes once when an appended
+slot exceeds its count, without hiding genuine corruption.
+
+Evidence: the original 13 G4 Rust regression tests passed with all 80 non-ignored core tests,
+core Clippy and rustdoc at `6020d5bc50288c6dc029d76f974284a22db83756` in G0
+boundary run 179. The job also exposed the corrected host closure formatting.
+SQL equality and restart checks are wired through `tools/g2_qualification.sh`.
+See [g4-query-execution.md](g4-query-execution.md) for examples, precise bounds,
+work-count evidence, observed versus pending qualification, and fallback limits.
+
+Review: implementation self-review completed; final-head CI is recorded in PR #8.
+No independent reviewer or performance qualification is claimed. Existing unsafe
+host-boundary review remains outstanding, and bare-PostgreSQL parity is unmeasured.

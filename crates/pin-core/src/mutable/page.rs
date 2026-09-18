@@ -1085,6 +1085,65 @@ impl Iterator for Postings<'_> {
 
 impl std::iter::FusedIterator for Postings<'_> {}
 
+// owns encoded bytes and decoder offsets without a self-referential borrow.
+pub(super) struct OwnedPostings {
+    page: Page,
+    offset: usize,
+    compressed: bool,
+    remaining: u16,
+    previous: Option<OwnerRef>,
+    failed: bool,
+}
+
+impl OwnedPostings {
+    pub(super) fn new(page: Page) -> Result<Self> {
+        let postings = page.posting_refs()?;
+        let (compressed, remaining) = (postings.compressed, postings.remaining);
+        Ok(Self {
+            page,
+            offset: POSTING_HEADER,
+            compressed,
+            remaining,
+            previous: None,
+            failed: false,
+        })
+    }
+
+    pub(super) fn page(&self) -> &Page {
+        &self.page
+    }
+}
+
+impl Iterator for OwnedPostings {
+    type Item = Result<OwnerRef>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.failed {
+            return None;
+        }
+        let Some(bytes) = self.page.bytes().get(self.offset..) else {
+            self.failed = true;
+            return Some(Err(Error::InvalidState));
+        };
+        // resume the shared decoder at its exact byte offset, never rescan a prefix.
+        let mut postings = Postings {
+            reader: Reader::new(bytes),
+            compressed: self.compressed,
+            remaining: self.remaining,
+            previous: self.previous,
+            failed: false,
+        };
+        let value = postings.next();
+        self.offset += postings.reader.offset();
+        self.remaining = postings.remaining;
+        self.previous = postings.previous;
+        self.failed = postings.failed;
+        value
+    }
+}
+
+impl std::iter::FusedIterator for OwnedPostings {}
+
 /// Stable bucket routing only; exact byte equality always resolves collisions.
 pub fn bucket_for(term: &str) -> usize {
     let mut hash = 0xcbf29ce484222325u64;

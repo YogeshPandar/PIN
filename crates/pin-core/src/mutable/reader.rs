@@ -92,10 +92,12 @@ pub(super) fn resolve<S: PageStore>(
     cache: &mut Option<Page>,
     reference: OwnerRef,
 ) -> Result<Option<RootTid>> {
-    if cache
-        .as_ref()
-        .is_none_or(|page| page.block() != reference.page)
-    {
+    // a concurrent append may outgrow a private owner-page copy.
+    let reload = match cache.as_ref() {
+        Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
+        _ => true,
+    };
+    if reload {
         *cache = Some(load(store, reference.page, PageKind::Owners)?);
     }
     let page = cache.as_ref().ok_or(Error::InvalidState)?;
