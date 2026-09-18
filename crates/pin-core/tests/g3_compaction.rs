@@ -274,6 +274,40 @@ fn multi_page_segments_recycle_blocks_and_accept_a_mutable_tail() {
 }
 
 #[test]
+fn compaction_preserves_terms_sharing_one_dictionary_page() {
+    assert_eq!(bucket_for("aav"), bucket_for("ala"));
+    let mut store = seed(1300, "aav ala");
+    let expected: BTreeSet<_> = (0..1300).map(root).collect();
+
+    let meta = store.read(0).unwrap();
+    let (dictionary_block, _) = meta.bucket(bucket_for("aav")).unwrap();
+    let dictionary = store.read(dictionary_block).unwrap();
+    let entries = dictionary
+        .terms()
+        .unwrap()
+        .collect::<Result<Vec<_>>>()
+        .unwrap();
+    assert!(entries.iter().any(|entry| entry.term == "aav"));
+    assert!(entries.iter().any(|entry| entry.term == "ala"));
+
+    // each replacement must preserve sibling metadata in the shared dictionary image.
+    let stats = mutable::compact(&mut store).unwrap();
+    assert_eq!(stats.rewritten_terms, 2);
+    assert_eq!(candidates(&mut store, "aav"), expected);
+    assert_eq!(candidates(&mut store, "ala"), expected);
+
+    mutable::insert(&mut store, root(1300), &prepared("aav")).unwrap();
+    let stats = mutable::compact(&mut store).unwrap();
+    assert_eq!(stats.rewritten_terms, 1);
+
+    let mut aav = expected.clone();
+    aav.insert(root(1300));
+    assert_eq!(candidates(&mut store, "aav"), aav);
+    assert_eq!(candidates(&mut store, "ala"), expected);
+    free_list(&mut store);
+}
+
+#[test]
 fn vacuum_and_reused_heap_slots_cannot_resurrect_sealed_postings() {
     let mut store = seed(700, "alpha beta");
     mutable::compact(&mut store).unwrap();
