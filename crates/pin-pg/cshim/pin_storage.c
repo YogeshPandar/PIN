@@ -16,6 +16,8 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
+#include "nodes/pathnodes.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "storage/bufmgr.h"
@@ -58,7 +60,7 @@ pin_page_check(Page page)
 }
 
 void
-pin_storage_check(Relation index, Relation heap, IndexInfo *info)
+pin_storage_check(Relation index, Relation heap, struct IndexInfo *info)
 {
     if (index == NULL || index->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT ||
         !RelationNeedsWAL(index) || RelationGetDescr(index)->natts != 1 ||
@@ -184,7 +186,7 @@ pin_root_coordinates(ItemPointer tid, uint32 *block, uint16 *offset)
 }
 
 double
-pin_heap_build_scan(Relation heap, Relation index, IndexInfo *info,
+pin_heap_build_scan(Relation heap, Relation index, struct IndexInfo *info,
                     IndexBuildCallback callback, void *state)
 {
     return table_index_build_scan(heap, index, info, true, true, callback, state, NULL);
@@ -352,7 +354,7 @@ pin_opclass_adjust(Oid opclass, List *operators, List *functions)
 }
 
 void
-pin_index_cost(PlannerInfo *root, IndexPath *path, double loops,
+pin_index_cost(struct PlannerInfo *root, struct IndexPath *path, double loops,
                Cost *startup, Cost *total, Selectivity *selectivity,
                double *correlation, double *pages)
 {
