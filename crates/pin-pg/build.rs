@@ -37,7 +37,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for name in ["PGRX_PG_CONFIG_PATH", "CC", "AR"] {
         println!("cargo:rerun-if-env-changed={name}");
     }
-    for name in ["cshim/pin_abi.c", "cshim/pin_abi.h", "cshim/am_fields.def", "cshim/pin_storage.c", "cshim/pin_storage.h"] {
+    for name in [
+        "cshim/pin_abi.c",
+        "cshim/pin_abi.h",
+        "cshim/am_fields.def",
+        "cshim/pin_storage.c",
+        "cshim/pin_storage.h",
+    ] {
         println!("cargo:rerun-if-changed={name}");
     }
     let host = env::var("HOST")?;
@@ -64,20 +70,22 @@ fn main() -> Result<(), Box<dyn Error>> {
     let cc = env::var_os("CC").unwrap_or_else(|| "cc".into());
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
     for source in ["pin_abi", "pin_storage"] {
-    let object = out.join(format!("{source}.o"));
-    let mut compile = Command::new(&cc);
-    compile
-        .arg("-D_GNU_SOURCE")
-        .args([
-            "-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-I",
-        ])
-        .arg(&server_include)
-        .arg("-I")
-        .arg(&include)
-        .arg("-c").arg(format!("cshim/{source}.c")).arg("-o")
-        .arg(&object);
-    run(&mut compile)?;
-    objects.push(object);
+        let object = out.join(format!("{source}.o"));
+        let mut compile = Command::new(&cc);
+        compile
+            .arg("-D_GNU_SOURCE")
+            .args([
+                "-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-isystem",
+            ])
+            .arg(&server_include)
+            .arg("-isystem")
+            .arg(&include)
+            .arg("-c")
+            .arg(format!("cshim/{source}.c"))
+            .arg("-o")
+            .arg(&object);
+        run(&mut compile)?;
+        objects.push(object);
     }
     run(Command::new(ar).arg("crs").arg(&archive).args(&objects))?;
     println!("cargo:rustc-link-search=native={}", out.display());
