@@ -31,7 +31,10 @@ fn every_reference_match_is_covered() {
         for text in documents {
             let document = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
             let exact = oracle::matches(&document, &query, 1 << 20, 1 << 20).unwrap();
-            assert!(!exact || covered(&document, &plan), "{source:?} on {text:?}");
+            assert!(
+                !exact || covered(&document, &plan),
+                "{source:?} on {text:?}"
+            );
         }
     }
 }
