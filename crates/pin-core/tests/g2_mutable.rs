@@ -26,7 +26,11 @@ fn candidates(store: &mut MemoryStore, source: &str) -> BTreeSet<RootTid> {
     let query = Query::parse(source, QueryLimits::default()).unwrap();
     let plan = CandidatePlan::build(&query, 1 << 20).unwrap();
     let mut result = BTreeSet::new();
-    mutable::scan(store, &plan, |root| { result.insert(root); Ok(()) }).unwrap();
+    mutable::scan(store, &plan, |root| {
+        result.insert(root);
+        Ok(())
+    })
+    .unwrap();
     result
 }
 
@@ -40,11 +44,16 @@ fn inline_payloads_pack_without_moving_owner_identities() {
     let mut references = Vec::new();
     for index in 0..1000 {
         let incarnation = pin_core::identity::Incarnation::new(index as u64 + 1).unwrap();
-        let Some(reference) = page.append_owner(incarnation, root(&store, index), 3, 2, payload.bytes()).unwrap() else {
+        let Some(reference) = page
+            .append_owner(incarnation, root(&store, index), 3, 2, payload.bytes())
+            .unwrap()
+        else {
             break;
         };
-        page.change_owner(reference, OwnerChange::PayloadReady(NO_BLOCK), layout).unwrap();
-        page.change_owner(reference, OwnerChange::Publish, layout).unwrap();
+        page.change_owner(reference, OwnerChange::PayloadReady(NO_BLOCK), layout)
+            .unwrap();
+        page.change_owner(reference, OwnerChange::Publish, layout)
+            .unwrap();
         references.push(reference);
     }
     assert!(references.len() > 50);
@@ -61,20 +70,44 @@ fn inline_payloads_pack_without_moving_owner_identities() {
 fn lossy_candidates_plus_recheck_equal_the_independent_oracle() {
     let mut store = MemoryStore::default();
     mutable::initialize(&mut store).unwrap();
-    let texts = ["", "alpha", "alpha beta", "beta alpha alpha", "alphabet", "é BETA", "missing"];
+    let texts = [
+        "",
+        "alpha",
+        "alpha beta",
+        "beta alpha alpha",
+        "alphabet",
+        "é BETA",
+        "missing",
+    ];
     let mut documents = Vec::new();
     for index in 0..1100 {
         let text = texts[index as usize % texts.len()];
         let tid = root(&store, index);
         mutable::insert(&mut store, tid, &prepared(text)).unwrap();
-        documents.push((tid, Analyzed::analyze(text, AnalysisLimits::default()).unwrap()));
+        documents.push((
+            tid,
+            Analyzed::analyze(text, AnalysisLimits::default()).unwrap(),
+        ));
     }
-    for source in ["alpha", "alpha OR beta", "alpha AND beta", "NOT alpha", "alpha*", "\"alpha alpha\"", "NOT (alpha OR beta)", "", "missing AND alpha"] {
+    for source in [
+        "alpha",
+        "alpha OR beta",
+        "alpha AND beta",
+        "NOT alpha",
+        "alpha*",
+        "\"alpha alpha\"",
+        "NOT (alpha OR beta)",
+        "",
+        "missing AND alpha",
+    ] {
         let query = Query::parse(source, QueryLimits::default()).unwrap();
         let actual = candidates(&mut store, source);
         for (root, document) in &documents {
             let exact = oracle::matches(document, &query, 1 << 20, 1 << 20).unwrap();
-            assert!(!exact || actual.contains(root), "{source:?} missed {root:?}");
+            assert!(
+                !exact || actual.contains(root),
+                "{source:?} missed {root:?}"
+            );
         }
     }
     let stats = mutable::vacuum(&mut store, |_| Ok(false)).unwrap();
@@ -95,7 +128,11 @@ fn old_terms_cannot_resurrect_when_the_same_heap_slot_is_reused() {
     assert!(candidates(&mut store, "alpha").is_empty());
     assert_eq!(candidates(&mut store, "beta"), BTreeSet::from([tid]));
     let mut owner_page = store.read(old.page).unwrap();
-    assert!(owner_page.change_owner(old, OwnerChange::Publish, store.layout()).is_err());
+    assert!(
+        owner_page
+            .change_owner(old, OwnerChange::Publish, store.layout())
+            .is_err()
+    );
     assert!(!owner_page.owner(old.slot, store.layout()).unwrap().live);
 }
 
@@ -118,8 +155,14 @@ fn every_insertion_boundary_recovers_without_half_published_matches() {
         assert!(mutable::insert(&mut crashed, attempted, &document).is_err());
         crashed.fail_at = None;
         let published = crashed.events.last() == Some(&Stage::Published);
-        assert_eq!(candidates(&mut crashed, "beta").contains(&attempted), published);
-        assert_eq!(candidates(&mut crashed, "gamma").contains(&attempted), published);
+        assert_eq!(
+            candidates(&mut crashed, "beta").contains(&attempted),
+            published
+        );
+        assert_eq!(
+            candidates(&mut crashed, "gamma").contains(&attempted),
+            published
+        );
         assert!(candidates(&mut crashed, "stable").contains(&committed));
         let stats = mutable::vacuum(&mut crashed, |tid| Ok(tid == attempted)).unwrap();
         assert_eq!(stats.live_documents, 1);
@@ -166,7 +209,10 @@ fn vacuum_interruptions_are_idempotent_and_freed_payload_pages_are_reused() {
         mutable::insert(&mut interrupted, next_tid, &document).unwrap();
         // two new posting pages hold second occurrences; fragments come from free pages.
         assert!(interrupted.blocks().unwrap() <= before + 2);
-        assert_eq!(candidates(&mut interrupted, "beta"), BTreeSet::from([next_tid]));
+        assert_eq!(
+            candidates(&mut interrupted, "beta"),
+            BTreeSet::from([next_tid])
+        );
     }
 }
 
@@ -180,7 +226,9 @@ fn exact_term_comparison_survives_hash_collisions_and_dictionary_overflow() {
         let term = format!("{prefix}{index}");
         if bucket_for(&term) == 0 {
             terms.push(term);
-            if terms.len() == 25 { break; }
+            if terms.len() == 25 {
+                break;
+            }
         }
     }
     assert_eq!(terms.len(), 25);
@@ -219,5 +267,11 @@ fn document_validation_rejects_cross_term_position_reuse_and_trailing_bytes() {
     corrupt.push(0);
     assert!(validate(&corrupt, 4096).is_err());
     assert!(validate(payload.bytes(), 0).is_err());
-    assert!(PreparedDocument::prepare(&Analyzed::analyze("a", AnalysisLimits::default()).unwrap(), 0).is_err());
+    assert!(
+        PreparedDocument::prepare(
+            &Analyzed::analyze("a", AnalysisLimits::default()).unwrap(),
+            0
+        )
+        .is_err()
+    );
 }
