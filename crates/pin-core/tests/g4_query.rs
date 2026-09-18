@@ -254,6 +254,7 @@ fn equal_owner_coordinates_with_foreign_incarnations_are_rejected() {
 struct CountStore {
     inner: MemoryStore,
     owner_reads: usize,
+    dictionary_reads: usize,
     cancel: bool,
 }
 
@@ -267,6 +268,7 @@ impl PageStore for CountStore {
     fn read(&mut self, block: u32) -> Result<Page> {
         let page = self.inner.read(block)?;
         self.owner_reads += usize::from(page.kind() == PageKind::Owners);
+        self.dictionary_reads += usize::from(page.kind() == PageKind::Dictionary);
         Ok(page)
     }
     fn extend(&mut self) -> Result<u32> {
@@ -296,6 +298,7 @@ fn filtering_avoids_owner_page_reads_for_rejected_postings() {
     let mut store = CountStore {
         inner,
         owner_reads: 0,
+        dictionary_reads: 0,
         cancel: false,
     };
     let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
@@ -321,6 +324,29 @@ fn filtering_avoids_owner_page_reads_for_rejected_postings() {
         run(&mut store, "a AND b", 1 << 20),
         Err(Error::InvalidParameters)
     );
+}
+
+#[test]
+fn repeated_terms_share_dictionary_lookup_but_keep_independent_cursors() {
+    let mut store = CountStore {
+        inner: seeded(&["a", "a b", "b", "a c", "c"]),
+        owner_reads: 0,
+        dictionary_reads: 0,
+        cancel: false,
+    };
+    let expected = vec![root(0), root(1), root(3)];
+    assert_eq!(
+        run(&mut store, "(a AND b) OR a", 1 << 20).unwrap(),
+        expected
+    );
+    assert_eq!(store.dictionary_reads, 2);
+
+    store.dictionary_reads = 0;
+    assert_eq!(
+        run(&mut store, "a OR (a AND b)", 1 << 20).unwrap(),
+        expected
+    );
+    assert_eq!(store.dictionary_reads, 2);
 }
 
 #[test]
