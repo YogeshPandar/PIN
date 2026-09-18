@@ -65,7 +65,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
     let mut compile = Command::new(cc);
     compile
-        .args(["-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-I"])
+        .args([
+            "-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-I",
+        ])
+        .arg("-D_GNU_SOURCE")
         .arg(server_include)
         .arg("-I")
         .arg(include)
