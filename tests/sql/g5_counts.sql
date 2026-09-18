@@ -79,11 +79,11 @@ SELECT pg_temp.g5_expect($q$SELECT count(*) FROM ONLY public.g5_docs
 
 -- compound predicates may use the custom node but remain heap checked.
 SELECT pg_temp.g5_expect($q$SELECT count(*) FROM ONLY public.g5_docs
-    WHERE body OPERATOR(pin.@@@) pin.parse_query('"alpha alpha"')$q$, 1920, NULL);
+    WHERE body OPERATOR(pin.@@@) pin.parse_query('"alpha alpha"')$q$, 1920, false);
 SELECT pg_temp.g5_expect($q$SELECT count(*) FROM ONLY public.g5_docs
-    WHERE body OPERATOR(pin.@@@) pin.parse_query('alpha OR beta')$q$, 2400, NULL);
+    WHERE body OPERATOR(pin.@@@) pin.parse_query('alpha OR beta')$q$, 2400, false);
 SELECT pg_temp.g5_expect($q$SELECT count(*) FROM ONLY public.g5_docs
-    WHERE body OPERATOR(pin.@@@) pin.parse_query('alp*')$q$, 1920, NULL);
+    WHERE body OPERATOR(pin.@@@) pin.parse_query('alp*')$q$, 1920, false);
 
 -- residual and non-plain aggregate shapes retain the core aggregate.
 SELECT pg_temp.g5_expect($q$SELECT count(*) FROM ONLY public.g5_docs

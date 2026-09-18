@@ -8,7 +8,9 @@ It is not a production-readiness or performance claim.
 ## Scope
 
 The custom upper path handles only plain `COUNT(*)` over one ordinary heap
-relation with one Pin predicate and no residual restriction. It excludes RLS,
+relation with one constant exact single-term Pin predicate and no residual
+restriction. The planner decodes that bounded typed constant once and declines
+phrases, Boolean expressions, prefix queries and other compound shapes. It excludes RLS,
 security quals, inheritance, lateral dependencies, joins, grouping, DISTINCT,
 aggregate FILTER or ORDER BY, row marks, LIMIT/OFFSET, CTEs, recovery and
 SERIALIZABLE execution. Partial and expression indexes are excluded.
@@ -129,9 +131,9 @@ most 64 candidate records. Counters use checked arithmetic. Heap fallback
 analyzes one visible document at a time and resets its PostgreSQL scratch context
 before the next candidate.
 
-The implementation is intentionally conservative. Complex predicates can use the
-custom node only through heap-checked candidate coverage. VM certification is
-limited to exact sealed single-term membership.
+The implementation is intentionally conservative. Complex predicates remain on
+PostgreSQL's ordinary bitmap/heap aggregate path. VM certification is limited to
+exact sealed single-term membership.
 
 ## Deterministic qualification
 

@@ -275,6 +275,10 @@ identity remains unchanged. Mutable or otherwise uncertified candidates never
 use the VM shortcut. SERIALIZABLE and recovery-time custom execution are
 excluded. Both count GUCs are `PGC_SUSET` and default off.
 
+The upper path first decodes the already-validated constant query through the
+same bounded Rust query decoder and is offered only for an exact single-term
+root. Compound queries remain on the core aggregate path.
+
 The upper path retains an actual core aggregate child for execution-time
 fallback. Because `add_path` can immediately free a dominated non-IndexPath,
 Pin shallow-copies the AggPath before insertion. Candidate costing retains the

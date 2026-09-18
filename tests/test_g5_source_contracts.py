@@ -79,6 +79,11 @@ class CountSourceContracts(unittest.TestCase):
         self.assertIn("IsolationIsSerializable()", self.c)
         self.assertIn("IsMVCCSnapshot(estate->es_snapshot)", self.c)
 
+    def test_planner_accepts_only_single_term_count_queries(self):
+        self.assertIn("pin_count_single_term", self.c)
+        self.assertIn("pin_count_single_term", self.rust)
+        self.assertLess(self.c.index("pin_count_single_term"), self.c.index("add_path(output"))
+
     def test_count_candidate_stream_is_bounded_and_safe(self):
         for forbidden in ("Vec<", "HashSet", "BTreeSet", "unsafe"):
             self.assertNotIn(forbidden, self.core)

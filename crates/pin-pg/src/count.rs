@@ -12,7 +12,7 @@ use pin_core::identity::{HeapLayout, RootTid};
 use pin_core::mutable::page::{Page, PageKind};
 use pin_core::mutable::{self, CountCandidate};
 use pin_core::oracle;
-use pin_core::query::{Query, QueryLimits};
+use pin_core::query::{Kind, Query, QueryLimits};
 use std::ffi::c_void;
 
 const BATCH: usize = 64;
@@ -178,6 +178,23 @@ impl Counter<'_> {
         self.length = 0;
         Ok(())
     }
+}
+
+/// Returns whether one validated constant query is eligible for the narrow count path.
+///
+/// # Safety
+/// bytes points to one initialized query datum allocation for the synchronous call.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_count_single_term(bytes: *const u8, length: usize) -> bool {
+    crate::compatibility::database();
+    if bytes.is_null() || length > isize::MAX as usize {
+        return matching::input(Err(Error::InvalidState));
+    }
+    // safety: the planner owns one immutable detoasted query allocation for this call.
+    let input = unsafe { std::slice::from_raw_parts(bytes, length) };
+    let query = matching::input(Query::decode(input, QueryLimits::default()));
+    matches!(&query.nodes[query.root].kind, Kind::Term(_))
 }
 
 /// Executes one count to completion without retaining Rust state in a plan.

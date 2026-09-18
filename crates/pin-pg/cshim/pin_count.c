@@ -161,6 +161,15 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
                                 CStringGetDatum("query"), ObjectIdGetDatum(schema));
     if (!OidIsValid(query_type) || argument->consttype != query_type)
         return;
+    {
+        bytea *encoded = DatumGetByteaPP(argument->constvalue);
+        bool single_term = pin_count_single_term((const uint8 *) VARDATA_ANY(encoded),
+                                                  VARSIZE_ANY_EXHDR(encoded));
+        if ((Pointer) encoded != DatumGetPointer(argument->constvalue))
+            pfree(encoded);
+        if (!single_term)
+            return;
+    }
     match = OpernameGetOprid(list_make2(makeString("pin"), makeString("@@@")),
                             TEXTOID, query_type);
     am = get_am_oid("pin", true);
@@ -329,10 +338,10 @@ pin_count_open(PinCountState *state)
         state->heap->rd_rel->relpersistence != RELPERSISTENCE_PERMANENT)
     {
         state->fallback_reason = "heap or security eligibility";
+        pin_count_release(state);
         return false;
     }
     state->index = index_open(pin_private_oid(scan->custom_private, 1), AccessShareLock);
-    pin_storage_check(state->index, state->heap, NULL);
     if (state->index->rd_rel->relam != get_am_oid("pin", false) ||
         state->index->rd_index == NULL || !state->index->rd_index->indisvalid ||
         !state->index->rd_index->indisready || !state->index->rd_index->indislive ||
@@ -353,7 +362,12 @@ pin_count_open(PinCountState *state)
         (state->index->rd_index->indcheckxmin &&
          !TransactionIdPrecedes(
              HeapTupleHeaderGetXmin(state->index->rd_indextuple->t_data), TransactionXmin)))
-        elog(ERROR, "PinCount index binding changed");
+    {
+        state->fallback_reason = "index eligibility changed";
+        pin_count_release(state);
+        return false;
+    }
+    pin_storage_check(state->index, state->heap, NULL);
     state->fetch = table_index_fetch_begin(state->heap);
     state->heap_slot = table_slot_create(state->heap, NULL);
     state->scratch = AllocSetContextCreate(estate->es_query_cxt, "PinCount tuple", ALLOCSET_SMALL_SIZES);

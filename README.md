@@ -11,7 +11,7 @@ Boolean candidate execution. PostgreSQL performs snapshot visibility and exact
 predicate rechecks on the ordinary bitmap path.
 
 This G5 branch adds an experimental, default-off `PinCount` upper plan for plain
-`COUNT(*)` search shapes. It streams candidate accounting without a result
+`COUNT(*)` with one constant exact-term search predicate. It streams candidate accounting without a result
 bitmap, keeps mutable and uncertified candidates on HOT-aware heap visibility,
 and may certify exact sealed-term candidates with fresh visibility-map status
 while a canonical owner pin protects liveness. A real PostgreSQL aggregate
