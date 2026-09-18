@@ -1,4 +1,4 @@
-comment = 'Pin G2 experimental durable bitmap baseline'
+comment = 'Pin G4 streaming bitmap query execution'
 default_version = '0.0.0'
 module_pathname = '$libdir/pin'
 relocatable = false
