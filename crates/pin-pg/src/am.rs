@@ -248,6 +248,7 @@ unsafe extern "C-unwind" fn vacuum_cleanup(
     }
     // safety: when bulk delete was skipped, collect live/free statistics first.
     let stats = if stats.is_null() {
+        // safety: the live VACUUM descriptor remains valid through the cleanup pass.
         unsafe { vacuum_pass(info, stats, None, std::ptr::null_mut()) }
     } else {
         stats
