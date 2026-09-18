@@ -28,6 +28,7 @@ jobs:
           python3 -m unittest discover -s tests -v
           python3 tools/check_contracts.py
           bash -n tools/pg_smoke.sh
+          bash -n tools/g2_qualification.sh
       - name: Check formatting
         run: cargo fmt --all --check
       - name: Test pure contracts
@@ -94,6 +95,8 @@ jobs:
         env:
           PIN_G0_TEST_HOOKS: '1'
         run: bash tools/pg_smoke.sh
+      - name: Test G2 transactional and recovery qualification
+        run: bash tools/g2_qualification.sh
       - name: Preserve disposable cluster logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
