@@ -3,7 +3,7 @@ DO $test$
 BEGIN
     IF EXISTS (
         SELECT FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'pin' AND p.proname LIKE 'g0_%'
+        WHERE n.nspname = 'pin' AND (p.proname LIKE 'g0_%' OR p.proname LIKE 'g2_%')
     ) THEN
         RAISE EXCEPTION 'test hooks present in an ordinary build';
     END IF;

@@ -1,4 +1,4 @@
-comment = 'Pin G0 host-boundary prototype; indexing is disabled'
+comment = 'Pin G2 experimental durable bitmap baseline'
 default_version = '0.0.0'
 module_pathname = '$libdir/pin'
 relocatable = false

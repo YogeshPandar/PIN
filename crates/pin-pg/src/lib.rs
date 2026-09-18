@@ -1,4 +1,4 @@
-//! postgresql-owned host boundary; storage and search remain disabled.
+//! PostgreSQL-owned host boundary for the experimental G2 bitmap baseline.
 //! abi, ownership, and error contracts are recorded in docs/api-evidence.md.
 
 #[cfg(not(feature = "pg18"))]
@@ -11,6 +11,9 @@ use pgrx::prelude::*;
 mod abi;
 mod am;
 mod compatibility;
+mod matching;
+mod native;
+mod storage;
 #[cfg(feature = "test-hooks")]
 mod test_hooks;
 
@@ -43,7 +46,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G0: host boundary only; indexing disabled"
+    "G2: durable bitmap baseline; advanced paths gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]

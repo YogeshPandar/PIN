@@ -9,7 +9,8 @@ DECLARE
 BEGIN
     FOR hook_oid IN
         SELECT p.oid FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'pin' AND p.proname LIKE 'g0_%'
+        WHERE n.nspname = 'pin'
+          AND (p.proname LIKE 'g0_%' OR p.proname LIKE 'g2_%')
     LOOP
         IF has_function_privilege('pin_g0_reader', hook_oid, 'EXECUTE') THEN
             RAISE EXCEPTION 'test hook is executable by an unprivileged role';
