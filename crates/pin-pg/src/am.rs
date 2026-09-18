@@ -8,12 +8,12 @@
 )]
 
 use crate::{matching, native, storage};
+use pgrx::{FromDatum, Internal, pg_extern, pg_guard, pg_sys};
 use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::candidate::CandidatePlan;
 use pin_core::error::Error;
 use pin_core::mutable::{self, document::PreparedDocument};
 use pin_core::query::{Query, QueryLimits};
-use pgrx::{FromDatum, Internal, pg_extern, pg_guard, pg_sys};
 use std::ffi::c_void;
 
 #[pg_extern(sql = r#"
@@ -111,7 +111,9 @@ unsafe extern "C-unwind" fn build(
     // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
     // state lives through all sequential, guarded callback invocations.
     let heap_tuples = unsafe {
-        native::call(|| native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr))
+        native::call(|| {
+            native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr)
+        })
     };
     // safety: palloc returns aligned PostgreSQL-owned memory; both fields are initialized.
     unsafe {
@@ -143,8 +145,12 @@ unsafe extern "C-unwind" fn build_tuple(
     let state = unsafe { &mut *state.cast::<BuildState>() };
     // safety: the core build scan supplies one evaluated text key and its HOT root.
     if unsafe { insert_value(index, state.heap, values, nulls, tid) } {
-        state.documents = matching::stored(state.documents.checked_add(1)
-            .ok_or(Error::Limit("index document count")));
+        state.documents = matching::stored(
+            state
+                .documents
+                .checked_add(1)
+                .ok_or(Error::Limit("index document count")),
+        );
     }
 }
 
@@ -167,7 +173,10 @@ unsafe fn insert_value(
     let text = unsafe { <&str as FromDatum>::from_datum(*values, false) };
     let text = matching::input(text.ok_or(Error::InvalidDocument));
     let analyzed = matching::input(Analyzed::analyze(text, AnalysisLimits::default()));
-    let document = matching::input(PreparedDocument::prepare(&analyzed, matching::PREPARE_MEMORY));
+    let document = matching::input(PreparedDocument::prepare(
+        &analyzed,
+        matching::PREPARE_MEMORY,
+    ));
     drop(analyzed);
     // safety: C reads a valid core-owned item pointer without changing its root identity.
     let root = matching::stored(unsafe { storage::root(tid) });
@@ -257,14 +266,18 @@ unsafe fn vacuum_pass(
     // safety: VACUUM and insertion share the writer interlock; the core callback
     // decides removability once per owner, not independently per term occurrence.
     let result = matching::stored(unsafe {
-        storage::with_writer(index, |store| mutable::vacuum(store, |root| {
-            if callback.is_none() {
-                return Ok(false);
-            }
-            let block = root.block();
-            let offset = root.offset();
-            Ok(native::call(|| native::pin_vacuum_removable(callback, state, block, offset)))
-        }))
+        storage::with_writer(index, |store| {
+            mutable::vacuum(store, |root| {
+                if callback.is_none() {
+                    return Ok(false);
+                }
+                let block = root.block();
+                let offset = root.offset();
+                Ok(native::call(|| {
+                    native::pin_vacuum_removable(callback, state, block, offset)
+                }))
+            })
+        })
     });
     // safety: PostgreSQL owns this initialized statistics record across VACUUM rounds.
     unsafe {
@@ -278,8 +291,12 @@ unsafe fn vacuum_pass(
         (*stats).estimated_count = false;
         (*stats).num_index_tuples = result.live_documents as f64;
         (*stats).tuples_removed += result.removed_documents as f64;
-        (*stats).pages_newly_deleted = matching::stored((*stats).pages_newly_deleted
-            .checked_add(result.reclaimed_pages).ok_or(Error::Limit("VACUUM pages")));
+        (*stats).pages_newly_deleted = matching::stored(
+            (*stats)
+                .pages_newly_deleted
+                .checked_add(result.reclaimed_pages)
+                .ok_or(Error::Limit("VACUUM pages")),
+        );
         (*stats).pages_deleted = result.free_pages;
         (*stats).pages_free = result.free_pages;
         stats
@@ -298,14 +315,24 @@ unsafe extern "C-unwind" fn cost_estimate(
     pages: *mut f64,
 ) {
     // safety: the planner provides live inputs and five distinct writable outputs.
-    unsafe { native::call(|| native::pin_index_cost(root, path, loops, startup, total, selectivity, correlation, pages)) };
+    unsafe {
+        native::call(|| {
+            native::pin_index_cost(
+                root,
+                path,
+                loops,
+                startup,
+                total,
+                selectivity,
+                correlation,
+                pages,
+            )
+        })
+    };
 }
 
 #[pg_guard]
-unsafe extern "C-unwind" fn options(
-    _options: pg_sys::Datum,
-    validate: bool,
-) -> *mut pg_sys::bytea {
+unsafe extern "C-unwind" fn options(_options: pg_sys::Datum, validate: bool) -> *mut pg_sys::bytea {
     if !validate {
         return std::ptr::null_mut();
     }
@@ -341,7 +368,9 @@ unsafe extern "C-unwind" fn begin_scan(
     // safety: core holds a live index relation; C allocates the core descriptor and
     // a context-owned integer capacity record, with no Rust destructor requirement.
     unsafe {
-        native::call(|| native::pin_storage_check(index, std::ptr::null_mut(), std::ptr::null_mut()));
+        native::call(|| {
+            native::pin_storage_check(index, std::ptr::null_mut(), std::ptr::null_mut())
+        });
         native::call(|| native::pin_scan_begin(index, keys, orderbys))
     }
 }
@@ -359,11 +388,15 @@ unsafe extern "C-unwind" fn rescan(
 }
 
 #[pg_guard]
-unsafe extern "C-unwind" fn bitmap(scan: pg_sys::IndexScanDesc, bitmap: *mut pg_sys::TIDBitmap) -> i64 {
+unsafe extern "C-unwind" fn bitmap(
+    scan: pg_sys::IndexScanDesc,
+    bitmap: *mut pg_sys::TIDBitmap,
+) -> i64 {
     // safety: core owns the descriptor, current MVCC snapshot and key array.
     unsafe { native::call(|| native::pin_scan_validate(scan)) };
     // safety: C validated the dimensions; copy scalars rather than retain C field borrows.
-    let (index, key_count, keys) = unsafe { ((*scan).indexRelation, (*scan).numberOfKeys, (*scan).keyData) };
+    let (index, key_count, keys) =
+        unsafe { ((*scan).indexRelation, (*scan).numberOfKeys, (*scan).keyData) };
     let mut chosen = None;
     let mut cost = usize::MAX;
     for position in 0..key_count as usize {
@@ -371,7 +404,10 @@ unsafe extern "C-unwind" fn bitmap(scan: pg_sys::IndexScanDesc, bitmap: *mut pg_
         // safety: position is bounded by the validated initialized scan-key array.
         let (datum, null) = unsafe {
             let key = keys.add(position);
-            ((*key).sk_argument, (*key).sk_flags & pg_sys::SK_ISNULL as i32 != 0)
+            (
+                (*key).sk_argument,
+                (*key).sk_flags & pg_sys::SK_ISNULL as i32 != 0,
+            )
         };
         if null {
             return 0;
