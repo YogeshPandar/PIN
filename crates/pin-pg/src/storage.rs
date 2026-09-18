@@ -50,7 +50,6 @@ pub(crate) unsafe fn with_writer<T>(
     unsafe { native::call(|| native::pin_writer_lock(index)) };
     store.writer = true;
     let result = operation(&mut store);
-    store.writer = false;
     // safety: exactly one acquisition occurred; ERROR paths release via abort cleanup.
     unsafe { native::call(|| native::pin_writer_unlock(index)) };
     result
