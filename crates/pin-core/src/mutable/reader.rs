@@ -35,7 +35,9 @@ pub fn scan<S: PageStore>(
                     let owner = page.owner(slot, store.layout())?;
                     if owner.publication == Publication::Published && owner.live {
                         emit(owner.root)?;
-                        count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                        count = count
+                            .checked_add(1)
+                            .ok_or(Error::Limit("candidate count"))?;
                     }
                 }
                 match following(&page, tail)? {
@@ -53,7 +55,9 @@ pub fn scan<S: PageStore>(
                 let entry = dictionary.term(reference)?;
                 if let Some(root) = resolve(store, &mut cache, entry.first)? {
                     emit(root)?;
-                    count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                    count = count
+                        .checked_add(1)
+                        .ok_or(Error::Limit("candidate count"))?;
                 }
                 let (head, tail) = (entry.head, entry.tail);
                 if head == NO_BLOCK {
@@ -68,7 +72,9 @@ pub fn scan<S: PageStore>(
                     for owner in page.posting_refs()? {
                         if let Some(root) = resolve(store, &mut cache, owner?)? {
                             emit(root)?;
-                            count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                            count = count
+                                .checked_add(1)
+                                .ok_or(Error::Limit("candidate count"))?;
                         }
                     }
                     match following(&page, tail)? {
@@ -82,8 +88,15 @@ pub fn scan<S: PageStore>(
     Ok(count)
 }
 
-fn resolve<S: PageStore>(store: &mut S, cache: &mut Option<Page>, reference: OwnerRef) -> Result<Option<RootTid>> {
-    if cache.as_ref().is_none_or(|page| page.block() != reference.page) {
+fn resolve<S: PageStore>(
+    store: &mut S,
+    cache: &mut Option<Page>,
+    reference: OwnerRef,
+) -> Result<Option<RootTid>> {
+    if cache
+        .as_ref()
+        .is_none_or(|page| page.block() != reference.page)
+    {
         *cache = Some(load(store, reference.page, PageKind::Owners)?);
     }
     let page = cache.as_ref().ok_or(Error::InvalidState)?;
