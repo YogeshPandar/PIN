@@ -12,7 +12,7 @@ use pin_core::identity::{HeapLayout, RootTid};
 use pin_core::mutable::page::{Page, PageKind};
 use pin_core::mutable::{self, CountCandidate};
 use pin_core::oracle;
-use pin_core::query::{Kind, Query, QueryLimits};
+use pin_core::query::{Query, QueryLimits};
 use std::ffi::c_void;
 
 const BATCH: usize = 64;
@@ -194,7 +194,7 @@ pub unsafe extern "C-unwind" fn pin_count_single_term(bytes: *const u8, length: 
     // safety: the planner owns one immutable detoasted query allocation for this call.
     let input = unsafe { std::slice::from_raw_parts(bytes, length) };
     let query = matching::input(Query::decode(input, QueryLimits::default()));
-    matches!(&query.nodes[query.root].kind, Kind::Term(_))
+    query.is_single_term()
 }
 
 /// Executes one count to completion without retaining Rust state in a plan.

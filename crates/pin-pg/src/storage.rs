@@ -7,7 +7,7 @@ use crate::native;
 use pgrx::pg_sys;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
-use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page};
+use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
 use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 

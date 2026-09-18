@@ -42,6 +42,23 @@ fn candidates(store: &mut MemoryStore, source: &str) -> Vec<CountCandidate> {
 }
 
 #[test]
+fn count_shape_gate_accepts_only_exact_terms() {
+    for (source, expected) in [
+        ("alpha", true),
+        ("missing", true),
+        ("alpha OR beta", false),
+        ("alpha AND beta", false),
+        ("\"alpha beta\"", false),
+        ("alpha*", false),
+        ("NOT alpha", false),
+        ("", false),
+    ] {
+        let query = Query::parse(source, QueryLimits::default()).unwrap();
+        assert_eq!(query.is_single_term(), expected, "{source}");
+    }
+}
+
+#[test]
 fn every_query_uses_a_duplicate_free_cover() {
     let texts = ["", "alpha", "beta", "alpha beta", "alpha alpha", "betamax"];
     let mut store = seed(&texts);

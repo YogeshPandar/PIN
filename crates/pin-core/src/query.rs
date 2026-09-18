@@ -396,6 +396,9 @@ impl Query {
     pub const fn term_count(&self) -> usize {
         self.terms
     }
+    pub fn is_single_term(&self) -> bool {
+        matches!(&self.nodes[self.root].kind, Kind::Term(_))
+    }
     pub const fn retained_bytes(&self) -> usize {
         self.retained_bytes
     }
