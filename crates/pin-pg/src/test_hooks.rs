@@ -51,5 +51,10 @@ pgrx::extension_sql!(
     "REVOKE ALL ON FUNCTION pin.g0_drop_count(), pin.g0_raise_error(), \
      pin.g0_raise_panic(), pin.g0_raise_pg_error() FROM PUBLIC;",
     name = "pin_test_hook_permissions",
-    requires = [g0_drop_count, g0_raise_error, g0_raise_panic, g0_raise_pg_error]
+    requires = [
+        g0_drop_count,
+        g0_raise_error,
+        g0_raise_panic,
+        g0_raise_pg_error
+    ]
 );
