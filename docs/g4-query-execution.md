@@ -41,8 +41,10 @@ load canonical owner pages and check publication, liveness and exact identity.
 
 Repeated terms in different Boolean branches have independent cursor positions.
 Sharing a mutable cursor between `a` and the nested `a AND c` branch would let the
-intersection skip rows required by the outer union. Direct duplicate operands
-can simplify before cursor assignment; unrelated branches cannot share state.
+intersection skip rows required by the outer union. Immutable dictionary metadata
+is resolved once per unique active term, then copied into each independent cursor.
+Direct duplicate operands can simplify before cursor assignment; unrelated branches
+cannot share mutable state.
 
 Each active cursor owns at most one encoded page. `OwnedPostings` resumes the
 existing checked decoder using byte offsets and integer state. It retains no
@@ -74,7 +76,9 @@ All executor vectors are reserved before scanning. Candidate iteration uses no
 result-sized Rust collection or per-candidate allocation in this executor; host
 I/O and the caller's sink have their own allocation contracts. Each active
 occurrence decodes postings incrementally rather than rescanning page prefixes.
-Page validation still checks the complete loaded payload before traversal.
+Single-term roots and direct two-term AND/OR roots bypass the generic continuation
+interpreter. Other query shapes retain the bounded flat interpreter. Page
+validation still checks the complete loaded payload before traversal.
 
 The reader captures each posting tail and a relation-size traversal bound under
 the shared structural barrier. Compaction takes the exclusive barrier before the
@@ -101,9 +105,10 @@ No index-only, ordered, parallel or non-MVCC scan capability is enabled.
 ## Review and qualification
 
 `g4_query.rs` covers 393 generated query forms against an independent document
-oracle, exact positive Boolean results, repeated clauses, phrase lossiness,
-owner identity versus reused heap coordinates, 4,000-row sealed/mutable mixtures,
-VACUUM/compaction, bounded fallback, corruption, cancellation and deep trees.
+oracle, exact positive Boolean results, repeated clauses, duplicate-term dictionary
+reuse, phrase lossiness, owner identity versus reused heap coordinates, 4,000-row
+sealed/mutable mixtures, VACUUM/compaction, bounded fallback, corruption,
+cancellation and deep trees.
 `g4_interleaving.rs` checks append/cache refresh, captured-tail stability and a
 genuinely missing owner slot using deterministic I/O interleavings.
 
@@ -141,6 +146,7 @@ release gates. No bare-PostgreSQL or Tin performance parity is claimed.
 - [Pinned bitmap dispatch and statistical count](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/index/indexam.c#L757-L783)
 - [Rust 1.98.1 fallible reservation](https://doc.rust-lang.org/1.98.1/std/vec/struct.Vec.html#method.try_reserve_exact)
 - [Rust 1.98.1 checked slices](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.get)
+- [Rust 1.98.1 disjoint mutable slices](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html#method.split_at_mut)
 - [Rust conditional chains](https://doc.rust-lang.org/reference/expressions/if-expr.html#let-chain)
 
 The entry in [api-evidence.md](api-evidence.md#g4query01-streaming-bitmap-query-execution)
