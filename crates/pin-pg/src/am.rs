@@ -90,7 +90,7 @@ pub(crate) fn unavailable() -> ! {
     pgrx::ereport!(
         ERROR,
         pgrx::PgSqlErrorCode::ERRCODE_FEATURE_NOT_SUPPORTED,
-        "Pin does not support this operation in the G2 bitmap baseline"
+        "Pin does not support this operation in the bitmap baseline"
     );
 }
 
@@ -243,11 +243,18 @@ unsafe extern "C-unwind" fn vacuum_cleanup(
     stats: *mut pg_sys::IndexBulkDeleteResult,
 ) -> *mut pg_sys::IndexBulkDeleteResult {
     // safety: core initializes info; ANALYZE must not perform index reclamation.
-    if unsafe { (*info).analyze_only } || !stats.is_null() {
+    if unsafe { (*info).analyze_only } {
         return stats;
     }
-    // safety: no bulk-delete pass ran; reclaim abandoned data but remove no live owner.
-    unsafe { vacuum_pass(info, stats, None, std::ptr::null_mut()) }
+    // safety: when bulk delete was skipped, collect live/free statistics first.
+    let stats = if stats.is_null() {
+        // safety: the live VACUUM descriptor remains valid through the cleanup pass.
+        unsafe { vacuum_pass(info, stats, None, std::ptr::null_mut()) }
+    } else {
+        stats
+    };
+    // safety: final cleanup runs once after all bulk-delete cycles.
+    unsafe { compact_cleanup(info, stats) }
 }
 
 /// # Safety
@@ -263,8 +270,7 @@ unsafe fn vacuum_pass(
     let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
-    // safety: VACUUM and insertion share the writer interlock; the core callback
-    // decides removability once per owner, not independently per term occurrence.
+    // safety: the writer interlock serializes owner liveness and free-list changes.
     let result = matching::stored(unsafe {
         storage::with_writer(index, |store| {
             mutable::vacuum(store, |root| {
@@ -299,6 +305,47 @@ unsafe fn vacuum_pass(
         );
         (*stats).pages_deleted = result.free_pages;
         (*stats).pages_free = result.free_pages;
+        stats
+    }
+}
+
+/// # Safety
+/// info and stats are live PostgreSQL VACUUM cleanup parameters.
+unsafe fn compact_cleanup(
+    info: *mut pg_sys::IndexVacuumInfo,
+    stats: *mut pg_sys::IndexBulkDeleteResult,
+) -> *mut pg_sys::IndexBulkDeleteResult {
+    crate::compatibility::database();
+    // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
+    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    // safety: only live relation pointers enter the checked C compatibility gate.
+    unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
+    // safety: physical posting reclamation waits for readers, then excludes writers.
+    let (compacted, pages) = matching::stored(unsafe {
+        storage::with_maintenance(index, |store| {
+            let compacted = mutable::compact(store)?;
+            let pages = pin_core::mutable::PageStore::blocks(store)?;
+            Ok((compacted, pages))
+        })
+    });
+    // safety: vacuum_pass always returns a live PostgreSQL-owned statistics record.
+    unsafe {
+        let free_pages = matching::stored(
+            (*stats)
+                .pages_free
+                .checked_add(compacted.reclaimed_pages)
+                .and_then(|pages| pages.checked_sub(compacted.reused_pages))
+                .ok_or(Error::InvalidState),
+        );
+        (*stats).num_pages = pages;
+        (*stats).pages_newly_deleted = matching::stored(
+            (*stats)
+                .pages_newly_deleted
+                .checked_add(compacted.reclaimed_pages)
+                .ok_or(Error::Limit("VACUUM pages")),
+        );
+        (*stats).pages_deleted = free_pages;
+        (*stats).pages_free = free_pages;
         stats
     }
 }
@@ -431,11 +478,14 @@ unsafe extern "C-unwind" fn bitmap(
     }
     let query = matching::input(chosen.ok_or(Error::InvalidParameters));
     let plan = matching::input(CandidatePlan::build(&query, matching::QUERY_MEMORY));
-    // safety: core retains index and bitmap through this synchronous bitmap callback.
-    let mut store = matching::stored(unsafe { storage::PgStore::read_only(index) });
     // safety: the caller's existing bitmap remains writable for the complete scan.
     let mut sink = unsafe { storage::BitmapSink::new(bitmap) };
-    let count = matching::stored(mutable::scan(&mut store, &plan, |root| sink.push(root)));
+    // safety: the read barrier covers all page references, not later heap visibility work.
+    let count = matching::stored(unsafe {
+        storage::with_reader(index, |store| {
+            mutable::scan(store, &plan, |root| sink.push(root))
+        })
+    });
     sink.flush();
     matching::stored(i64::try_from(count).map_err(|_| Error::Limit("bitmap accounting")))
 }

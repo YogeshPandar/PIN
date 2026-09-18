@@ -192,5 +192,7 @@ for stage in $(seq 1 6); do
   check_count "$term" 0
 done
 
+source "$root/tools/g3_qualification.sh"
+
 "${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-crash.log"
 "$bin/pg_ctl" -D "$work/data" -m fast -w stop

@@ -10,6 +10,8 @@
 extern void pin_storage_check(Relation index, Relation heap, struct IndexInfo *info);
 extern void pin_writer_lock(Relation index);
 extern void pin_writer_unlock(Relation index);
+extern void pin_structure_lock(Relation index, bool exclusive);
+extern void pin_structure_unlock(Relation index, bool exclusive);
 extern uint32 pin_storage_blocks(Relation index);
 extern uint32 pin_storage_extend(Relation index);
 extern uint32 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity);

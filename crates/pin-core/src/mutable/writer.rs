@@ -4,7 +4,7 @@
 
 use super::document::PreparedDocument;
 use super::page::{FRAGMENT_BYTES, INLINE_BYTES, NO_BLOCK, OwnerChange, OwnerRef, Page, PageKind};
-use super::{PageStore, Stage, allocate, find_term, load};
+use super::{PageStore, Stage, allocate, find_term, load, load_posting};
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
 
@@ -146,11 +146,11 @@ fn link_term<S: PageStore>(
             store.commit(&[&dictionary, &page])?;
             return Ok(());
         }
-        let mut page = load(store, tail, PageKind::Postings)?;
-        if page.posting_term()? != reference {
+        let mut page = load_posting(store, tail, reference)?;
+        if page.next()? != NO_BLOCK {
             return Err(Error::InvalidState);
         }
-        if page.append_posting(owner)? {
+        if page.kind() == PageKind::Postings && page.append_posting(owner)? {
             return store.commit(&[&page]);
         }
         let mut next = Page::postings(allocate(store)?, reference)?;

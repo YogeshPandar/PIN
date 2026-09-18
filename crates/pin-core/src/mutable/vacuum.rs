@@ -1,6 +1,6 @@
 //! Callback-authorized removal and recovery-safe fragment/orphan reclamation.
 //! The host writer interlock excludes incomplete live writers during this pass.
-//! Owner and dictionary identities remain allocated; G3 owns structural compaction.
+//! Owner and dictionary identities remain allocated across posting compaction.
 
 use super::page::{NO_BLOCK, OwnerChange, Page, PageKind};
 use super::{PageStore, Stage, following, load, load_any};
@@ -28,8 +28,12 @@ pub fn vacuum<S: PageStore>(
     store: &mut S,
     mut removable: impl FnMut(RootTid) -> Result<bool>,
 ) -> Result<VacuumStats> {
+    let recovered = super::recover_compaction(store)?;
     let mut meta = load(store, 0, PageKind::Meta)?;
-    let mut stats = VacuumStats::default();
+    let mut stats = VacuumStats {
+        reclaimed_pages: recovered,
+        ..VacuumStats::default()
+    };
     let (head, tail) = meta.owner_chain()?;
     if head != NO_BLOCK {
         let mut block = head;
@@ -82,7 +86,7 @@ pub fn vacuum<S: PageStore>(
                     return Err(Error::InvalidState);
                 }
                 if owner.publication != Publication::Published || !owner.live {
-                    reclaim(store, &mut meta, block)?;
+                    reclaim(store, &mut meta, block, false)?;
                     stats.reclaimed_pages += 1;
                     stats.free_pages += 1;
                 }
@@ -94,7 +98,7 @@ pub fn vacuum<S: PageStore>(
         for block in 1..stats.pages {
             if load_any(store, block)?.kind() == PageKind::Zero {
                 check_unreferenced(store, block, stats.pages)?;
-                reclaim(store, &mut meta, block)?;
+                reclaim(store, &mut meta, block, true)?;
                 stats.reclaimed_pages += 1;
                 stats.free_pages += 1;
             }
@@ -103,8 +107,13 @@ pub fn vacuum<S: PageStore>(
     Ok(stats)
 }
 
-fn reclaim<S: PageStore>(store: &mut S, meta: &mut Page, block: u32) -> Result<()> {
-    let page = Page::free(block, meta.free_head()?)?;
+fn reclaim<S: PageStore>(store: &mut S, meta: &mut Page, block: u32, zero: bool) -> Result<()> {
+    let next = meta.free_head()?;
+    let page = if zero {
+        Page::free_from_zero(block, next)?
+    } else {
+        Page::free(block, next)?
+    };
     meta.set_free_head(block)?;
     store.commit(&[meta, &page])?;
     store.event(Stage::PageReclaimed)
@@ -122,6 +131,12 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
         }
         match page.kind() {
             PageKind::Meta => {
+                if page
+                    .rewrite_journal()?
+                    .is_some_and(|journal| journal.head == target || journal.tail == target)
+                {
+                    return Err(Error::InvalidState);
+                }
                 let (head, tail) = page.owner_chain()?;
                 if head == target || tail == target || page.free_head()? == target {
                     return Err(Error::InvalidState);
@@ -148,7 +163,7 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
                     }
                 }
             }
-            PageKind::Postings => {
+            PageKind::Postings | PageKind::SealedPostings => {
                 if page.posting_term()?.page == target {
                     return Err(Error::InvalidState);
                 }
