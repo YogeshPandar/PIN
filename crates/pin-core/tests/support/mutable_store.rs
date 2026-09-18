@@ -41,10 +41,17 @@ impl PageStore for MemoryStore {
         for (index, page) in pages.iter().enumerate() {
             page.validate(self.layout())?;
             assert!((page.block() as usize) < self.pages.len());
-            assert!(pages[..index].iter().all(|other| other.block() != page.block()));
+            assert!(
+                pages[..index]
+                    .iter()
+                    .all(|other| other.block() != page.block())
+            );
         }
         // one test-store commit represents one indivisible generic WAL replay record.
-        let copies: Vec<_> = pages.iter().map(|page| (page.block(), page.bytes().to_vec())).collect();
+        let copies: Vec<_> = pages
+            .iter()
+            .map(|page| (page.block(), page.bytes().to_vec()))
+            .collect();
         for (block, bytes) in copies {
             self.pages[block as usize] = bytes;
         }
