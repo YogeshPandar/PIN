@@ -4,11 +4,11 @@
 //! contracts and independent-review obligations: docs/g2-storage.md.
 
 use crate::native;
+use pgrx::pg_sys;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
-use pin_core::mutable::{PageStore, Stage};
 use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
-use pgrx::pg_sys;
+use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 
 pub(crate) struct PgStore<'rel> {
@@ -74,9 +74,11 @@ impl PageStore for PgStore<'_> {
             let capacity = output.len() as u32;
             // safety: one exclusive output slice covers capacity bytes; C copies under
             // a shared buffer lock and retains no pointer after releasing the buffer.
-            Ok(unsafe {
-                native::call(|| native::pin_storage_read(index, block, pointer, capacity))
-            } as usize)
+            Ok(
+                unsafe {
+                    native::call(|| native::pin_storage_read(index, block, pointer, capacity))
+                } as usize,
+            )
         })
     }
 
@@ -105,7 +107,8 @@ impl PageStore for PgStore<'_> {
         for (slot, &position) in order[..count].iter().enumerate() {
             let page = pages[position];
             page.validate(self.layout)?;
-            if page.bytes().is_empty() || page.bytes().len() > CAPACITY
+            if page.bytes().is_empty()
+                || page.bytes().len() > CAPACITY
                 || (slot > 0 && blocks[slot - 1] == page.block())
             {
                 return Err(Error::InvalidState);
@@ -125,10 +128,21 @@ impl PageStore for PgStore<'_> {
         // safety: distinct ascending pages and all extents are checked before locks.
         // C reads these private immutable images synchronously and mutates only WAL copies.
         unsafe {
-            native::call(|| native::pin_storage_commit(index, count_u32, blocks_ptr,
-                pointers_ptr, lengths_ptr, full_ptr))
+            native::call(|| {
+                native::pin_storage_commit(
+                    index,
+                    count_u32,
+                    blocks_ptr,
+                    pointers_ptr,
+                    lengths_ptr,
+                    full_ptr,
+                )
+            })
         };
-        if self.extended.is_some_and(|block| blocks[..count].contains(&block)) {
+        if self
+            .extended
+            .is_some_and(|block| blocks[..count].contains(&block))
+        {
             self.extended = None;
         }
         Ok(())
@@ -162,7 +176,8 @@ pub(crate) unsafe fn root(tid: pg_sys::ItemPointer) -> Result<RootTid> {
     let offset_ptr = &mut offset as *mut u16;
     // safety: C validates the item pointer and fills two distinct initialized scalars.
     unsafe { native::call(|| native::pin_root_coordinates(tid, block_ptr, offset_ptr)) };
-    let layout = HeapLayout::new(crate::abi::constant(9) as u16).map_err(|_| Error::InvalidState)?;
+    let layout =
+        HeapLayout::new(crate::abi::constant(9) as u16).map_err(|_| Error::InvalidState)?;
     RootTid::new(block, offset, layout).map_err(|_| Error::InvalidState)
 }
 
@@ -177,7 +192,12 @@ impl BitmapSink {
     /// # Safety
     /// bitmap remains caller-owned and writable until the sink is discarded.
     pub(crate) unsafe fn new(bitmap: *mut pg_sys::TIDBitmap) -> Self {
-        Self { bitmap, blocks: [0; 256], offsets: [0; 256], len: 0 }
+        Self {
+            bitmap,
+            blocks: [0; 256],
+            offsets: [0; 256],
+            len: 0,
+        }
     }
 
     pub(crate) fn push(&mut self, root: RootTid) -> Result<()> {
