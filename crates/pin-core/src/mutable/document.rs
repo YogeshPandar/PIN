@@ -85,7 +85,11 @@ impl PreparedDocument {
                 previous = token.position;
             }
         }
-        Ok(Self { bytes, tokens: document.len(), terms })
+        Ok(Self {
+            bytes,
+            tokens: document.len(),
+            terms,
+        })
     }
 
     pub fn bytes(&self) -> &[u8] {
@@ -102,7 +106,10 @@ impl PreparedDocument {
 
     /// Returns a lazy term iterator without decoding positional streams.
     pub fn terms(&self) -> DocumentTerms<'_> {
-        DocumentTerms { reader: Reader::new(&self.bytes[HEADER..]), remaining: self.terms }
+        DocumentTerms {
+            reader: Reader::new(&self.bytes[HEADER..]),
+            remaining: self.terms,
+        }
     }
 }
 
@@ -138,8 +145,8 @@ impl<'a> Iterator for DocumentTerms<'a> {
                 return Err(Error::InvalidDocument);
             }
             let position_bytes = self.reader.u32()? as usize;
-            let term = std::str::from_utf8(self.reader.take(len)?)
-                .map_err(|_| Error::InvalidDocument)?;
+            let term =
+                std::str::from_utf8(self.reader.take(len)?).map_err(|_| Error::InvalidDocument)?;
             let positions = self.reader.take(position_bytes)?;
             self.remaining -= 1;
             if self.remaining == 0 {
@@ -176,13 +183,20 @@ pub fn validate(bytes: &[u8], memory_bytes: usize) -> Result<(u32, u32)> {
     }
     if terms == 0 {
         reader.finish()?;
-        return if tokens == 0 { Ok((0, 0)) } else { Err(Error::InvalidDocument) };
+        return if tokens == 0 {
+            Ok((0, 0))
+        } else {
+            Err(Error::InvalidDocument)
+        };
     }
     let mut budget = MemoryBudget::new(memory_bytes);
     let words = (tokens as usize).div_ceil(64);
     let mut seen: Vec<u64> = vector(words, &mut budget)?;
     seen.resize(words, 0);
-    let iter = DocumentTerms { reader, remaining: terms };
+    let iter = DocumentTerms {
+        reader,
+        remaining: terms,
+    };
     let mut previous = "";
     let mut total = 0u32;
     for entry in iter {
