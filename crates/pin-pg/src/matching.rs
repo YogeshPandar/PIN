@@ -2,11 +2,11 @@
 //! SQL and bitmap rechecks share the G1 profile, parser, limits and document oracle.
 //! no index storage or visibility state is consulted here.
 
+use pgrx::prelude::*;
 use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::error::{Error, Result};
 use pin_core::oracle;
 use pin_core::query::{Query, QueryLimits};
-use pgrx::prelude::*;
 
 pub(crate) const QUERY_MEMORY: usize = 1 << 20;
 pub(crate) const PREPARE_MEMORY: usize = 32 << 20;
@@ -57,7 +57,11 @@ fn parse_query(source: &str) -> Vec<u8> {
     let query = input(Query::parse(source, QueryLimits::default()));
     let length = source.len() + 28;
     let mut bytes = Vec::new();
-    input(bytes.try_reserve_exact(length).map_err(|_| Error::Allocation));
+    input(
+        bytes
+            .try_reserve_exact(length)
+            .map_err(|_| Error::Allocation),
+    );
     if bytes.capacity() > QUERY_MEMORY {
         input::<()>(Err(Error::Limit("encoded query memory")));
     }
@@ -77,7 +81,12 @@ fn matches(body: &str, bytes: &[u8]) -> bool {
     crate::storage::interrupt();
     let query = input(Query::decode(bytes, QueryLimits::default()));
     let document = input(Analyzed::analyze(body, AnalysisLimits::default()));
-    let result = input(oracle::matches(&document, &query, QUERY_MEMORY, MATCH_STEPS));
+    let result = input(oracle::matches(
+        &document,
+        &query,
+        QUERY_MEMORY,
+        MATCH_STEPS,
+    ));
     crate::storage::interrupt();
     result
 }
