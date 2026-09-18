@@ -1,0 +1,106 @@
+name: G1 pure engine
+
+on:
+  pull_request:
+    paths:
+      - 'crates/pin-core/**'
+      - '.github/workflows/g1.yml'
+      - 'tools/g1_unicode_data.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g1-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pure:
+    if: startsWith(github.head_ref, 'feat/g1-') && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Fetch pinned Unicode conformance data
+        run: python tools/g1_unicode_data.py "$RUNNER_TEMP/g1-unicode"
+      - name: Check pure code and prepare diagnostics
+        shell: python
+        run: |
+          import base64, glob, os, pathlib, subprocess, zlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'g1-report'
+          root.mkdir(exist_ok=True)
+          reports = []
+          failed = False
+          commands = [
+              ['cargo', 'check', '-p', 'pin-core'],
+              ['cargo', 'test', '--locked', '-p', 'pin-core', '--no-fail-fast', '--', '--nocapture'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--no-fail-fast'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--', '--ignored', '--nocapture'],
+              ['cargo', 'clippy', '--locked', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
+              ['cargo', 'doc', '--locked', '-p', 'pin-core', '--no-deps'],
+          ]
+          env = dict(os.environ, RUSTDOCFLAGS='-D warnings', PIN_UNICODE_DATA=str(pathlib.Path(os.environ['RUNNER_TEMP']) / 'g1-unicode'))
+          for index, command in enumerate(commands):
+              with (root / f'{index}.log').open('w') as output:
+                  result = subprocess.run(command, stdout=output, stderr=subprocess.STDOUT, env=env)
+              text = (root / f'{index}.log').read_text()
+              reports.append(f"### {' '.join(command)}\nExit: {result.returncode}\n```text\n{text[-8000:]}\n```\n")
+              failed |= result.returncode != 0
+          files = sorted(glob.glob('crates/pin-core/src/codec/*.rs') + glob.glob('crates/pin-core/tests/g1_*.rs') + ['crates/pin-core/src/' + name + '.rs' for name in ['analysis', 'error', 'index', 'memory', 'normalize', 'normalize_conformance', 'oracle', 'query', 'rank']])
+          lock_patch = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
+          reports.append('### Cargo-generated lockfile delta\n```diff\n' + lock_patch + '\n```\n')
+          (root / 'lock.patch').write_text(lock_patch)
+          failed |= bool(lock_patch)
+          result = subprocess.run(['rustfmt', '--edition', '2024', *files])
+          patch = subprocess.check_output(['git', 'diff', '--', *files], text=True)
+          (root / 'format.patch').write_text(patch)
+          failed |= result.returncode != 0 or bool(patch)
+          encoded = base64.b64encode(zlib.compress(patch.encode())).decode()
+          reports.append(f'### G1 formatting\nPatch bytes: {len(patch.encode())}. The artifact contains plain `format.patch`.\n\nReview-only patch (zlib/base64):\n```text\n{encoded}\n```\n')
+          head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          body = f'<!-- pin-g1-diagnostics -->\n## G1 diagnostics for `{head}`\n\n' + '\n'.join(reports)
+          if len(body) > 60000:
+              body = body[:59000] + '\n\nReport truncated; complete files are in the workflow artifact.'
+          (root / 'report.md').write_text(body)
+          (root / 'status').write_text('1' if failed else '0')
+      - name: Publish review-only diagnostics
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import json, os, pathlib, urllib.request
+          event = json.loads(pathlib.Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'g1-report'
+          body = (root / 'report.md').read_text()
+          repo = os.environ['GITHUB_REPOSITORY']
+          number = event['pull_request']['number']
+          request = urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/issues/{number}/comments',
+              data=json.dumps({'body': body}).encode(),
+              headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28'},
+              method='POST')
+          with urllib.request.urlopen(request, timeout=30) as response:
+              response.read()
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g1-diagnostics-${{ github.run_id }}
+          path: ${{ runner.temp }}/g1-report/
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g1-unicode-${{ github.run_id }}
+          path: ${{ runner.temp }}/g1-unicode/
+          retention-days: 7
+      - name: Enforce check results
+        if: always()
+        run: exit "$(cat "$RUNNER_TEMP/g1-report/status")"

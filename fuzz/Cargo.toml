@@ -1,0 +1,40 @@
+[package]
+name = "pin-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[dependencies]
+libfuzzer-sys = "=0.4.13"
+pin-core = { path = "../crates/pin-core" }
+unicode-normalization = "=0.1.24"
+unicode-case-mapping = "=1.0.0"
+unicode-segmentation = "=1.12.0"
+
+[[bin]]
+name = "query"
+path = "fuzz_targets/query.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "codecs"
+path = "fuzz_targets/codecs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "analysis"
+path = "fuzz_targets/analysis.rs"
+test = false
+doc = false
+bench = false
