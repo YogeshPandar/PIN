@@ -11,6 +11,7 @@ pub mod error;
 pub mod identity;
 pub mod index;
 mod memory;
+pub mod mutable;
 mod normalize;
 pub mod oracle;
 pub mod query;

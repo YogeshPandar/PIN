@@ -1,0 +1,95 @@
+//! Bounded candidate streaming with captured chain tails and one owner-page cache.
+//! Readers never follow document payloads, so fragment reclamation cannot invalidate
+//! their borrows. The host must use MVCC and recheck every emitted root tuple.
+
+use super::page::{NO_BLOCK, OwnerRef, Page, PageKind};
+use super::{PageStore, find_term, following, load};
+use crate::candidate::CandidatePlan;
+use crate::codec::records::Publication;
+use crate::error::{Error, Result};
+use crate::identity::RootTid;
+
+/// Streams a conservative cover; returned accounting is not a visible SQL count.
+///
+/// # Errors
+/// Rejects corruption, missing owners, incarnation mismatches and host failures.
+/// The caller owns duplicate elimination, bitmap lossification and heap rechecks.
+pub fn scan<S: PageStore>(
+    store: &mut S,
+    plan: &CandidatePlan<'_>,
+    mut emit: impl FnMut(RootTid) -> Result<()>,
+) -> Result<u64> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let mut count = 0u64;
+    match plan {
+        CandidatePlan::Empty => {}
+        CandidatePlan::Universe => {
+            let (head, tail) = meta.owner_chain()?;
+            if head == NO_BLOCK {
+                return Ok(0);
+            }
+            let mut block = head;
+            loop {
+                let page = load(store, block, PageKind::Owners)?;
+                for slot in 0..page.owner_count()? {
+                    let owner = page.owner(slot, store.layout())?;
+                    if owner.publication == Publication::Published && owner.live {
+                        emit(owner.root)?;
+                        count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                    }
+                }
+                match following(&page, tail)? {
+                    Some(next) => block = next,
+                    None => break,
+                }
+            }
+        }
+        CandidatePlan::Terms(terms) => {
+            let mut cache: Option<Page> = None;
+            for term in terms {
+                let Some((dictionary, reference)) = find_term(store, &meta, term)? else {
+                    continue;
+                };
+                let entry = dictionary.term(reference)?;
+                if let Some(root) = resolve(store, &mut cache, entry.first)? {
+                    emit(root)?;
+                    count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                }
+                let (head, tail) = (entry.head, entry.tail);
+                if head == NO_BLOCK {
+                    continue;
+                }
+                let mut block = head;
+                loop {
+                    let page = load(store, block, PageKind::Postings)?;
+                    if page.posting_term()? != reference {
+                        return Err(Error::InvalidState);
+                    }
+                    for owner in page.posting_refs()? {
+                        if let Some(root) = resolve(store, &mut cache, owner?)? {
+                            emit(root)?;
+                            count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+                        }
+                    }
+                    match following(&page, tail)? {
+                        Some(next) => block = next,
+                        None => break,
+                    }
+                }
+            }
+        }
+    }
+    Ok(count)
+}
+
+fn resolve<S: PageStore>(store: &mut S, cache: &mut Option<Page>, reference: OwnerRef) -> Result<Option<RootTid>> {
+    if cache.as_ref().is_none_or(|page| page.block() != reference.page) {
+        *cache = Some(load(store, reference.page, PageKind::Owners)?);
+    }
+    let page = cache.as_ref().ok_or(Error::InvalidState)?;
+    let owner = page.owner(reference.slot, store.layout())?;
+    if owner.reference != reference {
+        return Err(Error::InvalidState);
+    }
+    Ok((owner.live && owner.publication == Publication::Published).then_some(owner.root))
+}
