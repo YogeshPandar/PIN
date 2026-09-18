@@ -448,6 +448,7 @@ fn seek_pair_and<S: PageStore>(
     let (left, right) = cursor_pair(cursors, left, right)?;
     let mut left_value = left.seek(store, target, true)?;
     let mut right_value = right.seek(store, target, true)?;
+    let mut work = 0u8;
     loop {
         let (Some(left_owner), Some(right_owner)) = (left_value, right_value) else {
             return Ok(None);
@@ -460,6 +461,10 @@ fn seek_pair_and<S: PageStore>(
             Ordering::Greater => {
                 right_value = right.seek(store, Some(left_owner), false)?;
             }
+        }
+        work = work.wrapping_add(1);
+        if work == 0 {
+            store.interrupt()?;
         }
     }
 }
