@@ -308,7 +308,7 @@ impl Page {
         Ok(page)
     }
 
-    pub const fn requires_full_image(&self) -> bool {
+    pub const fn initializes_storage(&self) -> bool {
         self.initialize
     }
 
