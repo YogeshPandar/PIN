@@ -105,7 +105,7 @@ unsafe extern "C-unwind" fn build(
     // safety: core supplies live locked relations and IndexInfo for this build.
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: the relation stays open through the synchronous initialization.
-    matching::stored(unsafe { storage::with_writer(index, mutable::initialize) });
+    matching::stored(unsafe { storage::with_writer(index, |store| mutable::initialize(store)) });
     let mut state = BuildState { heap, documents: 0 };
     let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
     // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
