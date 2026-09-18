@@ -477,13 +477,12 @@ unsafe extern "C-unwind" fn bitmap(
         }
     }
     let query = matching::input(chosen.ok_or(Error::InvalidParameters));
-    let plan = matching::input(CandidatePlan::build(&query, matching::QUERY_MEMORY));
     // safety: the caller's existing bitmap remains writable for the complete scan.
     let mut sink = unsafe { storage::BitmapSink::new(bitmap) };
     // safety: the read barrier covers all page references, not later heap visibility work.
     let count = matching::stored(unsafe {
         storage::with_reader(index, |store| {
-            mutable::scan(store, &plan, |root| sink.push(root))
+            mutable::scan_query(store, &query, matching::QUERY_MEMORY, |root| sink.push(root))
         })
     });
     sink.flush();
