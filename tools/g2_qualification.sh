@@ -52,6 +52,7 @@ if [[ $("${psql[@]}" -Atqc "SELECT to_regprocedure('pin.g2_inject(integer,intege
 fi
 
 "${psql[@]}" -f "$root/tests/sql/g2_transactions.sql" | tee "$work/transactions.log"
+"${psql[@]}" -f "$root/tests/sql/g4_queries.sql" | tee "$work/g4-queries.log"
 
 start_blocker() {
   local app=$1

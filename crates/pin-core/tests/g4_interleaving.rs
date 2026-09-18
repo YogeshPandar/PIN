@@ -11,7 +11,12 @@ mod mutable_store;
 use mutable_store::MemoryStore;
 
 fn root(index: u32) -> RootTid {
-    RootTid::new(index / 200 + 1, (index % 200 + 1) as u16, HeapLayout::new(291).unwrap()).unwrap()
+    RootTid::new(
+        index / 200 + 1,
+        (index % 200 + 1) as u16,
+        HeapLayout::new(291).unwrap(),
+    )
+    .unwrap()
 }
 
 fn document() -> PreparedDocument {
@@ -29,8 +34,12 @@ struct AppendStore {
 }
 
 impl PageStore for AppendStore {
-    fn layout(&self) -> HeapLayout { self.inner.layout() }
-    fn blocks(&mut self) -> Result<u32> { self.inner.blocks() }
+    fn layout(&self) -> HeapLayout {
+        self.inner.layout()
+    }
+    fn blocks(&mut self) -> Result<u32> {
+        self.inner.blocks()
+    }
     fn read(&mut self, block: u32) -> Result<Page> {
         let page = self.inner.read(block)?;
         self.owner_reads += usize::from(page.kind() == PageKind::Owners);
@@ -43,8 +52,12 @@ impl PageStore for AppendStore {
         }
         Ok(page)
     }
-    fn extend(&mut self) -> Result<u32> { self.inner.extend() }
-    fn commit(&mut self, pages: &[&Page]) -> Result<()> { self.inner.commit(pages) }
+    fn extend(&mut self) -> Result<u32> {
+        self.inner.extend()
+    }
+    fn commit(&mut self, pages: &[&Page]) -> Result<()> {
+        self.inner.commit(pages)
+    }
 }
 
 fn store(count: u32, end: u32, append_at: PageKind) -> AppendStore {
@@ -54,7 +67,14 @@ fn store(count: u32, end: u32, append_at: PageKind) -> AppendStore {
     for index in 0..count {
         mutable::insert(&mut inner, root(index), &document).unwrap();
     }
-    AppendStore { inner, append_at, first: count, end, owner_reads: 0, armed: true }
+    AppendStore {
+        inner,
+        append_at,
+        first: count,
+        end,
+        owner_reads: 0,
+        armed: true,
+    }
 }
 
 #[test]
@@ -64,10 +84,18 @@ fn owner_cache_refreshes_once_when_a_later_posting_outgrows_its_copy() {
         let mut store = store(2, 3, PageKind::Owners);
         let mut rows = Vec::new();
         if streaming {
-            mutable::scan_query(&mut store, &query, 1 << 20, |root| { rows.push(root); Ok(()) }).unwrap();
+            mutable::scan_query(&mut store, &query, 1 << 20, |root| {
+                rows.push(root);
+                Ok(())
+            })
+            .unwrap();
         } else {
             let cover = CandidatePlan::build(&query, 1 << 20).unwrap();
-            mutable::scan(&mut store, &cover, |root| { rows.push(root); Ok(()) }).unwrap();
+            mutable::scan(&mut store, &cover, |root| {
+                rows.push(root);
+                Ok(())
+            })
+            .unwrap();
         }
         assert_eq!(rows, vec![root(0), root(1), root(2)]);
         assert_eq!(store.owner_reads, 2);
@@ -80,11 +108,19 @@ fn captured_tail_stops_before_pages_appended_after_open() {
     let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
     let mut store = store(2, 700, PageKind::Postings);
     let mut rows = Vec::new();
-    mutable::scan_query(&mut store, &query, 1 << 20, |root| { rows.push(root); Ok(()) }).unwrap();
+    mutable::scan_query(&mut store, &query, 1 << 20, |root| {
+        rows.push(root);
+        Ok(())
+    })
+    .unwrap();
     assert_eq!(rows, vec![root(0), root(1)]);
     assert!(!store.armed);
     rows.clear();
-    mutable::scan_query(&mut store, &query, 1 << 20, |root| { rows.push(root); Ok(()) }).unwrap();
+    mutable::scan_query(&mut store, &query, 1 << 20, |root| {
+        rows.push(root);
+        Ok(())
+    })
+    .unwrap();
     assert_eq!(rows, (0..700).map(root).collect::<Vec<_>>());
 }
 
@@ -99,6 +135,9 @@ fn refresh_does_not_hide_a_genuinely_missing_owner_slot() {
     }
     let query = Query::parse("a", QueryLimits::default()).unwrap();
     let result = mutable::scan_query(&mut store, &query, 1 << 20, |_| Ok(()));
-    assert!(matches!(result, Err(Error::Codec(_)) | Err(Error::InvalidState)));
+    assert!(matches!(
+        result,
+        Err(Error::Codec(_)) | Err(Error::InvalidState)
+    ));
     assert_eq!(store.owner_reads, 2);
 }

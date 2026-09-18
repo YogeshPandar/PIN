@@ -1085,7 +1085,6 @@ impl Iterator for Postings<'_> {
 
 impl std::iter::FusedIterator for Postings<'_> {}
 
-
 // owns encoded bytes and decoder offsets without a self-referential borrow.
 pub(super) struct OwnedPostings {
     page: Page,

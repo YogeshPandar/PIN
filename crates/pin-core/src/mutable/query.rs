@@ -28,11 +28,27 @@ enum Node<'q> {
 
 #[derive(Clone, Copy)]
 enum Task {
-    Seek { node: usize, target: Option<OwnerRef>, exclusive: bool },
-    AndLeft { node: usize, right: usize },
-    AndRight { node: usize, left: OwnerRef },
-    OrLeft { right: usize, target: Option<OwnerRef>, exclusive: bool },
-    OrRight { left: Option<OwnerRef> },
+    Seek {
+        node: usize,
+        target: Option<OwnerRef>,
+        exclusive: bool,
+    },
+    AndLeft {
+        node: usize,
+        right: usize,
+    },
+    AndRight {
+        node: usize,
+        left: OwnerRef,
+    },
+    OrLeft {
+        right: usize,
+        target: Option<OwnerRef>,
+        exclusive: bool,
+    },
+    OrRight {
+        left: Option<OwnerRef>,
+    },
 }
 
 struct Plan<'q> {
@@ -45,10 +61,15 @@ struct Plan<'q> {
 impl<'q> Plan<'q> {
     fn build(query: &'q Query, memory_bytes: usize) -> Result<Self> {
         let mut budget = MemoryBudget::new(memory_bytes);
-        let mut capacity = query.node_count().checked_add(2).ok_or(Error::Limit("query nodes"))?;
+        let mut capacity = query
+            .node_count()
+            .checked_add(2)
+            .ok_or(Error::Limit("query nodes"))?;
         for node in &query.nodes {
             if let Kind::Phrase(terms) = &node.kind {
-                capacity = terms.len().checked_mul(2)
+                capacity = terms
+                    .len()
+                    .checked_mul(2)
                     .and_then(|extra| capacity.checked_add(extra))
                     .ok_or(Error::Limit("query nodes"))?;
             }
@@ -96,21 +117,28 @@ impl<'q> Plan<'q> {
         // private encoded pages are included in the actual cursor vector capacity.
         let mut cursors = vector(count, &mut budget)?;
         for (index, node) in nodes.iter_mut().enumerate() {
-            if let Node::Term { cursor, .. } = node {
-                if active[index] {
-                    *cursor = cursors.len();
-                    cursors.push(Cursor::empty());
-                }
+            if let Node::Term { cursor, .. } = node
+                && active[index]
+            {
+                *cursor = cursors.len();
+                cursors.push(Cursor::empty());
             }
         }
         let tasks = vector(nodes.len(), &mut budget)?;
-        Ok(Self { nodes, cursors, tasks, root })
+        Ok(Self {
+            nodes,
+            cursors,
+            tasks,
+            root,
+        })
     }
 
     fn open<S: PageStore>(&mut self, store: &mut S) -> Result<()> {
         let meta = load(store, 0, PageKind::Meta)?;
         for node in &self.nodes {
-            let Node::Term { text, cursor } = node else { continue };
+            let Node::Term { text, cursor } = node else {
+                continue;
+            };
             if *cursor == UNUSED {
                 continue;
             }
@@ -139,7 +167,11 @@ impl<'q> Plan<'q> {
         target: Option<OwnerRef>,
     ) -> Result<Option<OwnerRef>> {
         self.tasks.clear();
-        self.tasks.push(Task::Seek { node: self.root, target, exclusive: true });
+        self.tasks.push(Task::Seek {
+            node: self.root,
+            target,
+            exclusive: true,
+        });
         let mut value = None;
         // each pending continuation belongs to a distinct ancestor, so nodes bound scratch.
         let mut work = 0u8;
@@ -149,17 +181,33 @@ impl<'q> Plan<'q> {
                 store.interrupt()?;
             }
             match task {
-                Task::Seek { node, target, exclusive } => match self.nodes[node] {
+                Task::Seek {
+                    node,
+                    target,
+                    exclusive,
+                } => match self.nodes[node] {
                     Node::Term { cursor, .. } => {
                         value = self.cursors[cursor].seek(store, target, exclusive)?;
                     }
                     Node::And(left, right) => {
                         self.tasks.push(Task::AndLeft { node, right });
-                        self.tasks.push(Task::Seek { node: left, target, exclusive });
+                        self.tasks.push(Task::Seek {
+                            node: left,
+                            target,
+                            exclusive,
+                        });
                     }
                     Node::Or(left, right) => {
-                        self.tasks.push(Task::OrLeft { right, target, exclusive });
-                        self.tasks.push(Task::Seek { node: left, target, exclusive });
+                        self.tasks.push(Task::OrLeft {
+                            right,
+                            target,
+                            exclusive,
+                        });
+                        self.tasks.push(Task::Seek {
+                            node: left,
+                            target,
+                            exclusive,
+                        });
                     }
                     Node::Empty => value = None,
                     Node::Universe => return Err(Error::InvalidState),
@@ -167,7 +215,11 @@ impl<'q> Plan<'q> {
                 Task::AndLeft { node, right } => {
                     if let Some(left) = value {
                         self.tasks.push(Task::AndRight { node, left });
-                        self.tasks.push(Task::Seek { node: right, target: Some(left), exclusive: false });
+                        self.tasks.push(Task::Seek {
+                            node: right,
+                            target: Some(left),
+                            exclusive: false,
+                        });
                     }
                 }
                 Task::AndRight { node, left } => {
@@ -175,23 +227,35 @@ impl<'q> Plan<'q> {
                         match compare(left, right)? {
                             Ordering::Equal => value = Some(left),
                             Ordering::Less => self.tasks.push(Task::Seek {
-                                node, target: Some(right), exclusive: false,
+                                node,
+                                target: Some(right),
+                                exclusive: false,
                             }),
                             Ordering::Greater => return Err(Error::InvalidState),
                         }
                     }
                 }
-                Task::OrLeft { right, target, exclusive } => {
+                Task::OrLeft {
+                    right,
+                    target,
+                    exclusive,
+                } => {
                     self.tasks.push(Task::OrRight { left: value });
-                    self.tasks.push(Task::Seek { node: right, target, exclusive });
+                    self.tasks.push(Task::Seek {
+                        node: right,
+                        target,
+                        exclusive,
+                    });
                 }
                 Task::OrRight { left } => {
                     value = match (left, value) {
-                        (Some(left), Some(right)) => Some(if compare(left, right)? == Ordering::Greater {
-                            right
-                        } else {
-                            left
-                        }),
+                        (Some(left), Some(right)) => {
+                            Some(if compare(left, right)? == Ordering::Greater {
+                                right
+                            } else {
+                                left
+                            })
+                        }
                         (left, right) => left.or(right),
                     };
                 }
@@ -203,7 +267,10 @@ impl<'q> Plan<'q> {
 
 fn term<'q>(nodes: &mut Vec<Node<'q>>, text: &'q str) -> usize {
     let index = nodes.len();
-    nodes.push(Node::Term { text, cursor: UNUSED });
+    nodes.push(Node::Term {
+        text,
+        cursor: UNUSED,
+    });
     index
 }
 
@@ -211,7 +278,11 @@ fn combine<'q>(nodes: &mut Vec<Node<'q>>, left: usize, right: usize, and: bool) 
     if nodes[left] == nodes[right] {
         return left;
     }
-    let (identity, absorbing) = if and { (UNIVERSE, EMPTY) } else { (EMPTY, UNIVERSE) };
+    let (identity, absorbing) = if and {
+        (UNIVERSE, EMPTY)
+    } else {
+        (EMPTY, UNIVERSE)
+    };
     if left == absorbing || right == absorbing {
         return absorbing;
     }
@@ -222,7 +293,11 @@ fn combine<'q>(nodes: &mut Vec<Node<'q>>, left: usize, right: usize, and: bool) 
         return left;
     }
     let index = nodes.len();
-    nodes.push(if and { Node::And(left, right) } else { Node::Or(left, right) });
+    nodes.push(if and {
+        Node::And(left, right)
+    } else {
+        Node::Or(left, right)
+    });
     index
 }
 
@@ -242,7 +317,10 @@ struct Chain {
 
 impl Cursor {
     fn empty() -> Self {
-        Self { current: None, chain: None }
+        Self {
+            current: None,
+            chain: None,
+        }
     }
 
     fn seek<S: PageStore>(
@@ -256,7 +334,11 @@ impl Cursor {
             if order == Ordering::Greater || (order == Ordering::Equal && !exclusive) {
                 break;
             }
-            self.current = self.chain.as_mut().ok_or(Error::InvalidState)?.advance(store)?;
+            self.current = self
+                .chain
+                .as_mut()
+                .ok_or(Error::InvalidState)?
+                .advance(store)?;
         }
         Ok(self.current)
     }
@@ -276,13 +358,18 @@ impl Chain {
                     self.previous = owner;
                     return Ok(Some(owner));
                 }
-                self.block = posting_next(page.page(), self.tail, &mut self.remaining)?.unwrap_or(NO_BLOCK);
+                self.block =
+                    posting_next(page.page(), self.tail, &mut self.remaining)?.unwrap_or(NO_BLOCK);
                 self.page = None;
             }
             if self.block == NO_BLOCK {
                 return Ok(None);
             }
-            self.page = Some(OwnedPostings::new(load_posting(store, self.block, self.reference)?)?);
+            self.page = Some(OwnedPostings::new(load_posting(
+                store,
+                self.block,
+                self.reference,
+            )?)?);
         }
     }
 }
@@ -333,15 +420,17 @@ pub fn scan_query<S: PageStore>(
     let mut cache: Option<Page> = None;
     let mut count = 0u64;
     while let Some(owner) = plan.seek(store, previous)? {
-        if let Some(previous) = previous {
-            if compare(previous, owner)? != Ordering::Less {
-                return Err(Error::InvalidState);
-            }
+        if let Some(previous) = previous
+            && compare(previous, owner)? != Ordering::Less
+        {
+            return Err(Error::InvalidState);
         }
         previous = Some(owner);
         if let Some(root) = resolve(store, &mut cache, owner)? {
             emit(root)?;
-            count = count.checked_add(1).ok_or(Error::Limit("candidate count"))?;
+            count = count
+                .checked_add(1)
+                .ok_or(Error::Limit("candidate count"))?;
         }
     }
     Ok(count)
