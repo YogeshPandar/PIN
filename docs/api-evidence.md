@@ -232,3 +232,61 @@ work-count evidence, observed versus pending qualification, and fallback limits.
 Review: implementation self-review completed; final-head CI is recorded in PR #8.
 No independent reviewer or performance qualification is claimed. Existing unsafe
 host-boundary review remains outstanding, and bare-PostgreSQL parity is unmeasured.
+
+
+## G5COUNT01: owner-pinned direct counts and VM certification
+
+Modules: `pin-core/src/mutable/{count,vacuum}.rs`,
+`pin-pg/src/{count,storage,native}.rs`, and
+`pin-pg/cshim/{pin_count,pin_storage}.c`.
+
+Authority: PostgreSQL 18.6 pinned
+[visibility-map implementation](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/visibilitymap.c),
+[index-only VM ordering](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeIndexonlyscan.c),
+[buffer cleanup-pin contract](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/README),
+[buffer API](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/storage/bufmgr.h),
+[table index fetch](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/tableam.h),
+[CustomScan execution](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeCustom.c),
+[CustomPath plan creation](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/optimizer/plan/createplan.c),
+[setrefs CustomScan handling](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/optimizer/plan/setrefs.c), and
+[path lifetime](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/optimizer/util/pathnode.c).
+Rust 1.98.1 contracts used in the guarded adapter are
+[`slice::from_raw_parts`](https://doc.rust-lang.org/1.98.1/std/slice/fn.from_raw_parts.html),
+[`str::from_utf8`](https://doc.rust-lang.org/1.98.1/std/str/fn.from_utf8.html), and
+[checked integer arithmetic](https://doc.rust-lang.org/1.98.1/std/primitive.u64.html).
+
+`visibilitymap_get_status` does not lock the VM page and explicitly leaves
+concurrency to the caller. Pin rereads status for each eligible candidate and
+retains a canonical owner buffer pin from the fresh publication/liveness copy
+through either VM certification or `table_index_fetch_tuple`. The content lock
+used for the private owner copy is released before VM, heap work or a test pause.
+No all-visible boolean is cached in Rust.
+
+VACUUM owner removal is not an ordinary PageStore commit. The PostgreSQL adapter
+uses `LockBufferForCleanup` before the generic-WAL registration. The buffer
+manager waits until the remover is the sole pin holder, so a count relying on its
+copied owner state finishes before removal and possible heap-slot reuse. Unknown
+PageStore adapters fail closed. The existing writer interlock protects the private
+read/modify/write image while cleanup permission protects count readers.
+
+Heap fallback uses `table_index_fetch_tuple` with a private root copy and the
+executor MVCC snapshot, preserving HOT semantics. The original posting/owner
+identity remains unchanged. Mutable or otherwise uncertified candidates never
+use the VM shortcut. SERIALIZABLE and recovery-time custom execution are
+excluded. Both count GUCs are `PGC_SUSET` and default off.
+
+The upper path retains an actual core aggregate child for execution-time
+fallback. Because `add_path` can immediately free a dominated non-IndexPath,
+Pin shallow-copies the AggPath before insertion. Candidate costing retains the
+eligible core aggregate's full heap/index estimate and credits only the omitted
+aggregate transition. The plan adds the private index OID to relation
+dependencies. Execution revalidates relation/index identity, attribute/type,
+collation, operator family, validity/readiness/liveness and `indcheckxmin`
+before reading storage.
+
+Evidence authored in this change: `g5_count.rs`, the source-contract tests,
+the exhaustive bounded visibility model and its negative controls,
+`tests/sql/g5_counts.sql`, and `tools/g5_qualification.sh`. Local Python/model
+checks are independent of Rust compilation. Rust/C compilation, PostgreSQL
+integration schedules, crash recovery and independent visibility review remain
+unobserved until CI/host execution. See [g5-counts.md](g5-counts.md).

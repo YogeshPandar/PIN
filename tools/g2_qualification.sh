@@ -194,6 +194,7 @@ for stage in $(seq 1 6); do
 done
 
 source "$root/tools/g3_qualification.sh"
+source "$root/tools/g5_qualification.sh"
 
 "${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-crash.log"
 "$bin/pg_ctl" -D "$work/data" -m fast -w stop
