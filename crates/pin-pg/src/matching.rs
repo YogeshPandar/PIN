@@ -10,7 +10,7 @@ use pin_core::query::{Query, QueryLimits};
 
 pub(crate) const QUERY_MEMORY: usize = 1 << 20;
 pub(crate) const PREPARE_MEMORY: usize = 32 << 20;
-const MATCH_STEPS: usize = 1 << 24;
+pub(crate) const MATCH_STEPS: usize = 1 << 24;
 
 pub(crate) fn input<T>(result: Result<T>) -> T {
     match result {

@@ -5,6 +5,7 @@
 #include "access/amapi.h"
 #include "access/tableam.h"
 #include "nodes/tidbitmap.h"
+#include "storage/buf.h"
 
 /* pgrx guards every call; pointers never outlive the synchronous operation. */
 extern void pin_storage_check(Relation index, Relation heap, struct IndexInfo *info);
@@ -15,6 +16,8 @@ extern void pin_structure_unlock(Relation index, bool exclusive);
 extern uint32 pin_storage_blocks(Relation index);
 extern uint32 pin_storage_extend(Relation index);
 extern uint32 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity);
+extern uint32 pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
+                                      Buffer *held);
 extern void pin_storage_commit(Relation index, uint32 count, const uint32 *blocks,
                                const uint8 *const *bytes, const uint32 *lengths,
                                const bool *full_images);

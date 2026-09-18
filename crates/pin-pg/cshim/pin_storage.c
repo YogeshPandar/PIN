@@ -144,6 +144,25 @@ pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity)
     return length;
 }
 
+/* retain one shared owner lock through certification; never across a heap fetch. */
+uint32
+pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
+                        Buffer *held)
+{
+    Page page;
+    uint32 length;
+    if (out == NULL || held == NULL || capacity != PIN_PAYLOAD_BYTES ||
+        block >= RelationGetNumberOfBlocks(index))
+        pin_corrupt();
+    *held = ReadBuffer(index, block);
+    LockBuffer(*held, BUFFER_LOCK_SHARE);
+    page = BufferGetPage(*held);
+    pin_page_check(page);
+    length = ((PageHeader) page)->pd_lower - MAXALIGN(SizeOfPageHeaderData);
+    memcpy(out, PageGetContents(page), length);
+    return length;
+}
+
 void
 pin_storage_commit(Relation index, uint32 count, const uint32 *blocks,
                    const uint8 *const *bytes, const uint32 *lengths,
