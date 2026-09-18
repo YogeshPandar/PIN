@@ -7,7 +7,7 @@ use crate::native;
 use pgrx::pg_sys;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
-use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
+use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page};
 use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 
@@ -154,11 +154,8 @@ impl PageStore for PgStore<'_> {
             blocks[slot] = page.block();
             pointers[slot] = page.bytes().as_ptr();
             lengths[slot] = page.bytes().len() as u32;
-            full[slot] = self.extended == Some(page.block())
-                || matches!(
-                    page.kind(),
-                    PageKind::Fragment | PageKind::Free | PageKind::SealedPostings
-                );
+            // existing standard pages use compact generic-wal deltas.
+            full[slot] = self.extended == Some(page.block());
         }
         let index = self.index;
         let count_u32 = count as u32;
