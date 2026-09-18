@@ -144,7 +144,7 @@ pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity)
     return length;
 }
 
-/* retain one shared owner lock through certification; never across a heap fetch. */
+/* copy under a shared lock; retain only the owner pin through visibility. */
 uint32
 pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                         Buffer *held)

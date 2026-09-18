@@ -10,9 +10,9 @@
 #include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
-#include "catalog/pg_inherits.h"
 #include "commands/defrem.h"
 #include "commands/explain.h"
+#include "commands/explain_format.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/extensible.h"
@@ -31,7 +31,6 @@
 #include "utils/rel.h"
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
-#include "utils/spccache.h"
 #include "pin_count.h"
 #include "pin_storage.h"
 
@@ -230,7 +229,7 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
         path->flags = CUSTOMPATH_SUPPORT_PROJECTION;
         path->custom_paths = list_make1(saved);
         path->custom_private = list_make5(pin_oid_node(rte->relid), pin_oid_node(index->indexoid),
-                                          makeInteger(column->varattno), copyObject(argument),
+                                          makeInteger(column->varattno), copyObjectImpl(argument),
                                           pin_oid_node(predicate->inputcollid));
         path->methods = &pin_count_path_methods;
         add_path(output, &path->path);
@@ -265,14 +264,14 @@ pin_count_plan(PlannerInfo *root, RelOptInfo *rel, CustomPath *path,
         list_length(path->custom_private) != 5 || clauses != NIL)
         elog(ERROR, "unsupported PinCount plan target");
     scan->scan.plan.targetlist = target;
-    scan->custom_scan_tlist = copyObject(target);
+    scan->custom_scan_tlist = (List *) copyObjectImpl(target);
     scan->custom_plans = children;
     scan->custom_private = list_make4(
-        copyObject(linitial(path->custom_private)),
-        copyObject(index),
-        copyObject(lthird(path->custom_private)),
-        copyObject(list_nth(path->custom_private, 4)));
-    scan->custom_exprs = list_make1(copyObject(list_nth(path->custom_private, 3)));
+        copyObjectImpl(linitial(path->custom_private)),
+        copyObjectImpl(index),
+        copyObjectImpl(lthird(path->custom_private)),
+        copyObjectImpl(list_nth(path->custom_private, 4)));
+    scan->custom_exprs = list_make1(copyObjectImpl(list_nth(path->custom_private, 3)));
     scan->flags = path->flags;
     scan->methods = &pin_count_scan_methods;
     if (!list_member_oid(root->glob->relationOids, DatumGetObjectId(index->constvalue)))
@@ -428,7 +427,6 @@ pin_count_end(CustomScanState *node)
     if (state->fallback != NULL)
         ExecEndNode(state->fallback);
     state->fallback = NULL;
-    ExecFreeExprContext(&node->ss.ps);
     ExecClearTuple(node->ss.ss_ScanTupleSlot);
 }
 
