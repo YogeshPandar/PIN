@@ -87,6 +87,8 @@ impl Counter<'_> {
             if page.kind() != PageKind::Owners {
                 return Err(Error::InvalidState);
             }
+            #[cfg(feature = "test-hooks")]
+            crate::test_hooks::storage_event(mutable::Stage::CountOwnerPinned);
             self.note(1, 1)?;
             for index in 0..self.length {
                 let candidate = self.pending[index].ok_or(Error::InvalidState)?;
@@ -99,12 +101,16 @@ impl Counter<'_> {
                     self.note(2, 1)?;
                     continue;
                 }
+                #[cfg(feature = "test-hooks")]
+                crate::test_hooks::storage_event(mutable::Stage::CountBeforeVisibility);
                 if candidate.sealed_term {
                     self.note(3, 1)?;
                     let heap_block = owner.root.block();
                     // safety: the canonical owner pin spans the fresh VM decision.
                     if unsafe { native::call(|| pin_count_all_visible(context, heap_block)) } {
                         self.note(4, 1)?;
+                        #[cfg(feature = "test-hooks")]
+                        crate::test_hooks::storage_event(mutable::Stage::CountAfterVisibility);
                         continue;
                     }
                 } else {
@@ -126,6 +132,8 @@ impl Counter<'_> {
                 let visible = unsafe {
                     native::call(|| pin_count_fetch(context, block, offset, &mut bytes, &mut length))
                 };
+                #[cfg(feature = "test-hooks")]
+                crate::test_hooks::storage_event(mutable::Stage::CountAfterVisibility);
                 let matched = if visible {
                     if bytes.is_null() || length > isize::MAX as usize {
                         Err(Error::InvalidState)

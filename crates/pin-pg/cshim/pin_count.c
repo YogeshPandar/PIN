@@ -138,9 +138,9 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
     base = root->simple_rel_array[from->rtindex];
     rte = root->simple_rte_array[from->rtindex];
     if (base == NULL || base->reloptkind != RELOPT_BASEREL || rte->rtekind != RTE_RELATION ||
-        rte->relkind != RELKIND_RELATION || rte->security_barrier || rte->securityQuals != NIL ||
-        rte->tablesample != NULL || base->lateral_relids != NULL ||
-        list_length(base->baserestrictinfo) != 1 || has_subclass(rte->relid))
+        rte->relkind != RELKIND_RELATION || rte->inh || rte->lateral ||
+        rte->security_barrier || rte->securityQuals != NIL || rte->tablesample != NULL ||
+        !bms_is_empty(base->lateral_relids) || list_length(base->baserestrictinfo) != 1)
         return;
     restriction = castNode(RestrictInfo, linitial(base->baserestrictinfo));
     if (restriction->pseudoconstant || restriction->security_level != 0 ||
@@ -167,11 +167,22 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
     am = get_am_oid("pin", true);
     if (!OidIsValid(am) || !OidIsValid(match) || predicate->opno != match)
         return;
+    {
+        Relation heap = table_open(rte->relid, NoLock);
+        bool supported = heap->rd_tableam == GetHeapamTableAmRoutine() &&
+            heap->rd_rel->relpersistence == RELPERSISTENCE_PERMANENT &&
+            !heap->rd_rel->relrowsecurity;
+        table_close(heap, NoLock);
+        if (!supported)
+            return;
+    }
     /* retain a real core aggregate for cached-plan runtime fallback. */
     foreach(cell, output->pathlist)
     {
         Path *path = lfirst(cell);
-        if (IsA(path, AggPath) && ((AggPath *) path)->aggsplit == AGGSPLIT_SIMPLE &&
+        if (IsA(path, AggPath) && path->param_info == NULL &&
+            ((AggPath *) path)->aggstrategy == AGG_PLAIN &&
+            ((AggPath *) path)->aggsplit == AGGSPLIT_SIMPLE &&
             (fallback == NULL || path->disabled_nodes < fallback->path.disabled_nodes ||
              (path->disabled_nodes == fallback->path.disabled_nodes &&
               path->total_cost < fallback->path.total_cost)))
@@ -184,10 +195,16 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
         IndexOptInfo *index = lfirst_node(IndexOptInfo, cell);
         CustomPath *path;
         AggPath *saved;
-        double sequential, random;
+        Path *scan = fallback->subpath;
+        Cost saved_transition;
+        if (!IsA(scan, BitmapHeapPath) ||
+            !IsA(((BitmapHeapPath *) scan)->bitmapqual, IndexPath) ||
+            ((IndexPath *) ((BitmapHeapPath *) scan)->bitmapqual)->indexinfo != index)
+            continue;
         if (index->relam != am || index->ncolumns != 1 || index->nkeycolumns != 1 ||
             index->indexkeys[0] != column->varattno || index->indexprs != NIL ||
             index->indpred != NIL || index->hypothetical || index->opcintype[0] != TEXTOID ||
+            index->indexcollations[0] != predicate->inputcollid ||
             get_opfamily_member(index->opfamily[0], TEXTOID, query_type, 1) != match)
             continue;
         /* add_path may free a dominated sibling; retain an independent shallow path. */
@@ -197,18 +214,24 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
         path->path.pathtype = T_CustomScan;
         path->path.parent = output;
         path->path.pathtarget = output->reltarget;
+        path->path.param_info = NULL;
+        path->path.parallel_aware = false;
+        path->path.parallel_safe = false;
+        path->path.parallel_workers = 0;
         path->path.rows = 1;
+        path->path.pathkeys = NIL;
         path->path.disabled_nodes = saved->path.disabled_nodes;
-        get_tablespace_page_costs(index->reltablespace, &random, &sequential);
-        /* charge the entire index and conservative noncertified heap work. */
-        path->path.total_cost = index->pages * sequential +
-            base->pages * (1.0 - base->allvisfrac) * random +
-            base->tuples * (cpu_operator_cost + (1.0 - base->allvisfrac) * cpu_tuple_cost);
+        /* retain baseline heap/index cost; credit only the omitted aggregate transition. */
+        saved_transition = cpu_operator_cost * base->rows;
+        path->path.total_cost = Max(cpu_operator_cost,
+                                    saved->path.total_cost - saved_transition) +
+                                8 * cpu_operator_cost;
         path->path.startup_cost = path->path.total_cost;
         path->flags = CUSTOMPATH_SUPPORT_PROJECTION;
         path->custom_paths = list_make1(saved);
-        path->custom_private = list_make4(pin_oid_node(rte->relid), pin_oid_node(index->indexoid),
-                                          makeInteger(column->varattno), copyObject(argument));
+        path->custom_private = list_make5(pin_oid_node(rte->relid), pin_oid_node(index->indexoid),
+                                          makeInteger(column->varattno), copyObject(argument),
+                                          pin_oid_node(predicate->inputcollid));
         path->methods = &pin_count_path_methods;
         add_path(output, &path->path);
         /* the original fallback may have been freed by add_path. */
@@ -235,18 +258,26 @@ pin_count_plan(PlannerInfo *root, RelOptInfo *rel, CustomPath *path,
                 List *target, List *clauses, List *children)
 {
     CustomScan *scan = makeNode(CustomScan);
-    (void) root;
+    Const *index = castNode(Const, list_nth(path->custom_private, 1));
     (void) rel;
     (void) clauses;
-    if (list_length(target) != 1 || list_length(children) != 1 || clauses != NIL)
+    if (list_length(target) != 1 || list_length(children) != 1 ||
+        list_length(path->custom_private) != 5 || clauses != NIL)
         elog(ERROR, "unsupported PinCount plan target");
     scan->scan.plan.targetlist = target;
     scan->custom_scan_tlist = copyObject(target);
     scan->custom_plans = children;
-    scan->custom_private = list_copy_head(path->custom_private, 3);
+    scan->custom_private = list_make4(
+        copyObject(linitial(path->custom_private)),
+        copyObject(index),
+        copyObject(lthird(path->custom_private)),
+        copyObject(list_nth(path->custom_private, 4)));
     scan->custom_exprs = list_make1(copyObject(list_nth(path->custom_private, 3)));
     scan->flags = path->flags;
     scan->methods = &pin_count_scan_methods;
+    if (!list_member_oid(root->glob->relationOids, DatumGetObjectId(index->constvalue)))
+        root->glob->relationOids = lappend_oid(root->glob->relationOids,
+                                               DatumGetObjectId(index->constvalue));
     return &scan->scan.plan;
 }
 
@@ -267,7 +298,7 @@ pin_count_begin(CustomScanState *node, EState *estate, int flags)
 {
     PinCountState *state = (PinCountState *) node;
     CustomScan *scan = castNode(CustomScan, node->ss.ps.plan);
-    if (list_length(scan->custom_plans) != 1 || list_length(scan->custom_private) != 3 ||
+    if (list_length(scan->custom_plans) != 1 || list_length(scan->custom_private) != 4 ||
         list_length(scan->custom_exprs) != 1)
         elog(ERROR, "invalid PinCount plan");
     state->eflags = flags;
@@ -304,12 +335,25 @@ pin_count_open(PinCountState *state)
     state->index = index_open(pin_private_oid(scan->custom_private, 1), AccessShareLock);
     pin_storage_check(state->index, state->heap, NULL);
     if (state->index->rd_rel->relam != get_am_oid("pin", false) ||
-        !state->index->rd_index->indisvalid || !state->index->rd_index->indisready ||
-        !state->index->rd_index->indislive ||
+        state->index->rd_index == NULL || !state->index->rd_index->indisvalid ||
+        !state->index->rd_index->indisready || !state->index->rd_index->indislive ||
         state->index->rd_index->indrelid != RelationGetRelid(state->heap) ||
+        state->index->rd_index->indnatts != 1 || state->index->rd_index->indnkeyatts != 1 ||
+        state->attribute <= 0 || state->attribute > RelationGetDescr(state->heap)->natts ||
+        TupleDescAttr(RelationGetDescr(state->heap), state->attribute - 1)->attisdropped ||
+        TupleDescAttr(RelationGetDescr(state->heap), state->attribute - 1)->atttypid != TEXTOID ||
         state->index->rd_index->indkey.values[0] != state->attribute ||
+        state->index->rd_indcollation[0] !=
+            pin_private_oid(scan->custom_private, 3) ||
         RelationGetIndexPredicate(state->index) != NIL ||
-        RelationGetIndexExpressions(state->index) != NIL)
+        RelationGetIndexExpressions(state->index) != NIL ||
+        get_opfamily_member(state->index->rd_opfamily[0], TEXTOID,
+                            ((Const *) linitial(scan->custom_exprs))->consttype, 1) !=
+            OpernameGetOprid(list_make2(makeString("pin"), makeString("@@@")),
+                             TEXTOID, ((Const *) linitial(scan->custom_exprs))->consttype) ||
+        (state->index->rd_index->indcheckxmin &&
+         !TransactionIdPrecedes(
+             HeapTupleHeaderGetXmin(state->index->rd_indextuple->t_data), TransactionXmin)))
         elog(ERROR, "PinCount index binding changed");
     state->fetch = table_index_fetch_begin(state->heap);
     state->heap_slot = table_slot_create(state->heap, NULL);

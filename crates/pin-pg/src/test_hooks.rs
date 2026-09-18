@@ -74,7 +74,7 @@ fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
             "Pin test injection requires a superuser"
         );
     }
-    if !(1..=12).contains(&stage) || !(1..=4096).contains(&occurrence) {
+    if !(1..=15).contains(&stage) || !(1..=4096).contains(&occurrence) {
         pgrx::ereport!(
             ERROR,
             PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
@@ -107,7 +107,7 @@ pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
         }
         Some(true) => {
             // a test driver holds this fixed key and confirms the wait in pg_locks.
-            // no buffer lock survives here; external crash tests own server shutdown.
+            // content locks are absent; a resource-owned count pin may remain.
             if let Err(error) = Spi::run("SELECT pg_catalog.pg_advisory_xact_lock(180006, 2)") {
                 pgrx::error!("Pin test pause failed: {error}");
             }

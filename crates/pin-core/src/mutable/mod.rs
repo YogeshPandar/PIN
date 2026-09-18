@@ -40,6 +40,9 @@ pub enum Stage {
     ReplacementPublished = 10,
     SegmentReclaimed = 11,
     ReaderPinned = 12,
+    CountOwnerPinned = 13,
+    CountBeforeVisibility = 14,
+    CountAfterVisibility = 15,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
