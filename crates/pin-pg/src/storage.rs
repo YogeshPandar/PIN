@@ -155,8 +155,7 @@ impl PageStore for PgStore<'_> {
             pointers[slot] = page.bytes().as_ptr();
             lengths[slot] = page.bytes().len() as u32;
             // only new storage needs a full image; existing standard pages use deltas.
-            full[slot] =
-                self.extended == Some(page.block()) || page.requires_full_image();
+            full[slot] = self.extended == Some(page.block()) || page.requires_full_image();
         }
         let index = self.index;
         let count_u32 = count as u32;

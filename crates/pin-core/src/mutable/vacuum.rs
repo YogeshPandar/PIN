@@ -107,12 +107,7 @@ pub fn vacuum<S: PageStore>(
     Ok(stats)
 }
 
-fn reclaim<S: PageStore>(
-    store: &mut S,
-    meta: &mut Page,
-    block: u32,
-    zero: bool,
-) -> Result<()> {
+fn reclaim<S: PageStore>(store: &mut S, meta: &mut Page, block: u32, zero: bool) -> Result<()> {
     let next = meta.free_head()?;
     let page = if zero {
         Page::free_from_zero(block, next)?
