@@ -5,6 +5,7 @@
 //! Owner slots and dictionary identities are never reused.
 
 mod compact;
+mod count;
 pub mod document;
 pub mod page;
 mod query;
@@ -13,6 +14,7 @@ mod vacuum;
 mod writer;
 
 pub use compact::{CompactStats, compact, recover as recover_compaction};
+pub use count::{CountCandidate, scan_count};
 pub use query::scan_query;
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
