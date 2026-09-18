@@ -46,7 +46,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G2: experimental durable bitmap baseline; qualification in progress"
+    "G2: durable bitmap baseline; advanced paths gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]
