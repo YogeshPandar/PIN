@@ -69,7 +69,11 @@ impl OwnerRef {
         {
             return Err(corrupt(reader.offset()));
         }
-        Ok(Self { page, slot, incarnation })
+        Ok(Self {
+            page,
+            slot,
+            incarnation,
+        })
     }
 
     fn write(self, writer: &mut Writer<'_>) -> Result<()> {
@@ -138,14 +142,16 @@ impl Page {
     /// # Errors
     /// Rejects invalid block identities, lengths, magic, tags and reserved fields.
     /// A zero-length read represents a physically all-zero allocation orphan only.
-    pub fn read_with(
-        block: u32,
-        read: impl FnOnce(&mut [u8]) -> Result<usize>,
-    ) -> Result<Self> {
+    pub fn read_with(block: u32, read: impl FnOnce(&mut [u8]) -> Result<usize>) -> Result<Self> {
         if block == NO_BLOCK {
             return Err(corrupt(8));
         }
-        let mut page = Self { block, kind: PageKind::Zero, len: 0, bytes: [0; CAPACITY] };
+        let mut page = Self {
+            block,
+            kind: PageKind::Zero,
+            len: 0,
+            bytes: [0; CAPACITY],
+        };
         page.len = read(&mut page.bytes)?;
         if page.len == 0 {
             return Ok(page);
@@ -191,7 +197,12 @@ impl Page {
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
-        let mut page = Self { block, kind, len: HEADER, bytes: [0; CAPACITY] };
+        let mut page = Self {
+            block,
+            kind,
+            len: HEADER,
+            bytes: [0; CAPACITY],
+        };
         let mut writer = Writer::new(&mut page.bytes);
         writer.put(b"PIN2")?;
         writer.u16(1)?;
@@ -295,8 +306,10 @@ impl Page {
         if !block_valid(next) || next == self.block || self.kind == PageKind::Meta {
             return Err(corrupt(12));
         }
-        if matches!(self.kind, PageKind::Owners | PageKind::Dictionary | PageKind::Postings)
-            && next <= self.block
+        if matches!(
+            self.kind,
+            PageKind::Owners | PageKind::Dictionary | PageKind::Postings
+        ) && next <= self.block
         {
             return Err(corrupt(12));
         }
@@ -365,7 +378,9 @@ impl Page {
             PageKind::Fragment => {
                 let (_, offset, payload) = self.fragment_data()?;
                 if payload.is_empty()
-                    || (offset as usize).checked_add(payload.len()).is_none_or(|end| end > MAX_DOCUMENT_BYTES)
+                    || (offset as usize)
+                        .checked_add(payload.len())
+                        .is_none_or(|end| end > MAX_DOCUMENT_BYTES)
                 {
                     return Err(corrupt(32));
                 }
@@ -383,7 +398,9 @@ impl Page {
     pub fn reserve_incarnation(&mut self) -> Result<Incarnation> {
         self.require(PageKind::Meta)?;
         let value = self.u64(32)?;
-        let next = value.checked_add(1).ok_or(Error::Limit("incarnation space"))?;
+        let next = value
+            .checked_add(1)
+            .ok_or(Error::Limit("incarnation space"))?;
         let incarnation = Incarnation::new(value).map_err(|_| corrupt(32))?;
         self.put_u64(32, next)?;
         Ok(incarnation)
@@ -450,9 +467,7 @@ impl Page {
     pub fn owner_count(&self) -> Result<u16> {
         self.require(PageKind::Owners)?;
         let count = self.u16(16)?;
-        if self.u16(18)? != 0
-            || OWNER_HEADER + usize::from(count) * OWNER_BYTES > self.len
-        {
+        if self.u16(18)? != 0 || OWNER_HEADER + usize::from(count) * OWNER_BYTES > self.len {
             return Err(corrupt(16));
         }
         Ok(count)
@@ -465,8 +480,8 @@ impl Page {
         let offset = OWNER_HEADER + usize::from(slot) * OWNER_BYTES;
         let mut reader = Reader::new(&self.bytes[offset..offset + OWNER_BYTES]);
         let incarnation = Incarnation::new(reader.u64()?).map_err(|_| corrupt(offset))?;
-        let root = RootTid::new(reader.u32()?, reader.u16()?, layout)
-            .map_err(|_| corrupt(offset + 8))?;
+        let root =
+            RootTid::new(reader.u32()?, reader.u16()?, layout).map_err(|_| corrupt(offset + 8))?;
         let publication = match reader.u8()? {
             0 => Publication::Allocated,
             1 => Publication::FragmentsWritten,
@@ -519,8 +534,19 @@ impl Page {
             return Err(corrupt(offset + 24));
         }
         Ok(Owner {
-            reference: OwnerRef { page: self.block, slot, incarnation },
-            root, publication, live, tokens, terms, data_head, data_bytes, inline,
+            reference: OwnerRef {
+                page: self.block,
+                slot,
+                incarnation,
+            },
+            root,
+            publication,
+            live,
+            tokens,
+            terms,
+            data_head,
+            data_bytes,
+            inline,
         })
     }
 
@@ -535,24 +561,35 @@ impl Page {
         payload: &[u8],
     ) -> Result<Option<OwnerRef>> {
         let count = self.owner_count()?;
-        if tokens > MAX_DOCUMENT_TOKENS || terms > tokens
+        if tokens > MAX_DOCUMENT_TOKENS
+            || terms > tokens
             || !(16..=MAX_DOCUMENT_BYTES).contains(&payload.len())
         {
             return Err(Error::InvalidDocument);
         }
-        let inline = if payload.len() <= INLINE_BYTES { payload } else { &[] };
+        let inline = if payload.len() <= INLINE_BYTES {
+            payload
+        } else {
+            &[]
+        };
         let new_len = self.len + OWNER_BYTES + inline.len();
         if new_len > CAPACITY {
             return Ok(None);
         }
         let offset = OWNER_HEADER + usize::from(count) * OWNER_BYTES;
         // fixed slots stay in place; only private inline bytes move past the new slot.
-        self.bytes.copy_within(offset..self.len, offset + OWNER_BYTES);
+        self.bytes
+            .copy_within(offset..self.len, offset + OWNER_BYTES);
         for slot in 0..count {
             let record = OWNER_HEADER + usize::from(slot) * OWNER_BYTES;
             let inline_offset = self.u16(record + 32)?;
             if inline_offset != 0 {
-                self.put_u16(record + 32, inline_offset.checked_add(OWNER_BYTES as u16).ok_or_else(|| corrupt(record + 32))?)?;
+                self.put_u16(
+                    record + 32,
+                    inline_offset
+                        .checked_add(OWNER_BYTES as u16)
+                        .ok_or_else(|| corrupt(record + 32))?,
+                )?;
             }
         }
         let inline_offset = self.len + OWNER_BYTES;
@@ -567,12 +604,20 @@ impl Page {
         writer.u32(terms)?;
         writer.u32(NO_BLOCK)?;
         writer.u32(payload.len() as u32)?;
-        writer.u16(if inline.is_empty() { 0 } else { inline_offset as u16 })?;
+        writer.u16(if inline.is_empty() {
+            0
+        } else {
+            inline_offset as u16
+        })?;
         writer.u16(inline.len() as u16)?;
         writer.u32(0)?;
         self.bytes[inline_offset..new_len].copy_from_slice(inline);
         self.put_u16(16, count + 1)?;
-        Ok(Some(OwnerRef { page: self.block, slot: count, incarnation }))
+        Ok(Some(OwnerRef {
+            page: self.block,
+            slot: count,
+            incarnation,
+        }))
     }
 
     /// Applies one explicit publication or liveness change.
@@ -603,7 +648,11 @@ impl Page {
                 (2, false, NO_BLOCK)
             }
             OwnerChange::Abandon
-                if matches!(owner.publication, Publication::Allocated | Publication::FragmentsWritten) => {
+                if matches!(
+                    owner.publication,
+                    Publication::Allocated | Publication::FragmentsWritten
+                ) =>
+            {
                 (3, false, NO_BLOCK)
             }
             _ => return Err(Error::InvalidState),
@@ -616,7 +665,11 @@ impl Page {
 
     pub fn terms(&self) -> Result<Terms<'_>> {
         self.require(PageKind::Dictionary)?;
-        Ok(Terms { page: self.block, reader: Reader::new(&self.bytes()[HEADER..]), failed: false })
+        Ok(Terms {
+            page: self.block,
+            reader: Reader::new(&self.bytes()[HEADER..]),
+            failed: false,
+        })
     }
 
     pub fn append_term(&mut self, term: &str, first: OwnerRef) -> Result<Option<TermRef>> {
@@ -628,7 +681,10 @@ impl Page {
         if next > CAPACITY {
             return Ok(None);
         }
-        let reference = TermRef { page: self.block, offset: self.len as u16 };
+        let reference = TermRef {
+            page: self.block,
+            offset: self.len as u16,
+        };
         let mut writer = Writer::new(&mut self.bytes[self.len..next]);
         writer.u16(term.len() as u16)?;
         writer.u16(0)?;
@@ -668,7 +724,10 @@ impl Page {
         if self.u16(22)? != 0 {
             return Err(corrupt(22));
         }
-        Ok(TermRef { page: self.u32(16)?, offset: self.u16(20)? })
+        Ok(TermRef {
+            page: self.u32(16)?,
+            offset: self.u16(20)?,
+        })
     }
 
     pub fn posting_refs(&self) -> Result<Postings<'_>> {
@@ -676,7 +735,10 @@ impl Page {
         if !(self.len - POSTING_HEADER).is_multiple_of(16) {
             return Err(corrupt(POSTING_HEADER));
         }
-        Ok(Postings { reader: Reader::new(&self.bytes()[POSTING_HEADER..]), failed: false })
+        Ok(Postings {
+            reader: Reader::new(&self.bytes()[POSTING_HEADER..]),
+            failed: false,
+        })
     }
 
     pub fn append_posting(&mut self, owner: OwnerRef) -> Result<bool> {
@@ -717,15 +779,30 @@ impl Page {
     }
 
     fn put_u16(&mut self, offset: usize, value: u16) -> Result<()> {
-        Ok(Writer::new(self.bytes.get_mut(offset..offset + 2).ok_or_else(|| corrupt(offset))?).u16(value)?)
+        Ok(Writer::new(
+            self.bytes
+                .get_mut(offset..offset + 2)
+                .ok_or_else(|| corrupt(offset))?,
+        )
+        .u16(value)?)
     }
 
     fn put_u32(&mut self, offset: usize, value: u32) -> Result<()> {
-        Ok(Writer::new(self.bytes.get_mut(offset..offset + 4).ok_or_else(|| corrupt(offset))?).u32(value)?)
+        Ok(Writer::new(
+            self.bytes
+                .get_mut(offset..offset + 4)
+                .ok_or_else(|| corrupt(offset))?,
+        )
+        .u32(value)?)
     }
 
     fn put_u64(&mut self, offset: usize, value: u64) -> Result<()> {
-        Ok(Writer::new(self.bytes.get_mut(offset..offset + 8).ok_or_else(|| corrupt(offset))?).u64(value)?)
+        Ok(Writer::new(
+            self.bytes
+                .get_mut(offset..offset + 8)
+                .ok_or_else(|| corrupt(offset))?,
+        )
+        .u64(value)?)
     }
 }
 
@@ -757,8 +834,14 @@ impl<'a> Iterator for Terms<'a> {
             let term = std::str::from_utf8(self.reader.take(len)?)
                 .map_err(|_| corrupt(offset + DICTIONARY_ENTRY))?;
             Ok(Term {
-                reference: TermRef { page: self.page, offset: offset as u16 },
-                term, first, head, tail,
+                reference: TermRef {
+                    page: self.page,
+                    offset: offset as u16,
+                },
+                term,
+                first,
+                head,
+                tail,
             })
         })();
         self.failed = result.is_err();
