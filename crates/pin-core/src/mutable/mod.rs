@@ -98,7 +98,11 @@ fn following(page: &Page, tail: u32) -> Result<Option<u32>> {
 }
 
 // scans a captured dictionary chain; hashes route but never establish equality.
-fn find_term<S: PageStore>(store: &mut S, meta: &Page, text: &str) -> Result<Option<(Page, page::TermRef)>> {
+fn find_term<S: PageStore>(
+    store: &mut S,
+    meta: &Page,
+    text: &str,
+) -> Result<Option<(Page, page::TermRef)>> {
     let bucket = page::bucket_for(text);
     let (head, tail) = meta.bucket(bucket)?;
     if head == page::NO_BLOCK {
