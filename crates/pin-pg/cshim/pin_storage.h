@@ -18,6 +18,8 @@ extern uint32 pin_storage_extend(Relation index);
 extern uint32 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity);
 extern uint32 pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                                       Buffer *held);
+extern void pin_storage_remove_owners(Relation index, uint32 block,
+                                      const uint8 *bytes, uint32 length);
 extern void pin_storage_commit(Relation index, uint32 count, const uint32 *blocks,
                                const uint8 *const *bytes, const uint32 *lengths,
                                const bool *full_images);

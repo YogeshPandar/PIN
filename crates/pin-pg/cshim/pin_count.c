@@ -38,6 +38,7 @@
 #define PIN_COUNT_STATS 8
 
 static bool pin_enable_count = false;
+static bool pin_enable_count_vm = false;
 static create_upper_paths_hook_type pin_previous_upper = NULL;
 
 typedef struct PinCountState
@@ -219,8 +220,11 @@ void
 pin_count_init(void)
 {
     DefineCustomBoolVariable("pin.enable_count_fastpath", "Enable experimental direct counts.",
-                             "Off until VM and concurrency qualification is complete.",
-                             &pin_enable_count, false, PGC_USERSET, 0, NULL, NULL, NULL);
+                             "Off until count qualification is complete.",
+                             &pin_enable_count, false, PGC_SUSET, 0, NULL, NULL, NULL);
+    DefineCustomBoolVariable("pin.enable_count_vm", "Enable experimental count VM certification.",
+                             "Uncertified candidates always use heap visibility.",
+                             &pin_enable_count_vm, false, PGC_SUSET, 0, NULL, NULL, NULL);
     RegisterCustomScanMethods(&pin_count_scan_methods);
     pin_previous_upper = create_upper_paths_hook;
     create_upper_paths_hook = pin_count_upper;
@@ -426,7 +430,7 @@ pin_count_owner_unlock(void *context)
 {
     PinCountState *state = context;
     if (BufferIsValid(state->owner_buffer))
-        UnlockReleaseBuffer(state->owner_buffer);
+        ReleaseBuffer(state->owner_buffer);
     state->owner_buffer = InvalidBuffer;
 }
 
@@ -436,6 +440,8 @@ pin_count_all_visible(void *context, uint32 block)
     PinCountState *state = context;
     if (!BufferIsValid(state->owner_buffer))
         elog(ERROR, "PinCount VM check requires owner protection");
+    if (!pin_enable_count_vm)
+        return false;
     return (visibilitymap_get_status(state->heap, block, &state->vm_buffer) &
             VISIBILITYMAP_ALL_VISIBLE) != 0;
 }
@@ -451,7 +457,7 @@ pin_count_fetch(void *context, uint32 block, uint16 offset, const uint8 **bytes,
     text *body;
     *bytes = NULL;
     *length = 0;
-    if (BufferIsValid(state->owner_buffer) || block == InvalidBlockNumber ||
+    if (!BufferIsValid(state->owner_buffer) || block == InvalidBlockNumber ||
         offset == InvalidOffsetNumber || offset > MaxHeapTuplesPerPage)
         elog(ERROR, "invalid PinCount heap fetch");
     CHECK_FOR_INTERRUPTS();

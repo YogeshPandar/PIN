@@ -386,6 +386,9 @@ impl PageStore for CommitFault {
     fn extend(&mut self) -> Result<u32> {
         self.inner.extend()
     }
+    fn remove_owners(&mut self, page: &Page) -> Result<()> {
+        self.commit(&[page])
+    }
     fn commit(&mut self, pages: &[&Page]) -> Result<()> {
         let current = self.commits;
         self.commits += 1;

@@ -62,7 +62,7 @@ pub fn vacuum<S: PageStore>(
                 }
             }
             if changed {
-                store.commit(&[&page])?;
+                store.remove_owners(&page)?;
                 store.event(Stage::OwnerRemoved)?;
             }
             match following(&page, tail)? {

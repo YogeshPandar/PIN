@@ -186,6 +186,23 @@ impl PageStore for PgStore<'_> {
         Ok(())
     }
 
+    fn remove_owners(&mut self, page: &Page) -> Result<()> {
+        if !self.writer || page.kind() != PageKind::Owners || self.extended.is_some() {
+            return Err(Error::InvalidState);
+        }
+        page.validate(self.layout)?;
+        let index = self.index;
+        let block = page.block();
+        let bytes = page.bytes().as_ptr();
+        let length = page.bytes().len() as u32;
+        // safety: the writer interlock covers the private image's read and mutation.
+        // C takes cleanup permission before publishing removal through generic WAL.
+        unsafe {
+            native::call(|| native::pin_storage_remove_owners(index, block, bytes, length))
+        };
+        Ok(())
+    }
+
     fn interrupt(&mut self) -> Result<()> {
         interrupt();
         Ok(())

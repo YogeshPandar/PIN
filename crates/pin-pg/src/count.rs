@@ -72,16 +72,16 @@ impl Counter<'_> {
         let context = self.context;
         let mut fallback: [Option<RootTid>; BATCH] = [None; BATCH];
         let mut fetches = 0;
-        // pure errors also leave the native owner handle releasable below.
+        // pure errors leave the native owner pin releasable after this closure.
         let result = (|| -> Result<()> {
             let page = Page::read_with(block, |bytes| {
                 let pointer = bytes.as_mut_ptr();
                 let capacity = bytes.len() as u32;
-                // safety: C copies at most capacity bytes into this exclusive slice
-                // and retains only its resource-owned buffer, never the slice pointer.
-                Ok(unsafe { native::call(|| {
-                    pin_count_owner_lock(context, block, pointer, capacity)
-                }) } as usize)
+                // safety: C copies under a shared content lock, then retains only
+                // its resource-owned buffer pin until pin_count_owner_unlock.
+                Ok(unsafe {
+                    native::call(|| pin_count_owner_lock(context, block, pointer, capacity))
+                } as usize)
             })?;
             page.validate(self.layout)?;
             if page.kind() != PageKind::Owners {
@@ -102,8 +102,7 @@ impl Counter<'_> {
                 if candidate.sealed_term {
                     self.note(3, 1)?;
                     let heap_block = owner.root.block();
-                    // safety: this context retains the shared owner content lock
-                    // from the fresh publication/liveness read through the VM decision.
+                    // safety: the canonical owner pin spans the fresh VM decision.
                     if unsafe { native::call(|| pin_count_all_visible(context, heap_block)) } {
                         self.note(4, 1)?;
                         continue;
@@ -114,52 +113,56 @@ impl Counter<'_> {
                 fallback[fetches] = Some(owner.root);
                 fetches += 1;
             }
+
+            for root in &fallback[..fetches] {
+                self.note(5, 1)?;
+                let root = root.ok_or(Error::InvalidState)?;
+                let block = root.block();
+                let offset = root.offset();
+                let mut bytes = std::ptr::null();
+                let mut length = 0;
+                // safety: the owner pin still blocks cleanup while C follows the
+                // root's HOT chain under the active MVCC snapshot.
+                let visible = unsafe {
+                    native::call(|| pin_count_fetch(context, block, offset, &mut bytes, &mut length))
+                };
+                let matched = if visible {
+                    if bytes.is_null() || length > isize::MAX as usize {
+                        Err(Error::InvalidState)
+                    } else {
+                        // safety: C returns initialized text bytes valid until clear.
+                        let value = unsafe { std::slice::from_raw_parts(bytes, length) };
+                        std::str::from_utf8(value)
+                            .map_err(|_| Error::InvalidDocument)
+                            .and_then(|text| Analyzed::analyze(text, AnalysisLimits::default()))
+                            .and_then(|document| {
+                                oracle::matches(
+                                    &document,
+                                    self.query,
+                                    matching::QUERY_MEMORY,
+                                    matching::MATCH_STEPS,
+                                )
+                            })
+                    }
+                } else {
+                    Ok(false)
+                };
+                // safety: every borrow above ended before the slot/context reset.
+                unsafe { native::call(|| pin_count_clear(context)) };
+                if matched? {
+                    self.note(6, 1)?;
+                }
+            }
             Ok(())
         })();
-        // safety: C records at most one owner handle; release is idempotent and
-        // occurs before any heap fetch, predicate evaluation or next batch.
+
+        // safety: C retains at most one owner pin; release is idempotent.
         unsafe { native::call(|| pin_count_owner_unlock(context)) };
         result?;
-        for root in &fallback[..fetches] {
-            self.note(5, 1)?;
-            let root = root.ok_or(Error::InvalidState)?;
-            let block = root.block();
-            let offset = root.offset();
-            let mut bytes = std::ptr::null();
-            let mut length = 0;
-            // safety: C mutates a copy of the root, fetches with the active MVCC
-            // snapshot and returns slot/context-owned bytes until pin_count_clear.
-            let visible = unsafe { native::call(|| {
-                pin_count_fetch(context, block, offset, &mut bytes, &mut length)
-            }) };
-            let matched = if visible {
-                // no host call can reset or mutate the borrowed text in this scope.
-                if bytes.is_null() || length > isize::MAX as usize {
-                    Err(Error::InvalidState)
-                } else {
-                    // safety: C returned one initialized detoasted allocation or
-                    // pinned tuple range; alignment is one and the extent is bounded.
-                    let value = unsafe { std::slice::from_raw_parts(bytes, length) };
-                    std::str::from_utf8(value)
-                        .map_err(|_| Error::InvalidDocument)
-                        .and_then(|text| Analyzed::analyze(text, AnalysisLimits::default()))
-                        .and_then(|document| oracle::matches(
-                            &document, self.query, matching::QUERY_MEMORY, matching::MATCH_STEPS,
-                        ))
-                }
-            } else {
-                Ok(false)
-            };
-            // safety: all text borrows and Rust analysis values have ended; reset
-            // releases heap pins before another owner buffer can be locked.
-            unsafe { native::call(|| pin_count_clear(context)) };
-            if matched? {
-                self.note(6, 1)?;
-            }
-        }
         self.pending.fill(None);
         self.length = 0;
         Ok(())
+
     }
 }
 

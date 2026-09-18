@@ -160,6 +160,8 @@ pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity
     pin_page_check(page);
     length = ((PageHeader) page)->pd_lower - MAXALIGN(SizeOfPageHeaderData);
     memcpy(out, PageGetContents(page), length);
+    /* retain only the pin; heap fetches must not hold index content locks. */
+    LockBuffer(*held, BUFFER_LOCK_UNLOCK);
     return length;
 }
 
@@ -199,6 +201,27 @@ pin_storage_commit(Relation index, uint32 count, const uint32 *blocks,
     GenericXLogFinish(state);
     for (uint32 i = 0; i < count; i++)
         UnlockReleaseBuffer(buffers[i]);
+}
+
+/* the writer lock protects the private image; cleanup permission protects readers. */
+void
+pin_storage_remove_owners(Relation index, uint32 block, const uint8 *bytes, uint32 length)
+{
+    Buffer buffer;
+    GenericXLogState *state;
+    Page image;
+    if (block == 0 || block >= RelationGetNumberOfBlocks(index) ||
+        bytes == NULL || length < 16 || length > PIN_PAYLOAD_BYTES)
+        elog(ERROR, "invalid Pin owner-removal image");
+    buffer = ReadBuffer(index, block);
+    LockBufferForCleanup(buffer);
+    state = GenericXLogStart(index);
+    image = GenericXLogRegisterBuffer(state, buffer, 0);
+    pin_page_check(image);
+    memcpy(PageGetContents(image), bytes, length);
+    ((PageHeader) image)->pd_lower = MAXALIGN(SizeOfPageHeaderData) + length;
+    GenericXLogFinish(state);
+    UnlockReleaseBuffer(buffer);
 }
 
 void

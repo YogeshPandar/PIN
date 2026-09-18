@@ -58,6 +58,11 @@ impl PageStore for MemoryStore {
         Ok(())
     }
 
+    fn remove_owners(&mut self, page: &Page) -> Result<()> {
+        // this store has no concurrent readers or host buffer pins.
+        self.commit(&[page])
+    }
+
     fn event(&mut self, stage: Stage) -> Result<()> {
         self.events.push(stage);
         if self.fail_at == Some(self.events.len() - 1) {

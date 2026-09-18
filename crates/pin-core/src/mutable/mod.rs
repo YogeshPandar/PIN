@@ -59,6 +59,13 @@ pub trait PageStore {
     fn extend(&mut self) -> Result<u32>;
     fn commit(&mut self, pages: &[&Page]) -> Result<()>;
 
+    /// Publishes owner removal only after all protecting count-reader pins drain.
+    /// The writer interlock must cover the original read and this WAL operation.
+    /// The default refuses removal; an adapter must explicitly supply this interlock.
+    fn remove_owners(&mut self, _page: &Page) -> Result<()> {
+        Err(Error::InvalidState)
+    }
+
     fn interrupt(&mut self) -> Result<()> {
         Ok(())
     }
