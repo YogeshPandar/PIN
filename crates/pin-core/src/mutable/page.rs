@@ -1,7 +1,7 @@
 //! Checked, explicit little-endian payloads inside PostgreSQL standard pages.
 //! Page images are private copies; this module never borrows shared buffers.
-//! Owner slots and dictionary offsets never move or get reused in G2.
-//! Format and publication obligations: docs/g2-storage.md.
+//! Owner slots and dictionary offsets remain stable across posting compaction.
+//! Format and publication obligations: docs/g3-storage.md.
 
 use super::document::{MAX_DOCUMENT_BYTES, MAX_DOCUMENT_TOKENS, MAX_TERM_BYTES};
 use crate::analysis::PROFILE_ID;
@@ -32,6 +32,7 @@ pub enum PageKind {
     Owners,
     Dictionary,
     Postings,
+    SealedPostings,
     Fragment,
     Free,
 }
@@ -44,9 +45,28 @@ fn block_valid(block: u32) -> bool {
     block != 0 && block != NO_BLOCK
 }
 
+fn posting_pair_valid(head: u32, tail: u32) -> bool {
+    (head == NO_BLOCK && tail == NO_BLOCK) || (block_valid(head) && block_valid(tail))
+}
+
 fn pair_valid(head: u32, tail: u32) -> bool {
     (head == NO_BLOCK && tail == NO_BLOCK)
         || (block_valid(head) && block_valid(tail) && tail >= head)
+}
+
+/// One unreachable chain retained until recovery or retirement completes.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct RewriteJournal {
+    pub head: u32,
+    pub tail: u32,
+    pub phase: RewritePhase,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum RewritePhase {
+    Building = 1,
+    Retiring = 2,
 }
 
 /// An immutable owner slot, qualified by its never-reused incarnation.
@@ -163,7 +183,7 @@ impl Page {
         if reader.take(4)? != b"PIN2" {
             return Err(CodecError::new(0, ErrorKind::BadMagic).into());
         }
-        if reader.u16()? != 1 {
+        if reader.u16()? != 2 {
             return Err(CodecError::new(4, ErrorKind::UnsupportedVersion).into());
         }
         let kind = match reader.u8()? {
@@ -173,6 +193,7 @@ impl Page {
             4 => PageKind::Postings,
             5 => PageKind::Fragment,
             6 => PageKind::Free,
+            7 => PageKind::SealedPostings,
             _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
         };
         if reader.u8()? != 0 || reader.u32()? != block {
@@ -194,6 +215,7 @@ impl Page {
             PageKind::Owners => 2,
             PageKind::Dictionary => 3,
             PageKind::Postings => 4,
+            PageKind::SealedPostings => 7,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -205,7 +227,7 @@ impl Page {
         };
         let mut writer = Writer::new(&mut page.bytes);
         writer.put(b"PIN2")?;
-        writer.u16(1)?;
+        writer.u16(2)?;
         writer.u8(tag)?;
         writer.u8(0)?;
         writer.u32(block)?;
@@ -308,7 +330,7 @@ impl Page {
         }
         if matches!(
             self.kind,
-            PageKind::Owners | PageKind::Dictionary | PageKind::Postings
+            PageKind::Owners | PageKind::Dictionary
         ) && next <= self.block
         {
             return Err(corrupt(12));
@@ -334,12 +356,12 @@ impl Page {
                     || usize::from(self.u16(26)?) != BUCKETS
                     || self.u32(28)? != 0
                     || self.u64(32)? == 0
-                    || self.bytes[52..64].iter().any(|&byte| byte != 0)
                 {
                     return Err(corrupt(16));
                 }
                 self.owner_chain()?;
                 self.free_head()?;
+                self.rewrite_journal()?;
                 for bucket in 0..BUCKETS {
                     self.bucket(bucket)?;
                 }
@@ -366,7 +388,7 @@ impl Page {
                     term?;
                 }
             }
-            PageKind::Postings => {
+            PageKind::Postings | PageKind::SealedPostings => {
                 let term = self.posting_term()?;
                 if !block_valid(term.page) || usize::from(term.offset) < HEADER {
                     return Err(corrupt(16));
@@ -462,6 +484,38 @@ impl Page {
             return Err(corrupt(48));
         }
         self.put_u32(48, block)
+    }
+
+    pub fn rewrite_journal(&self) -> Result<Option<RewriteJournal>> {
+        self.require(PageKind::Meta)?;
+        let head = self.u32(52)?;
+        let tail = self.u32(56)?;
+        let phase = match self.u32(60)? {
+            0 if head == 0 && tail == 0 => return Ok(None),
+            1 => RewritePhase::Building,
+            2 => RewritePhase::Retiring,
+            _ => return Err(corrupt(60)),
+        };
+        if !block_valid(head) || !block_valid(tail) {
+            return Err(corrupt(52));
+        }
+        Ok(Some(RewriteJournal { head, tail, phase }))
+    }
+
+    pub fn set_rewrite_journal(&mut self, journal: Option<RewriteJournal>) -> Result<()> {
+        self.require(PageKind::Meta)?;
+        let (head, tail, phase) = match journal {
+            Some(journal) => {
+                if !block_valid(journal.head) || !block_valid(journal.tail) {
+                    return Err(corrupt(52));
+                }
+                (journal.head, journal.tail, journal.phase as u32)
+            }
+            None => (0, 0, 0),
+        };
+        self.put_u32(52, head)?;
+        self.put_u32(56, tail)?;
+        self.put_u32(60, phase)
     }
 
     pub fn owner_count(&self) -> Result<u16> {
@@ -712,7 +766,7 @@ impl Page {
 
     pub fn set_posting_chain(&mut self, term: TermRef, head: u32, tail: u32) -> Result<()> {
         self.term(term)?;
-        if !pair_valid(head, tail) {
+        if !posting_pair_valid(head, tail) {
             return Err(corrupt(usize::from(term.offset)));
         }
         self.put_u32(usize::from(term.offset) + 4, head)?;
@@ -720,8 +774,10 @@ impl Page {
     }
 
     pub fn posting_term(&self) -> Result<TermRef> {
-        self.require(PageKind::Postings)?;
-        if self.u16(22)? != 0 {
+        if !matches!(self.kind, PageKind::Postings | PageKind::SealedPostings) {
+            return Err(corrupt(6));
+        }
+        if self.kind == PageKind::Postings && self.u16(22)? != 0 {
             return Err(corrupt(22));
         }
         Ok(TermRef {
@@ -732,11 +788,24 @@ impl Page {
 
     pub fn posting_refs(&self) -> Result<Postings<'_>> {
         self.posting_term()?;
-        if !(self.len - POSTING_HEADER).is_multiple_of(16) {
-            return Err(corrupt(POSTING_HEADER));
-        }
+        let compressed = self.kind == PageKind::SealedPostings;
+        let count = if compressed {
+            let count = self.u16(22)?;
+            if count == 0 || usize::from(count) > (self.len - POSTING_HEADER) / 3 {
+                return Err(corrupt(22));
+            }
+            count
+        } else {
+            if !(self.len - POSTING_HEADER).is_multiple_of(16) {
+                return Err(corrupt(POSTING_HEADER));
+            }
+            ((self.len - POSTING_HEADER) / 16) as u16
+        };
         Ok(Postings {
             reader: Reader::new(&self.bytes()[POSTING_HEADER..]),
+            compressed,
+            remaining: count,
+            previous: None,
             failed: false,
         })
     }
@@ -806,6 +875,105 @@ impl Page {
     }
 }
 
+/// Builds one compressed page without a heap allocation or a decoder rescan.
+pub struct SealedBuilder {
+    page: Page,
+    previous: Option<OwnerRef>,
+    count: u16,
+}
+
+impl SealedBuilder {
+    pub fn new(block: u32, term: TermRef) -> Result<Self> {
+        let mut page = Page::postings(block, term)?;
+        page.kind = PageKind::SealedPostings;
+        page.bytes[6] = 7;
+        Ok(Self { page, previous: None, count: 0 })
+    }
+
+    /// Returns false without mutation when this page has no room for the owner.
+    pub fn push(&mut self, owner: OwnerRef) -> Result<bool> {
+        let mut bytes = [0u8; 20];
+        let mut writer = Writer::new(&mut bytes);
+        write_delta(&mut writer, owner, self.previous)?;
+        let len = writer.len();
+        if self.page.len + len > CAPACITY {
+            return Ok(false);
+        }
+        self.page.bytes[self.page.len..self.page.len + len].copy_from_slice(&bytes[..len]);
+        self.page.len += len;
+        self.count += 1;
+        self.page.put_u16(22, self.count)?;
+        self.previous = Some(owner);
+        Ok(true)
+    }
+
+    pub fn finish(self) -> Result<Page> {
+        if self.count == 0 {
+            return Err(Error::InvalidState);
+        }
+        Ok(self.page)
+    }
+}
+
+// page/slot order follows stable owner allocation, not reusable posting blocks.
+fn write_delta(writer: &mut Writer<'_>, owner: OwnerRef, previous: Option<OwnerRef>) -> Result<()> {
+    let (page, slot, incarnation) = match previous {
+        Some(previous) => {
+            if owner.page < previous.page
+                || (owner.page == previous.page && owner.slot <= previous.slot)
+                || owner.incarnation.get() <= previous.incarnation.get()
+            {
+                return Err(Error::InvalidState);
+            }
+            (
+                owner.page - previous.page,
+                if owner.page == previous.page { owner.slot - previous.slot } else { owner.slot },
+                owner.incarnation.get() - previous.incarnation.get(),
+            )
+        }
+        None => (owner.page, owner.slot, owner.incarnation.get()),
+    };
+    if !block_valid(owner.page) || usize::from(owner.slot) >= (CAPACITY - OWNER_HEADER) / OWNER_BYTES {
+        return Err(Error::InvalidState);
+    }
+    writer.var_u32(page)?;
+    writer.var_u32(u32::from(slot))?;
+    writer.var_u64(incarnation)?;
+    Ok(())
+}
+
+fn read_delta(reader: &mut Reader<'_>, previous: Option<OwnerRef>) -> Result<OwnerRef> {
+    let start = reader.offset();
+    let page_delta = reader.var_u32()?;
+    let slot_delta = reader.var_u32()?;
+    let incarnation_delta = reader.var_u64()?;
+    let (page, slot, incarnation) = match previous {
+        Some(previous) => {
+            if incarnation_delta == 0 || (page_delta == 0 && slot_delta == 0) {
+                return Err(corrupt(start));
+            }
+            (
+                previous.page.checked_add(page_delta).ok_or_else(|| corrupt(start))?,
+                if page_delta == 0 {
+                    u32::from(previous.slot).checked_add(slot_delta).ok_or_else(|| corrupt(start))?
+                } else {
+                    slot_delta
+                },
+                previous.incarnation.get().checked_add(incarnation_delta).ok_or_else(|| corrupt(start))?,
+            )
+        }
+        None => (page_delta, slot_delta, incarnation_delta),
+    };
+    if !block_valid(page) || slot as usize >= (CAPACITY - OWNER_HEADER) / OWNER_BYTES {
+        return Err(corrupt(start));
+    }
+    Ok(OwnerRef {
+        page,
+        slot: slot as u16,
+        incarnation: Incarnation::new(incarnation).map_err(|_| corrupt(start))?,
+    })
+}
+
 pub struct Terms<'a> {
     page: u32,
     reader: Reader<'a>,
@@ -828,7 +996,7 @@ impl<'a> Iterator for Terms<'a> {
             let head = self.reader.u32()?;
             let tail = self.reader.u32()?;
             let first = OwnerRef::read(&mut self.reader)?;
-            if !pair_valid(head, tail) || self.reader.u32()? != 0 {
+            if !posting_pair_valid(head, tail) || self.reader.u32()? != 0 {
                 return Err(corrupt(offset + 4));
             }
             let term = std::str::from_utf8(self.reader.take(len)?)
@@ -853,6 +1021,9 @@ impl std::iter::FusedIterator for Terms<'_> {}
 
 pub struct Postings<'a> {
     reader: Reader<'a>,
+    compressed: bool,
+    remaining: u16,
+    previous: Option<OwnerRef>,
     failed: bool,
 }
 
@@ -860,11 +1031,26 @@ impl Iterator for Postings<'_> {
     type Item = Result<OwnerRef>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.failed || self.reader.remaining() == 0 {
+        if self.failed {
             return None;
         }
-        let result = OwnerRef::read(&mut self.reader);
-        self.failed = result.is_err();
+        if self.remaining == 0 {
+            if self.reader.remaining() == 0 {
+                return None;
+            }
+            self.failed = true;
+            return Some(Err(corrupt(self.reader.offset())));
+        }
+        let result = if self.compressed {
+            read_delta(&mut self.reader, self.previous)
+        } else {
+            OwnerRef::read(&mut self.reader)
+        };
+        self.remaining -= 1;
+        match result {
+            Ok(owner) => self.previous = Some(owner),
+            Err(_) => self.failed = true,
+        }
         Some(result)
     }
 }

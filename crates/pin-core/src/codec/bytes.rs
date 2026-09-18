@@ -1,4 +1,4 @@
-// little-endian fields and canonical u32 varints over borrowed byte slices.
+// little-endian fields and canonical u32/u64 varints over borrowed byte slices.
 // reads validate extents before advancing; failed writes may alter the output.
 // contract: https://doc.rust-lang.org/std/primitive.u32.html#method.from_le_bytes
 
@@ -81,6 +81,28 @@ impl<'a> Reader<'a> {
         Err(Error::new(start, ErrorKind::Overflow))
     }
 
+    // the tenth group has one payload bit; failed reads preserve the cursor.
+    pub fn var_u64(&mut self) -> Result<u64> {
+        let mut input = *self;
+        let start = input.offset;
+        let mut value = 0u64;
+        for group in 0..10 {
+            let byte = input.u8()?;
+            if group == 9 && byte > 1 {
+                return Err(Error::new(start, ErrorKind::Overflow));
+            }
+            value |= u64::from(byte & 127) << (group * 7);
+            if byte & 128 == 0 {
+                if group != 0 && byte == 0 {
+                    return Err(Error::new(start, ErrorKind::NonCanonical));
+                }
+                *self = input;
+                return Ok(value);
+            }
+        }
+        Err(Error::new(start, ErrorKind::Overflow))
+    }
+
     pub fn finish(self) -> Result<()> {
         if self.remaining() != 0 {
             return Err(Error::new(self.offset, ErrorKind::TrailingBytes));
@@ -135,6 +157,20 @@ impl<'a> Writer<'a> {
 
     pub fn u64(&mut self, value: u64) -> Result<()> {
         self.put(&value.to_le_bytes())
+    }
+
+    pub fn var_u64(&mut self, mut value: u64) -> Result<()> {
+        let mut bytes = [0u8; 10];
+        let mut len = 0;
+        loop {
+            let low = (value & 127) as u8;
+            value >>= 7;
+            bytes[len] = low | if value == 0 { 0 } else { 128 };
+            len += 1;
+            if value == 0 {
+                return self.put(&bytes[..len]);
+            }
+        }
     }
 
     pub fn var_u32(&mut self, mut value: u32) -> Result<()> {

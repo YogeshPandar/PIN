@@ -15,6 +15,7 @@ pub struct CompactStats {
     pub rewritten_terms: u64,
     pub removed_postings: u64,
     pub written_pages: u32,
+    pub reused_pages: u32,
     pub reclaimed_pages: u32,
 }
 
@@ -63,8 +64,10 @@ pub fn compact<S: PageStore>(store: &mut S) -> Result<CompactStats> {
                 if summary.mutable_pages == 0 && summary.dead == 0 {
                     continue;
                 }
-                let written = rewrite(store, &mut meta, entry.reference, entry.head, entry.tail)?;
+                let (written, reused) = rewrite(store, &mut meta, entry.reference, entry.head, entry.tail)?;
                 stats.written_pages = stats.written_pages.checked_add(written)
+                    .ok_or(Error::Limit("compaction pages"))?;
+                stats.reused_pages = stats.reused_pages.checked_add(reused)
                     .ok_or(Error::Limit("compaction pages"))?;
                 stats.removed_postings = stats.removed_postings.checked_add(summary.dead)
                     .ok_or(Error::Limit("compaction postings"))?;
@@ -137,7 +140,7 @@ fn rewrite<S: PageStore>(
     term: TermRef,
     head: u32,
     tail: u32,
-) -> Result<u32> {
+) -> Result<(u32, u32)> {
     if meta.rewrite_journal()?.is_some() {
         return Err(Error::InvalidState);
     }
@@ -146,6 +149,7 @@ fn rewrite<S: PageStore>(
     let mut cache = None;
     let mut output: Option<SealedBuilder> = None;
     let mut written = 0u32;
+    let mut reused = 0u32;
     loop {
         let page = load_posting(store, block, term)?;
         for reference in page.posting_refs()? {
@@ -161,6 +165,7 @@ fn rewrite<S: PageStore>(
                 persist_output(store, meta, full)?;
                 written += 1;
             }
+            reused += u32::from(meta.free_head()? != NO_BLOCK);
             let mut builder = SealedBuilder::new(output_block(store, meta)?, term)?;
             if !builder.push(reference)? {
                 return Err(Error::InvalidState);
@@ -192,7 +197,7 @@ fn rewrite<S: PageStore>(
     // one WAL record switches coverage and records the complete retired source.
     store.commit(&[meta, &dictionary])?;
     store.event(Stage::ReplacementPublished)?;
-    Ok(written)
+    Ok((written, reused))
 }
 
 // free-list removal becomes durable only with the new output page and journal.

@@ -3,13 +3,14 @@
 //! their borrows. The host must use MVCC and recheck every emitted root tuple.
 
 use super::page::{NO_BLOCK, OwnerRef, Page, PageKind};
-use super::{PageStore, find_term, following, load};
+use super::{PageStore, find_term, following, load, load_posting, posting_next};
 use crate::candidate::CandidatePlan;
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
 
 /// Streams a conservative cover; returned accounting is not a visible SQL count.
+/// The host retains the shared structural barrier for this entire call.
 ///
 /// # Errors
 /// Rejects corruption, missing owners, incarnation mismatches and host failures.
@@ -64,11 +65,9 @@ pub fn scan<S: PageStore>(
                     continue;
                 }
                 let mut block = head;
+                let mut remaining = store.blocks()?;
                 loop {
-                    let page = load(store, block, PageKind::Postings)?;
-                    if page.posting_term()? != reference {
-                        return Err(Error::InvalidState);
-                    }
+                    let page = load_posting(store, block, reference)?;
                     for owner in page.posting_refs()? {
                         if let Some(root) = resolve(store, &mut cache, owner?)? {
                             emit(root)?;
@@ -77,7 +76,7 @@ pub fn scan<S: PageStore>(
                                 .ok_or(Error::Limit("candidate count"))?;
                         }
                     }
-                    match following(&page, tail)? {
+                    match posting_next(&page, tail, &mut remaining)? {
                         Some(next) => block = next,
                         None => break,
                     }
@@ -88,7 +87,7 @@ pub fn scan<S: PageStore>(
     Ok(count)
 }
 
-fn resolve<S: PageStore>(
+pub(super) fn resolve<S: PageStore>(
     store: &mut S,
     cache: &mut Option<Page>,
     reference: OwnerRef,
