@@ -480,13 +480,11 @@ fn seek_pair_or<S: PageStore>(
     let left = left.seek(store, target, true)?;
     let right = right.seek(store, target, true)?;
     match (left, right) {
-        (Some(left), Some(right)) => Ok(Some(
-            if compare(left, right)? == Ordering::Greater {
-                right
-            } else {
-                left
-            },
-        )),
+        (Some(left), Some(right)) => Ok(Some(if compare(left, right)? == Ordering::Greater {
+            right
+        } else {
+            left
+        })),
         (left, right) => Ok(left.or(right)),
     }
 }
