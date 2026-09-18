@@ -158,10 +158,8 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
                     }
                 }
             }
-            PageKind::Fragment => {
-                if page.fragment_data()?.0.page == target {
-                    return Err(Error::InvalidState);
-                }
+            PageKind::Fragment if page.fragment_data()?.0.page == target => {
+                return Err(Error::InvalidState);
             }
             _ => {}
         }
