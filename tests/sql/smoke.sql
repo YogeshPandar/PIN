@@ -29,8 +29,8 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'handler has the wrong SQL signature or strictness';
     END IF;
-    IF EXISTS (SELECT FROM pg_opclass WHERE opcmethod = am) THEN
-        RAISE EXCEPTION 'G0 must not install an opclass';
+    IF (SELECT count(*) FROM pg_opclass WHERE opcmethod = am) <> 1 THEN
+        RAISE EXCEPTION 'G2 must install exactly one reviewed opclass';
     END IF;
     IF EXISTS (SELECT FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid
         WHERE n.nspname='pin' AND (p.proleakproof OR p.prosecdef)) THEN
@@ -46,15 +46,10 @@ DECLARE
     original_count bigint;
 BEGIN
     SELECT count(*) INTO original_count FROM public.g0_documents;
-    BEGIN
-        CREATE INDEX g0_must_not_exist ON public.g0_documents USING pin(body);
-        RAISE EXCEPTION 'G0 accepted index creation';
-    EXCEPTION WHEN undefined_object THEN
-        NULL; -- no default opclass exists.
-    END;
-    IF to_regclass('public.g0_must_not_exist') IS NOT NULL
-       OR (SELECT count(*) FROM public.g0_documents) <> original_count THEN
-        RAISE EXCEPTION 'failed index creation changed table/catalog state';
+    CREATE INDEX g0_documents_pin ON public.g0_documents USING pin(body);
+    IF (SELECT count(*) FROM public.g0_documents
+        WHERE body OPERATOR(pin.@@@) pin.parse_query('alpha')) <> 1 THEN
+        RAISE EXCEPTION 'G2 basic match failed';
     END IF;
     BEGIN
         CREATE OPERATOR CLASS public.g0_untrusted_ops FOR TYPE text USING pin AS

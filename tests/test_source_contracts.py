@@ -27,7 +27,7 @@ class SourceContractTests(unittest.TestCase):
         self.assert_rejected(SOURCE_PATHS[3], "amcanparallel: false", "amcanparallel: true")
 
     def test_scan_enablement_is_detected(self):
-        self.assert_rejected(SOURCE_PATHS[3], "amgetbitmap: None", "amgetbitmap: Some(bitmap)")
+        self.assert_rejected(SOURCE_PATHS[3], "amgettuple: None", "amgettuple: Some(bitmap)")
 
     def test_missing_callback_guard_is_detected(self):
         self.assert_rejected(

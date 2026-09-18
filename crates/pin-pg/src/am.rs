@@ -1,4 +1,4 @@
-//! fail-closed am registration. no callback reads or writes relation storage.
+//! durable logged-table bitmap integration; PostgreSQL retains MVCC authority.
 //! exact pg18.6 signatures: access/amapi.h; manuals: index-api and index-functions.
 //! am01 in docs/api-evidence.md covers allocation, null callbacks, and unwind guards.
 
@@ -7,7 +7,13 @@
     reason = "PostgreSQL fixes the callback signatures"
 )]
 
-use pgrx::{Internal, pg_extern, pg_guard, pg_sys};
+use crate::{matching, native, storage};
+use pin_core::analysis::{AnalysisLimits, Analyzed};
+use pin_core::candidate::CandidatePlan;
+use pin_core::error::Error;
+use pin_core::mutable::{self, document::PreparedDocument};
+use pin_core::query::{Query, QueryLimits};
+use pgrx::{FromDatum, Internal, pg_extern, pg_guard, pg_sys};
 use std::ffi::c_void;
 
 #[pg_extern(sql = r#"
@@ -48,7 +54,7 @@ pub(crate) fn pin_handler() -> Internal {
         ambuild: Some(build),
         ambuildempty: Some(build_empty),
         aminsert: Some(insert),
-        aminsertcleanup: None,
+        aminsertcleanup: Some(insert_cleanup),
         ambulkdelete: Some(bulk_delete),
         amvacuumcleanup: Some(vacuum_cleanup),
         amcanreturn: None,
@@ -62,7 +68,7 @@ pub(crate) fn pin_handler() -> Internal {
         ambeginscan: Some(begin_scan),
         amrescan: Some(rescan),
         amgettuple: None,
-        amgetbitmap: None,
+        amgetbitmap: Some(bitmap),
         amendscan: Some(end_scan),
         ammarkpos: None,
         amrestrpos: None,
@@ -84,117 +90,322 @@ pub(crate) fn unavailable() -> ! {
     pgrx::ereport!(
         ERROR,
         pgrx::PgSqlErrorCode::ERRCODE_FEATURE_NOT_SUPPORTED,
-        "Pin G0 does not implement index storage or search"
+        "Pin does not support this operation in the G2 bitmap baseline"
     );
 }
 
+// core owns every relation, datum, callback and descriptor passed to these entries.
 #[pg_guard]
 unsafe extern "C-unwind" fn build(
-    _heap: pg_sys::Relation,
-    _index: pg_sys::Relation,
-    _info: *mut pg_sys::IndexInfo,
+    heap: pg_sys::Relation,
+    index: pg_sys::Relation,
+    info: *mut pg_sys::IndexInfo,
 ) -> *mut pg_sys::IndexBuildResult {
-    unavailable()
+    crate::compatibility::database();
+    // safety: core supplies live locked relations and IndexInfo for this build.
+    unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
+    // safety: the relation stays open through the synchronous initialization.
+    matching::stored(unsafe { storage::with_writer(index, mutable::initialize) });
+    let mut state = BuildState { heap, documents: 0 };
+    let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
+    // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
+    // state lives through all sequential, guarded callback invocations.
+    let heap_tuples = unsafe {
+        native::call(|| native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr))
+    };
+    // safety: palloc returns aligned PostgreSQL-owned memory; both fields are initialized.
+    unsafe {
+        let result = pg_sys::palloc(std::mem::size_of::<pg_sys::IndexBuildResult>())
+            .cast::<pg_sys::IndexBuildResult>();
+        result.write(pg_sys::IndexBuildResult {
+            heap_tuples,
+            index_tuples: state.documents as f64,
+        });
+        result
+    }
+}
+
+struct BuildState {
+    heap: pg_sys::Relation,
+    documents: u64,
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn build_tuple(
+    index: pg_sys::Relation,
+    tid: pg_sys::ItemPointer,
+    values: *mut pg_sys::Datum,
+    nulls: *mut bool,
+    _tuple_is_alive: bool,
+    state: *mut c_void,
+) {
+    // safety: build keeps this unique state live; callbacks run sequentially.
+    let state = unsafe { &mut *state.cast::<BuildState>() };
+    // safety: the core build scan supplies one evaluated text key and its HOT root.
+    if unsafe { insert_value(index, state.heap, values, nulls, tid) } {
+        state.documents = matching::stored(state.documents.checked_add(1)
+            .ok_or(Error::Limit("index document count")));
+    }
+}
+
+/// # Safety
+/// all pointers are core callback inputs for the validated one-text-key index.
+unsafe fn insert_value(
+    index: pg_sys::Relation,
+    _heap: pg_sys::Relation,
+    values: *mut pg_sys::Datum,
+    nulls: *mut bool,
+    tid: pg_sys::ItemPointer,
+) -> bool {
+    storage::interrupt();
+    // safety: core supplies initialized one-element key and null arrays.
+    if unsafe { *nulls } {
+        return false;
+    }
+    // safety: the opclass enforces text; pgrx detoasts it in the current context.
+    // the borrowed text is consumed before any context reset and never retained.
+    let text = unsafe { <&str as FromDatum>::from_datum(*values, false) };
+    let text = matching::input(text.ok_or(Error::InvalidDocument));
+    let analyzed = matching::input(Analyzed::analyze(text, AnalysisLimits::default()));
+    let document = matching::input(PreparedDocument::prepare(&analyzed, matching::PREPARE_MEMORY));
+    drop(analyzed);
+    // safety: C reads a valid core-owned item pointer without changing its root identity.
+    let root = matching::stored(unsafe { storage::root(tid) });
+    // safety: analysis/allocation precede the writer lock; relation lifetime is unchanged.
+    matching::stored(unsafe {
+        storage::with_writer(index, |store| mutable::insert(store, root, &document))
+    });
+    true
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn build_empty(_index: pg_sys::Relation) {
-    unavailable()
+    // unlogged tables are rejected before a successful main-fork build.
+    unavailable();
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn insert(
-    _index: pg_sys::Relation,
-    _values: *mut pg_sys::Datum,
-    _nulls: *mut bool,
-    _tid: pg_sys::ItemPointer,
-    _heap: pg_sys::Relation,
-    _unique: pg_sys::IndexUniqueCheck::Type,
-    _unchanged: bool,
-    _info: *mut pg_sys::IndexInfo,
+    index: pg_sys::Relation,
+    values: *mut pg_sys::Datum,
+    nulls: *mut bool,
+    heap_tid: pg_sys::ItemPointer,
+    heap: pg_sys::Relation,
+    uniqueness: pg_sys::IndexUniqueCheck::Type,
+    _index_unchanged: bool,
+    info: *mut pg_sys::IndexInfo,
 ) -> bool {
-    unavailable()
+    crate::compatibility::database();
+    if uniqueness != pg_sys::IndexUniqueCheck::UNIQUE_CHECK_NO {
+        unavailable();
+    }
+    // safety: core retains both relations and IndexInfo; C checks persistence/layout.
+    unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
+    // safety: evaluated key arrays and the root belong to this guarded insertion.
+    unsafe { insert_value(index, heap, values, nulls, heap_tid) };
+    false
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn insert_cleanup(
+    _index: pg_sys::Relation,
+    _info: *mut pg_sys::IndexInfo,
+) {
+    // every insertion is already published; no statement cache or retained pins exist.
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn bulk_delete(
-    _info: *mut pg_sys::IndexVacuumInfo,
-    _stats: *mut pg_sys::IndexBulkDeleteResult,
-    _callback: pg_sys::IndexBulkDeleteCallback,
-    _state: *mut c_void,
+    info: *mut pg_sys::IndexVacuumInfo,
+    stats: *mut pg_sys::IndexBulkDeleteResult,
+    callback: pg_sys::IndexBulkDeleteCallback,
+    state: *mut c_void,
 ) -> *mut pg_sys::IndexBulkDeleteResult {
-    unavailable()
+    if callback.is_none() {
+        unavailable();
+    }
+    // safety: core supplies a live vacuum descriptor through the entire callback.
+    unsafe { vacuum_pass(info, stats, callback, state) }
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn vacuum_cleanup(
-    _info: *mut pg_sys::IndexVacuumInfo,
-    _stats: *mut pg_sys::IndexBulkDeleteResult,
+    info: *mut pg_sys::IndexVacuumInfo,
+    stats: *mut pg_sys::IndexBulkDeleteResult,
 ) -> *mut pg_sys::IndexBulkDeleteResult {
-    unavailable()
+    // safety: core initializes info; ANALYZE must not perform index reclamation.
+    if unsafe { (*info).analyze_only } || !stats.is_null() {
+        return stats;
+    }
+    // safety: no bulk-delete pass ran; reclaim abandoned data but remove no live owner.
+    unsafe { vacuum_pass(info, stats, None, std::ptr::null_mut()) }
+}
+
+/// # Safety
+/// info, stats and callback/state are the live PostgreSQL VACUUM parameters.
+unsafe fn vacuum_pass(
+    info: *mut pg_sys::IndexVacuumInfo,
+    stats: *mut pg_sys::IndexBulkDeleteResult,
+    callback: pg_sys::IndexBulkDeleteCallback,
+    state: *mut c_void,
+) -> *mut pg_sys::IndexBulkDeleteResult {
+    crate::compatibility::database();
+    // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
+    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    // safety: only live relation pointers enter the checked C compatibility gate.
+    unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
+    // safety: VACUUM and insertion share the writer interlock; the core callback
+    // decides removability once per owner, not independently per term occurrence.
+    let result = matching::stored(unsafe {
+        storage::with_writer(index, |store| mutable::vacuum(store, |root| {
+            if callback.is_none() {
+                return Ok(false);
+            }
+            let block = root.block();
+            let offset = root.offset();
+            Ok(native::call(|| native::pin_vacuum_removable(callback, state, block, offset)))
+        }))
+    });
+    // safety: PostgreSQL owns this initialized statistics record across VACUUM rounds.
+    unsafe {
+        let stats = if stats.is_null() {
+            pg_sys::palloc0(std::mem::size_of::<pg_sys::IndexBulkDeleteResult>())
+                .cast::<pg_sys::IndexBulkDeleteResult>()
+        } else {
+            stats
+        };
+        (*stats).num_pages = result.pages;
+        (*stats).estimated_count = false;
+        (*stats).num_index_tuples = result.live_documents as f64;
+        (*stats).tuples_removed += result.removed_documents as f64;
+        (*stats).pages_newly_deleted = matching::stored((*stats).pages_newly_deleted
+            .checked_add(result.reclaimed_pages).ok_or(Error::Limit("VACUUM pages")));
+        (*stats).pages_deleted = result.free_pages;
+        (*stats).pages_free = result.free_pages;
+        stats
+    }
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn cost_estimate(
-    _root: *mut pg_sys::PlannerInfo,
-    _path: *mut pg_sys::IndexPath,
-    _loops: f64,
-    _startup: *mut pg_sys::Cost,
-    _total: *mut pg_sys::Cost,
-    _selectivity: *mut pg_sys::Selectivity,
-    _correlation: *mut f64,
-    _pages: *mut f64,
+    root: *mut pg_sys::PlannerInfo,
+    path: *mut pg_sys::IndexPath,
+    loops: f64,
+    startup: *mut pg_sys::Cost,
+    total: *mut pg_sys::Cost,
+    selectivity: *mut pg_sys::Selectivity,
+    correlation: *mut f64,
+    pages: *mut f64,
 ) {
-    unavailable()
+    // safety: the planner provides live inputs and five distinct writable outputs.
+    unsafe { native::call(|| native::pin_index_cost(root, path, loops, startup, total, selectivity, correlation, pages)) };
 }
 
 #[pg_guard]
-unsafe extern "C-unwind" fn options(_options: pg_sys::Datum, validate: bool) -> *mut pg_sys::bytea {
-    // validate new options; ignore unsupported options during catalog loading.
-    if validate {
-        unavailable();
+unsafe extern "C-unwind" fn options(
+    _options: pg_sys::Datum,
+    validate: bool,
+) -> *mut pg_sys::bytea {
+    if !validate {
+        return std::ptr::null_mut();
     }
-    std::ptr::null_mut()
+    unavailable();
 }
 
 #[pg_guard]
-unsafe extern "C-unwind" fn validate_opclass(_oid: pg_sys::Oid) -> bool {
-    false
+unsafe extern "C-unwind" fn validate_opclass(opclass: pg_sys::Oid) -> bool {
+    // safety: the catalog OID is checked through PostgreSQL's syscache routines.
+    unsafe { native::call(|| native::pin_opclass_validate(opclass)) }
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn adjust_members(
     _family: pg_sys::Oid,
-    _class: pg_sys::Oid,
-    _operators: *mut pg_sys::List,
-    _functions: *mut pg_sys::List,
+    class: pg_sys::Oid,
+    operators: *mut pg_sys::List,
+    functions: *mut pg_sys::List,
 ) {
     #[cfg(feature = "test-hooks")]
     let _probe = crate::test_hooks::DropProbe;
-    unavailable()
+    // safety: core owns both OpFamilyMember lists; C only validates their contents.
+    unsafe { native::call(|| native::pin_opclass_adjust(class, operators, functions)) };
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn begin_scan(
-    _index: pg_sys::Relation,
-    _keys: i32,
-    _orderbys: i32,
+    index: pg_sys::Relation,
+    keys: i32,
+    orderbys: i32,
 ) -> pg_sys::IndexScanDesc {
-    unavailable()
+    crate::compatibility::database();
+    // safety: core holds a live index relation; C allocates the core descriptor and
+    // a context-owned integer capacity record, with no Rust destructor requirement.
+    unsafe {
+        native::call(|| native::pin_storage_check(index, std::ptr::null_mut(), std::ptr::null_mut()));
+        native::call(|| native::pin_scan_begin(index, keys, orderbys))
+    }
 }
 
 #[pg_guard]
 unsafe extern "C-unwind" fn rescan(
-    _scan: pg_sys::IndexScanDesc,
-    _keys: pg_sys::ScanKey,
-    _nkeys: i32,
+    scan: pg_sys::IndexScanDesc,
+    keys: pg_sys::ScanKey,
+    key_count: i32,
     _orderbys: pg_sys::ScanKey,
-    _norderbys: i32,
+    orderby_count: i32,
 ) {
-    unavailable()
+    // safety: core owns scan and key arrays; C bounds the copy and preserves NULL keys.
+    unsafe { native::call(|| native::pin_scan_rescan(scan, keys, key_count, orderby_count)) };
 }
 
 #[pg_guard]
-unsafe extern "C-unwind" fn end_scan(_scan: pg_sys::IndexScanDesc) {
-    // begin_scan cannot create resources in g0.
+unsafe extern "C-unwind" fn bitmap(scan: pg_sys::IndexScanDesc, bitmap: *mut pg_sys::TIDBitmap) -> i64 {
+    // safety: core owns the descriptor, current MVCC snapshot and key array.
+    unsafe { native::call(|| native::pin_scan_validate(scan)) };
+    // safety: C validated the dimensions; copy scalars rather than retain C field borrows.
+    let (index, key_count, keys) = unsafe { ((*scan).indexRelation, (*scan).numberOfKeys, (*scan).keyData) };
+    let mut chosen = None;
+    let mut cost = usize::MAX;
+    for position in 0..key_count as usize {
+        storage::interrupt();
+        // safety: position is bounded by the validated initialized scan-key array.
+        let (datum, null) = unsafe {
+            let key = keys.add(position);
+            ((*key).sk_argument, (*key).sk_flags & pg_sys::SK_ISNULL as i32 != 0)
+        };
+        if null {
+            return 0;
+        }
+        // safety: the exact registered operator accepts the validated bytea-based query
+        // domain; pgrx detoasts in this callback's context and no borrow escapes it.
+        let bytes = unsafe { <&[u8] as FromDatum>::from_datum(datum, false) };
+        let bytes = matching::input(bytes.ok_or(Error::InvalidParameters));
+        let query = matching::input(Query::decode(bytes, QueryLimits::default()));
+        let plan = matching::input(CandidatePlan::build(&query, matching::QUERY_MEMORY));
+        let next_cost = match &plan {
+            CandidatePlan::Empty => 0,
+            CandidatePlan::Universe => usize::MAX,
+            CandidatePlan::Terms(terms) => terms.len(),
+        };
+        drop(plan);
+        if chosen.is_none() || next_cost < cost {
+            cost = next_cost;
+            chosen = Some(query);
+        }
+    }
+    let query = matching::input(chosen.ok_or(Error::InvalidParameters));
+    let plan = matching::input(CandidatePlan::build(&query, matching::QUERY_MEMORY));
+    // safety: core retains index and bitmap through this synchronous bitmap callback.
+    let mut store = matching::stored(unsafe { storage::PgStore::read_only(index) });
+    // safety: the caller's existing bitmap remains writable for the complete scan.
+    let mut sink = unsafe { storage::BitmapSink::new(bitmap) };
+    let count = matching::stored(mutable::scan(&mut store, &plan, |root| sink.push(root)));
+    sink.flush();
+    matching::stored(i64::try_from(count).map_err(|_| Error::Limit("bitmap accounting")))
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn end_scan(scan: pg_sys::IndexScanDesc) {
+    // safety: release only our context-owned capacity record, never the core descriptor.
+    unsafe { native::call(|| native::pin_scan_end(scan)) };
 }

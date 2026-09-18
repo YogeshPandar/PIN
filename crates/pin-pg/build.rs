@@ -1,4 +1,4 @@
-//! builds a scalar c probe against the same server headers as pgrx.
+//! builds audited C adapters against the same server headers as pgrx.
 //! no downloads, rust installation, or cross-compilation occur here.
 //! ownership and command contracts: docs/api-evidence.md, build01.
 #![forbid(unsafe_code)]
@@ -37,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     for name in ["PGRX_PG_CONFIG_PATH", "CC", "AR"] {
         println!("cargo:rerun-if-env-changed={name}");
     }
-    for name in ["cshim/pin_abi.c", "cshim/pin_abi.h", "cshim/am_fields.def"] {
+    for name in ["cshim/pin_abi.c", "cshim/pin_abi.h", "cshim/am_fields.def", "cshim/pin_storage.c", "cshim/pin_storage.h"] {
         println!("cargo:rerun-if-changed={name}");
     }
     let host = env::var("HOST")?;
@@ -59,23 +59,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-changed={}", Path::new(&pg_config).display());
     println!("cargo:rerun-if-changed={server_include}");
     let out = PathBuf::from(env::var_os("OUT_DIR").ok_or("OUT_DIR is missing")?);
-    let object = out.join("pin_abi.o");
+    let mut objects = Vec::new();
     let archive = out.join("libpin_abi.a");
     let cc = env::var_os("CC").unwrap_or_else(|| "cc".into());
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
-    let mut compile = Command::new(cc);
+    for source in ["pin_abi", "pin_storage"] {
+    let object = out.join(format!("{source}.o"));
+    let mut compile = Command::new(&cc);
     compile
         .arg("-D_GNU_SOURCE")
         .args([
             "-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-I",
         ])
-        .arg(server_include)
+        .arg(&server_include)
         .arg("-I")
-        .arg(include)
-        .args(["-c", "cshim/pin_abi.c", "-o"])
+        .arg(&include)
+        .arg("-c").arg(format!("cshim/{source}.c")).arg("-o")
         .arg(&object);
     run(&mut compile)?;
-    run(Command::new(ar).arg("crs").arg(&archive).arg(&object))?;
+    objects.push(object);
+    }
+    run(Command::new(ar).arg("crs").arg(&archive).args(&objects))?;
     println!("cargo:rustc-link-search=native={}", out.display());
     println!("cargo:rustc-link-lib=static=pin_abi");
     Ok(())

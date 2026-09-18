@@ -41,13 +41,15 @@ def check_sources(source: dict[str, str]) -> list[str]:
         values = dict(entries)
         false_flags = expected[4:23]
         if any(values.get(flag) != "false" for flag in false_flags):
-            errors.append("G0 cannot advertise an unimplemented boolean capability")
+            errors.append("G2 cannot advertise an unimplemented boolean capability")
         for field in (
-            "amgettuple", "amgetbitmap", "amcanreturn", "amestimateparallelscan",
+            "amgettuple", "amcanreturn", "amestimateparallelscan",
             "aminitparallelscan", "amparallelrescan",
         ):
             if values.get(field) != "None":
-                errors.append(f"{field} must stay disabled in G0")
+                errors.append(f"{field} must stay disabled before its implementation gate")
+        if values.get("amgetbitmap") != "Some(bitmap)" or values.get("aminsertcleanup") != "Some(insert_cleanup)":
+            errors.append("G2 requires guarded bitmap and insert-cleanup callbacks")
         for field, value in entries:
             callback = re.fullmatch(r"Some\((\w+)\)", value)
             if callback and not re.search(
@@ -68,7 +70,7 @@ def check_sources(source: dict[str, str]) -> list[str]:
     ):
         errors.append("test hooks must be excluded from the default build")
     hooks = source[SOURCE_PATHS[6]]
-    if "REVOKE ALL ON FUNCTION" not in hooks or "FROM PUBLIC;" not in hooks:
+    if hooks.count("REVOKE ALL ON FUNCTION") != hooks.count("FROM PUBLIC;") or "FROM PUBLIC;" not in hooks:
         errors.append("test hook execution privileges must be revoked from PUBLIC")
     hook_names = re.findall(r"^fn (g0_\w+)\(", hooks, re.M)
     for name in hook_names:
