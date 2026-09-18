@@ -1,6 +1,6 @@
 # G2 durable bitmap baseline
 
-Status: implementation in progress; not an accepted G2 gate or a performance claim.
+Status: G2 baseline implemented and passing the pinned PostgreSQL 18.6 qualification; not a performance or later-gate claim.
 The branch starts at `8d3885ae32a89321f3dba99cdcd9c990b77a0381`.
 
 ## Candidate contract
