@@ -1,4 +1,4 @@
-//! PostgreSQL-owned host boundary for the experimental G2 bitmap baseline.
+//! PostgreSQL-owned host boundary for G4 streaming bitmap query execution.
 //! abi, ownership, and error contracts are recorded in docs/api-evidence.md.
 
 #[cfg(not(feature = "pg18"))]
@@ -46,7 +46,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G2: durable bitmap baseline; advanced paths gated"
+    "G4: streaming bitmap query execution; advanced paths gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]
