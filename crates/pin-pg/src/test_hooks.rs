@@ -86,9 +86,7 @@ fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
 
 pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
     let action = STORAGE_HOOK.with(|hook| {
-        let Some((target, remaining, pause)) = hook.get() else {
-            return None;
-        };
+        let (target, remaining, pause) = hook.get()?;
         if target != stage as u8 {
             return None;
         }
