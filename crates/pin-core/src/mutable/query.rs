@@ -135,27 +135,55 @@ impl<'q> Plan<'q> {
 
     fn open<S: PageStore>(&mut self, store: &mut S) -> Result<()> {
         let meta = load(store, 0, PageKind::Meta)?;
-        for node in &self.nodes {
-            let Node::Term { text, cursor } = node else {
+        for index in 0..self.nodes.len() {
+            let Node::Term { text, cursor } = self.nodes[index] else {
                 continue;
             };
-            if *cursor == UNUSED {
+            if cursor == UNUSED {
+                continue;
+            }
+            // reuse immutable term metadata; duplicate cursors still advance independently.
+            if self.nodes[..index].iter().any(|node| {
+                matches!(
+                    *node,
+                    Node::Term {
+                        text: previous,
+                        cursor
+                    } if cursor != UNUSED && previous == text
+                )
+            }) {
                 continue;
             }
             store.interrupt()?;
-            if let Some((dictionary, reference)) = find_term(store, &meta, text)? {
-                let entry = dictionary.term(reference)?;
-                self.cursors[*cursor] = Cursor {
-                    current: Some(entry.first),
-                    chain: Some(Chain {
-                        reference,
-                        block: entry.head,
-                        tail: entry.tail,
-                        remaining: store.blocks()?,
-                        previous: entry.first,
-                        page: None,
-                    }),
+            let Some((dictionary, reference)) = find_term(store, &meta, text)? else {
+                continue;
+            };
+            let entry = dictionary.term(reference)?;
+            let first = entry.first;
+            let head = entry.head;
+            let tail = entry.tail;
+            let remaining = store.blocks()?;
+            for node in &self.nodes[index..] {
+                let Node::Term {
+                    text: duplicate,
+                    cursor,
+                } = *node
+                else {
+                    continue;
                 };
+                if cursor != UNUSED && duplicate == text {
+                    self.cursors[cursor] = Cursor {
+                        current: Some(first),
+                        chain: Some(Chain {
+                            reference,
+                            block: head,
+                            tail,
+                            remaining,
+                            previous: first,
+                            page: None,
+                        }),
+                    };
+                }
             }
         }
         Ok(())
@@ -166,6 +194,55 @@ impl<'q> Plan<'q> {
         store: &mut S,
         target: Option<OwnerRef>,
     ) -> Result<Option<OwnerRef>> {
+        // bypass the continuation stack for common one- and two-term roots.
+        match self.nodes[self.root] {
+            Node::Term { cursor, .. } => {
+                return self.cursors[cursor].seek(store, target, true);
+            }
+            Node::And(left, right) => {
+                if let (
+                    Node::Term {
+                        cursor: left_cursor,
+                        ..
+                    },
+                    Node::Term {
+                        cursor: right_cursor,
+                        ..
+                    },
+                ) = (self.nodes[left], self.nodes[right])
+                {
+                    return seek_pair_and(
+                        &mut self.cursors,
+                        store,
+                        left_cursor,
+                        right_cursor,
+                        target,
+                    );
+                }
+            }
+            Node::Or(left, right) => {
+                if let (
+                    Node::Term {
+                        cursor: left_cursor,
+                        ..
+                    },
+                    Node::Term {
+                        cursor: right_cursor,
+                        ..
+                    },
+                ) = (self.nodes[left], self.nodes[right])
+                {
+                    return seek_pair_or(
+                        &mut self.cursors,
+                        store,
+                        left_cursor,
+                        right_cursor,
+                        target,
+                    );
+                }
+            }
+            Node::Empty | Node::Universe => return Err(Error::InvalidState),
+        }
         self.tasks.clear();
         self.tasks.push(Task::Seek {
             node: self.root,
@@ -341,6 +418,71 @@ impl Cursor {
                 .advance(store)?;
         }
         Ok(self.current)
+    }
+}
+
+fn cursor_pair(
+    cursors: &mut [Cursor],
+    left: usize,
+    right: usize,
+) -> Result<(&mut Cursor, &mut Cursor)> {
+    if left == right || left >= cursors.len() || right >= cursors.len() {
+        return Err(Error::InvalidState);
+    }
+    if left < right {
+        let (before, after) = cursors.split_at_mut(right);
+        Ok((&mut before[left], &mut after[0]))
+    } else {
+        let (before, after) = cursors.split_at_mut(left);
+        Ok((&mut after[0], &mut before[right]))
+    }
+}
+
+fn seek_pair_and<S: PageStore>(
+    cursors: &mut [Cursor],
+    store: &mut S,
+    left: usize,
+    right: usize,
+    target: Option<OwnerRef>,
+) -> Result<Option<OwnerRef>> {
+    let (left, right) = cursor_pair(cursors, left, right)?;
+    let mut left_value = left.seek(store, target, true)?;
+    let mut right_value = right.seek(store, target, true)?;
+    loop {
+        let (Some(left_owner), Some(right_owner)) = (left_value, right_value) else {
+            return Ok(None);
+        };
+        match compare(left_owner, right_owner)? {
+            Ordering::Equal => return Ok(Some(left_owner)),
+            Ordering::Less => {
+                left_value = left.seek(store, Some(right_owner), false)?;
+            }
+            Ordering::Greater => {
+                right_value = right.seek(store, Some(left_owner), false)?;
+            }
+        }
+    }
+}
+
+fn seek_pair_or<S: PageStore>(
+    cursors: &mut [Cursor],
+    store: &mut S,
+    left: usize,
+    right: usize,
+    target: Option<OwnerRef>,
+) -> Result<Option<OwnerRef>> {
+    let (left, right) = cursor_pair(cursors, left, right)?;
+    let left = left.seek(store, target, true)?;
+    let right = right.seek(store, target, true)?;
+    match (left, right) {
+        (Some(left), Some(right)) => Ok(Some(
+            if compare(left, right)? == Ordering::Greater {
+                right
+            } else {
+                left
+            },
+        )),
+        (left, right) => Ok(left.or(right)),
     }
 }
 
