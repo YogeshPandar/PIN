@@ -59,7 +59,6 @@ pgrx::extension_sql!(
     ]
 );
 
-
 thread_local! {
     static STORAGE_HOOK: Cell<Option<(u8, u32, bool)>> = const { Cell::new(None) };
 }
@@ -69,20 +68,30 @@ thread_local! {
 fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
     // safety: pgrx enters this function on the backend main thread.
     if !unsafe { pg_sys::superuser() } {
-        pgrx::ereport!(ERROR, PgSqlErrorCode::ERRCODE_INSUFFICIENT_PRIVILEGE,
-                      "Pin test injection requires a superuser");
+        pgrx::ereport!(
+            ERROR,
+            PgSqlErrorCode::ERRCODE_INSUFFICIENT_PRIVILEGE,
+            "Pin test injection requires a superuser"
+        );
     }
     if !(1..=8).contains(&stage) || !(1..=4096).contains(&occurrence) {
-        pgrx::ereport!(ERROR, PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
-                      "invalid Pin test transition or occurrence");
+        pgrx::ereport!(
+            ERROR,
+            PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
+            "invalid Pin test transition or occurrence"
+        );
     }
     STORAGE_HOOK.with(|hook| hook.set(Some((stage as u8, occurrence as u32, pause))));
 }
 
 pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
     let action = STORAGE_HOOK.with(|hook| {
-        let Some((target, remaining, pause)) = hook.get() else { return None; };
-        if target != stage as u8 { return None; }
+        let Some((target, remaining, pause)) = hook.get() else {
+            return None;
+        };
+        if target != stage as u8 {
+            return None;
+        }
         if remaining > 1 {
             hook.set(Some((target, remaining - 1, pause)));
             return None;
@@ -92,8 +101,11 @@ pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
     });
     match action {
         Some(false) => {
-            pgrx::ereport!(ERROR, PgSqlErrorCode::ERRCODE_INTERNAL_ERROR,
-                          "Pin G2 injected publication error");
+            pgrx::ereport!(
+                ERROR,
+                PgSqlErrorCode::ERRCODE_INTERNAL_ERROR,
+                "Pin G2 injected publication error"
+            );
         }
         Some(true) => {
             // a test driver holds this fixed key and confirms the wait in pg_locks.
