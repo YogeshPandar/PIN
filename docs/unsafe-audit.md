@@ -1,9 +1,11 @@
 # G0 unsafe boundary register
 
-Review state: implementation self-review performed; independent reviewers are
-not assigned. None of these entries is independently approved. G0 remains open.
-See the identically named entries in [api-evidence.md](api-evidence.md) for pinned
-upstream contracts and exact local obligations.
+Review state: implementation self-review and executable CI validation are
+complete on code head `6b4c93938f6fd252ed66ebf0debafcc352769eed`.
+G0 boundary run 62 passed every executable validation listed below. Independent
+reviewers are not assigned, so none of these entries is independently approved.
+See the identically named entries in [api-evidence.md](api-evidence.md) for
+pinned upstream contracts and exact local obligations.
 
 | ID | Operations | Safety argument | Required validation |
 |---|---|---|---|
@@ -21,5 +23,9 @@ registrations, or ResourceOwner resources to release in this slice. Their future
 introduction requires a new audit and real ERROR/abort/backend-death testing.
 
 The test-only Drop probe makes no host calls and uses no unsafe code. It tests
-stack unwinding, not the safety of a future resource wrapper. Source inventory
-checks are drift detection, not type checking or a memory-safety proof.
+stack unwinding, not the safety of a future resource wrapper. G0 boundary run 62
+passed the normal lifecycle suite, host-boundary Clippy with warnings denied,
+test-hook installation, repeated guarded PostgreSQL/Rust/Pin errors, permission
+checks, and exact destructor accounting. Source inventory checks are drift
+detection, not type checking or a memory-safety proof. Independent unsafe review
+remains a separate acceptance requirement.

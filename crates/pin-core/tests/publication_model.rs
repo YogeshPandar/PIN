@@ -182,7 +182,11 @@ fn checked_model_explores_every_reachable_state() {
     // the independent packed-state fixed-point oracle generates this fixture.
     assert_eq!(result.states, expected);
     assert_eq!(result.edges, [2, 2, 1, 7, 16, 8, 6, 9, 4, 12, 9]);
-    assert!(result.counterexample.is_none(), "{:?}", result.counterexample);
+    assert!(
+        result.counterexample.is_none(),
+        "{:?}",
+        result.counterexample
+    );
     println!(
         "publication model: {} states, {} edges",
         result.states.len(),

@@ -2,11 +2,14 @@
 
 Verified against PostgreSQL 18.6 (`724edf9bde9d356724ad384a2e196edc3c9f80f7`),
 pgrx 0.19.2 (`70383e884582d1bcc7cd681d10886b995a2830cb`), and Rust 1.98.1.
-Review date: 17 September 2026. These are implementation contracts, not a claim
-that the new boundary has passed compilation or runtime tests.
+Review date: 18 September 2026. G0 boundary run 62 passed on code head
+`6b4c93938f6fd252ed66ebf0debafcc352769eed`; Review artifacts run 26 passed
+on the same head. This records observed CI evidence, not an independent unsafe
+approval.
 
 Every unsafe entry below still needs an independently assigned reviewer. No
-reviewer is recorded as having approved it. G0 remains open.
+reviewer is recorded as having approved it. G0 executable validation is green;
+independent unsafe review remains outstanding.
 
 ## ABI01: independent header and binding probes
 
@@ -32,8 +35,10 @@ limit. No guessed four-page generic-WAL limit is used. No on-disk bytes are
 encoded by these probes. Compiled layout agreement is not a server-fork audit.
 
 Evidence: compiler static assertions; `pin.abi_check()`; `smoke.sql`; source
-inventory tests and deliberately mutated inventories. C/Rust compilation and
-runtime comparison must run in CI; Python inventory checks do not replace them.
+inventory tests and deliberately mutated inventories. G0 boundary run 62
+compiled the C/Rust boundary and passed the runtime comparison against the
+pinned PostgreSQL 18.6 build. Python inventory checks remain drift detection,
+not a replacement for compiled validation.
 
 ## AM01: registration, allocation, and guarded callbacks
 
@@ -134,9 +139,10 @@ exercising the real registered C-to-Rust callback rather than a direct helper.
 
 Evidence: `errors.sql` repeats four failures in 32 rounds and requires exactly
 128 destructor increments, preserved SQLSTATE and PostgreSQL detail, no surviving
-opclass, and continued backend operation. These authored tests have not run on
-this branch. They do not prove buffer/ResourceOwner cleanup or backend-death
-recovery, because G0 has not acquired those resources.
+opclass, and continued backend operation. G0 boundary run 62 passed this guarded
+error-probe suite with the `test-hooks` build after host-boundary Clippy passed
+with warnings denied. These tests do not prove buffer/ResourceOwner cleanup or
+backend-death recovery, because G0 has not acquired those resources.
 
 ## BUILD01: native C compilation and matching host headers
 
@@ -147,16 +153,20 @@ Authority: [Cargo build scripts](https://doc.rust-lang.org/cargo/reference/build
 [`pg_config`](https://www.postgresql.org/docs/18/app-pgconfig.html).
 
 The script requires the absolute `PGRX_PG_CONFIG_PATH` used by pgrx, native
-x86_64 Linux GNU, and PostgreSQL 18.6 headers. Compiler and archiver arguments are
-passed as separate arguments, not shell commands. `CC` and `AR`, when set, must
-be executable paths, not shell command strings. It checks every child exit code
-and UTF-8 metadata result, writes only to OUT_DIR, and never downloads tools.
-Cargo watches the selected pg_config, header tree, and local C inputs. The
-existing dependency graph and Cargo-generated lockfile remain unchanged.
+x86_64 Linux GNU, and PostgreSQL 18.6 headers. The Linux C probe defines
+`_GNU_SOURCE`, matching PostgreSQL 18.6's Linux build template, while retaining
+strict C11 warnings as errors. Compiler and archiver arguments are passed as
+separate arguments, not shell commands. `CC` and `AR`, when set, must be
+executable paths, not shell command strings. It checks every child exit code and
+UTF-8 metadata result, writes only to OUT_DIR, and never downloads tools. Cargo
+watches the selected pg_config, header tree, and local C inputs. The existing
+dependency graph and Cargo-generated lockfile remain unchanged.
 
-Evidence: manifest/source policy checks, CI C compilation, extension linking,
-installation, and disposable cluster suite. No native Rust or PostgreSQL tool
-is installed in the development VM.
+Evidence: G0 boundary run 62 passed manifest/source policy checks, Rust
+formatting, pure tests, pure Clippy, rustdoc, pinned PostgreSQL 18.6 compilation,
+C probe compilation, extension linking/install, disposable-cluster lifecycle
+tests, host-boundary Clippy, test-hook installation, and guarded error/permission
+tests. No native Rust or PostgreSQL tool is installed in the development VM.
 
 ## ID01 / RS01: unchanged pure identity and accounting contracts
 
