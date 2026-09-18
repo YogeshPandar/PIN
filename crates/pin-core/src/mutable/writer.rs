@@ -45,7 +45,13 @@ pub fn insert<S: PageStore>(
                 meta.set_free_head(page.next()?)?;
                 free
             };
-            let page = Page::fragment(block, owner, data_head, offset as u32, &document.bytes()[offset..end])?;
+            let page = Page::fragment(
+                block,
+                owner,
+                data_head,
+                offset as u32,
+                &document.bytes()[offset..end],
+            )?;
             if free == NO_BLOCK {
                 store.commit(&[&page])?;
             } else {
@@ -82,19 +88,39 @@ fn reserve_owner<S: PageStore>(
     let (head, tail) = meta.owner_chain()?;
     if head == NO_BLOCK {
         let mut page = Page::owners(allocate(store)?)?;
-        let owner = page.append_owner(incarnation, root, document.token_count(), document.term_count(), document.bytes())?
+        let owner = page
+            .append_owner(
+                incarnation,
+                root,
+                document.token_count(),
+                document.term_count(),
+                document.bytes(),
+            )?
             .ok_or(Error::InvalidState)?;
         meta.set_owner_chain(page.block(), page.block())?;
         store.commit(&[meta, &page])?;
         return Ok(owner);
     }
     let mut page = load(store, tail, PageKind::Owners)?;
-    if let Some(owner) = page.append_owner(incarnation, root, document.token_count(), document.term_count(), document.bytes())? {
+    if let Some(owner) = page.append_owner(
+        incarnation,
+        root,
+        document.token_count(),
+        document.term_count(),
+        document.bytes(),
+    )? {
         store.commit(&[meta, &page])?;
         return Ok(owner);
     }
     let mut next = Page::owners(allocate(store)?)?;
-    let owner = next.append_owner(incarnation, root, document.token_count(), document.term_count(), document.bytes())?
+    let owner = next
+        .append_owner(
+            incarnation,
+            root,
+            document.token_count(),
+            document.term_count(),
+            document.bytes(),
+        )?
         .ok_or(Error::InvalidState)?;
     page.set_next(next.block())?;
     meta.set_owner_chain(head, next.block())?;
@@ -102,7 +128,12 @@ fn reserve_owner<S: PageStore>(
     Ok(owner)
 }
 
-fn link_term<S: PageStore>(store: &mut S, meta: &mut Page, text: &str, owner: OwnerRef) -> Result<()> {
+fn link_term<S: PageStore>(
+    store: &mut S,
+    meta: &mut Page,
+    text: &str,
+    owner: OwnerRef,
+) -> Result<()> {
     if let Some((mut dictionary, reference)) = find_term(store, meta, text)? {
         let term = dictionary.term(reference)?;
         let (head, tail) = (term.head, term.tail);
