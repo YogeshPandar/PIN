@@ -7,7 +7,7 @@ use crate::native;
 use pgrx::pg_sys;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
-use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
+use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page};
 use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 
@@ -154,9 +154,9 @@ impl PageStore for PgStore<'_> {
             blocks[slot] = page.block();
             pointers[slot] = page.bytes().as_ptr();
             lengths[slot] = page.bytes().len() as u32;
-            // zero-page recovery needs a full image; existing payload pages use deltas.
+            // only new storage needs a full image; existing standard pages use deltas.
             full[slot] =
-                self.extended == Some(page.block()) || page.kind() == PageKind::Free;
+                self.extended == Some(page.block()) || page.requires_full_image();
         }
         let index = self.index;
         let count_u32 = count as u32;
