@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "\${PGRX_PG_CONFIG_PATH:?set the PostgreSQL 18.6 pg_config path}"
+: "${PGRX_PG_CONFIG_PATH:?set the PostgreSQL 18.6 pg_config path}"
 if [[ $(id -u) == 0 ]]; then
   echo 'Run G2 qualification as an unprivileged user.' >&2
   exit 2
 fi
 
-root=$(cd -- "$(dirname -- "\${BASH_SOURCE[0]}")/.." && pwd)
+root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 bin=$("$PGRX_PG_CONFIG_PATH" --bindir)
 if [[ $("$PGRX_PG_CONFIG_PATH" --version) != 'PostgreSQL 18.6' ]]; then
   echo 'G2 qualification requires PostgreSQL 18.6.' >&2
@@ -45,25 +45,25 @@ CONF
 "$bin/pg_ctl" -D "$work/data" -l "$work/postgres.log" -w start
 psql=("$bin/psql" -X -h "$work/socket" -p "$port" -d postgres -v ON_ERROR_STOP=1)
 
-"\${psql[@]}" -c 'CREATE EXTENSION pin;'
-if [[ $("\${psql[@]}" -Atqc "SELECT to_regprocedure('pin.g2_inject(integer,integer,boolean)') IS NOT NULL") != t ]]; then
+"${psql[@]}" -c 'CREATE EXTENSION pin;'
+if [[ $("${psql[@]}" -Atqc "SELECT to_regprocedure('pin.g2_inject(integer,integer,boolean)') IS NOT NULL") != t ]]; then
   echo 'G2 qualification requires the test-hooks build.' >&2
   exit 1
 fi
 
-"\${psql[@]}" -f "$root/tests/sql/g2_transactions.sql" | tee "$work/transactions.log"
+"${psql[@]}" -f "$root/tests/sql/g2_transactions.sql" | tee "$work/transactions.log"
 
 start_blocker() {
   local app=$1
   local key=$2
-  PGAPPNAME="$app" "\${psql[@]}" \
+  PGAPPNAME="$app" "${psql[@]}" \
     -c "SELECT pg_advisory_lock(180006, $key); SELECT pg_sleep(600);" \
     >"$work/$app.log" 2>&1 &
   blocker_client_pid=$!
 
   blocker_backend_pid=
   for _ in $(seq 1 200); do
-    blocker_backend_pid=$("\${psql[@]}" -Atqc \
+    blocker_backend_pid=$("${psql[@]}" -Atqc \
       "SELECT a.pid FROM pg_stat_activity a JOIN pg_locks l USING (pid)
        WHERE a.application_name = '$app' AND l.locktype = 'advisory' AND l.granted
        LIMIT 1")
@@ -78,7 +78,7 @@ start_blocker() {
 wait_for_advisory_waiter() {
   local app=$1
   for _ in $(seq 1 200); do
-    if [[ $("\${psql[@]}" -Atqc \
+    if [[ $("${psql[@]}" -Atqc \
       "SELECT EXISTS (
          SELECT FROM pg_stat_activity a JOIN pg_locks l USING (pid)
          WHERE a.application_name = '$app'
@@ -95,13 +95,13 @@ wait_for_advisory_waiter() {
 }
 
 terminate_blocker() {
-  "\${psql[@]}" -Atqc "SELECT pg_terminate_backend($blocker_backend_pid)" >/dev/null
+  "${psql[@]}" -Atqc "SELECT pg_terminate_backend($blocker_backend_pid)" >/dev/null
   wait "$blocker_client_pid" || true
 }
 
 # fix one repeatable-read snapshot while writes commit.
 start_blocker pin-g2-concurrency-blocker 3
-PGAPPNAME=pin-g2-concurrency-reader "\${psql[@]}" \
+PGAPPNAME=pin-g2-concurrency-reader "${psql[@]}" \
   -f "$root/tests/sql/g2_concurrent_reader.sql" >"$work/concurrent-reader.log" 2>&1 &
 reader_pid=$!
 wait_for_advisory_waiter pin-g2-concurrency-reader
@@ -112,13 +112,13 @@ for i in $(seq 1 64); do
   printf "INSERT INTO public.g2_concurrent(id, body) VALUES (%d, 'concurrent alpha writer'); SELECT pg_sleep(0.01);\n" \
     "$((21000 + i))" >>"$writer_sql"
 done
-PGAPPNAME=pin-g2-concurrency-writer "\${psql[@]}" -f "$writer_sql" \
+PGAPPNAME=pin-g2-concurrency-writer "${psql[@]}" -f "$writer_sql" \
   >"$work/concurrent-writer.log" 2>&1 &
 writer_pid=$!
 
 visible=0
 for _ in $(seq 1 200); do
-  visible=$("\${psql[@]}" -Atqc 'SELECT count(*) FROM public.g2_concurrent')
+  visible=$("${psql[@]}" -Atqc 'SELECT count(*) FROM public.g2_concurrent')
   (( visible > 8 )) && break
   sleep 0.05
 done
@@ -132,7 +132,7 @@ wait "$reader_pid"
 wait "$writer_pid"
 
 "$bin/pg_ctl" -D "$work/data" -m fast -w restart -l "$work/postgres.log"
-"\${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-restart.log"
+"${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-restart.log"
 
 check_count() {
   local term=$1
@@ -144,13 +144,13 @@ check_count() {
 
   local sequential indexed plan
   sequential=$(PGOPTIONS='-c enable_seqscan=on -c enable_bitmapscan=off -c enable_indexscan=off -c enable_indexonlyscan=off' \
-    "\${psql[@]}" -Atq -c \
+    "${psql[@]}" -Atq -c \
     "SELECT count(*) FROM public.g2_crash_docs WHERE body OPERATOR(pin.@@@) pin.parse_query('$term')")
   indexed=$(PGOPTIONS='-c enable_seqscan=off -c enable_bitmapscan=on -c enable_indexscan=off -c enable_indexonlyscan=off' \
-    "\${psql[@]}" -Atq -c \
+    "${psql[@]}" -Atq -c \
     "SELECT count(*) FROM public.g2_crash_docs WHERE body OPERATOR(pin.@@@) pin.parse_query('$term')")
   plan=$(PGOPTIONS='-c enable_seqscan=off -c enable_bitmapscan=on -c enable_indexscan=off -c enable_indexonlyscan=off' \
-    "\${psql[@]}" -Atq -c \
+    "${psql[@]}" -Atq -c \
     "EXPLAIN (FORMAT JSON) SELECT id FROM public.g2_crash_docs WHERE body OPERATOR(pin.@@@) pin.parse_query('$term')")
 
   if [[ $plan != *'Bitmap Index Scan'* ]]; then
@@ -165,12 +165,12 @@ check_count() {
 
 terms=(crashone crashtwo crashthree crashfour crashfive crashsix)
 for stage in $(seq 1 6); do
-  term=\${terms[$((stage - 1))]}
+  term=${terms[$((stage - 1))]}
   blocker_app="pin-g2-crash-blocker-$stage"
   inserter_app="pin-g2-crash-$stage"
 
   start_blocker "$blocker_app" 2
-  PGAPPNAME="$inserter_app" "\${psql[@]}" -c \
+  PGAPPNAME="$inserter_app" "${psql[@]}" -c \
     "SELECT pin.g2_inject($stage, 1, true);
      INSERT INTO public.g2_crash_docs(id, body)
      VALUES ($((30000 + stage)), repeat('$term alpha beta gamma ', 5000));" \
@@ -188,9 +188,9 @@ for stage in $(seq 1 6); do
   check_count stable 1
   check_count "$term" 0
 
-  "\${psql[@]}" -c 'VACUUM (INDEX_CLEANUP ON) public.g2_crash_docs;'
+  "${psql[@]}" -c 'VACUUM (INDEX_CLEANUP ON) public.g2_crash_docs;'
   check_count "$term" 0
 done
 
-"\${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-crash.log"
+"${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-crash.log"
 "$bin/pg_ctl" -D "$work/data" -m fast -w stop
