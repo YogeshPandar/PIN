@@ -153,6 +153,7 @@ pub struct Page {
     block: u32,
     kind: PageKind,
     len: usize,
+    initialize: bool,
     bytes: [u8; CAPACITY],
 }
 
@@ -170,6 +171,7 @@ impl Page {
             block,
             kind: PageKind::Zero,
             len: 0,
+            initialize: false,
             bytes: [0; CAPACITY],
         };
         page.len = read(&mut page.bytes)?;
@@ -223,6 +225,7 @@ impl Page {
             block,
             kind,
             len: HEADER,
+            initialize: false,
             bytes: [0; CAPACITY],
         };
         let mut writer = Writer::new(&mut page.bytes);
@@ -297,6 +300,16 @@ impl Page {
         let mut page = Self::new(block, PageKind::Free)?;
         page.set_next(next)?;
         Ok(page)
+    }
+
+    pub fn free_from_zero(block: u32, next: u32) -> Result<Self> {
+        let mut page = Self::free(block, next)?;
+        page.initialize = true;
+        Ok(page)
+    }
+
+    pub const fn requires_full_image(&self) -> bool {
+        self.initialize
     }
 
     pub const fn block(&self) -> u32 {
