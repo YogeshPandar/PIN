@@ -74,7 +74,7 @@ fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
             "Pin test injection requires a superuser"
         );
     }
-    if !(1..=8).contains(&stage) || !(1..=4096).contains(&occurrence) {
+    if !(1..=12).contains(&stage) || !(1..=4096).contains(&occurrence) {
         pgrx::ereport!(
             ERROR,
             PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
@@ -102,7 +102,7 @@ pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
             pgrx::ereport!(
                 ERROR,
                 PgSqlErrorCode::ERRCODE_INTERNAL_ERROR,
-                "Pin G2 injected publication error"
+                "Pin injected storage error"
             );
         }
         Some(true) => {

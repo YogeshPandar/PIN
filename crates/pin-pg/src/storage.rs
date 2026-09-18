@@ -1,7 +1,7 @@
 //! adapts owned Rust page images to PostgreSQL buffers and generic WAL.
 //! the caller retains the relation lock; no page pointer escapes the C shim.
 //! normal paths unlock explicitly; PostgreSQL abort cleanup handles ERROR/panic.
-//! contracts and independent-review obligations: docs/g2-storage.md.
+//! contracts and independent-review obligations: docs/g3-storage.md.
 
 use crate::native;
 use pgrx::pg_sys;
@@ -23,7 +23,7 @@ impl PgStore<'_> {
     /// # Safety
     /// index must be a validated, open, locked relation on the backend main thread
     /// and remain so for every use of the returned store. no store escapes a callback.
-    pub(crate) unsafe fn read_only(index: pg_sys::Relation) -> Result<Self> {
+    unsafe fn read_only(index: pg_sys::Relation) -> Result<Self> {
         Ok(Self {
             index,
             layout: HeapLayout::new(crate::abi::constant(9) as u16)
@@ -52,6 +52,45 @@ pub(crate) unsafe fn with_writer<T>(
     let result = operation(&mut store);
     // safety: exactly one acquisition occurred; ERROR paths release via abort cleanup.
     unsafe { native::call(|| native::pin_writer_unlock(index)) };
+    result
+}
+
+/// holds the structural read barrier only while producing bitmap candidates.
+///
+/// # Safety
+/// index is validated and remains open/locked throughout the guarded callback.
+/// the result must not retain page references or use the store after this call.
+pub(crate) unsafe fn with_reader<T>(
+    index: pg_sys::Relation,
+    operation: impl FnOnce(&mut PgStore<'_>) -> Result<T>,
+) -> Result<T> {
+    // safety: the caller retains its validated relation throughout this operation.
+    let mut store = unsafe { PgStore::read_only(index)? };
+    // safety: a transaction-owned shared page lock prevents structural reclamation.
+    unsafe { native::call(|| native::pin_structure_lock(index, false)) };
+    #[cfg(feature = "test-hooks")]
+    crate::test_hooks::storage_event(Stage::ReaderPinned);
+    let result = operation(&mut store);
+    // safety: one shared acquisition precedes this call; ERROR uses abort cleanup.
+    unsafe { native::call(|| native::pin_structure_unlock(index, false)) };
+    result
+}
+
+/// excludes readers before writers, so no captured posting page can be recycled.
+///
+/// # Safety
+/// index has the same guarded lifetime as with_writer. no lock upgrade is allowed:
+/// the caller holds neither the structural barrier nor the writer interlock.
+pub(crate) unsafe fn with_maintenance<T>(
+    index: pg_sys::Relation,
+    operation: impl FnOnce(&mut PgStore<'_>) -> Result<T>,
+) -> Result<T> {
+    // safety: the caller owns neither interlock; relation lifetime covers both.
+    unsafe { native::call(|| native::pin_structure_lock(index, true)) };
+    // safety: structural exclusion precedes writer exclusion in every maintenance path.
+    let result = unsafe { with_writer(index, operation) };
+    // safety: one exclusive acquisition precedes this call; ERROR uses abort cleanup.
+    unsafe { native::call(|| native::pin_structure_unlock(index, true)) };
     result
 }
 
@@ -116,7 +155,10 @@ impl PageStore for PgStore<'_> {
             pointers[slot] = page.bytes().as_ptr();
             lengths[slot] = page.bytes().len() as u32;
             full[slot] = self.extended == Some(page.block())
-                || matches!(page.kind(), PageKind::Fragment | PageKind::Free);
+                || matches!(
+                    page.kind(),
+                    PageKind::Fragment | PageKind::Free | PageKind::SealedPostings
+                );
         }
         let index = self.index;
         let count_u32 = count as u32;

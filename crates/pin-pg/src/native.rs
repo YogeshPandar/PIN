@@ -14,6 +14,8 @@ unsafe extern "C-unwind" {
     );
     pub(crate) fn pin_writer_lock(index: pg_sys::Relation);
     pub(crate) fn pin_writer_unlock(index: pg_sys::Relation);
+    pub(crate) fn pin_structure_lock(index: pg_sys::Relation, exclusive: bool);
+    pub(crate) fn pin_structure_unlock(index: pg_sys::Relation, exclusive: bool);
     pub(crate) fn pin_storage_blocks(index: pg_sys::Relation) -> u32;
     pub(crate) fn pin_storage_extend(index: pg_sys::Relation) -> u32;
     pub(crate) fn pin_storage_read(

@@ -90,7 +90,7 @@ pub(crate) fn unavailable() -> ! {
     pgrx::ereport!(
         ERROR,
         pgrx::PgSqlErrorCode::ERRCODE_FEATURE_NOT_SUPPORTED,
-        "Pin does not support this operation in the G2 bitmap baseline"
+        "Pin does not support this operation in the bitmap baseline"
     );
 }
 
@@ -263,11 +263,11 @@ unsafe fn vacuum_pass(
     let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
-    // safety: VACUUM and insertion share the writer interlock; the core callback
+    // safety: readers are excluded before the writer lock; the core callback
     // decides removability once per owner, not independently per term occurrence.
     let result = matching::stored(unsafe {
-        storage::with_writer(index, |store| {
-            mutable::vacuum(store, |root| {
+        storage::with_maintenance(index, |store| {
+            let mut result = mutable::vacuum(store, |root| {
                 if callback.is_none() {
                     return Ok(false);
                 }
@@ -276,7 +276,19 @@ unsafe fn vacuum_pass(
                 Ok(native::call(|| {
                     native::pin_vacuum_removable(callback, state, block, offset)
                 }))
-            })
+            })?;
+            let compacted = mutable::compact(store)?;
+            result.reclaimed_pages = result
+                .reclaimed_pages
+                .checked_add(compacted.reclaimed_pages)
+                .ok_or(Error::Limit("VACUUM pages"))?;
+            result.free_pages = result
+                .free_pages
+                .checked_add(compacted.reclaimed_pages)
+                .and_then(|pages| pages.checked_sub(compacted.reused_pages))
+                .ok_or(Error::InvalidState)?;
+            result.pages = pin_core::mutable::PageStore::blocks(store)?;
+            Ok(result)
         })
     });
     // safety: PostgreSQL owns this initialized statistics record across VACUUM rounds.
@@ -431,11 +443,14 @@ unsafe extern "C-unwind" fn bitmap(
     }
     let query = matching::input(chosen.ok_or(Error::InvalidParameters));
     let plan = matching::input(CandidatePlan::build(&query, matching::QUERY_MEMORY));
-    // safety: core retains index and bitmap through this synchronous bitmap callback.
-    let mut store = matching::stored(unsafe { storage::PgStore::read_only(index) });
     // safety: the caller's existing bitmap remains writable for the complete scan.
     let mut sink = unsafe { storage::BitmapSink::new(bitmap) };
-    let count = matching::stored(mutable::scan(&mut store, &plan, |root| sink.push(root)));
+    // safety: the read barrier covers all page references, not later heap visibility work.
+    let count = matching::stored(unsafe {
+        storage::with_reader(index, |store| {
+            mutable::scan(store, &plan, |root| sink.push(root))
+        })
+    });
     sink.flush();
     matching::stored(i64::try_from(count).map_err(|_| Error::Limit("bitmap accounting")))
 }

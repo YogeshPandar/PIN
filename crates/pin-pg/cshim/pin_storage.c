@@ -1,6 +1,6 @@
 /* PostgreSQL-only page operations; Rust owns formats and publication state.
  * contracts: PostgreSQL 18.6 generic_xlog, tableam, bufpage, genam and lmgr.
- * lock order: writer page lock, ascending buffer content locks, generic WAL.
+ * lock order: structural barrier, writer lock, ascending buffers, generic WAL.
  * every entry runs inside pgrx's PG_TRY boundary; resource owners clean ERROR.
  */
 #include "postgres.h"
@@ -70,7 +70,7 @@ pin_storage_check(Relation index, Relation heap, struct IndexInfo *info)
         (info != NULL && (info->ii_Concurrent || info->ii_NumIndexAttrs != 1 ||
                           info->ii_NumIndexKeyAttrs != 1)))
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                        errmsg("Pin G2 requires a logged permanent heap table, one text key and a nonconcurrent build")));
+                        errmsg("Pin requires a logged permanent heap table, one text key and a nonconcurrent build")));
     if (RecoveryInProgress())
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                         errmsg("Pin index access during recovery is not supported")));
@@ -86,6 +86,19 @@ void
 pin_writer_unlock(Relation index)
 {
     UnlockPage(index, 0, ExclusiveLock);
+}
+
+/* lock tags 0 and 1 are logical interlocks, not retained buffer pins. */
+void
+pin_structure_lock(Relation index, bool exclusive)
+{
+    LockPage(index, 1, exclusive ? ExclusiveLock : ShareLock);
+}
+
+void
+pin_structure_unlock(Relation index, bool exclusive)
+{
+    UnlockPage(index, 1, exclusive ? ExclusiveLock : ShareLock);
 }
 
 uint32
