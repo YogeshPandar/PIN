@@ -22,14 +22,22 @@ fn prepared(text: &str) -> PreparedDocument {
 }
 
 fn root(index: u32) -> RootTid {
-    RootTid::new(index / 200 + 1, (index % 200 + 1) as u16, HeapLayout::new(291).unwrap()).unwrap()
+    RootTid::new(
+        index / 200 + 1,
+        (index % 200 + 1) as u16,
+        HeapLayout::new(291).unwrap(),
+    )
+    .unwrap()
 }
 
 fn scan(store: &mut MemoryStore, text: &str) -> Result<Vec<RootTid>> {
     let query = Query::parse(text, QueryLimits::default()).unwrap();
     let plan = CandidatePlan::build(&query, 1 << 20).unwrap();
     let mut rows = Vec::new();
-    mutable::scan(store, &plan, |root| { rows.push(root); Ok(()) })?;
+    mutable::scan(store, &plan, |root| {
+        rows.push(root);
+        Ok(())
+    })?;
     Ok(rows)
 }
 
@@ -58,14 +66,20 @@ fn free_list(store: &mut MemoryStore) -> BTreeSet<u32> {
         block = page.next().unwrap();
     }
     for block in 1..store.blocks().unwrap() {
-        assert_eq!(seen.contains(&block), store.read(block).unwrap().kind() == PageKind::Free);
+        assert_eq!(
+            seen.contains(&block),
+            store.read(block).unwrap().kind() == PageKind::Free
+        );
     }
     seen
 }
 
 fn owner(index: u32) -> OwnerRef {
-    OwnerRef { page: index / 200 + 1, slot: (index % 200) as u16,
-        incarnation: Incarnation::new(u64::from(index) + 1).unwrap() }
+    OwnerRef {
+        page: index / 200 + 1,
+        slot: (index % 200) as u16,
+        incarnation: Incarnation::new(u64::from(index) + 1).unwrap(),
+    }
 }
 
 #[test]
@@ -89,8 +103,13 @@ fn u64_varints_cover_boundaries_and_preserve_failed_cursors() {
             assert_eq!(reader.offset(), 0);
         }
     }
-    for bytes in [vec![0x80, 0], vec![0x81, 0], vec![0xff; 10],
-        [vec![0xff; 9], vec![2]].concat(), vec![0x80; 11]] {
+    for bytes in [
+        vec![0x80, 0],
+        vec![0x81, 0],
+        vec![0xff; 10],
+        [vec![0xff; 9], vec![2]].concat(),
+        vec![0x80; 11],
+    ] {
         let mut reader = Reader::new(&bytes);
         assert!(reader.var_u64().is_err());
         assert_eq!(reader.offset(), 0);
@@ -99,11 +118,16 @@ fn u64_varints_cover_boundaries_and_preserve_failed_cursors() {
 
 #[test]
 fn sealed_pages_round_trip_without_a_page_sized_reference_array() {
-    let term = TermRef { page: 99, offset: 16 };
+    let term = TermRef {
+        page: 99,
+        offset: 16,
+    };
     let mut builder = SealedBuilder::new(100, term).unwrap();
     let mut expected = Vec::new();
     for index in 0..10_000 {
-        if !builder.push(owner(index)).unwrap() { break; }
+        if !builder.push(owner(index)).unwrap() {
+            break;
+        }
         expected.push(owner(index));
     }
     assert!(expected.len() > 2500);
@@ -111,19 +135,29 @@ fn sealed_pages_round_trip_without_a_page_sized_reference_array() {
     page.validate(HeapLayout::new(291).unwrap()).unwrap();
     assert_eq!(page.kind(), PageKind::SealedPostings);
     assert_eq!(page.posting_term().unwrap(), term);
-    assert_eq!(page.posting_refs().unwrap().collect::<Result<Vec<_>>>().unwrap(), expected);
+    assert_eq!(
+        page.posting_refs()
+            .unwrap()
+            .collect::<Result<Vec<_>>>()
+            .unwrap(),
+        expected
+    );
     assert!(page.bytes().len() < expected.len() * 4);
     let copy = Page::read_with(100, |out| {
         out[..page.bytes().len()].copy_from_slice(page.bytes());
         Ok(page.bytes().len())
-    }).unwrap();
+    })
+    .unwrap();
     copy.validate(HeapLayout::new(291).unwrap()).unwrap();
     assert_eq!(copy.bytes(), page.bytes());
 }
 
 #[test]
 fn sealed_codec_rejects_invalid_order_counts_trailing_bytes_and_old_version() {
-    let term = TermRef { page: 99, offset: 16 };
+    let term = TermRef {
+        page: 99,
+        offset: 16,
+    };
     assert!(SealedBuilder::new(100, term).unwrap().finish().is_err());
     let mut builder = SealedBuilder::new(100, term).unwrap();
     builder.push(owner(0)).unwrap();
@@ -138,35 +172,58 @@ fn sealed_codec_rejects_invalid_order_counts_trailing_bytes_and_old_version() {
         bytes[offset] = if offset == 4 { 1 } else { 0 };
         cases.push(bytes);
     }
-    let mut trailing = valid.clone(); trailing.push(0); cases.push(trailing);
-    let mut too_many = valid.clone(); too_many[22] = 3; cases.push(too_many);
-    let mut noncanonical = valid.clone(); noncanonical.splice(24..25, [0x81, 0]); cases.push(noncanonical);
-    for end in 0..valid.len() { cases.push(valid[..end].to_vec()); }
+    let mut trailing = valid.clone();
+    trailing.push(0);
+    cases.push(trailing);
+    let mut too_many = valid.clone();
+    too_many[22] = 3;
+    cases.push(too_many);
+    let mut noncanonical = valid.clone();
+    noncanonical.splice(24..25, [0x81, 0]);
+    cases.push(noncanonical);
+    for end in 0..valid.len() {
+        cases.push(valid[..end].to_vec());
+    }
     for bytes in cases {
         let parsed = Page::read_with(100, |out| {
-            out[..bytes.len()].copy_from_slice(&bytes); Ok(bytes.len())
+            out[..bytes.len()].copy_from_slice(&bytes);
+            Ok(bytes.len())
         });
         // zero bytes represent an allocation orphan, never a sealed posting page.
-        assert!(parsed.is_err() || parsed.as_ref().unwrap().kind() == PageKind::Zero
-            || parsed.unwrap().validate(HeapLayout::new(291).unwrap()).is_err());
+        assert!(
+            parsed.is_err()
+                || parsed.as_ref().unwrap().kind() == PageKind::Zero
+                || parsed
+                    .unwrap()
+                    .validate(HeapLayout::new(291).unwrap())
+                    .is_err()
+        );
     }
     let mut extremes = SealedBuilder::new(100, term).unwrap();
-    let maximum = OwnerRef { page: u32::MAX - 1, slot: 202,
-        incarnation: Incarnation::new(u64::MAX).unwrap() };
+    let maximum = OwnerRef {
+        page: u32::MAX - 1,
+        slot: 202,
+        incarnation: Incarnation::new(u64::MAX).unwrap(),
+    };
     extremes.push(maximum).unwrap();
     let page = extremes.finish().unwrap();
     page.validate(HeapLayout::new(291).unwrap()).unwrap();
-    assert_eq!(page.posting_refs().unwrap().next().unwrap().unwrap(), maximum);
+    assert_eq!(
+        page.posting_refs().unwrap().next().unwrap().unwrap(),
+        maximum
+    );
 }
 
 #[test]
 fn multi_page_segments_recycle_blocks_and_accept_a_mutable_tail() {
     let mut store = seed(6000, "alpha beta alpha");
     let expected = candidates(&mut store, "alpha");
-    let owner_images: Vec<_> = (1..store.blocks().unwrap()).filter_map(|block| {
-        let page = store.read(block).unwrap();
-        (page.kind() == PageKind::Owners).then(|| (block, page.bytes().to_vec()))
-    }).collect();
+    let owner_images: Vec<_> = (1..store.blocks().unwrap())
+        .filter_map(|block| {
+            let page = store.read(block).unwrap();
+            (page.kind() == PageKind::Owners).then(|| (block, page.bytes().to_vec()))
+        })
+        .collect();
     let stats = mutable::compact(&mut store).unwrap();
     assert_eq!(stats.rewritten_terms, 2);
     assert!(stats.written_pages >= 4);
@@ -180,21 +237,39 @@ fn multi_page_segments_recycle_blocks_and_accept_a_mutable_tail() {
             descending |= page.next().unwrap() < block;
         }
     }
-    assert!(descending, "recycled chains must not depend on ascending block numbers");
+    assert!(
+        descending,
+        "recycled chains must not depend on ascending block numbers"
+    );
     assert_eq!(candidates(&mut store, "alpha"), expected);
     assert_eq!(scan(&mut store, "alpha").unwrap().len(), expected.len());
-    for (block, bytes) in owner_images { assert_eq!(store.read(block).unwrap().bytes(), bytes); }
-    for source in ["beta", "alpha OR beta", "alpha AND beta", "NOT missing", "al*", "\"alpha beta\""] {
+    for (block, bytes) in owner_images {
+        assert_eq!(store.read(block).unwrap().bytes(), bytes);
+    }
+    for source in [
+        "beta",
+        "alpha OR beta",
+        "alpha AND beta",
+        "NOT missing",
+        "al*",
+        "\"alpha beta\"",
+    ] {
         assert_eq!(candidates(&mut store, source), expected);
     }
     let before = store.pages.clone();
-    assert_eq!(mutable::compact(&mut store).unwrap(), mutable::CompactStats::default());
+    assert_eq!(
+        mutable::compact(&mut store).unwrap(),
+        mutable::CompactStats::default()
+    );
     assert_eq!(before, store.pages);
     mutable::insert(&mut store, root(6000), &prepared("alpha beta")).unwrap();
     assert_eq!(scan(&mut store, "alpha").unwrap().len(), 6001);
     mutable::compact(&mut store).unwrap();
     assert_eq!(scan(&mut store, "alpha").unwrap().len(), 6001);
-    assert_eq!(candidates(&mut store, "alpha"), (0..6001).map(root).collect());
+    assert_eq!(
+        candidates(&mut store, "alpha"),
+        (0..6001).map(root).collect()
+    );
     free_list(&mut store);
 }
 
@@ -213,7 +288,10 @@ fn vacuum_and_reused_heap_slots_cannot_resurrect_sealed_postings() {
     mutable::insert(&mut store, root(1), &prepared("alpha")).unwrap();
     mutable::compact(&mut store).unwrap();
     assert_eq!(candidates(&mut store, "alpha"), BTreeSet::from([root(1)]));
-    assert_eq!(candidates(&mut store, "NOT absent"), BTreeSet::from([root(0), root(1)]));
+    assert_eq!(
+        candidates(&mut store, "NOT absent"),
+        BTreeSet::from([root(0), root(1)])
+    );
     free_list(&mut store);
 }
 
@@ -222,7 +300,11 @@ fn every_durable_compaction_boundary_preserves_coverage_and_recovers() {
     let baseline = seed(3000, "alpha beta gamma");
     let mut complete = baseline.clone();
     mutable::compact(&mut complete).unwrap();
-    for stage in [Stage::SegmentStored, Stage::ReplacementPublished, Stage::SegmentReclaimed] {
+    for stage in [
+        Stage::SegmentStored,
+        Stage::ReplacementPublished,
+        Stage::SegmentReclaimed,
+    ] {
         assert!(complete.events.contains(&stage));
     }
     let expected: BTreeSet<_> = (0..3000).map(root).collect();
@@ -239,7 +321,14 @@ fn every_durable_compaction_boundary_preserves_coverage_and_recovers() {
         mutable::vacuum(&mut crashed, |_| Ok(false)).unwrap();
         mutable::compact(&mut crashed).unwrap();
         assert_eq!(candidates(&mut crashed, "alpha"), expected);
-        assert!(crashed.read(0).unwrap().rewrite_journal().unwrap().is_none());
+        assert!(
+            crashed
+                .read(0)
+                .unwrap()
+                .rewrite_journal()
+                .unwrap()
+                .is_none()
+        );
         free_list(&mut crashed);
     }
 }
@@ -251,16 +340,28 @@ struct CommitFault {
 }
 
 impl PageStore for CommitFault {
-    fn layout(&self) -> HeapLayout { self.inner.layout() }
-    fn blocks(&mut self) -> Result<u32> { self.inner.blocks() }
-    fn read(&mut self, block: u32) -> Result<Page> { self.inner.read(block) }
-    fn extend(&mut self) -> Result<u32> { self.inner.extend() }
+    fn layout(&self) -> HeapLayout {
+        self.inner.layout()
+    }
+    fn blocks(&mut self) -> Result<u32> {
+        self.inner.blocks()
+    }
+    fn read(&mut self, block: u32) -> Result<Page> {
+        self.inner.read(block)
+    }
+    fn extend(&mut self) -> Result<u32> {
+        self.inner.extend()
+    }
     fn commit(&mut self, pages: &[&Page]) -> Result<()> {
         let current = self.commits;
         self.commits += 1;
-        if self.stop == Some((current, false)) { return Err(Error::InvalidState); }
+        if self.stop == Some((current, false)) {
+            return Err(Error::InvalidState);
+        }
         self.inner.commit(pages)?;
-        if self.stop == Some((current, true)) { return Err(Error::InvalidState); }
+        if self.stop == Some((current, true)) {
+            return Err(Error::InvalidState);
+        }
         Ok(())
     }
 }
@@ -268,11 +369,19 @@ impl PageStore for CommitFault {
 #[test]
 fn wal_batch_failures_before_and_after_persistence_are_atomic() {
     let baseline = seed(700, "alpha beta");
-    let mut complete = CommitFault { inner: baseline.clone(), stop: None, commits: 0 };
+    let mut complete = CommitFault {
+        inner: baseline.clone(),
+        stop: None,
+        commits: 0,
+    };
     mutable::compact(&mut complete).unwrap();
     for point in 0..complete.commits {
         for after in [false, true] {
-            let mut fault = CommitFault { inner: baseline.clone(), stop: Some((point, after)), commits: 0 };
+            let mut fault = CommitFault {
+                inner: baseline.clone(),
+                stop: Some((point, after)),
+                commits: 0,
+            };
             assert!(mutable::compact(&mut fault).is_err());
             fault.stop = None;
             mutable::recover_compaction(&mut fault).unwrap();
@@ -293,8 +402,11 @@ fn corrupted_journal_cannot_reclaim_the_active_chain() {
     let dictionary = store.read(block).unwrap();
     let term = dictionary.terms().unwrap().next().unwrap().unwrap();
     meta.set_rewrite_journal(Some(RewriteJournal {
-        head: term.head, tail: term.tail, phase: RewritePhase::Building,
-    })).unwrap();
+        head: term.head,
+        tail: term.tail,
+        phase: RewritePhase::Building,
+    }))
+    .unwrap();
     store.commit(&[&meta]).unwrap();
     let before = store.pages.clone();
     assert!(mutable::recover_compaction(&mut store).is_err());

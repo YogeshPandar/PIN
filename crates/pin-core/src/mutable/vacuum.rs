@@ -30,7 +30,10 @@ pub fn vacuum<S: PageStore>(
 ) -> Result<VacuumStats> {
     let recovered = super::recover_compaction(store)?;
     let mut meta = load(store, 0, PageKind::Meta)?;
-    let mut stats = VacuumStats { reclaimed_pages: recovered, ..VacuumStats::default() };
+    let mut stats = VacuumStats {
+        reclaimed_pages: recovered,
+        ..VacuumStats::default()
+    };
     let (head, tail) = meta.owner_chain()?;
     if head != NO_BLOCK {
         let mut block = head;
@@ -123,7 +126,10 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
         }
         match page.kind() {
             PageKind::Meta => {
-                if page.rewrite_journal()?.is_some_and(|journal| journal.head == target || journal.tail == target) {
+                if page
+                    .rewrite_journal()?
+                    .is_some_and(|journal| journal.head == target || journal.tail == target)
+                {
                     return Err(Error::InvalidState);
                 }
                 let (head, tail) = page.owner_chain()?;

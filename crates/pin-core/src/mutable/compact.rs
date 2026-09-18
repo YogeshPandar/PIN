@@ -59,20 +59,34 @@ pub fn compact<S: PageStore>(store: &mut S) -> Result<CompactStats> {
                     continue;
                 }
                 let summary = inspect(
-                    store, entry.reference, entry.head, entry.tail, Some(entry.first), true,
+                    store,
+                    entry.reference,
+                    entry.head,
+                    entry.tail,
+                    Some(entry.first),
+                    true,
                 )?;
                 if summary.mutable_pages == 0 && summary.dead == 0 {
                     continue;
                 }
-                let (written, reused) = rewrite(store, &mut meta, entry.reference, entry.head, entry.tail)?;
-                stats.written_pages = stats.written_pages.checked_add(written)
+                let (written, reused) =
+                    rewrite(store, &mut meta, entry.reference, entry.head, entry.tail)?;
+                stats.written_pages = stats
+                    .written_pages
+                    .checked_add(written)
                     .ok_or(Error::Limit("compaction pages"))?;
-                stats.reused_pages = stats.reused_pages.checked_add(reused)
+                stats.reused_pages = stats
+                    .reused_pages
+                    .checked_add(reused)
                     .ok_or(Error::Limit("compaction pages"))?;
-                stats.removed_postings = stats.removed_postings.checked_add(summary.dead)
+                stats.removed_postings = stats
+                    .removed_postings
+                    .checked_add(summary.dead)
                     .ok_or(Error::Limit("compaction postings"))?;
                 stats.rewritten_terms += 1;
-                stats.reclaimed_pages = stats.reclaimed_pages.checked_add(recover(store)?)
+                stats.reclaimed_pages = stats
+                    .reclaimed_pages
+                    .checked_add(recover(store)?)
                     .ok_or(Error::Limit("compaction pages"))?;
                 // recovery advances the free list; never reuse a stale metapage image.
                 meta = load(store, 0, PageKind::Meta)?;
@@ -193,7 +207,11 @@ fn rewrite<S: PageStore>(
         _ => return Err(Error::InvalidState),
     };
     dictionary.set_posting_chain(term, new_head, new_tail)?;
-    meta.set_rewrite_journal(Some(RewriteJournal { head, tail, phase: RewritePhase::Retiring }))?;
+    meta.set_rewrite_journal(Some(RewriteJournal {
+        head,
+        tail,
+        phase: RewritePhase::Retiring,
+    }))?;
     // one WAL record switches coverage and records the complete retired source.
     store.commit(&[meta, &dictionary])?;
     store.event(Stage::ReplacementPublished)?;
@@ -216,7 +234,9 @@ fn persist_output<S: PageStore>(store: &mut S, meta: &mut Page, page: Page) -> R
     match meta.rewrite_journal()? {
         None => {
             meta.set_rewrite_journal(Some(RewriteJournal {
-                head: page.block(), tail: page.block(), phase: RewritePhase::Building,
+                head: page.block(),
+                tail: page.block(),
+                phase: RewritePhase::Building,
             }))?;
             store.commit(&[meta, &page])?;
         }
@@ -226,7 +246,10 @@ fn persist_output<S: PageStore>(store: &mut S, meta: &mut Page, page: Page) -> R
                 return Err(Error::InvalidState);
             }
             previous.set_next(page.block())?;
-            meta.set_rewrite_journal(Some(RewriteJournal { tail: page.block(), ..journal }))?;
+            meta.set_rewrite_journal(Some(RewriteJournal {
+                tail: page.block(),
+                ..journal
+            }))?;
             store.commit(&[meta, &previous, &page])?;
         }
         _ => return Err(Error::InvalidState),
@@ -253,7 +276,14 @@ pub fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
     let dictionary = load(store, term.page, PageKind::Dictionary)?;
     let active = dictionary.term(term)?;
     inspect(store, term, journal.head, journal.tail, None, false)?;
-    inspect(store, term, active.head, active.tail, Some(active.first), false)?;
+    inspect(
+        store,
+        term,
+        active.head,
+        active.tail,
+        Some(active.first),
+        false,
+    )?;
     // two finite terminal singly linked chains intersect iff they share a tail.
     if active.tail == journal.tail {
         return Err(Error::InvalidState);

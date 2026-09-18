@@ -328,11 +328,7 @@ impl Page {
         if !block_valid(next) || next == self.block || self.kind == PageKind::Meta {
             return Err(corrupt(12));
         }
-        if matches!(
-            self.kind,
-            PageKind::Owners | PageKind::Dictionary
-        ) && next <= self.block
-        {
+        if matches!(self.kind, PageKind::Owners | PageKind::Dictionary) && next <= self.block {
             return Err(corrupt(12));
         }
         Ok(())
@@ -887,7 +883,11 @@ impl SealedBuilder {
         let mut page = Page::postings(block, term)?;
         page.kind = PageKind::SealedPostings;
         page.bytes[6] = 7;
-        Ok(Self { page, previous: None, count: 0 })
+        Ok(Self {
+            page,
+            previous: None,
+            count: 0,
+        })
     }
 
     /// Returns false without mutation when this page has no room for the owner.
@@ -927,13 +927,19 @@ fn write_delta(writer: &mut Writer<'_>, owner: OwnerRef, previous: Option<OwnerR
             }
             (
                 owner.page - previous.page,
-                if owner.page == previous.page { owner.slot - previous.slot } else { owner.slot },
+                if owner.page == previous.page {
+                    owner.slot - previous.slot
+                } else {
+                    owner.slot
+                },
                 owner.incarnation.get() - previous.incarnation.get(),
             )
         }
         None => (owner.page, owner.slot, owner.incarnation.get()),
     };
-    if !block_valid(owner.page) || usize::from(owner.slot) >= (CAPACITY - OWNER_HEADER) / OWNER_BYTES {
+    if !block_valid(owner.page)
+        || usize::from(owner.slot) >= (CAPACITY - OWNER_HEADER) / OWNER_BYTES
+    {
         return Err(Error::InvalidState);
     }
     writer.var_u32(page)?;
@@ -953,13 +959,22 @@ fn read_delta(reader: &mut Reader<'_>, previous: Option<OwnerRef>) -> Result<Own
                 return Err(corrupt(start));
             }
             (
-                previous.page.checked_add(page_delta).ok_or_else(|| corrupt(start))?,
+                previous
+                    .page
+                    .checked_add(page_delta)
+                    .ok_or_else(|| corrupt(start))?,
                 if page_delta == 0 {
-                    u32::from(previous.slot).checked_add(slot_delta).ok_or_else(|| corrupt(start))?
+                    u32::from(previous.slot)
+                        .checked_add(slot_delta)
+                        .ok_or_else(|| corrupt(start))?
                 } else {
                     slot_delta
                 },
-                previous.incarnation.get().checked_add(incarnation_delta).ok_or_else(|| corrupt(start))?,
+                previous
+                    .incarnation
+                    .get()
+                    .checked_add(incarnation_delta)
+                    .ok_or_else(|| corrupt(start))?,
             )
         }
         None => (page_delta, slot_delta, incarnation_delta),
