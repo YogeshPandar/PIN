@@ -40,7 +40,9 @@ pub fn scan_count<S: PageStore>(
     let mut count = 0u64;
     let mut send = |owner, sealed_term| -> Result<()> {
         emit(CountCandidate { owner, sealed_term })?;
-        count = count.checked_add(1).ok_or(Error::Limit("count candidates"))?;
+        count = count
+            .checked_add(1)
+            .ok_or(Error::Limit("count candidates"))?;
         Ok(())
     };
     if let Kind::Term(term) = kind {

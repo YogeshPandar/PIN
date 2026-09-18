@@ -30,11 +30,13 @@ fn candidates(store: &mut MemoryStore, source: &str) -> Vec<CountCandidate> {
     let count = mutable::scan_count(store, &query, |candidate| {
         output.push(candidate);
         Ok(())
-    }).unwrap();
+    })
+    .unwrap();
     assert_eq!(count, output.len() as u64);
-    let unique: BTreeSet<_> = output.iter().map(|c| {
-        (c.owner.page, c.owner.slot, c.owner.incarnation)
-    }).collect();
+    let unique: BTreeSet<_> = output
+        .iter()
+        .map(|c| (c.owner.page, c.owner.slot, c.owner.incarnation))
+        .collect();
     assert_eq!(output.len(), unique.len());
     output
 }
@@ -43,14 +45,28 @@ fn candidates(store: &mut MemoryStore, source: &str) -> Vec<CountCandidate> {
 fn every_query_uses_a_duplicate_free_cover() {
     let texts = ["", "alpha", "beta", "alpha beta", "alpha alpha", "betamax"];
     let mut store = seed(&texts);
-    for source in ["", "missing", "alpha", "alpha OR beta", "alpha OR alpha",
-                   "alpha AND beta", "NOT alpha", "\"alpha alpha\"", "beta*"] {
+    for source in [
+        "",
+        "missing",
+        "alpha",
+        "alpha OR beta",
+        "alpha OR alpha",
+        "alpha AND beta",
+        "NOT alpha",
+        "\"alpha alpha\"",
+        "beta*",
+    ] {
         let query = Query::parse(source, QueryLimits::default()).unwrap();
         let rows = candidates(&mut store, source);
-        let roots: BTreeSet<_> = rows.iter().map(|candidate| {
-            let page = store.read(candidate.owner.page).unwrap();
-            page.owner(candidate.owner.slot, store.layout()).unwrap().root
-        }).collect();
+        let roots: BTreeSet<_> = rows
+            .iter()
+            .map(|candidate| {
+                let page = store.read(candidate.owner.page).unwrap();
+                page.owner(candidate.owner.slot, store.layout())
+                    .unwrap()
+                    .root
+            })
+            .collect();
         for (index, text) in texts.iter().enumerate() {
             let document = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
             if oracle::matches(&document, &query, 1 << 20, 1 << 20).unwrap() {
@@ -70,8 +86,18 @@ fn only_sealed_single_term_membership_is_certifiable() {
     assert_eq!(rows.len(), texts.len());
     assert!(!rows[0].sealed_term);
     assert!(rows[1..].iter().all(|candidate| candidate.sealed_term));
-    for source in ["alpha OR beta", "alpha AND beta", "\"alpha beta\"", "NOT beta", "a*"] {
-        assert!(candidates(&mut store, source).iter().all(|c| !c.sealed_term));
+    for source in [
+        "alpha OR beta",
+        "alpha AND beta",
+        "\"alpha beta\"",
+        "NOT beta",
+        "a*",
+    ] {
+        assert!(
+            candidates(&mut store, source)
+                .iter()
+                .all(|c| !c.sealed_term)
+        );
     }
     let analyzed = Analyzed::analyze("alpha", AnalysisLimits::default()).unwrap();
     let document = PreparedDocument::prepare(&analyzed, 1 << 20).unwrap();
@@ -107,7 +133,11 @@ fn cancellation_never_returns_partial_accounting() {
     let mut seen = 0;
     let result = mutable::scan_count(&mut store, &query, |_| -> Result<()> {
         seen += 1;
-        if seen == 2 { Err(Error::Limit("cancelled")) } else { Ok(()) }
+        if seen == 2 {
+            Err(Error::Limit("cancelled"))
+        } else {
+            Ok(())
+        }
     });
     assert_eq!(result, Err(Error::Limit("cancelled")));
     assert_eq!(seen, 2);

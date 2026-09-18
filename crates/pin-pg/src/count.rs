@@ -23,8 +23,13 @@ unsafe extern "C-unwind" {
     fn pin_count_owner_lock(context: *mut c_void, block: u32, out: *mut u8, capacity: u32) -> u32;
     fn pin_count_owner_unlock(context: *mut c_void);
     fn pin_count_all_visible(context: *mut c_void, block: u32) -> bool;
-    fn pin_count_fetch(context: *mut c_void, block: u32, offset: u16,
-                       bytes: *mut *const u8, length: *mut usize) -> bool;
+    fn pin_count_fetch(
+        context: *mut c_void,
+        block: u32,
+        offset: u16,
+        bytes: *mut *const u8,
+        length: *mut usize,
+    ) -> bool;
     fn pin_count_clear(context: *mut c_void);
 }
 
@@ -53,9 +58,9 @@ impl Counter<'_> {
     }
 
     fn push(&mut self, candidate: CountCandidate) -> Result<()> {
-        if self.length == BATCH || self.pending[0].is_some_and(|first| {
-            first.owner.page != candidate.owner.page
-        }) {
+        if self.length == BATCH
+            || self.pending[0].is_some_and(|first| first.owner.page != candidate.owner.page)
+        {
             self.flush()?;
         }
         self.pending[self.length] = Some(candidate);
@@ -130,7 +135,9 @@ impl Counter<'_> {
                 // safety: the owner pin still blocks cleanup while C follows the
                 // root's HOT chain under the active MVCC snapshot.
                 let visible = unsafe {
-                    native::call(|| pin_count_fetch(context, block, offset, &mut bytes, &mut length))
+                    native::call(|| {
+                        pin_count_fetch(context, block, offset, &mut bytes, &mut length)
+                    })
                 };
                 #[cfg(feature = "test-hooks")]
                 crate::test_hooks::storage_event(mutable::Stage::CountAfterVisibility);
@@ -170,7 +177,6 @@ impl Counter<'_> {
         self.pending.fill(None);
         self.length = 0;
         Ok(())
-
     }
 }
 
@@ -190,7 +196,10 @@ pub unsafe extern "C-unwind" fn pin_count_execute(
     counters: *mut u64,
 ) -> i64 {
     crate::compatibility::database();
-    if index.is_null() || context.is_null() || bytes.is_null() || counters.is_null()
+    if index.is_null()
+        || context.is_null()
+        || bytes.is_null()
+        || counters.is_null()
         || length > isize::MAX as usize
     {
         matching::stored::<()>(Err(Error::InvalidState));
@@ -199,21 +208,31 @@ pub unsafe extern "C-unwind" fn pin_count_execute(
     // no resettable per-tuple context owns these bytes.
     let input = unsafe { std::slice::from_raw_parts(bytes, length) };
     let query = matching::input(Query::decode(input, QueryLimits::default()));
-    let layout = matching::stored(HeapLayout::new(crate::abi::constant(9) as u16)
-        .map_err(|_| Error::InvalidState));
+    let layout = matching::stored(
+        HeapLayout::new(crate::abi::constant(9) as u16).map_err(|_| Error::InvalidState),
+    );
     let mut counter = Counter {
-        context, query: &query, layout, pending: [None; BATCH], length: 0,
+        context,
+        query: &query,
+        layout,
+        pending: [None; BATCH],
+        length: 0,
         stats: [0; COUNTERS],
     };
     // safety: C retains the index lock; the structural barrier prevents sealed
     // payload replacement while fresh canonical owner checks handle VACUUM.
-    matching::stored(unsafe { storage::with_reader(index, |store| {
-        mutable::scan_count(store, &query, |candidate| counter.push(candidate))?;
-        counter.flush()
-    }) });
-    let count = matching::stored(counter.stats[4].checked_add(counter.stats[6])
-        .and_then(|count| i64::try_from(count).ok())
-        .ok_or(Error::Limit("SQL count")));
+    matching::stored(unsafe {
+        storage::with_reader(index, |store| {
+            mutable::scan_count(store, &query, |candidate| counter.push(candidate))?;
+            counter.flush()
+        })
+    });
+    let count = matching::stored(
+        counter.stats[4]
+            .checked_add(counter.stats[6])
+            .and_then(|count| i64::try_from(count).ok())
+            .ok_or(Error::Limit("SQL count")),
+    );
     for (position, value) in counter.stats.iter().enumerate() {
         // safety: caller reserved COUNTERS aligned writable u64s; no C code
         // accesses them concurrently with this synchronous guarded invocation.

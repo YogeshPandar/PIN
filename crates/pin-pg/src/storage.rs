@@ -197,9 +197,7 @@ impl PageStore for PgStore<'_> {
         let length = page.bytes().len() as u32;
         // safety: the writer interlock covers the private image's read and mutation.
         // C takes cleanup permission before publishing removal through generic WAL.
-        unsafe {
-            native::call(|| native::pin_storage_remove_owners(index, block, bytes, length))
-        };
+        unsafe { native::call(|| native::pin_storage_remove_owners(index, block, bytes, length)) };
         Ok(())
     }
 
