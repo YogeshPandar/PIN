@@ -83,12 +83,32 @@ fn main() -> Result<()> {
         ("empty", String::new(), "alpha"),
         ("ascii_short", "ALPHA beta can't 32.3".to_owned(), "alpha"),
         ("ascii_miss", "BETA gamma delta ".repeat(128), "alpha"),
-        ("ascii_first", format!("ALPHA {}", "beta gamma ".repeat(512)), "alpha"),
-        ("ascii_last", format!("{}ALPHA", "beta gamma ".repeat(512)), "alpha"),
-        ("ascii_boundaries", "A_B a:b a.b can't 32.3 ".repeat(128), "can't"),
+        (
+            "ascii_first",
+            format!("ALPHA {}", "beta gamma ".repeat(512)),
+            "alpha",
+        ),
+        (
+            "ascii_last",
+            format!("{}ALPHA", "beta gamma ".repeat(512)),
+            "alpha",
+        ),
+        (
+            "ascii_boundaries",
+            "A_B a:b a.b can't 32.3 ".repeat(128),
+            "can't",
+        ),
         ("unicode_nfc", "CAFÉ beta gamma ".repeat(128), "café"),
-        ("unicode_decomposed", "CAFE\u{301} beta Σ K ".repeat(128), "café"),
-        ("unicode_miss", "CAFE\u{301} Straße Σ K ".repeat(128), "alpha"),
+        (
+            "unicode_decomposed",
+            "CAFE\u{301} beta Σ K ".repeat(128),
+            "café",
+        ),
+        (
+            "unicode_miss",
+            "CAFE\u{301} Straße Σ K ".repeat(128),
+            "alpha",
+        ),
     ] {
         cases.push(Case {
             name,

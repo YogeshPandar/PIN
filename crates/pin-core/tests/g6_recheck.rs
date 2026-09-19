@@ -113,7 +113,13 @@ fn work_accounting_matches_the_oracle_for_first_last_absent_and_empty() {
 #[test]
 fn early_hits_do_not_hide_invalid_tails_or_analysis_errors() {
     let query = query("a");
-    for text in ["a enormous", "A ENORMOUS", "a éééé", "a b c", "a b c\u{301}"] {
+    for text in [
+        "a enormous",
+        "A ENORMOUS",
+        "a éééé",
+        "a b c",
+        "a b c\u{301}",
+    ] {
         for term_bytes in 0..=10 {
             for tokens in 0..=4 {
                 let limits = AnalysisLimits {

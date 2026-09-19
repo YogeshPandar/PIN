@@ -86,8 +86,8 @@ fn match_words(
         }
     }
     // do not let an early match or work error hide an invalid document tail.
-    let comparisons = usize::try_from(first_match.unwrap_or(tokens))
-        .map_err(|_| Error::Limit("search work"))?;
+    let comparisons =
+        usize::try_from(first_match.unwrap_or(tokens)).map_err(|_| Error::Limit("search work"))?;
     let mut work = Work::new(max_steps);
     work.charge(1)?;
     work.charge(comparisons)?;
