@@ -681,10 +681,15 @@ dependencies = [
 name = "pin-core"
 version = "0.0.0"
 dependencies = [
+ "pin-kernels",
  "unicode-case-mapping",
  "unicode-normalization",
  "unicode-segmentation",
 ]
+
+[[package]]
+name = "pin-kernels"
+version = "0.0.0"
 
 [[package]]
 name = "pin-pg"

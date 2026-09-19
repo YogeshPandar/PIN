@@ -16,6 +16,7 @@ mod normalize;
 pub mod oracle;
 pub mod query;
 pub mod rank;
+pub mod recheck;
 
 /// The PostgreSQL major version targeted by the G0 boundary.
 pub const POSTGRES_MAJOR: u32 = 18;

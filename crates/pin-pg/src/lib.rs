@@ -49,7 +49,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G5: experimental VM counts; defaults remain heap-checked"
+    "G6: scalar-default optimization; experimental fast paths remain gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]

@@ -1,0 +1,103 @@
+name: G6 optimization checks
+
+on:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/g6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g6-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Test and preserve review diagnostics
+        shell: python
+        run: |
+          import os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'g6-review'
+          root.mkdir()
+          failed = False
+          commands = [
+              ['cargo', 'check', '--locked', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'test', '--locked', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'clippy', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
+              ['cargo', 'run', '--locked', '--release', '-p', 'pin-kernels', '--example', 'bitmap'],
+              ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'g6_containers'],
+              ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'g6_recheck', '--', '--iterations', '64', '--samples', '2'],
+              ['cargo', 'doc', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--no-deps'],
+          ]
+          metadata = []
+          for command in [['rustc', '-Vv'], ['lscpu'], ['uname', '-a'], ['sha256sum', 'Cargo.lock']]:
+              metadata.append(subprocess.check_output(command, text=True))
+          (root / 'environment.txt').write_text('\n'.join(metadata))
+          env = dict(os.environ, RUSTDOCFLAGS='-D warnings')
+          for index, command in enumerate(commands):
+              result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+              (root / f'{index}.log').write_text(result.stderr + result.stdout)
+              if '--example' in command:
+                  example = command[command.index('--example') + 1]
+                  (root / f'{example}.csv').write_text(result.stdout)
+              print('COMMAND:', ' '.join(command), 'EXIT:', result.returncode, flush=True)
+              print((result.stderr + result.stdout)[-16000:], flush=True)
+              failed |= result.returncode != 0
+          lock = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
+          (root / 'lock.patch').write_text(lock)
+          print('CARGO-GENERATED LOCK PATCH:', lock, sep='\n', flush=True)
+          failed |= bool(lock)
+          fmt = subprocess.run(['cargo', 'fmt', '--all'])
+          patch = subprocess.check_output(['git', 'diff', '--', '*.rs'], text=True)
+          (root / 'format.patch').write_text(patch)
+          print('FORMATTING PATCH:', patch, sep='\n', flush=True)
+          failed |= fmt.returncode != 0 or bool(patch)
+          (root / 'head.txt').write_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True))
+          (root / 'status').write_text('1' if failed else '0')
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g6-review-${{ github.run_id }}
+          path: ${{ runner.temp }}/g6-review/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce observed results
+        if: always()
+        run: test "$(cat "$RUNNER_TEMP/g6-review/status")" = 0
+
+  memory-safety:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select pinned test-only tooling
+        run: rustup toolchain install nightly-2026-09-18 --profile minimal --component miri
+      - name: Interpret scalar tails and unsupported-mode rejection
+        env:
+          MIRIFLAGS: -Zmiri-strict-provenance
+        run: |
+          cargo +nightly-2026-09-18 miri test --locked -p pin-kernels --test bitmap exact_allocations_and_identical_inputs_include_every_tail
+          cargo +nightly-2026-09-18 miri test --locked -p pin-kernels --test bitmap modes_and_every_length_mismatch_fail_before_writes
+      - name: Instrument native kernels with AddressSanitizer
+        env:
+          RUSTFLAGS: -Zsanitizer=address -Cdebuginfo=1
+          ASAN_OPTIONS: detect_stack_use_after_return=1
+        run: cargo +nightly-2026-09-18 test --locked -p pin-kernels --tests --target x86_64-unknown-linux-gnu
