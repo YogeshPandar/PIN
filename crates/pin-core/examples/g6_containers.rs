@@ -64,7 +64,11 @@ fn main() {
                         });
                     }
                     let elapsed = start.elapsed().as_nanos();
-                    let path = if per_offset { "offset-reference" } else { "word" };
+                    let path = if per_offset {
+                        "offset-reference"
+                    } else {
+                        "word"
+                    };
                     println!(
                         "{sample},{path},{domain},{pattern},{},{expected:?},{},10000,{elapsed}",
                         set.len(),

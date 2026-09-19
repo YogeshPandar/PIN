@@ -7,7 +7,9 @@ use std::hint::black_box;
 use std::time::Instant;
 
 fn main() {
-    println!("sample,requested,selected,operation,words,word_offset,iterations,elapsed_ns,checksum");
+    println!(
+        "sample,requested,selected,operation,words,word_offset,iterations,elapsed_ns,checksum"
+    );
     for sample in 0..5 {
         let modes = if sample % 2 == 0 {
             [CpuMode::Scalar, CpuMode::Avx2]
@@ -22,7 +24,11 @@ fn main() {
                 let right: Vec<_> = left.iter().map(|value| value.rotate_left(17)).collect();
                 let left = &left[offset..offset + words];
                 let right = &right[3 - offset..3 - offset + words];
-                for op in [BitmapOp::Intersection, BitmapOp::Union, BitmapOp::Difference] {
+                for op in [
+                    BitmapOp::Intersection,
+                    BitmapOp::Union,
+                    BitmapOp::Difference,
+                ] {
                     let reference: Vec<_> = left
                         .iter()
                         .zip(right)
@@ -55,7 +61,9 @@ fn main() {
                         }
                         let elapsed = start.elapsed().as_nanos();
                         assert_eq!(output, reference.as_slice());
-                        let checksum = output.iter().fold(0u64, |sum, value| sum.wrapping_add(*value));
+                        let checksum = output
+                            .iter()
+                            .fold(0u64, |sum, value| sum.wrapping_add(*value));
                         println!(
                             "{sample},{mode:?},{:?},{op:?},{words},{offset},{iterations},{elapsed},{checksum}",
                             kernels.mode()
