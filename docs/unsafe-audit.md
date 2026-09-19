@@ -29,3 +29,30 @@ test-hook installation, repeated guarded PostgreSQL/Rust/Pin errors, permission
 checks, and exact destructor accounting. Source inventory checks are drift
 detection, not type checking or a memory-safety proof. Independent unsafe review
 remains a separate acceptance requirement.
+
+
+## G5 count boundary additions
+
+Review state: implementation self-review completed for the G5 count changes.
+Independent unsafe and visibility review is not recorded. Rust/C/PostgreSQL
+execution for this head must be observed in CI before changing that status.
+
+| ID | Operations | Safety argument | Required validation |
+|---|---|---|---|
+| G5COUNT01 | Owner buffer read, retained buffer pin, VM status | C copies under a shared content lock, unlocks content access, and retains one ResourceOwner-backed pin; Rust receives only private initialized bytes | C/Rust compile, cancellation, ERROR and backend-death cleanup |
+| G5COUNT01 | \`visibilitymap_get_status\` | Called only with a protected canonical owner and supported MVCC execution; result is reread per candidate and never cached | old-snapshot, VM transition, delete/reuse schedules |
+| G5COUNT01 | \`table_index_fetch_tuple\` | Uses a validated root copy, active MVCC snapshot and host-owned slot; HOT may change only the local TID copy | HOT/non-HOT update and old-snapshot equality |
+| G5COUNT01 | \`slice::from_raw_parts\` on returned text bytes | C returns an initialized byte range owned by the tuple/scratch context; length is checked and the borrow ends before \`pin_count_clear\` | Rust/C compile, SQL text/TOAST cases, sanitizer-compatible host run |
+| G5COUNT01 | \`LockBufferForCleanup\` owner removal | Called by VACUUM while the writer interlock protects the private owner image; cleanup permission drains count-reader pins before WAL publication | deterministic BufferPin wait and cancellation/backend-death schedules |
+| G5COUNT01 | Planner path/node pointers and shallow AggPath copy | PostgreSQL planner context owns all allocations; \`add_path\` may free the original path, so Pin copies it before insertion and does not dereference it afterward | planner source tripwire, cached-plan and DDL invalidation tests |
+
+The pure G5 candidate iterator remains safe Rust and does not retain PostgreSQL
+pointers. No raw shared-buffer slice enters Rust. The owner pin is represented
+only inside the C executor state and is released explicitly on normal paths.
+PostgreSQL ResourceOwner cleanup is relied on for C ERROR, cancellation and
+backend death, which is why the real host schedules remain an acceptance gate.
+
+The VM shortcut is not accepted merely because these operations are memory-safe.
+Its correctness also depends on PostgreSQL publication, snapshot and cleanup
+ordering. That proof and the negative controls are documented in
+[g5-counts.md](g5-counts.md). Both count switches remain off by default.

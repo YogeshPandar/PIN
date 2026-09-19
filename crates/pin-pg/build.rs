@@ -43,6 +43,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "cshim/am_fields.def",
         "cshim/pin_storage.c",
         "cshim/pin_storage.h",
+        "cshim/pin_count.c",
+        "cshim/pin_count.h",
     ] {
         println!("cargo:rerun-if-changed={name}");
     }
@@ -69,7 +71,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let archive = out.join("libpin_abi.a");
     let cc = env::var_os("CC").unwrap_or_else(|| "cc".into());
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
-    for source in ["pin_abi", "pin_storage"] {
+    for source in ["pin_abi", "pin_storage", "pin_count"] {
         let object = out.join(format!("{source}.o"));
         let mut compile = Command::new(&cc);
         compile

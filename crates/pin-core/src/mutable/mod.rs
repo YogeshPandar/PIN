@@ -5,6 +5,7 @@
 //! Owner slots and dictionary identities are never reused.
 
 mod compact;
+mod count;
 pub mod document;
 pub mod page;
 mod query;
@@ -13,6 +14,7 @@ mod vacuum;
 mod writer;
 
 pub use compact::{CompactStats, compact, recover as recover_compaction};
+pub use count::{CountCandidate, scan_count};
 pub use query::scan_query;
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
@@ -38,6 +40,9 @@ pub enum Stage {
     ReplacementPublished = 10,
     SegmentReclaimed = 11,
     ReaderPinned = 12,
+    CountOwnerPinned = 13,
+    CountBeforeVisibility = 14,
+    CountAfterVisibility = 15,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
@@ -56,6 +61,13 @@ pub trait PageStore {
     fn read(&mut self, block: u32) -> Result<Page>;
     fn extend(&mut self) -> Result<u32>;
     fn commit(&mut self, pages: &[&Page]) -> Result<()>;
+
+    /// Publishes owner removal only after all protecting count-reader pins drain.
+    /// The writer interlock must cover the original read and this WAL operation.
+    /// The default refuses removal; an adapter must explicitly supply this interlock.
+    fn remove_owners(&mut self, _page: &Page) -> Result<()> {
+        Err(Error::InvalidState)
+    }
 
     fn interrupt(&mut self) -> Result<()> {
         Ok(())

@@ -24,6 +24,12 @@ unsafe extern "C-unwind" {
         out: *mut u8,
         capacity: u32,
     ) -> u32;
+    pub(crate) fn pin_storage_remove_owners(
+        index: pg_sys::Relation,
+        block: u32,
+        bytes: *const u8,
+        length: u32,
+    );
     pub(crate) fn pin_storage_commit(
         index: pg_sys::Relation,
         count: u32,

@@ -1,4 +1,4 @@
-//! PostgreSQL-owned host boundary for G4 streaming bitmap query execution.
+//! PostgreSQL-owned host boundary for streaming search and opt-in G5 counts.
 //! abi, ownership, and error contracts are recorded in docs/api-evidence.md.
 
 #[cfg(not(feature = "pg18"))]
@@ -11,6 +11,7 @@ use pgrx::prelude::*;
 mod abi;
 mod am;
 mod compatibility;
+mod count;
 mod matching;
 mod native;
 mod storage;
@@ -41,12 +42,14 @@ pub unsafe extern "C-unwind" fn _PG_init() {
             "Pin requires shared_preload_libraries = 'pin'; configure it and restart"
         );
     }
+    // safety: validation and the preload-only check precede static hook registration.
+    unsafe { count::initialize() };
 }
 
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G4: streaming bitmap query execution; advanced paths gated"
+    "G5: experimental VM counts; defaults remain heap-checked"
 }
 
 #[pg_extern(stable, parallel_unsafe)]
