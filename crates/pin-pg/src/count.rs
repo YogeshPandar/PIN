@@ -4,6 +4,7 @@
 //! Contracts: docs/g5-counts.md and docs/api-evidence.md, count01.
 
 use crate::{matching, native, storage};
+use pgrx::guc::{GucContext, GucFlags, GucRegistry, GucSetting};
 use pgrx::{pg_guard, pg_sys};
 use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::codec::records::Publication;
@@ -13,10 +14,13 @@ use pin_core::mutable::page::{Page, PageKind};
 use pin_core::mutable::{self, CountCandidate};
 use pin_core::oracle;
 use pin_core::query::{Query, QueryLimits};
+use pin_core::recheck::SingleTermMatcher;
 use std::ffi::c_void;
 
 const BATCH: usize = 64;
 const COUNTERS: usize = 8;
+
+static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::new(false);
 
 unsafe extern "C-unwind" {
     fn pin_count_init();
@@ -38,11 +42,20 @@ unsafe extern "C-unwind" {
 pub(crate) unsafe fn initialize() {
     // safety: static C methods and the GUC outlive every inherited backend.
     unsafe { native::call(|| pin_count_init()) };
+    GucRegistry::define_bool_guc(
+        c"pin.enable_count_recheck",
+        c"Enable experimental streaming count rechecks.",
+        c"Off retains the materialized document oracle; visibility is unchanged.",
+        &ENABLE_COUNT_RECHECK,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
 }
 
 struct Counter<'q> {
     context: *mut c_void,
     query: &'q Query,
+    matcher: Option<SingleTermMatcher<'q>>,
     layout: HeapLayout,
     pending: [Option<CountCandidate>; BATCH],
     length: usize,
@@ -50,6 +63,20 @@ struct Counter<'q> {
 }
 
 impl Counter<'_> {
+    fn matches(&self, text: &str) -> Result<bool> {
+        if let Some(matcher) = self.matcher {
+            matcher.matches(text, AnalysisLimits::default(), matching::MATCH_STEPS)
+        } else {
+            let document = Analyzed::analyze(text, AnalysisLimits::default())?;
+            oracle::matches(
+                &document,
+                self.query,
+                matching::QUERY_MEMORY,
+                matching::MATCH_STEPS,
+            )
+        }
+    }
+
     fn note(&mut self, counter: usize, amount: u64) -> Result<()> {
         self.stats[counter] = self.stats[counter]
             .checked_add(amount)
@@ -149,15 +176,7 @@ impl Counter<'_> {
                         let value = unsafe { std::slice::from_raw_parts(bytes, length) };
                         std::str::from_utf8(value)
                             .map_err(|_| Error::InvalidDocument)
-                            .and_then(|text| Analyzed::analyze(text, AnalysisLimits::default()))
-                            .and_then(|document| {
-                                oracle::matches(
-                                    &document,
-                                    self.query,
-                                    matching::QUERY_MEMORY,
-                                    matching::MATCH_STEPS,
-                                )
-                            })
+                            .and_then(|text| self.matches(text))
                     }
                 } else {
                     Ok(false)
@@ -228,9 +247,15 @@ pub unsafe extern "C-unwind" fn pin_count_execute(
     let layout = matching::stored(
         HeapLayout::new(crate::abi::constant(9) as u16).map_err(|_| Error::InvalidState),
     );
+    let streaming = ENABLE_COUNT_RECHECK.get();
     let mut counter = Counter {
         context,
         query: &query,
+        matcher: if streaming {
+            SingleTermMatcher::new(&query)
+        } else {
+            None
+        },
         layout,
         pending: [None; BATCH],
         length: 0,
