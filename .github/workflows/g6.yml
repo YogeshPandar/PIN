@@ -1,0 +1,71 @@
+name: G6 optimization checks
+
+on:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - '.github/workflows/g6.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g6-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select exact Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Test and preserve review diagnostics
+        shell: python
+        run: |
+          import os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'g6-review'
+          root.mkdir()
+          failed = False
+          commands = [
+              ['cargo', 'check', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'test', '--locked', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-kernels', '-p', 'pin-core'],
+              ['cargo', 'clippy', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
+              ['cargo', 'doc', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--no-deps'],
+          ]
+          env = dict(os.environ, RUSTDOCFLAGS='-D warnings')
+          for index, command in enumerate(commands):
+              result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, env=env)
+              (root / f'{index}.log').write_text(result.stdout)
+              print('COMMAND:', ' '.join(command), 'EXIT:', result.returncode, flush=True)
+              print(result.stdout[-16000:], flush=True)
+              failed |= result.returncode != 0
+          lock = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
+          (root / 'lock.patch').write_text(lock)
+          print('CARGO-GENERATED LOCK PATCH:\n' + lock, flush=True)
+          failed |= bool(lock)
+          fmt = subprocess.run(['cargo', 'fmt', '--all'])
+          patch = subprocess.check_output(['git', 'diff', '--', '*.rs'], text=True)
+          (root / 'format.patch').write_text(patch)
+          print('FORMATTING PATCH:\n' + patch, flush=True)
+          failed |= fmt.returncode != 0 or bool(patch)
+          (root / 'head.txt').write_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True))
+          (root / 'status').write_text('1' if failed else '0')
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: g6-review-${{ github.run_id }}
+          path: ${{ runner.temp }}/g6-review/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce observed results
+        if: always()
+        run: test "$(cat "$RUNNER_TEMP/g6-review/status")" = 0

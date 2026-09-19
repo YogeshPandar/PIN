@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/pin-core", "crates/pin-pg"]
+members = ["crates/pin-core", "crates/pin-pg", "crates/pin-kernels"]
 default-members = ["crates/pin-core"]
 
 [workspace.package]
