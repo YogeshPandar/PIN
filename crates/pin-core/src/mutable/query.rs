@@ -9,7 +9,7 @@ use crate::budget::MemoryBudget;
 use crate::candidate::CandidatePlan;
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
-use crate::memory::vector;
+use crate::memory::{release, vector};
 use crate::query::{Kind, Query};
 use std::cmp::Ordering;
 
@@ -96,6 +96,7 @@ impl<'q> Plan<'q> {
             mapped.push(index);
         }
         let root = mapped[query.root];
+        release(mapped, &mut budget)?;
         // mark only reachable operands; NOT and universe simplification discard children.
         let mut active = vector(nodes.len(), &mut budget)?;
         active.resize(nodes.len(), false);
@@ -124,7 +125,15 @@ impl<'q> Plan<'q> {
                 cursors.push(Cursor::empty());
             }
         }
-        let tasks = vector(nodes.len(), &mut budget)?;
+        release(active, &mut budget)?;
+        // direct roots never enter the continuation interpreter.
+        let direct = match nodes[root] {
+            Node::And(left, right) | Node::Or(left, right) => {
+                matches!((nodes[left], nodes[right]), (Node::Term { .. }, Node::Term { .. }))
+            }
+            Node::Empty | Node::Universe | Node::Term { .. } => true,
+        };
+        let tasks = if direct { Vec::new() } else { vector(nodes.len(), &mut budget)? };
         Ok(Self {
             nodes,
             cursors,
@@ -579,4 +588,22 @@ pub fn scan_query<S: PageStore>(
         }
     }
     Ok(count)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::query::QueryLimits;
+
+    #[test]
+    fn direct_roots_do_not_allocate_continuations() {
+        for source in ["", "a", "a AND b", "a OR b", "a AND a", "\"a b\"", "NOT a", "a*"] {
+            let query = Query::parse(source, QueryLimits::default()).unwrap();
+            let plan = Plan::build(&query, 1 << 20).unwrap();
+            assert_eq!(plan.tasks.capacity(), 0, "{source}");
+        }
+        let query = Query::parse("(a OR b) AND c", QueryLimits::default()).unwrap();
+        let plan = Plan::build(&query, 1 << 20).unwrap();
+        assert!(plan.tasks.capacity() >= plan.nodes.len());
+    }
 }

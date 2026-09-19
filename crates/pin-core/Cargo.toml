@@ -8,6 +8,7 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+pin-kernels.workspace = true
 unicode-normalization = "=0.1.24"
 unicode-segmentation = "=1.12.0"
 unicode-case-mapping = "=1.0.0"

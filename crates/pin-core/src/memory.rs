@@ -44,6 +44,15 @@ pub(crate) fn vector<T>(capacity: usize, budget: &mut MemoryBudget) -> Result<Ve
     Ok(values)
 }
 
+// release actual capacity only after the owning allocation has been dropped.
+pub(crate) fn release<T>(values: Vec<T>, budget: &mut MemoryBudget) -> Result<()> {
+    let bytes = values.capacity().checked_mul(size_of::<T>())
+        .ok_or(Error::Limit("allocation bytes"))?;
+    drop(values);
+    budget.release(bytes)?;
+    Ok(())
+}
+
 pub(crate) fn copy_text(text: &str, budget: &mut MemoryBudget) -> Result<String> {
     let mut bytes = vector(text.len(), budget)?;
     bytes.extend_from_slice(text.as_bytes());
@@ -65,5 +74,26 @@ impl Work {
             .checked_sub(units)
             .ok_or(Error::Limit("search work"))?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn scratch_release_returns_capacity_without_resetting_peak() {
+        let mut budget = MemoryBudget::new(4096);
+        let first: Vec<u64> = vector(16, &mut budget).unwrap();
+        let second: Vec<u8> = vector(7, &mut budget).unwrap();
+        let retained = second.capacity();
+        let peak = budget.peak();
+        release(first, &mut budget).unwrap();
+        assert_eq!(budget.used(), retained);
+        assert_eq!(budget.peak(), peak);
+        release(second, &mut budget).unwrap();
+        release(Vec::<u8>::new(), &mut budget).unwrap();
+        assert_eq!(budget.used(), 0);
+        assert_eq!(budget.peak(), peak);
     }
 }

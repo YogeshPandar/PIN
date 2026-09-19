@@ -12,6 +12,7 @@ repository = "https://github.com/YogeshPandar/PIN"
 publish = false
 
 [workspace.dependencies]
+pin-kernels = { path = "crates/pin-kernels" }
 pin-core = { path = "crates/pin-core" }
 pgrx = { version = "=0.19.2", default-features = false }
 pgrx-pg-sys = { version = "=0.19.2", default-features = false }
