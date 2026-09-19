@@ -41,6 +41,7 @@ jobs:
               ['cargo', 'clippy', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--all-targets', '--', '-D', 'warnings'],
               ['cargo', 'run', '--locked', '--release', '-p', 'pin-kernels', '--example', 'bitmap'],
               ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'g6_containers'],
+              ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'g6_recheck', '--', '--iterations', '64', '--samples', '2'],
               ['cargo', 'doc', '--locked', '-p', 'pin-kernels', '-p', 'pin-core', '--no-deps'],
           ]
           metadata = []
@@ -52,7 +53,8 @@ jobs:
               result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
               (root / f'{index}.log').write_text(result.stderr + result.stdout)
               if '--example' in command:
-                  (root / (command[-1] + '.csv')).write_text(result.stdout)
+                  example = command[command.index('--example') + 1]
+                  (root / f'{example}.csv').write_text(result.stdout)
               print('COMMAND:', ' '.join(command), 'EXIT:', result.returncode, flush=True)
               print((result.stderr + result.stdout)[-16000:], flush=True)
               failed |= result.returncode != 0
