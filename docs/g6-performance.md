@@ -1,0 +1,75 @@
+# G6 performance and validation experiments
+
+## Current status
+
+There is no accepted PostgreSQL end-to-end speedup, cost calibration or hardware
+parity claim. SIMD selection remains opt-in and does not affect the default
+bitmap, count, or visibility paths. The examples below are diagnostic experiments,
+not proof that 64-byte containers benefit from an indirect or ISA-specific call.
+
+## Reproduce pure measurements
+
+Use the committed toolchain and lockfile on a controlled machine:
+
+```sh
+rustc -Vv
+lscpu
+sha256sum Cargo.lock
+git rev-parse HEAD
+cargo run --locked --release -p pin-kernels --example bitmap > bitmap.csv
+cargo run --locked --release -p pin-core --example g6_containers > containers.csv
+```
+
+The kernel example compares forced scalar and supported AVX2 selection for all
+three Boolean operations, empty inputs, small vector tails, heap-page-sized
+scratch and larger buffers. Input/output alignment offsets vary. Each output is
+compared with a separate per-word reference before and after timing. Fixture
+allocation and CPU selection are outside the timed loop. Unsupported AVX2 modes
+are omitted, not labelled as measurements of a fallback backend.
+
+The container example compares word-level size selection with an independent
+per-offset run counter for empty, singleton, run, dense, alternating and mixed
+sets across several valid domains. Encoded sizes, selected tags and cardinality
+accompany raw timings. It measures selection, not encoding, disk I/O or SQL.
+
+Five samples alternate the comparison order. Retain each raw row, report
+variation, and repeat on the target deployment CPU. Neither harness measures
+write p99 or maintenance debt. Do not use noisy shared-runner ratios as release
+thresholds. The benchmark examples intentionally use no third-party dependency.
+
+## PostgreSQL acceptance experiment
+
+Use disposable PostgreSQL 18.6 instances with the same pinned build, durability,
+cache state, concurrency, corpus and query semantics. Compare the G6 parent and
+candidate commits first. Compare native GIN only on an explicitly matched analysis
+subset; Pin's Unicode profile is not universally identical to PostgreSQL simple
+text search. Ranking models and VM count eligibility must not be conflated.
+
+Before timing, verify equal result sets and actual EXPLAIN plans. Keep Pin count
+experiments off unless separately qualified. Use pgbench custom scripts for rare
+and common terms, conjunctions, unions, phrases and negative queries. Include
+returned rows, TOASTed text, mixed writes, HOT/non-HOT updates, deletes and VACUUM.
+Run long enough to include checkpoint, seal and merge cycles. Measure saturated
+and rate-controlled loads separately, retaining errors, timeouts and skipped work.
+
+Record exact source/toolchain/lock hashes, CPU/ISA, kernel/storage, server settings,
+private and shared memory, index bytes, WAL bytes, heap fetches, source fanout,
+maintenance debt, throughput and p50/p95/p99 latency for reads and writes. Do not
+disable fsync, synchronous_commit or autovacuum to manufacture a win. Memory and
+write-tail regressions invalidate an unconditional speedup claim.
+
+Only then consider automatic SIMD, different group sizes, read-stream batching,
+container thresholds or planner cost changes. Each is a separate ablation and
+needs its own correctness and sustained-workload evidence.
+
+## Validation scope
+
+G6 CI compiles, tests debug/release, lints, builds rustdoc and runs the pure examples.
+It preserves Cargo/format deltas as review artifacts and rejects uncommitted drift.
+A separate pinned test-only nightly job runs Miri on scalar/fallback boundary
+cases and AddressSanitizer on native kernels. These jobs do not audit PostgreSQL
+MVCC, C buffers, cross-process locks or replay. The existing G0 PostgreSQL workflow
+remains responsible for extension compilation and host tests.
+
+Independent unsafe review and end-to-end G6 acceptance remain open regardless of
+microbenchmark or sanitizer success.
