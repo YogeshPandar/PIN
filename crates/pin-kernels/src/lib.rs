@@ -46,7 +46,9 @@ pub struct Kernels {
 impl Kernels {
     /// Selects the portable implementation without feature detection or allocation.
     pub const fn scalar() -> Self {
-        Self { backend: Backend::Scalar }
+        Self {
+            backend: Backend::Scalar,
+        }
     }
 
     /// Selects a backend without retaining caller data or changing global policy.
@@ -61,7 +63,9 @@ impl Kernels {
         {
             static AVX2: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
             if *AVX2.get_or_init(|| std::arch::is_x86_feature_detected!("avx2")) {
-                return Ok(Self { backend: Backend::Avx2 });
+                return Ok(Self {
+                    backend: Backend::Avx2,
+                });
             }
         }
         if mode == CpuMode::Avx2 {

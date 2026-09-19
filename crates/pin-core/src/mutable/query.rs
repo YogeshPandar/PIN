@@ -129,11 +129,18 @@ impl<'q> Plan<'q> {
         // direct roots never enter the continuation interpreter.
         let direct = match nodes[root] {
             Node::And(left, right) | Node::Or(left, right) => {
-                matches!((nodes[left], nodes[right]), (Node::Term { .. }, Node::Term { .. }))
+                matches!(
+                    (nodes[left], nodes[right]),
+                    (Node::Term { .. }, Node::Term { .. })
+                )
             }
             Node::Empty | Node::Universe | Node::Term { .. } => true,
         };
-        let tasks = if direct { Vec::new() } else { vector(nodes.len(), &mut budget)? };
+        let tasks = if direct {
+            Vec::new()
+        } else {
+            vector(nodes.len(), &mut budget)?
+        };
         Ok(Self {
             nodes,
             cursors,
@@ -597,7 +604,9 @@ mod tests {
 
     #[test]
     fn direct_roots_do_not_allocate_continuations() {
-        for source in ["", "a", "a AND b", "a OR b", "a AND a", "\"a b\"", "NOT a", "a*"] {
+        for source in [
+            "", "a", "a AND b", "a OR b", "a AND a", "\"a b\"", "NOT a", "a*",
+        ] {
             let query = Query::parse(source, QueryLimits::default()).unwrap();
             let plan = Plan::build(&query, 1 << 20).unwrap();
             assert_eq!(plan.tasks.capacity(), 0, "{source}");

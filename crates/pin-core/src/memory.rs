@@ -46,7 +46,9 @@ pub(crate) fn vector<T>(capacity: usize, budget: &mut MemoryBudget) -> Result<Ve
 
 // release actual capacity only after the owning allocation has been dropped.
 pub(crate) fn release<T>(values: Vec<T>, budget: &mut MemoryBudget) -> Result<()> {
-    let bytes = values.capacity().checked_mul(size_of::<T>())
+    let bytes = values
+        .capacity()
+        .checked_mul(size_of::<T>())
         .ok_or(Error::Limit("allocation bytes"))?;
     drop(values);
     budget.release(bytes)?;

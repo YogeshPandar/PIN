@@ -102,8 +102,12 @@ impl OffsetSet {
         if self.domain != other.domain {
             return Err(Error::new(0, ErrorKind::InvalidValue));
         }
-        let mut result = Self { words: [0; 8], domain: self.domain };
-        kernels.combine(operation, &self.words, &other.words, &mut result.words)
+        let mut result = Self {
+            words: [0; 8],
+            domain: self.domain,
+        };
+        kernels
+            .combine(operation, &self.words, &other.words, &mut result.words)
             .map_err(|_| Error::new(0, ErrorKind::InvalidValue))?;
         Ok(result)
     }
