@@ -42,9 +42,10 @@ thresholds. The benchmark examples intentionally use no third-party dependency.
 G6 run `35498740070` at
 `93c5bbeba0d53c064b6f55a9be4b51849493114c` is useful diagnostic evidence,
 not controlled release benchmarking. On that shared runner the current
-eight-word `OffsetSet` shape was faster through the forced scalar kernel than
-through forced AVX2 across the benchmark samples. Larger 128- and 1024-word
-buffers favored AVX2, while the largest memory-heavy case was near parity.
+eight-word `OffsetSet` shape had a lower median per-iteration time through the
+forced scalar kernel than through forced AVX2 across samples, operations and
+alignment offsets. The same aggregate favored AVX2 at 128 and 1024 words, while
+the largest memory-heavy case was near parity.
 That size sensitivity is why the production set operations remain scalar and
 automatic SIMD is not enabled from this result.
 
