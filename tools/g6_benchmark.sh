@@ -36,9 +36,19 @@ if (( clients == 0 || threads == 0 || threads > clients || seconds == 0 )); then
   echo 'invalid G6 client, thread or duration setting.' >&2
   exit 2
 fi
-if [[ -n $rate && ! $rate =~ ^[0-9]+([.][0-9]+)?$ ]]; then
-  echo 'PIN_G6_RATE must be a positive numeric rate.' >&2
+if [[ $setup != 0 && $setup != 1 ]]; then
+  echo 'PIN_G6_SETUP must be 0 or 1.' >&2
   exit 2
+fi
+if [[ ! $label =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+  echo 'PIN_G6_LABEL must use letters, digits, dot, underscore or hyphen.' >&2
+  exit 2
+fi
+if [[ -n $rate ]]; then
+  if [[ ! $rate =~ ^[0-9]+([.][0-9]+)?$ || $rate =~ ^0+([.]0+)?$ ]]; then
+    echo 'PIN_G6_RATE must be a positive numeric rate.' >&2
+    exit 2
+  fi
 fi
 
 server_version=$("${psql[@]}" -Atqc 'SHOW server_version_num')
@@ -143,6 +153,31 @@ fi
 printf 'sequential=%s\nindexed=%s\n' "$sequential" "$indexed" >"$output/correctness.txt"
 
 PGOPTIONS="$pin_options" "${psql[@]}" -Atqc "EXPLAIN (ANALYZE, BUFFERS, WAL, FORMAT JSON) $query"   >"$output/plan.json"
+python3 - "$mode" "$output/plan.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+mode = sys.argv[1]
+document = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
+
+def nodes(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from nodes(child)
+
+plan_nodes = list(nodes(document))
+if mode == "core":
+    expected = any(node.get("Node Type") == "Bitmap Index Scan" for node in plan_nodes)
+else:
+    expected = any(node.get("Custom Plan Provider") == "PinCount" for node in plan_nodes)
+if not expected:
+    raise SystemExit(f"unexpected plan for G6 mode {mode}")
+PY
 
 snapshot() {
   local name=$1
