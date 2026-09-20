@@ -7,6 +7,12 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/g6.yml'
+      - 'tests/test_g6_optimization.py'
+      - 'tests/sql/g6_recheck.sql'
+      - 'tests/sql/g2_concurrent_reader.sql'
+      - 'tools/g2_qualification.sh'
+      - 'benches/g6/**'
+      - 'docs/g6-*.md'
   workflow_dispatch:
 
 permissions:
@@ -27,6 +33,10 @@ jobs:
           persist-credentials: false
       - name: Select exact Rust
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Check G6 source contracts
+        run: |
+          python3 -m unittest tests.test_g6_optimization -v
+          bash -n tools/g2_qualification.sh
       - name: Test and preserve review diagnostics
         shell: python
         run: |
