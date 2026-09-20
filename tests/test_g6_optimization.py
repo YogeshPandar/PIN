@@ -60,7 +60,7 @@ class RecheckSourceTests(unittest.TestCase):
 
     def test_experiment_defaults_off_and_is_privileged(self):
         self.assertIn(
-            'static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::new(false);',
+            'static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::<bool>::new(false);',
             self.rust,
         )
         self.assertIn('GucRegistry::define_bool_guc(', self.rust)
