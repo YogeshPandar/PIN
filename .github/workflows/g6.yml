@@ -7,10 +7,11 @@ on:
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/g6.yml'
-      - 'tests/test_g6_optimization.py'
+      - 'tests/test_g6*.py'
       - 'tests/sql/g6_recheck.sql'
       - 'tests/sql/g2_concurrent_reader.sql'
       - 'tools/g2_qualification.sh'
+      - 'tools/g6_*'
       - 'benches/g6/**'
       - 'docs/g6-*.md'
   workflow_dispatch:
@@ -35,8 +36,9 @@ jobs:
         run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
       - name: Check G6 source contracts
         run: |
-          python3 -m unittest tests.test_g6_optimization -v
+          python3 -m unittest tests.test_g6_optimization tests.test_g6_latency -v
           bash -n tools/g2_qualification.sh
+          bash -n tools/g6_benchmark.sh
       - name: Test and preserve review diagnostics
         shell: python
         run: |
