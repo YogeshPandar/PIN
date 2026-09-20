@@ -46,8 +46,10 @@ Evidence authored: independent per-word differential tests over all three
 operations, zero lengths, every vector tail, all u64 alignments modulo 32 for
 both inputs and output, exact allocations, identical input aliases, densities
 and every small length-mismatch permutation. Guards detect output clobbering.
-Actual compiler/test results and applicable sanitizer/Miri execution must be
-recorded after CI. These tests do not prove PostgreSQL visibility or performance.
+Observed G6 run `35498740070` at `93c5bbeba0d53c064b6f55a9be4b51849493114c`
+passed debug/release kernel and core tests, Clippy, rustdoc, the pure benchmark
+examples, Miri scalar/tail checks, and AddressSanitizer kernel tests. These checks
+do not prove PostgreSQL visibility or end-to-end performance.
 
 ## Performance gate
 
@@ -85,9 +87,30 @@ Evidence: `g6_offsets` compares encoded sizes and tags to a separate per-offset
 counter for exhaustive small sets and every supported domain. Tests cover
 cross-word boundaries, exact round trips, every kernel mode, and foreign-domain
 rejection. Private allocation tests cover direct roots and peak preservation.
-Debug/release tests passed in G6 run 35422940870 at `296aa055fce494c6255168a04f8974d9248d6445`.
-That run still failed the formatting/lock drift gate and three Clippy suggestions;
-the following checkpoint applies the generated output and typed chunk fix.
+Debug/release tests, Clippy and rustdoc passed in G6 run `35498740070` at
+`93c5bbeba0d53c064b6f55a9be4b51849493114c`. G0 run `35498740038` compiled the
+PostgreSQL extension and passed installation/lifecycle and host-boundary linting;
+its later qualification failure was traced to a misspelled fixture path and a
+stale source-string assertion, both outside the compiled implementation.
+
+## COUNTRECHECK06: default-off pgrx boolean GUC
+
+Module: `pin-pg/src/count.rs`.
+
+The exact pgrx release is 0.19.2, tag commit
+`70383e884582d1bcc7cd681d10886b995a2830cb`. Its `pgrx/src/guc.rs` defines
+`GucSetting<bool>::new(bool)` as a const constructor and
+`GucRegistry::define_bool_guc` over a static `GucSetting<bool>`.
+The constructor call is explicitly type-qualified because pgrx also provides
+inherent `new` methods for several other `GucSetting<T>` specializations.
+
+Immutable source:
+https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx/src/guc.rs
+
+`pin.enable_count_recheck` remains `PGC_SUSET` and false by default. The setting
+selects only the exact single-term heap recheck implementation. It does not alter
+snapshot choice, owner pinning, VM certification, HOT fetches or SQL semantics.
+The sequential predicate retains the independently materialized document oracle.
 
 ## MEASURE06: benchmark and memory-tool boundaries
 
@@ -96,6 +119,7 @@ the following checkpoint applies the generated output and typed chunk fix.
 - https://doc.rust-lang.org/unstable-book/compiler-flags/sanitizer.html
 - https://github.com/rust-lang/miri/blob/master/README.md
 - https://www.postgresql.org/docs/18/pgbench.html
+- https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/doc/src/sgml/ref/pgbench.sgml
 
 Benchmarks allocate fixtures before timing, verify output independently, retain
 raw samples and alternate order. `black_box` is a best-effort optimization barrier,
@@ -103,4 +127,10 @@ not a timing guarantee. CI timings are not controlled end-to-end evidence.
 Test-only nightly tooling is separately pinned to nightly-2026-09-18. Miri checks
 scalar/fallback paths; it does not execute this build's AVX2 module. AddressSanitizer
 instruments native kernels, not PostgreSQL and not a rebuilt standard library.
+PostgreSQL 18.6 documents the per-transaction log duration in microseconds and,
+for rate-controlled runs, a separate schedule-lag field. The committed parser
+combines worker logs, rejects malformed records, preserves failure classes and
+uses deterministic nearest-rank percentiles. The benchmark harness records raw
+logs and environment data so summaries can be recomputed independently.
+
 Tool availability and successful execution are evidence only when observed in CI.
