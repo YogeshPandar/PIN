@@ -20,7 +20,7 @@ use std::ffi::c_void;
 const BATCH: usize = 64;
 const COUNTERS: usize = 8;
 
-static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::new(false);
+static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 unsafe extern "C-unwind" {
     fn pin_count_init();
