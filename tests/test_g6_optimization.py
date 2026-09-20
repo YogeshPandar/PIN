@@ -99,6 +99,8 @@ class RecheckSourceTests(unittest.TestCase):
 
     def test_new_sql_is_in_the_existing_disposable_cluster_runner(self):
         runner = (ROOT / 'tools/g2_qualification.sh').read_text()
+        self.assertIn('"$root/tests/sql/g2_concurrent_reader.sql"', runner)
+        self.assertTrue((ROOT / 'tests/sql/g2_concurrent_reader.sql').is_file())
         self.assertIn('"${psql[@]}" -f "$root/tests/sql/g6_recheck.sql"', runner)
         sql = (ROOT / 'tests/sql/g6_recheck.sql').read_text()
         self.assertIn("set_config('pin.enable_count_vm', 'off', true)", sql)
