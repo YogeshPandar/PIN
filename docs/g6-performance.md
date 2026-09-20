@@ -37,6 +37,24 @@ variation, and repeat on the target deployment CPU. Neither harness measures
 write p99 or maintenance debt. Do not use noisy shared-runner ratios as release
 thresholds. The benchmark examples intentionally use no third-party dependency.
 
+## Observed CI diagnostics
+
+G6 run `35498740070` at
+`93c5bbeba0d53c064b6f55a9be4b51849493114c` is useful diagnostic evidence,
+not controlled release benchmarking. On that shared runner the current
+eight-word `OffsetSet` shape was faster through the forced scalar kernel than
+through forced AVX2 across the benchmark samples. Larger 128- and 1024-word
+buffers favored AVX2, while the largest memory-heavy case was near parity.
+That size sensitivity is why the production set operations remain scalar and
+automatic SIMD is not enabled from this result.
+
+The word-level run counter also agreed with the independent coordinate oracle
+while removing most of the per-offset work as domains became denser. The
+single-term streaming recheck was faster on the ASCII fixtures in that run,
+while the Unicode normalization fixtures were approximately level with the
+materialized reference. The PostgreSQL recheck switch therefore remains
+default-off until host-level measurements show a useful end-to-end result.
+
 ## Reproduce PostgreSQL measurements
 
 Use one fresh benchmark fixture per workload so a faster write run cannot change
