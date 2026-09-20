@@ -20,6 +20,7 @@ seconds=${PIN_G6_SECONDS:-30}
 warmup=${PIN_G6_WARMUP_SECONDS:-5}
 seed=${PIN_G6_SEED:-6001}
 mode=${PIN_G6_MODE:-core}
+workload=${PIN_G6_WORKLOAD:-read}
 setup=${PIN_G6_SETUP:-1}
 rate=${PIN_G6_RATE:-}
 latency_limit=${PIN_G6_LATENCY_LIMIT_MS:-250}
@@ -49,6 +50,10 @@ if [[ $("${psql[@]}" -Atqc "SELECT count(*) FROM pg_catalog.pg_extension WHERE e
   echo 'install and create extension pin before benchmarking.' >&2
   exit 2
 fi
+if [[ $("${psql[@]}" -Atqc "SELECT rolsuper FROM pg_catalog.pg_roles WHERE rolname = current_user") != t ]]; then
+  echo 'G6 benchmark requires a superuser for SUSET fast-path controls.' >&2
+  exit 2
+fi
 
 case "$mode" in
   core)
@@ -65,10 +70,20 @@ case "$mode" in
     exit 2
     ;;
 esac
+case "$workload" in
+  read|write|mixed) ;;
+  *)
+    echo "unsupported PIN_G6_WORKLOAD: $workload" >&2
+    exit 2
+    ;;
+esac
 
 head=$(git -C "$root" rev-parse HEAD)
 short=${head:0:12}
-output=${PIN_G6_OUTPUT:-"$root/.artifacts/g6/${label}-${mode}-${short}"}
+output=${PIN_G6_OUTPUT:-"$root/.artifacts/g6/${label}-${mode}-${workload}-${short}"}
+if [[ $output != /* ]]; then
+  output="$root/$output"
+fi
 if [[ -e $output ]]; then
   echo "benchmark output already exists: $output" >&2
   exit 2
@@ -79,6 +94,7 @@ mkdir -p "$output"
   echo "commit=$head"
   echo "label=$label"
   echo "mode=$mode"
+  echo "workload=$workload"
   echo "clients=$clients"
   echo "threads=$threads"
   echo "seconds=$seconds"
@@ -172,19 +188,27 @@ run_workload() {
   snapshot "$name-before"
   (
     cd "$output"
-    PGOPTIONS="$pin_options" "$pgbench" "${common[@]}" --log-prefix="$prefix" "$@" "$PGDATABASE"
+    PGOPTIONS="$pin_options" "$pgbench" "${common[@]}" --log-prefix="$prefix" "$@" -d "$PGDATABASE"
   ) >"$output/$name.txt" 2>&1
   snapshot "$name-after"
   python3 "$root/tools/g6_latency.py" "${scheduled[@]}" "$prefix".* >"$output/$name-latency.json"
 }
 
 if (( warmup > 0 )); then
-  PGOPTIONS="$pin_options" "$pgbench" -n -M prepared -c "$clients" -j "$threads"     -T "$warmup" --random-seed="$seed" -f "$root/benches/g6/count.sql" "$PGDATABASE"     >"$output/warmup.txt" 2>&1
+  PGOPTIONS="$pin_options" "$pgbench" -n -M prepared -c "$clients" -j "$threads"     -T "$warmup" --random-seed="$seed" -f "$root/benches/g6/count.sql" -d "$PGDATABASE"     >"$output/warmup.txt" 2>&1
 fi
 
-run_workload read -f "$root/benches/g6/count.sql"
-run_workload write -f "$root/benches/g6/write.sql"
-run_workload mixed   -f "$root/benches/g6/count.sql@95"   -f "$root/benches/g6/write.sql@5"
+case "$workload" in
+  read)
+    run_workload read -f "$root/benches/g6/count.sql"
+    ;;
+  write)
+    run_workload write -f "$root/benches/g6/write.sql"
+    ;;
+  mixed)
+    run_workload mixed -f "$root/benches/g6/count.sql@95" -f "$root/benches/g6/write.sql@5"
+    ;;
+esac
 
 "${psql[@]}" -Atqc "
 SELECT pg_size_pretty(pg_relation_size('public.pin_g6_bench')),
