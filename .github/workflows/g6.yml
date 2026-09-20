@@ -14,6 +14,7 @@ on:
       - 'tools/g6_*'
       - 'benches/g6/**'
       - 'docs/g6-*.md'
+      - 'docs/unsafe-audit.md'
   workflow_dispatch:
 
 permissions:
