@@ -56,3 +56,23 @@ The VM shortcut is not accepted merely because these operations are memory-safe.
 Its correctness also depends on PostgreSQL publication, snapshot and cleanup
 ordering. That proof and the negative controls are documented in
 [g5-counts.md](g5-counts.md). Both count switches remain off by default.
+
+## G6 kernel boundary additions
+
+Review state: implementation self-review completed for the G6 AVX2 kernel.
+Independent unsafe review is not recorded. The production PostgreSQL paths keep
+automatic SIMD disabled until end-to-end measurement and independent review.
+
+| ID | Operations | Safety argument | Required validation |
+|---|---|---|---|
+| G6KERNEL01 | `#[target_feature(enable = "avx2")]` kernel entry | The private backend can be constructed only after `is_x86_feature_detected!("avx2")`; scalar remains universally available | forced scalar/AVX2 differential tests and unsupported-mode rejection |
+| G6KERNEL01 | `_mm256_loadu_si256` | Each load receives one complete initialized four-`u64` chunk; unaligned access does not extend beyond the borrowed slice | every length tail and alignment modulo 32 |
+| G6KERNEL01 | `_mm256_storeu_si256` | Output is an exclusive four-`u64` chunk with the same validated length; valid Rust callers cannot overlap the output with immutable inputs | guard-word clobber tests and AddressSanitizer |
+| G6KERNEL01 | AVX2 boolean intrinsics | Union, intersection and difference map directly to scalar operations; difference reverses operands for `andnot` semantics | independent per-word oracle over sparse/dense/random inputs |
+
+G6 run `35498740070` passed the kernel debug/release suite, Clippy, rustdoc,
+Miri scalar/tail checks and AddressSanitizer native-kernel tests at
+`93c5bbeba0d53c064b6f55a9be4b51849493114c`. Those checks cover memory and
+scalar-equivalence properties of the isolated kernel. They do not establish
+whole-query performance or PostgreSQL visibility correctness.
+
