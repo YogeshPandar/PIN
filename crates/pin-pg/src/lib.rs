@@ -12,6 +12,7 @@ mod abi;
 mod am;
 mod compatibility;
 mod count;
+mod maintenance;
 mod matching;
 mod native;
 mod storage;
@@ -44,12 +45,13 @@ pub unsafe extern "C-unwind" fn _PG_init() {
     }
     // safety: validation and the preload-only check precede static hook registration.
     unsafe { count::initialize() };
+    maintenance::initialize();
 }
 
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G6: scalar-default optimization; experimental fast paths remain gated"
+    "G7: selective compaction and native parallel qualification; experiments remain gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]

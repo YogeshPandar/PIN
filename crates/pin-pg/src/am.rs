@@ -323,11 +323,12 @@ unsafe fn compact_cleanup(
     // safety: physical posting reclamation waits for readers, then excludes writers.
     let (compacted, pages) = matching::stored(unsafe {
         storage::with_maintenance(index, |store| {
-            let compacted = mutable::compact(store)?;
+            let compacted = mutable::compact_with_mode(store, crate::maintenance::mode())?;
             let pages = pin_core::mutable::PageStore::blocks(store)?;
             Ok((compacted, pages))
         })
     });
+    crate::maintenance::report(compacted);
     // safety: vacuum_pass always returns a live PostgreSQL-owned statistics record.
     unsafe {
         let free_pages = matching::stored(

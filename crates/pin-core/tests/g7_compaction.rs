@@ -164,7 +164,11 @@ fn retention_preserves_payloads_and_matches_the_copying_reference() {
         "beta OR gamma",
         "NOT missing",
     ] {
-        assert_eq!(rows(&mut retained, query), rows(&mut copied, query), "{query}");
+        assert_eq!(
+            rows(&mut retained, query),
+            rows(&mut copied, query),
+            "{query}"
+        );
     }
     integrity(&mut retained);
 }
@@ -353,9 +357,10 @@ fn every_event_failure_recovers_and_interrupted_retirement_keeps_the_prefix() {
 fn corrupted_sealed_chain_is_rejected_before_publication() {
     let mut store = sealed("alpha");
     append(&mut store, 8500, 8501, "alpha");
-    let mut first = chain(&mut store, "alpha").remove(0);
-    first.set_next(first.block()).unwrap();
-    store.commit(&[&first]).unwrap();
+    let pages = chain(&mut store, "alpha");
+    let mut second = pages[1].clone();
+    second.set_next(pages[0].block()).unwrap();
+    store.commit(&[&second]).unwrap();
     let before = store.pages.clone();
     assert!(retain(&mut store).is_err());
     assert_eq!(store.pages, before);
