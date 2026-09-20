@@ -103,7 +103,7 @@ terminate_blocker() {
 # fix one repeatable-read snapshot while writes commit.
 start_blocker pin-g2-concurrency-blocker 3
 PGAPPNAME=pin-g2-concurrency-reader "${psql[@]}" \
-  -f "$root/tests/sql/g2_concurt_reader.sql" >"$work/concurrent-reader.log" 2>&1 &
+  -f "$root/tests/sql/g2_concurrent_reader.sql" >"$work/concurrent-reader.log" 2>&1 &
 reader_pid=$!
 wait_for_advisory_waiter pin-g2-concurrency-reader
 
