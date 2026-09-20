@@ -5,6 +5,7 @@
 use super::bytes::{Reader, Writer};
 use super::{Error, ErrorKind, Result};
 use crate::identity::HeapLayout;
+use pin_kernels::{BitmapOp, Kernels};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Encoding {
@@ -64,7 +65,7 @@ impl OffsetSet {
         }
     }
 
-    fn combine(&self, other: &Self, op: fn(u64, u64) -> u64) -> Result<Self> {
+    fn combine(&self, other: &Self, op: impl Fn(u64, u64) -> u64) -> Result<Self> {
         if self.domain != other.domain {
             return Err(Error::new(0, ErrorKind::InvalidValue));
         }
@@ -87,14 +88,37 @@ impl OffsetSet {
         self.combine(other, |left, right| left & !right)
     }
 
+    /// Applies an explicitly selected kernel without changing the default path.
+    /// The validated domain and zero tail bits survive all three operations.
+    ///
+    /// # Errors
+    /// Rejects different heap-offset domains before producing a result.
+    pub fn combine_with(
+        &self,
+        other: &Self,
+        operation: BitmapOp,
+        kernels: Kernels,
+    ) -> Result<Self> {
+        if self.domain != other.domain {
+            return Err(Error::new(0, ErrorKind::InvalidValue));
+        }
+        let mut result = Self {
+            words: [0; 8],
+            domain: self.domain,
+        };
+        kernels
+            .combine(operation, &self.words, &other.words, &mut result.words)
+            .map_err(|_| Error::new(0, ErrorKind::InvalidValue))?;
+        Ok(result)
+    }
+
     fn run_count(&self) -> u16 {
         let mut runs = 0;
-        let mut previous = 0;
-        for offset in self.iter() {
-            if previous == 0 || offset != previous + 1 {
-                runs += 1;
-            }
-            previous = offset;
+        let mut carry = 0;
+        for &word in &self.words {
+            // count set bits whose predecessor is clear, including word boundaries.
+            runs += (word & !((word << 1) | carry)).count_ones() as u16;
+            carry = word >> 63;
         }
         runs
     }
@@ -109,13 +133,16 @@ impl OffsetSet {
 
     // ties prefer sparse, then bitmap, then runs; headers count toward selection.
     pub fn preferred_encoding(&self) -> Encoding {
-        let mut best = Encoding::Sparse;
-        for encoding in [Encoding::Bitmap, Encoding::Runs] {
-            if self.encoded_len(encoding) < self.encoded_len(best) {
-                best = encoding;
-            }
+        let sparse = self.encoded_len(Encoding::Sparse);
+        let bitmap = self.encoded_len(Encoding::Bitmap);
+        let runs = self.encoded_len(Encoding::Runs);
+        if sparse <= bitmap && sparse <= runs {
+            Encoding::Sparse
+        } else if bitmap <= runs {
+            Encoding::Bitmap
+        } else {
+            Encoding::Runs
         }
-        best
     }
 
     pub fn encode(&self, output: &mut [u8]) -> Result<usize> {

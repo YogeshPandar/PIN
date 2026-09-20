@@ -54,15 +54,7 @@ pub struct Analyzed {
 impl Analyzed {
     // rejects size, token, allocation and profile errors without returning partial text.
     pub fn analyze(text: &str, limits: AnalysisLimits) -> Result<Self> {
-        if unicode_normalization::UNICODE_VERSION != (16, 0, 0)
-            || unicode_segmentation::UNICODE_VERSION != (16, 0, 0)
-            || unicode_case_mapping::UNICODE_VERSION != (16, 0, 0)
-        {
-            return Err(Error::InvalidProfile);
-        }
-        if text.len() > limits.input_bytes {
-            return Err(Error::Limit("document bytes"));
-        }
+        check_input(text, limits)?;
         let mut budget = MemoryBudget::new(limits.memory_bytes);
         let (normalized, peak) = profile_text(text, limits.normalized_bytes, &mut budget)?;
         u32::try_from(normalized.len()).map_err(|_| Error::Limit("normalized bytes"))?;
@@ -119,4 +111,18 @@ impl Analyzed {
             position: index as u32,
         })
     }
+}
+
+// both materialized analysis and streaming rechecks use the same profile gate.
+pub(crate) fn check_input(text: &str, limits: AnalysisLimits) -> Result<()> {
+    if unicode_normalization::UNICODE_VERSION != (16, 0, 0)
+        || unicode_segmentation::UNICODE_VERSION != (16, 0, 0)
+        || unicode_case_mapping::UNICODE_VERSION != (16, 0, 0)
+    {
+        return Err(Error::InvalidProfile);
+    }
+    if text.len() > limits.input_bytes {
+        return Err(Error::Limit("document bytes"));
+    }
+    Ok(())
 }

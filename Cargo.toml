@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/pin-core", "crates/pin-pg"]
+members = ["crates/pin-core", "crates/pin-pg", "crates/pin-kernels"]
 default-members = ["crates/pin-core"]
 
 [workspace.package]
@@ -12,6 +12,7 @@ repository = "https://github.com/YogeshPandar/PIN"
 publish = false
 
 [workspace.dependencies]
+pin-kernels = { path = "crates/pin-kernels" }
 pin-core = { path = "crates/pin-core" }
 pgrx = { version = "=0.19.2", default-features = false }
 pgrx-pg-sys = { version = "=0.19.2", default-features = false }
