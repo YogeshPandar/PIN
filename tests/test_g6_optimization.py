@@ -97,6 +97,19 @@ class RecheckSourceTests(unittest.TestCase):
         self.assertIn('max_steps.saturating_sub(1)', body)
         self.assertIn('comparisons_left != 0', body)
 
+    def test_benchmark_harness_checks_semantics_plans_and_durability(self):
+        runner = (ROOT / 'tools/g6_benchmark.sh').read_text()
+        setup = (ROOT / 'benches/g6/setup.sql').read_text()
+        self.assertIn('EXPLAIN (ANALYZE, BUFFERS, WAL, FORMAT JSON)', runner)
+        self.assertIn('Bitmap Index Scan', runner)
+        self.assertIn('Custom Plan Provider', runner)
+        self.assertIn('PinCount', runner)
+        self.assertIn('--log-prefix=', runner)
+        self.assertIn('tools/g6_latency.py', runner)
+        self.assertIn("'fsync','full_page_writes','synchronous_commit','autovacuum'", runner)
+        self.assertIn('PIN_G6_WORKLOAD', runner)
+        self.assertNotIn('autovacuum_enabled = false', setup)
+
     def test_new_sql_is_in_the_existing_disposable_cluster_runner(self):
         runner = (ROOT / 'tools/g2_qualification.sh').read_text()
         self.assertIn('"$root/tests/sql/g2_concurrent_reader.sql"', runner)
