@@ -4,7 +4,9 @@
 
 Work starts from main `5a3c5f04aab0ae9fa67a0ecbc0c10ca210f978e8`.
 G6 is not an assertion that the earlier G4/G5 qualification gates passed.
-No throughput, latency, memory-parity or production-readiness result is claimed.
+The non-measurement implementation work in this branch is complete for the
+current storage/query architecture. No throughput, latency, memory-parity or
+production-readiness result is claimed.
 
 ## Scope
 
@@ -27,7 +29,7 @@ without a demonstrated I/O bottleneck.
 2. Add isolated scalar/AVX2 kernels and bounds, tail and alignment tests.
 3. Reduce measured-work opportunities in container sizing and query scratch;
    retain reference paths and add regression tests.
-4. Add reproducible kernel/container and PostgreSQL workload measurements.
+4. Add reproducible kernel/container and PostgreSQL workload harnesses.
 5. Review CI diagnostics, correct regressions and record observed evidence.
 
 ## Required evidence
@@ -62,6 +64,19 @@ an unsafe kernel is accepted.
 - `_mm256_loadu_si256`: unaligned loads still need the complete 32-byte readable
   range inside one initialized live allocation. Tails use the scalar path.
   https://doc.rust-lang.org/core/arch/x86_64/fn._mm256_loadu_si256.html
+
+## Measurement-gated decisions
+
+Automatic SIMD selection, different physical group sizes, PG18 read-stream
+batching, container threshold changes and planner cost constants remain unchanged
+until controlled measurements justify them. This is intentional. PostgreSQL 18's
+read-stream batching contract restricts callback behavior while batch mode is
+active, and introducing it without an observed I/O bottleneck would add host
+lifetime and error-boundary complexity without evidence of a whole-query gain.
+
+The committed PostgreSQL harness records the inputs needed to decide those
+changes. A future measured change must be a separate focused patch so its
+correctness and resource impact can be compared with this scalar/reference base.
 
 ## Acceptance
 
