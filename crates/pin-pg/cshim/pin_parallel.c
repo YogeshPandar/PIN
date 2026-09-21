@@ -41,7 +41,7 @@ typedef struct PinBuildShared
 {
     Oid heaprelid;
     Oid indexrelid;
-    uint64 participant_memory;
+    uint64 prepare_memory;
     slock_t mutex;
     double heap_tuples;
     uint64 index_tuples;
@@ -141,7 +141,7 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
 {
     PinBuildLocal local = {
         .heap = heap,
-        .participant_memory = shared->participant_memory,
+        .participant_memory = shared->prepare_memory,
         .index_tuples = 0
     };
     IndexInfo *info = BuildIndexInfo(index);
@@ -160,8 +160,8 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
 
 bool
 pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
-                   uint64 participant_memory, double *heap_tuples,
-                   uint64 *index_tuples)
+                   uint64 prepare_memory, uint64 participant_memory,
+                   double *heap_tuples, uint64 *index_tuples)
 {
     ParallelContext *pcxt;
     PinBuildShared *shared;
@@ -175,7 +175,7 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
     int querylen = 0;
 
     if (heap == NULL || index == NULL || info == NULL || heap_tuples == NULL ||
-        index_tuples == NULL || participant_memory == 0 ||
+        index_tuples == NULL || prepare_memory == 0 || participant_memory == 0 ||
         info->ii_Concurrent || info->ii_ParallelWorkers <= 0)
         return false;
 
@@ -218,7 +218,7 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
     shared = shm_toc_allocate(pcxt->toc, shared_size);
     shared->heaprelid = RelationGetRelid(heap);
     shared->indexrelid = RelationGetRelid(index);
-    shared->participant_memory = participant_memory;
+    shared->prepare_memory = prepare_memory;
     SpinLockInit(&shared->mutex);
     shared->heap_tuples = 0;
     shared->index_tuples = 0;
