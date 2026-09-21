@@ -173,6 +173,7 @@ unsafe extern "C-unwind" fn build_tuple(
             nulls,
             tid,
             matching::PREPARE_MEMORY,
+            std::ptr::null_mut(),
         )
     } {
         state.documents = matching::stored(
@@ -193,6 +194,7 @@ unsafe fn insert_value(
     nulls: *mut bool,
     tid: pg_sys::ItemPointer,
     memory_bytes: usize,
+    parallel_writer: *mut c_void,
 ) -> bool {
     storage::interrupt();
     // safety: core supplies initialized one-element key and null arrays.
@@ -208,10 +210,17 @@ unsafe fn insert_value(
     drop(analyzed);
     // safety: C reads a valid core-owned item pointer without changing its root identity.
     let root = matching::stored(unsafe { storage::root(tid) });
-    // safety: analysis/allocation precede the writer lock; relation lifetime is unchanged.
-    matching::stored(unsafe {
-        storage::with_writer(index, |store| mutable::insert(store, root, &document))
-    });
+    // safety: analysis/allocation precede both writer locks.
+    if !parallel_writer.is_null() {
+        unsafe { native::call(|| native::pin_parallel_build_writer_lock(parallel_writer)) };
+    }
+    let result =
+        unsafe { storage::with_writer(index, |store| mutable::insert(store, root, &document)) };
+    if !parallel_writer.is_null() {
+        // safety: this participant acquired the DSM lock immediately above.
+        unsafe { native::call(|| native::pin_parallel_build_writer_unlock(parallel_writer)) };
+    }
+    matching::stored(result);
     true
 }
 
@@ -228,6 +237,7 @@ pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
     values: *mut pg_sys::Datum,
     nulls: *mut bool,
     memory_bytes: u64,
+    writer_lock: *mut c_void,
 ) -> bool {
     let memory_bytes = matching::stored(
         usize::try_from(memory_bytes)
@@ -240,8 +250,11 @@ pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
                 }
             }),
     );
-    // safety: C forwards the current worker's build callback arguments unchanged.
-    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes) }
+    if writer_lock.is_null() {
+        matching::stored::<()>(Err(Error::InvalidState));
+    }
+    // safety: C forwards callback arguments and an opaque DSM LWLock pointer.
+    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes, writer_lock) }
 }
 
 #[pg_guard]
@@ -276,6 +289,7 @@ unsafe extern "C-unwind" fn insert(
             nulls,
             heap_tid,
             matching::PREPARE_MEMORY,
+            std::ptr::null_mut(),
         )
     };
     false

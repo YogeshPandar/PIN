@@ -18,6 +18,8 @@ unsafe extern "C-unwind" {
         heap_tuples: *mut f64,
         index_tuples: *mut u64,
     ) -> bool;
+    pub(crate) fn pin_parallel_build_writer_lock(lock: *mut c_void);
+    pub(crate) fn pin_parallel_build_writer_unlock(lock: *mut c_void);
     #[cfg(feature = "test-hooks")]
     pub(crate) fn pin_parallel_test_event(stage: u8);
     pub(crate) fn pin_storage_check(

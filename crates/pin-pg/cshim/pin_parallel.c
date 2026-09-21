@@ -15,6 +15,7 @@
 #include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/spin.h"
+#include "storage/lwlock.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include "utils/snapmgr.h"
@@ -43,6 +44,8 @@ typedef struct PinBuildShared
     Oid heaprelid;
     Oid indexrelid;
     uint64 prepare_memory;
+    int writer_tranche;
+    LWLock writer_lock;
     slock_t mutex;
     double heap_tuples;
     uint64 index_tuples;
@@ -52,6 +55,7 @@ typedef struct PinBuildLocal
 {
     Relation heap;
     uint64 prepare_memory;
+    LWLock *writer_lock;
     uint64 index_tuples;
 } PinBuildLocal;
 
@@ -59,7 +63,8 @@ typedef struct PinBuildLocal
     ((ParallelTableScanDesc) ((char *) (shared) + BUFFERALIGN(sizeof(PinBuildShared))))
 
 extern bool pin_parallel_build_tuple(Relation index, Relation heap, ItemPointer tid,
-                                     Datum *values, bool *nulls, uint64 memory_bytes);
+                                     Datum *values, bool *nulls, uint64 memory_bytes,
+                                     void *writer_lock);
 
 static Size pin_parallel_build_shared_size(Relation heap);
 static void pin_parallel_build_scan(PinBuildShared *shared, Relation heap,
@@ -70,6 +75,7 @@ static void pin_parallel_build_callback(Relation index, ItemPointer tid,
 PGDLLEXPORT void pin_parallel_build_main(dsm_segment *seg, shm_toc *toc);
 
 static bool pin_enable_parallel_vacuum = false;
+static int pin_build_tranche_id = -1;
 #ifdef PIN_TEST_HOOKS
 static int pin_pause_worker_stage = 0;
 #endif
@@ -115,6 +121,31 @@ pin_parallel_test_event(uint8 stage)
 #endif
 
 
+static int
+pin_parallel_build_tranche(void)
+{
+    if (pin_build_tranche_id < 0)
+        pin_build_tranche_id = LWLockNewTrancheId();
+    LWLockRegisterTranche(pin_build_tranche_id, "PinParallelBuild");
+    return pin_build_tranche_id;
+}
+
+void
+pin_parallel_build_writer_lock(void *lock)
+{
+    if (lock == NULL)
+        elog(ERROR, "invalid Pin parallel build lock");
+    LWLockAcquire((LWLock *) lock, LW_EXCLUSIVE);
+}
+
+void
+pin_parallel_build_writer_unlock(void *lock)
+{
+    if (lock == NULL || !LWLockHeldByMeInMode((LWLock *) lock, LW_EXCLUSIVE))
+        elog(ERROR, "invalid Pin parallel build unlock");
+    LWLockRelease((LWLock *) lock);
+}
+
 static Size
 pin_parallel_build_shared_size(Relation heap)
 {
@@ -132,7 +163,7 @@ pin_parallel_build_callback(Relation index, ItemPointer tid, Datum *values,
     pin_parallel_test_event(16);
 #endif
     if (pin_parallel_build_tuple(index, local->heap, tid, values, nulls,
-                                 local->prepare_memory) &&
+                                 local->prepare_memory, local->writer_lock) &&
         pg_add_u64_overflow(local->index_tuples, 1, &local->index_tuples))
         ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
                         errmsg("Pin parallel build tuple count overflow")));
@@ -145,10 +176,15 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
     PinBuildLocal local = {
         .heap = heap,
         .prepare_memory = shared->prepare_memory,
+        .writer_lock = &shared->writer_lock,
         .index_tuples = 0
     };
-    IndexInfo *info = BuildIndexInfo(index);
-    TableScanDesc scan = table_beginscan_parallel(heap, PIN_BUILD_SCAN(shared));
+    IndexInfo *info;
+    TableScanDesc scan;
+
+    LWLockRegisterTranche(shared->writer_tranche, "PinParallelBuild");
+    info = BuildIndexInfo(index);
+    scan = table_beginscan_parallel(heap, PIN_BUILD_SCAN(shared));
     double heap_tuples;
 
     info->ii_Concurrent = false;
@@ -229,6 +265,8 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
     shared->heaprelid = RelationGetRelid(heap);
     shared->indexrelid = RelationGetRelid(index);
     shared->prepare_memory = prepare_memory;
+    shared->writer_tranche = pin_parallel_build_tranche();
+    LWLockInitialize(&shared->writer_lock, shared->writer_tranche);
     SpinLockInit(&shared->mutex);
     shared->heap_tuples = 0;
     shared->index_tuples = 0;
