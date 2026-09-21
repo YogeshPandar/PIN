@@ -12,6 +12,7 @@ extern bool pin_parallel_build(Relation heap, Relation index, struct IndexInfo *
                                double *heap_tuples, uint64 *index_tuples);
 extern void pin_parallel_build_writer_lock(void *lock);
 extern void pin_parallel_build_writer_unlock(void *lock);
+extern void pin_parallel_build_worker(void *segment, void *table);
 #ifdef PIN_TEST_HOOKS
 extern void pin_parallel_test_event(uint8 stage);
 #endif

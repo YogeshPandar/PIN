@@ -6,6 +6,7 @@
 
 /* scalar bridge; PostgreSQL owns the opaque context and all resource handles. */
 extern void pin_count_init(Size participant_memory);
+extern void pin_parallel_count_worker(void *segment, void *table);
 extern uint32 pin_count_owner_lock(void *context, uint32 block, uint8 *out, uint32 capacity);
 extern void pin_count_owner_unlock(void *context);
 extern bool pin_count_all_visible(void *context, uint32 block);

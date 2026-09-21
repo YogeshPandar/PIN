@@ -73,7 +73,7 @@ static void pin_parallel_build_scan(PinBuildShared *shared, Relation heap,
 static void pin_parallel_build_callback(Relation index, ItemPointer tid,
                                         Datum *values, bool *nulls,
                                         bool tuple_is_alive, void *state);
-PGDLLEXPORT void pin_parallel_build_main(dsm_segment *seg, shm_toc *toc);
+void pin_parallel_build_worker(void *seg, void *toc);
 
 static bool pin_enable_parallel_vacuum = false;
 static int pin_build_tranche_id = -1;
@@ -321,8 +321,10 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
 }
 
 void
-pin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
+pin_parallel_build_worker(void *segment, void *table)
 {
+    dsm_segment *seg = segment;
+    shm_toc *toc = table;
     PinBuildShared *shared;
     Relation heap;
     Relation index;

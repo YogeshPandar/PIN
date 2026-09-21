@@ -20,6 +20,8 @@ unsafe extern "C-unwind" {
     ) -> bool;
     pub(crate) fn pin_parallel_build_writer_lock(lock: *mut c_void);
     pub(crate) fn pin_parallel_build_writer_unlock(lock: *mut c_void);
+    pub(crate) fn pin_parallel_build_worker(segment: *mut c_void, table: *mut c_void);
+    pub(crate) fn pin_parallel_count_worker(segment: *mut c_void, table: *mut c_void);
     #[cfg(feature = "test-hooks")]
     pub(crate) fn pin_parallel_test_event(stage: u8);
     pub(crate) fn pin_storage_check(

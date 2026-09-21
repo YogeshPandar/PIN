@@ -91,7 +91,7 @@ static void pin_count_explain(CustomScanState *, List *, ExplainState *);
 static bool pin_count_parallel_run(PinCountState *, const uint8 *, Size, int64 *);
 static void pin_count_parallel_accumulate(PinCountParallelShared *, int64, const uint64 *);
 static void pin_count_worker_open(PinCountState *, PinCountParallelShared *);
-PGDLLEXPORT void pin_parallel_count_main(dsm_segment *, shm_toc *);
+void pin_parallel_count_worker(void *, void *);
 
 static const CustomPathMethods pin_count_path_methods = {
     .CustomName = "PinCount", .PlanCustomPath = pin_count_plan
@@ -758,8 +758,10 @@ pin_count_parallel_run(PinCountState *state, const uint8 *query, Size length,
 }
 
 void
-pin_parallel_count_main(dsm_segment *seg, shm_toc *toc)
+pin_parallel_count_worker(void *segment, void *table)
 {
+    dsm_segment *seg = segment;
+    shm_toc *toc = table;
     PinCountParallelShared *shared;
     PinCountState state;
     uint64 stats[PIN_COUNT_STATS] = {0};
