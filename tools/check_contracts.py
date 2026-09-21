@@ -40,18 +40,23 @@ def check_sources(source: dict[str, str]) -> list[str]:
             errors.append("AM initializer must match the independently enumerated field order")
         values = dict(entries)
         false_flags = expected[4:23]
-        implemented_true = {"amcanbuildparallel"}
+        implemented_true = {"amcanparallel", "amcanbuildparallel"}
         if any(
             values.get(flag) != ("true" if flag in implemented_true else "false")
             for flag in false_flags
         ):
             errors.append("AM boolean capabilities must match implemented gates")
-        for field in (
-            "amgettuple", "amcanreturn", "amestimateparallelscan",
-            "aminitparallelscan", "amparallelrescan",
-        ):
-            if values.get(field) != "None":
-                errors.append(f"{field} must stay disabled before its implementation gate")
+        if values.get("amcanreturn") != "None":
+            errors.append("amcanreturn must stay disabled before index-only support")
+        expected_scan = {
+            "amgettuple": "Some(native::pin_scan_gettuple)",
+            "amestimateparallelscan": "Some(native::pin_scan_estimate_parallel)",
+            "aminitparallelscan": "Some(native::pin_scan_init_parallel)",
+            "amparallelrescan": "Some(native::pin_scan_parallel_rescan)",
+        }
+        for field, value in expected_scan.items():
+            if values.get(field) != value:
+                errors.append(f"{field} must match the native parallel scan boundary")
         if values.get("amgetbitmap") != "Some(bitmap)" or values.get("aminsertcleanup") != "Some(insert_cleanup)":
             errors.append("G2 requires guarded bitmap and insert-cleanup callbacks")
         for field, value in entries:
