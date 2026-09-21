@@ -637,10 +637,8 @@ pub unsafe extern "C-unwind" fn pin_parallel_scan_fill(
                         return Err(Error::Limit("parallel scan batch"));
                     }
                     // safety: count is bounded by both caller-provided writable arrays.
-                    unsafe {
-                        blocks.add(count).write(root.block());
-                        offsets.add(count).write(root.offset());
-                    }
+                    blocks.add(count).write(root.block());
+                    offsets.add(count).write(root.offset());
                     count += 1;
                     Ok(())
                 })?;
