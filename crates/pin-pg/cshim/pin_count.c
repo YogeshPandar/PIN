@@ -45,6 +45,7 @@
 static bool pin_enable_count = false;
 static bool pin_enable_count_vm = false;
 static int pin_count_parallel_workers = 0;
+static Size pin_count_participant_memory = 0;
 static create_upper_paths_hook_type pin_previous_upper = NULL;
 
 typedef struct PinCountParallelShared
@@ -273,8 +274,11 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
 }
 
 void
-pin_count_init(void)
+pin_count_init(Size participant_memory)
 {
+    if (participant_memory == 0)
+        elog(ERROR, "invalid PinCount participant memory");
+    pin_count_participant_memory = participant_memory;
     DefineCustomBoolVariable("pin.enable_count_fastpath", "Enable experimental direct counts.",
                              "Off until count qualification is complete.",
                              &pin_enable_count, false, PGC_SUSET, 0, NULL, NULL, NULL);
@@ -674,10 +678,18 @@ pin_count_parallel_run(PinCountState *state, const uint8 *query, Size length,
     uint64 work[PIN_COUNT_WORK_WORDS];
     uint64 local_stats[PIN_COUNT_STATS] = {0};
     int request;
+    int max_participants;
     int64 local_count;
 
+    if (pin_count_participant_memory == 0 || IsParallelWorker() || IsInParallelMode())
+        return false;
+    max_participants = (int) (mul_size((Size) work_mem, (Size) 1024) /
+                              pin_count_participant_memory);
+    if (max_participants <= 1)
+        return false;
     request = Min(pin_count_parallel_workers, max_parallel_workers_per_gather);
-    if (request <= 0 || IsParallelWorker() || IsInParallelMode())
+    request = Min(request, max_participants - 1);
+    if (request <= 0)
         return false;
 
     pin_structure_lock(state->index, false);
