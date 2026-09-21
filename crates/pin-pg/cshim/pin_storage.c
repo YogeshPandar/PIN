@@ -319,7 +319,7 @@ pin_scan_validate(IndexScanDesc scan)
         scan->xs_snapshot == NULL || !IsMVCCSnapshot(scan->xs_snapshot) ||
         !OidIsValid(match))
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                        errmsg("Pin supports keyed MVCC bitmap scans only")));
+                        errmsg("Pin supports keyed MVCC scans only")));
     for (int i = 0; i < scan->numberOfKeys; i++)
     {
         ScanKey key = &scan->keyData[i];
@@ -372,7 +372,7 @@ pin_scan_begin(Relation index, int nkeys, int norderbys)
     PinScanState *state;
     if (nkeys <= 0 || nkeys > 1024 || norderbys != 0)
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                        errmsg("Pin supports keyed forward bitmap scans only")));
+                        errmsg("Pin supports keyed forward scans only")));
     scan = RelationGetIndexScan(index, nkeys, 0);
     state = palloc0(sizeof(PinScanState));
     state->capacity = nkeys;

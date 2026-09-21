@@ -6,10 +6,13 @@ PostgreSQL source: 18.6 at 724edf9bde9d356724ad384a2e196edc3c9f80f7.
 
 ## Implemented work
 
-1. Keep PostgreSQL's native parallel bitmap heap path as the row-producing
-   parallel baseline. Pin builds the bitmap once; PostgreSQL distributes heap
-   blocks, visibility and rechecks. `amcanparallel` remains false because Pin
-   does not implement the Index AM parallel scan callbacks or `amgettuple`.
+1. Add native plain and parallel index scans while retaining PostgreSQL's
+   parallel bitmap heap path. Plain scans use the same pointer-free `WorkState`
+   compare-and-replace protocol as direct count; each participant returns a
+   disjoint candidate subset and sets `xs_recheck`. Bitmap production remains
+   serial because PostgreSQL does not parallelize bitmap index scans through
+   `amcanparallel`; PostgreSQL can still distribute bitmap heap visibility and
+   rechecks across workers.
 2. Add PostgreSQL-worker parallel build. `amcanbuildparallel` is true and the
    build uses the core-requested `IndexInfo.ii_ParallelWorkers`, PostgreSQL
    `ParallelContext`, a parallel table scan and `table_index_build_scan`.
@@ -26,6 +29,25 @@ PostgreSQL source: 18.6 at 724edf9bde9d356724ad384a2e196edc3c9f80f7.
 5. Add optional sealed-prefix ownership retention to the copying compactor.
    Canonical owners, term identity, liveness, WAL publication and recovery
    remain unchanged. The copying implementation remains the default reference.
+
+## Native parallel index scan protocol
+
+`amcanparallel` is true because Pin now provides `amgettuple` plus the three
+parallel scan callbacks. PostgreSQL allocates the AM DSM returned by
+`amestimateparallelscan`. It contains only a spinlock, one ready flag and the
+eleven checked `WorkState` words.
+
+Each backend keeps a fixed root batch in PostgreSQL-owned local scan memory. The
+first participant captures a conservative cover; later participants consume the
+published scalar state. A participant prepares one private page outside the
+shared spinlock, atomically claims its successor, resolves canonical live owners,
+and returns only its claimed roots. Every returned TID sets `xs_recheck`, so
+PostgreSQL remains authoritative for MVCC and exact predicate evaluation.
+
+The structural read barrier is retained from `amrescan` through `amendscan`
+so captured posting pages cannot be recycled between calls. Parallel rescan
+clears only the shared scalar work; PostgreSQL starts the next scan from a fresh
+capture. No Rust object, backend pointer, buffer handle or page image enters DSM.
 
 ## Parallel build protocol
 
@@ -118,7 +140,7 @@ The default `CompactMode::Copy` remains the differential oracle.
 
 The code-backed G7 qualification must establish:
 
-- actual PostgreSQL workers for build, PinCount and native parallel bitmap plans,
+- actual PostgreSQL workers for native index scans, build, PinCount and parallel bitmap plans,
   not merely planned worker counts;
 - serial and parallel result equality, including lossy bitmap rechecks;
 - exact PinCount equality before and after worker termination;

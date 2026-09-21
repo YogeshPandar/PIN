@@ -117,19 +117,24 @@ class SourceTests(unittest.TestCase):
         self.assertNotIn('unsafe ', source)
         self.assertNotIn('Vec<', source)
 
-    def test_parallel_build_does_not_overadvertise_index_scan_callbacks(self):
+    def test_parallel_am_scan_and_build_capabilities_match_callbacks(self):
         source = (ROOT / 'crates/pin-pg/src/am.rs').read_text()
-        self.assertIn('amcanparallel: false', source)
+        storage = (ROOT / 'crates/pin-pg/cshim/pin_storage.c').read_text()
+        self.assertIn('amcanparallel: true', source)
         self.assertIn('amcanbuildparallel: true', source)
         self.assertIn('amusemaintenanceworkmem: false', source)
+        self.assertIn('amgettuple: Some(native::pin_scan_gettuple)', source)
+        self.assertIn('amestimateparallelscan: Some(native::pin_scan_estimate_parallel)', source)
+        self.assertIn('aminitparallelscan: Some(native::pin_scan_init_parallel)', source)
+        self.assertIn('amparallelrescan: Some(native::pin_scan_parallel_rescan)', source)
+        self.assertIn('PinParallelScanState', storage)
+        self.assertIn('pin_scan_work_claim', storage)
         host = (ROOT / 'crates/pin-pg/cshim/pin_parallel.c').read_text()
         self.assertIn('LWLock writer_lock;', host)
         self.assertIn('LWLockAcquire((LWLock *) lock, LW_EXCLUSIVE)', host)
         self.assertIn('LWLockRelease((LWLock *) lock)', host)
         self.assertIn('if (info->ii_BrokenHotChain)', host)
         self.assertIn('info->ii_BrokenHotChain = true;', host)
-        for callback in ['amestimateparallelscan', 'aminitparallelscan', 'amparallelrescan']:
-            self.assertIn(f'{callback}: None', source)
 
     def test_parallel_count_uses_fixed_pointer_free_work(self):
         rust = (ROOT / 'crates/pin-pg/src/count.rs').read_text()
