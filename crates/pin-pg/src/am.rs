@@ -576,11 +576,14 @@ unsafe fn prepare_tuple_scan(scan: pg_sys::IndexScanDesc) {
     // safety: core keeps the index relation open through the scan.
     let index = unsafe { (*scan).indexRelation };
     let state = match query {
-        Some(query) => matching::stored(unsafe {
-            storage::with_locked_reader(index, |store| {
-                WorkState::capture(store, &query, matching::QUERY_MEMORY)
+        Some(query) => {
+            // safety: c retains the structural barrier and live relation through capture.
+            matching::stored(unsafe {
+                storage::with_locked_reader(index, |store| {
+                    WorkState::capture(store, &query, matching::QUERY_MEMORY)
+                })
             })
-        }),
+        }
         None => WorkState::DONE,
     };
     let words = state.words();
