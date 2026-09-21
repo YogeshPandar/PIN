@@ -67,8 +67,9 @@ impl PageStore for VacuumStore<'_, '_> {
     }
 
     fn interrupt(&mut self) -> Result<()> {
-        // safety: pure page traversal calls this outside content locks and WAL batches.
-        unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
+        // safety: traversal checks cancellation while Pin interlocks are held.
+        // cost-delay sleeps run only outside those interlocks.
+        unsafe { native::call(|| native::pin_storage_interrupt()) };
         Ok(())
     }
 
@@ -86,8 +87,10 @@ pub(crate) unsafe fn with_vacuum<T>(
     strategy: pg_sys::BufferAccessStrategy,
     operation: impl FnOnce(&mut VacuumStore<'_, '_>) -> Result<T>,
 ) -> Result<T> {
+    // safety: delay points run before and after the Pin writer critical section.
+    unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
     // safety: the caller retains both host resources; the writer lock is resource-owned.
-    unsafe {
+    let result = unsafe {
         storage::with_writer(index, |store| {
             let mut vacuum = VacuumStore {
                 inner: store,
@@ -96,7 +99,10 @@ pub(crate) unsafe fn with_vacuum<T>(
             };
             operation(&mut vacuum)
         })
-    }
+    };
+    // safety: no Pin interlock or buffer lock is held after with_writer returns.
+    unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
+    result
 }
 
 /// excludes readers before running strategy-aware VACUUM cleanup.
@@ -108,8 +114,10 @@ pub(crate) unsafe fn with_maintenance<T>(
     strategy: pg_sys::BufferAccessStrategy,
     operation: impl FnOnce(&mut VacuumStore<'_, '_>) -> Result<T>,
 ) -> Result<T> {
+    // safety: pay accumulated vacuum cost before taking the structural barrier.
+    unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
     // safety: existing maintenance enforces structural-before-writer lock order.
-    unsafe {
+    let result = unsafe {
         crate::storage_impl::with_maintenance(index, |store| {
             let mut vacuum = VacuumStore {
                 inner: store,
@@ -118,5 +126,8 @@ pub(crate) unsafe fn with_maintenance<T>(
             };
             operation(&mut vacuum)
         })
-    }
+    };
+    // safety: compaction released both Pin interlocks before this delay point.
+    unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
+    result
 }
