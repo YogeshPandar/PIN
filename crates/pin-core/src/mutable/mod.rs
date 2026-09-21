@@ -11,8 +11,8 @@ pub mod page;
 mod query;
 mod reader;
 mod vacuum;
-mod writer;
 pub mod work;
+mod writer;
 
 pub use compact::{
     CompactMode, CompactStats, compact, compact_with_mode, recover as recover_compaction,

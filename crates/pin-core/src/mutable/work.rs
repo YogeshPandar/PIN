@@ -98,8 +98,12 @@ impl WorkState {
                 Err(Error::InvalidState)
             };
         }
-        if words[0] > 3 || words[9] == 0 || words[9] >= u64::from(NO_BLOCK)
-            || words[3] == 0 || words[3] > words[9] || words[10] > 1
+        if words[0] > 3
+            || words[9] == 0
+            || words[9] >= u64::from(NO_BLOCK)
+            || words[3] == 0
+            || words[3] > words[9]
+            || words[10] > 1
         {
             return Err(Error::InvalidState);
         }
@@ -109,14 +113,15 @@ impl WorkState {
             return Err(Error::InvalidState);
         }
         if words[0] == 3 {
-            if words[1] > words[2] || words[4..9].iter().any(|value| *value != 0)
-                || words[10] != 0
+            if words[1] > words[2] || words[4..9].iter().any(|value| *value != 0) || words[10] != 0
             {
                 return Err(Error::InvalidState);
             }
         } else {
-            if !valid_block(words[4]) || !valid_block(words[6])
-                || words[5] > u64::from(u16::MAX) || words[7] > u64::from(u16::MAX)
+            if !valid_block(words[4])
+                || !valid_block(words[6])
+                || words[5] > u64::from(u16::MAX)
+                || words[7] > u64::from(u16::MAX)
             {
                 return Err(Error::InvalidState);
             }
@@ -151,11 +156,14 @@ impl WorkState {
             if self.0[1] == u64::from(NO_BLOCK) {
                 next = Self::DONE;
             }
-            return Ok(Some((next, WorkBatch {
-                page: None,
-                inline: Some(self.previous()?),
-                sealed_term: false,
-            })));
+            return Ok(Some((
+                next,
+                WorkBatch {
+                    page: None,
+                    inline: Some(self.previous()?),
+                    sealed_term: false,
+                },
+            )));
         }
         let block = u32::try_from(self.0[1]).map_err(|_| Error::InvalidState)?;
         let tail = u32::try_from(self.0[2]).map_err(|_| Error::InvalidState)?;
@@ -195,7 +203,14 @@ impl WorkState {
             next = Self::DONE;
         }
         let sealed_term = self.0[10] == 1 && page.kind() == PageKind::SealedPostings;
-        Ok(Some((next, WorkBatch { page: Some(page), inline: None, sealed_term })))
+        Ok(Some((
+            next,
+            WorkBatch {
+                page: Some(page),
+                inline: None,
+                sealed_term,
+            },
+        )))
     }
 }
 
@@ -211,19 +226,28 @@ impl WorkBatch {
         mut emit: impl FnMut(CountCandidate) -> Result<()>,
     ) -> Result<()> {
         if let Some(owner) = self.inline {
-            return emit(CountCandidate { owner, sealed_term: false });
+            return emit(CountCandidate {
+                owner,
+                sealed_term: false,
+            });
         }
         let page = self.page.as_ref().ok_or(Error::InvalidState)?;
         if page.kind() == PageKind::Owners {
             for slot in 0..page.owner_count()? {
                 let owner = page.owner(slot, layout)?;
                 if owner.live && owner.publication == Publication::Published {
-                    emit(CountCandidate { owner: owner.reference, sealed_term: false })?;
+                    emit(CountCandidate {
+                        owner: owner.reference,
+                        sealed_term: false,
+                    })?;
                 }
             }
         } else {
             for owner in page.posting_refs()? {
-                emit(CountCandidate { owner: owner?, sealed_term: self.sealed_term })?;
+                emit(CountCandidate {
+                    owner: owner?,
+                    sealed_term: self.sealed_term,
+                })?;
             }
         }
         Ok(())

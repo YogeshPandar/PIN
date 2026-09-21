@@ -19,7 +19,11 @@ fn corpus(count: u32) -> MemoryStore {
     let mut store = MemoryStore::default();
     mutable::initialize(&mut store).unwrap();
     for id in 0..count {
-        let text = if id % 2 == 0 { "alpha beta" } else { "alpha gamma" };
+        let text = if id % 2 == 0 {
+            "alpha beta"
+        } else {
+            "alpha gamma"
+        };
         let analysis = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
         let document = PreparedDocument::prepare(&analysis, 32 << 20).unwrap();
         let root = RootTid::new(id / 200, (id % 200 + 1) as u16, store.layout()).unwrap();
@@ -44,10 +48,12 @@ fn drain(store: &mut MemoryStore, query: &Query, workers: usize) -> Vec<CountCan
             let (successor, batch) = &prepared[participant];
             if shared == snapshot {
                 shared = *successor;
-                batch.for_each(store.layout(), |candidate| {
-                    results.push(candidate);
-                    Ok(())
-                }).unwrap();
+                batch
+                    .for_each(store.layout(), |candidate| {
+                        results.push(candidate);
+                        Ok(())
+                    })
+                    .unwrap();
             } else {
                 assert_ne!(shared, snapshot);
             }
@@ -56,7 +62,11 @@ fn drain(store: &mut MemoryStore, query: &Query, workers: usize) -> Vec<CountCan
     results
 }
 
-fn roots(store: &mut MemoryStore, candidates: &[CountCandidate], query: &Query) -> BTreeSet<RootTid> {
+fn roots(
+    store: &mut MemoryStore,
+    candidates: &[CountCandidate],
+    query: &Query,
+) -> BTreeSet<RootTid> {
     let mut rows = BTreeSet::new();
     let mut owners = BTreeSet::new();
     for candidate in candidates {
@@ -69,7 +79,11 @@ fn roots(store: &mut MemoryStore, candidates: &[CountCandidate], query: &Query) 
             continue;
         }
         let id = owner.root.block() * 200 + u32::from(owner.root.offset()) - 1;
-        let text = if id % 2 == 0 { "alpha beta" } else { "alpha gamma" };
+        let text = if id % 2 == 0 {
+            "alpha beta"
+        } else {
+            "alpha gamma"
+        };
         let document = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
         if pin_core::oracle::matches(&document, query, 1 << 20, 1_000_000).unwrap() {
             assert!(rows.insert(owner.root));
@@ -81,7 +95,15 @@ fn roots(store: &mut MemoryStore, candidates: &[CountCandidate], query: &Query) 
 #[test]
 fn competing_claims_cover_each_owner_once() {
     let mut store = corpus(1024);
-    for text in ["alpha", "beta", "alpha AND beta", "beta OR gamma", "NOT missing", "alph*", "\"alpha beta\""] {
+    for text in [
+        "alpha",
+        "beta",
+        "alpha AND beta",
+        "beta OR gamma",
+        "NOT missing",
+        "alph*",
+        "\"alpha beta\"",
+    ] {
         let query = query(text);
         let serial = drain(&mut store, &query, 1);
         let expected = roots(&mut store, &serial, &query);
@@ -102,7 +124,12 @@ fn only_exact_sealed_terms_offer_a_vm_candidate() {
     assert_eq!(term.len(), 5000);
     assert!(!term[0].sealed_term);
     assert!(term.iter().skip(1).any(|candidate| candidate.sealed_term));
-    for text in ["alpha AND beta", "\"alpha beta\"", "beta OR gamma", "NOT missing"] {
+    for text in [
+        "alpha AND beta",
+        "\"alpha beta\"",
+        "beta OR gamma",
+        "NOT missing",
+    ] {
         let candidates = drain(&mut store, &query(text), 3);
         assert!(candidates.iter().all(|candidate| !candidate.sealed_term));
     }
@@ -132,8 +159,18 @@ fn empty_and_missing_queries_produce_no_work() {
 #[test]
 fn malformed_shared_words_fail_before_work() {
     let mut store = corpus(32);
-    let valid = WorkState::capture(&mut store, &query("alpha"), 1 << 20).unwrap().words();
-    for (field, value) in [(0, 4), (3, 0), (9, 0), (10, 2), (6, u64::MAX), (7, 65536), (8, 0)] {
+    let valid = WorkState::capture(&mut store, &query("alpha"), 1 << 20)
+        .unwrap()
+        .words();
+    for (field, value) in [
+        (0, 4),
+        (3, 0),
+        (9, 0),
+        (10, 2),
+        (6, u64::MAX),
+        (7, 65536),
+        (8, 0),
+    ] {
         let mut words = valid;
         words[field] = value;
         assert!(WorkState::from_words(words).is_err(), "field {field}");
