@@ -1,60 +1,133 @@
 # G7 worker protocol
 
-This document extends the existing selective-merge work. The copying path and
-sealed-prefix retention retain their existing publication, deletion and recovery
-contracts. No persistent format or shared extent reference counter is introduced.
+G7 uses PostgreSQL processes and PostgreSQL DSM. No Rust thread pool, shared Rust
+object, backend pointer or persistent shared-work format is introduced.
 
-## Disjoint work
+## Disjoint count work
 
-`mutable::work::WorkState` contains eleven checked integer words. A participant
-copies them under the host coordination lock, reads and validates one page outside
-the lock, and replaces the words only if its original copy still matches. Only
-the successful participant consumes that private batch. Failed claims discard
-private data. A participant failure fails the query, rather than reassigning a
-partially processed batch and risking duplicate output.
+`mutable::work::WorkState` contains eleven checked `u64` words. A participant
+copies those words under the host spinlock, reads and validates one page outside
+the spinlock, and publishes the successor only if the original shared words still
+match. Only the successful claimant consumes its private batch.
 
-Term work includes the inline dictionary owner exactly once, followed by the
-captured posting chain. Ordering checks span pages and reject duplicate owner
-coordinates or regressing incarnations. A one-term necessary condition can cover
-an AND or phrase, but only an exact single-term query can offer a sealed membership
-candidate to the existing VM proof. Wider unions and negation partition canonical
-owner pages instead. No shared set of matching document IDs is required.
+A failed compare-and-replace discards private work and retries from a new shared
+snapshot. An ERROR after a successful claim aborts the complete SQL statement.
+The host does not reassign that batch inside a partially successful query.
 
-The host retains its shared structural barrier while any captured work remains
-reachable. VACUUM can remove canonical liveness concurrently; a consumer must
-reread the owner under the existing cleanup-blocking pin before synchronous heap
-fetch or count certification. A captured candidate is never a visibility result.
-Each scan captures fresh state on restart. Shared words contain no backend address,
-allocator-owned object, snapshot pointer, buffer handle or Rust synchronization.
+Single-term work includes the inline dictionary owner exactly once, followed by
+the captured posting chain. Wider unions and negation use canonical owner pages,
+which gives duplicate-free physical coverage without a result-sized shared set.
+Ordering checks span posting pages and reject duplicate owner coordinates or
+regressing incarnations.
 
-## Maintenance
+Shared words are coordinates and bounded traversal state only. They contain no
+relation pointer, snapshot pointer, buffer handle, allocator pointer, Rust object,
+vtable or synchronization primitive.
 
-The restart-only, default-off `pin.enable_parallel_vacuum` enables PostgreSQL's
-parallel bulk-delete and cleanup flags. One core worker owns one complete index
-per phase. The exact `IndexBulkDeleteResult` is the only statistics object passed
-between phases. No private pointer is appended to that record.
+## Direct count workers
 
-Both maintenance phases borrow `IndexVacuumInfo.strategy`. Page reads use
-`ReadBufferExtended`; traversal boundaries use `vacuum_delay_point(false)` after
-content locks and generic WAL operations have ended. PostgreSQL remains responsible
-for worker admission, dead-TID storage, cost accounting and serial fallback.
+The serial G5 `PinCount` node remains the semantic and visibility reference.
+`pin.parallel_count_workers = 0` disables its worker path by default.
+
+When enabled, the leader:
+
+1. captures `WorkState` under the structural reader barrier;
+2. enters PostgreSQL parallel mode;
+3. creates one `ParallelContext`;
+4. copies relation OIDs, attribute number, query bytes, work words and aggregate
+   counters into DSM;
+5. launches workers and participates in the same claim loop;
+6. waits for all workers and copies the exact aggregate result;
+7. destroys the parallel context before releasing the outer structural barrier.
+
+PostgreSQL restores transaction state, active snapshot and GUCs in parallel
+workers. A worker reopens heap and index relations, validates the Pin index,
+creates its own heap fetch state and tuple slot, and executes the existing G5
+owner-pin and visibility protocol.
+
+The coordinator spinlock covers only fixed word and counter copies. No page read,
+query decode, heap fetch, visibility-map lookup, Rust callback or ERROR-capable
+operation runs under that spinlock.
+
+## Parallel build workers
+
+Core decides build worker eligibility and writes the requested count to
+`IndexInfo.ii_ParallelWorkers`. Pin accepts nonconcurrent parallel build only.
+
+The leader allocates one PostgreSQL parallel table scan in DSM. Workers reopen
+the heap with `ShareLock` and the index with `AccessExclusiveLock`, matching
+the nonconcurrent build leader. Each participant calls `BuildIndexInfo`,
+`table_beginscan_parallel`, and `table_index_build_scan`.
+
+The scan callback preserves PostgreSQL's heap/HOT build semantics. Document
+analysis and preparation happen independently in each participant. The existing
+Pin writer interlock still serializes generic-WAL publication, so build workers
+do not create a new concurrent page-mutation protocol.
+
+Each participant is charged the fixed document preparation ceiling. Pin caps
+leader plus workers so this total does not exceed `maintenance_work_mem`.
+If DSM allocation or worker launch is unavailable, the leader destroys the
+parallel context and runs the established serial build.
+
+## Parallel VACUUM
+
+The restart-only, default-off `pin.enable_parallel_vacuum` advertises
+PostgreSQL's parallel bulk-delete and cleanup flags. PostgreSQL assigns one whole
+index to one process in a phase. Pin does not partition one VACUUM index scan
+internally.
+
+The exact `IndexBulkDeleteResult` representation is the only statistics object
+passed between phases. Both phases borrow `IndexVacuumInfo.strategy` and read
+pages through `ReadBufferExtended`. Traversal boundaries call
+`vacuum_delay_point(false)` only outside content locks and generic-WAL batches.
+
+## Failure and shutdown
+
+`ParallelContext` is registered with PostgreSQL transaction and subtransaction
+cleanup. Explicit success paths wait for workers, accumulate results and destroy
+the context. Worker ERROR or termination aborts the SQL operation. PostgreSQL
+then releases relation locks, DSM and worker resources through its normal error
+cleanup.
+
+Test builds expose deterministic worker pause stages:
+
+- stage 16: parallel build callback before Rust document insertion;
+- stage 17: direct-count worker before claiming work;
+- stages 7 through 12: existing storage/maintenance transition windows.
+
+The disposable qualification harness holds advisory lock `(180006, 4)` only to
+stop a test worker at these boundaries. Production builds do not expose the pause
+GUC or test event calls.
 
 ## Official contracts reviewed
 
-PostgreSQL 18.6 source commit `724edf9bde9d356724ad384a2e196edc3c9f80f7`:
-`src/include/access/amapi.h`, `src/include/access/genam.h`,
-`src/include/commands/vacuum.h`, `src/backend/commands/vacuumparallel.c` and
-`src/backend/access/index/indexam.c`. Manual sections: `index-functions.html`,
-`index-locking.html`, `custom-scan-execution.html`, and `sql-vacuum.html`.
+PostgreSQL 18.6 commit `724edf9bde9d356724ad384a2e196edc3c9f80f7`:
 
-Rust 1.98.1 contracts: checked integer conversions and arithmetic, fixed arrays,
-fallible Vec reservation in the existing cover builder, and slice validity at the
-host boundary. The work implementation contains no unsafe operations and allocates
-no per-page result set. Code review is not execution or performance evidence.
+- `src/include/access/parallel.h`
+- `src/backend/access/transam/parallel.c`
+- `src/include/access/tableam.h`
+- `src/backend/catalog/index.c`
+- `src/backend/access/gin/gininsert.c`
+- `src/include/access/amapi.h`
+- `src/include/access/genam.h`
+- `src/include/commands/vacuum.h`
+- `src/backend/commands/vacuumparallel.c`
+- `src/backend/executor/nodeCustom.c`
 
-## Validation status
+Manual sections reviewed: Index AM functions, CustomScan execution, parallel
+safety, index locking and VACUUM.
 
-`g7_work.rs` supplies competing-claim, coverage, missing-term, restart, liveness,
-sealed-certificate and malformed-state tests. Native lifecycle qualification and
-independent storage/FFI review remain required before experimental capabilities
-are promoted. Benchmarking is outside this implementation update.
+Rust 1.98.1 contracts reviewed: checked integer conversions, fixed arrays and
+`slice::from_raw_parts`. The pure `WorkState` implementation contains no
+unsafe operations.
+
+## Validation
+
+Pure tests cover competing claims, duplicate-free coverage, missing terms,
+restart, liveness changes, sealed-count certification and malformed shared words.
+Host qualification requires observed workers for build and direct count, worker
+termination, exact serial equality, subsequent successful reuse and ordinary
+parallel bitmap equivalence.
+
+These tests establish correctness evidence only. They do not establish a latency,
+throughput, memory-footprint or performance-parity claim.
