@@ -309,9 +309,10 @@ and `src/backend/access/gin/gininsert.c`.
 
 PostgreSQL supplies `IndexInfo.ii_ParallelWorkers`. Pin enters parallel mode,
 creates a `ParallelContext`, initializes one parallel table scan, and launches
-no more participants than fit the fixed per-participant preparation ceiling
-inside `maintenance_work_mem`. Shared state contains relation OIDs, scalar
-statistics, the table-scan descriptor and one fixed memory limit. Workers reopen
+no more participants than fit a conservative preparation, detoast and fixed-state
+peak inside one `maintenance_work_mem` budget. Shared state contains relation
+OIDs, scalar statistics, the table-scan descriptor and the preparation limit.
+Workers reopen
 relations with the nonconcurrent build lock modes and call
 `table_index_build_scan` with `BuildIndexInfo`.
 
@@ -355,6 +356,10 @@ Workers use PostgreSQL-restored active MVCC snapshots and reopen their own
 relations, fetch state, slot and scratch context. Candidate visibility and count
 certification remain the G5 protocol. A worker failure aborts the whole SQL
 statement rather than returning or retrying partial accounting.
+
+Worker admission is also memory bounded. The leader plus requested workers must
+fit one `work_mem` budget using a conservative peak that includes two query
+budgets, analyzer memory, maximum detoasted input and fixed batch state.
 
 Validation: pure competing-claim tests, malformed shared-state tests,
 deterministic stage-17 worker observation, worker termination, exact serial count
