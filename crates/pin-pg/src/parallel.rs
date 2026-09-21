@@ -1,6 +1,6 @@
-//! opt-in whole-index maintenance using PostgreSQL's worker and DSM lifecycle.
-//! no custom workers, shared Rust objects or parallel posting scans are enabled.
-//! contracts, fallback and review gates: docs/g7-parallel-vacuum.md, G7PARALLEL01.
+//! opt-in whole-index VACUUM integration with PostgreSQL-managed workers.
+//! this module adds no Pin-owned threads or parallel index-scan callbacks.
+//! contracts, fallback and review gates: docs/g7-selective.md, G7VACUUM01.
 
 use crate::{native, storage};
 use pgrx::pg_sys;
