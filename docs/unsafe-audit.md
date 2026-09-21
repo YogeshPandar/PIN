@@ -76,3 +76,25 @@ Miri scalar/tail checks and AddressSanitizer native-kernel tests at
 scalar-equivalence properties of the isolated kernel. They do not establish
 whole-query performance or PostgreSQL visibility correctness.
 
+
+
+## G7 parallel boundary additions
+
+Review state: implementation self-review completed. Independent FFI, worker and
+storage review is not recorded. Parallel build, direct count and parallel VACUUM
+must pass the pinned PostgreSQL 18.6 qualification before their evidence status
+is promoted.
+
+| ID | Operations | Safety argument | Required validation |
+|---|---|---|---|
+| G7BUILD01 | C parallel table-scan DSM and Rust build callback | DSM stores OIDs/scalars and a PostgreSQL scan descriptor only; worker callback pointers remain live only for the synchronous call; Rust retains none | C/Rust compile, real worker observation, build equality, ERROR cleanup |
+| G7BUILD01 | `Datum`, null array and `ItemPointer` forwarded to Rust | PostgreSQL owns all callback storage; the guarded Rust entry uses the same validated insertion path and returns before core can reuse inputs | build with NULL/TOAST/large text, worker termination, transactional suite |
+| G7COUNT01 | `slice::from_raw_parts` over DSM query bytes | C allocates and initializes the complete query extent; pointer is non-null and length is bounded by `isize::MAX`; immutable borrow ends after synchronous decode | host compile, malformed query, repeated execution |
+| G7COUNT01 | PostgreSQL spinlock over fixed DSM words and counters | No Rust call, I/O, allocation, visibility operation or ERROR-capable work executes while the spinlock is held | competing claims, worker termination, cancellation |
+| G7COUNT01 | Worker relation, snapshot, heap fetch and slot state | Worker reopens process-local resources after PostgreSQL restores transaction state; existing G5 visibility safety rules apply independently in each worker | exact count equality, HOT/VM cases, cleanup after worker death |
+| G7VACUUM01 | Borrowed `BufferAccessStrategy` and cost-delay call | Strategy lifetime is the callback phase; C retains no pointer; delay runs outside content locks and WAL critical work | parallel/serial VACUUM, cancellation, worker failure |
+| G7MERGE01 | Retained on-disk sealed pages | No unsafe Rust added; exclusive reader quiescence prevents concurrent stale chain use; retained pages never enter retirement ownership | copying differential, fault injection, restart/reclaim tests |
+
+The pure `WorkState` and retained-prefix implementations contain no unsafe Rust.
+They do not turn PostgreSQL shared memory or shared buffers into Rust references.
+Process synchronization remains in the C/PostgreSQL boundary.
