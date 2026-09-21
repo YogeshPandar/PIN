@@ -1,6 +1,7 @@
 /* opt-in upper count node; host lifetimes and proof are in docs/g5-counts.md. */
 #include "postgres.h"
 #include "access/genam.h"
+#include "access/parallel.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/table.h"
@@ -24,6 +25,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "storage/bufmgr.h"
+#include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -35,10 +37,26 @@
 #include "pin_storage.h"
 
 #define PIN_COUNT_STATS 8
+#define PIN_COUNT_WORK_WORDS 11
+#define PIN_COUNT_KEY_SHARED UINT64CONST(21)
 
 static bool pin_enable_count = false;
 static bool pin_enable_count_vm = false;
+static int pin_count_parallel_workers = 0;
 static create_upper_paths_hook_type pin_previous_upper = NULL;
+
+typedef struct PinCountParallelShared
+{
+    Oid heaprelid;
+    Oid indexrelid;
+    AttrNumber attribute;
+    Size query_length;
+    slock_t mutex;
+    uint64 work[PIN_COUNT_WORK_WORDS];
+    int64 count;
+    uint64 stats[PIN_COUNT_STATS];
+    char query[FLEXIBLE_ARRAY_MEMBER];
+} PinCountParallelShared;
 
 typedef struct PinCountState
 {
@@ -53,6 +71,7 @@ typedef struct PinCountState
     Buffer vm_buffer;
     AttrNumber attribute;
     int eflags;
+    Snapshot snapshot;
     bool done;
     const char *fallback_reason;
     uint64 stats[PIN_COUNT_STATS];
@@ -66,6 +85,10 @@ static void pin_count_end(CustomScanState *);
 static void pin_count_rescan(CustomScanState *);
 static void pin_count_release(PinCountState *);
 static void pin_count_explain(CustomScanState *, List *, ExplainState *);
+static bool pin_count_parallel_run(PinCountState *, const uint8 *, Size, int64 *);
+static void pin_count_parallel_accumulate(PinCountParallelShared *, int64, const uint64 *);
+static void pin_count_worker_open(PinCountState *, PinCountParallelShared *);
+PGDLLEXPORT void pin_parallel_count_main(dsm_segment *, shm_toc *);
 
 static const CustomPathMethods pin_count_path_methods = {
     .CustomName = "PinCount", .PlanCustomPath = pin_count_plan
@@ -256,6 +279,11 @@ pin_count_init(void)
     DefineCustomBoolVariable("pin.enable_count_vm", "Enable experimental count VM certification.",
                              "Uncertified candidates always use heap visibility.",
                              &pin_enable_count_vm, false, PGC_SUSET, 0, NULL, NULL, NULL);
+    DefineCustomIntVariable("pin.parallel_count_workers",
+                            "Maximum PostgreSQL workers for experimental PinCount.",
+                            "Zero keeps direct count execution serial.",
+                            &pin_count_parallel_workers, 0, 0, 64, PGC_SUSET,
+                            GUC_NOT_IN_SAMPLE, NULL, NULL, NULL);
     RegisterCustomScanMethods(&pin_count_scan_methods);
     pin_previous_upper = create_upper_paths_hook;
     create_upper_paths_hook = pin_count_upper;
@@ -368,6 +396,7 @@ pin_count_open(PinCountState *state)
         return false;
     }
     pin_storage_check(state->index, state->heap, NULL);
+    state->snapshot = estate->es_snapshot;
     state->fetch = table_index_fetch_begin(state->heap);
     state->heap_slot = table_slot_create(state->heap, NULL);
     state->scratch = AllocSetContextCreate(estate->es_query_cxt, "PinCount tuple", ALLOCSET_SMALL_SIZES);
@@ -391,8 +420,10 @@ pin_count_next(CustomScanState *node)
         return ExecProcNode(state->fallback);
     query = linitial_node(Const, scan->custom_exprs);
     bytes = DatumGetByteaPP(query->constvalue);
-    count = pin_count_execute(state->index, state, (const uint8 *) VARDATA_ANY(bytes),
-                              VARSIZE_ANY_EXHDR(bytes), state->stats);
+    if (!pin_count_parallel_run(state, (const uint8 *) VARDATA_ANY(bytes),
+                                VARSIZE_ANY_EXHDR(bytes), &count))
+        count = pin_count_execute(state->index, state, (const uint8 *) VARDATA_ANY(bytes),
+                                  VARSIZE_ANY_EXHDR(bytes), state->stats);
     if ((Pointer) bytes != DatumGetPointer(query->constvalue))
         pfree(bytes);
     state->done = true;
@@ -425,6 +456,7 @@ pin_count_release(PinCountState *state)
     if (state->scratch != NULL)
         MemoryContextDelete(state->scratch);
     state->scratch = NULL;
+    state->snapshot = NULL;
     if (state->index != NULL)
         index_close(state->index, AccessShareLock);
     state->index = NULL;
@@ -518,8 +550,9 @@ pin_count_fetch(void *context, uint32 block, uint16 offset, const uint8 **bytes,
         elog(ERROR, "invalid PinCount heap fetch");
     CHECK_FOR_INTERRUPTS();
     ItemPointerSet(&visible, block, offset);
-    if (!table_index_fetch_tuple(state->fetch, &visible, state->css.ss.ps.state->es_snapshot,
-                                  state->heap_slot, &again, NULL))
+    if (state->snapshot == NULL ||
+        !table_index_fetch_tuple(state->fetch, &visible, state->snapshot,
+                                 state->heap_slot, &again, NULL))
         return false;
     if (again)
         elog(ERROR, "PinCount requires one MVCC-visible HOT version");
@@ -542,4 +575,181 @@ pin_count_clear(void *context)
     ExecClearTuple(state->heap_slot);
     table_index_fetch_reset(state->fetch);
     MemoryContextReset(state->scratch);
+}
+
+
+void
+pin_count_work_snapshot(void *shared_ptr, uint64 *words, uint32 count)
+{
+    PinCountParallelShared *shared = shared_ptr;
+    if (shared == NULL || words == NULL || count != PIN_COUNT_WORK_WORDS)
+        elog(ERROR, "invalid PinCount parallel work snapshot");
+    SpinLockAcquire(&shared->mutex);
+    memcpy(words, shared->work, sizeof(shared->work));
+    SpinLockRelease(&shared->mutex);
+}
+
+bool
+pin_count_work_claim(void *shared_ptr, const uint64 *expected,
+                     const uint64 *next, uint32 count)
+{
+    PinCountParallelShared *shared = shared_ptr;
+    bool claimed = false;
+    if (shared == NULL || expected == NULL || next == NULL ||
+        count != PIN_COUNT_WORK_WORDS)
+        elog(ERROR, "invalid PinCount parallel work claim");
+    SpinLockAcquire(&shared->mutex);
+    if (memcmp(shared->work, expected, sizeof(shared->work)) == 0)
+    {
+        memcpy(shared->work, next, sizeof(shared->work));
+        claimed = true;
+    }
+    SpinLockRelease(&shared->mutex);
+    return claimed;
+}
+
+static void
+pin_count_parallel_accumulate(PinCountParallelShared *shared, int64 count,
+                              const uint64 *stats)
+{
+    if (count < 0 || stats == NULL)
+        elog(ERROR, "invalid PinCount parallel result");
+    SpinLockAcquire(&shared->mutex);
+    if (pg_add_s64_overflow(shared->count, count, &shared->count))
+    {
+        SpinLockRelease(&shared->mutex);
+        ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+                        errmsg("Pin parallel count overflow")));
+    }
+    for (int i = 0; i < PIN_COUNT_STATS; i++)
+    {
+        uint64 next = shared->stats[i] + stats[i];
+        if (next < shared->stats[i])
+        {
+            SpinLockRelease(&shared->mutex);
+            ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+                            errmsg("Pin parallel count instrumentation overflow")));
+        }
+        shared->stats[i] = next;
+    }
+    SpinLockRelease(&shared->mutex);
+}
+
+static void
+pin_count_worker_open(PinCountState *state, PinCountParallelShared *shared)
+{
+    memset(state, 0, sizeof(*state));
+    state->owner_buffer = InvalidBuffer;
+    state->vm_buffer = InvalidBuffer;
+    state->attribute = shared->attribute;
+    state->snapshot = GetActiveSnapshot();
+    if (state->snapshot == NULL || !IsMVCCSnapshot(state->snapshot))
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                        errmsg("Pin parallel count requires an MVCC snapshot")));
+
+    state->heap = table_open(shared->heaprelid, AccessShareLock);
+    state->index = index_open(shared->indexrelid, AccessShareLock);
+    if (state->index->rd_index == NULL ||
+        state->index->rd_index->indrelid != RelationGetRelid(state->heap) ||
+        state->attribute <= 0 ||
+        state->attribute > RelationGetDescr(state->heap)->natts)
+        elog(ERROR, "invalid PinCount parallel relation state");
+    pin_storage_check(state->index, state->heap, NULL);
+    state->fetch = table_index_fetch_begin(state->heap);
+    state->heap_slot = table_slot_create(state->heap, NULL);
+    state->scratch = AllocSetContextCreate(CurrentMemoryContext,
+                                           "PinCount parallel tuple",
+                                           ALLOCSET_SMALL_SIZES);
+}
+
+static bool
+pin_count_parallel_run(PinCountState *state, const uint8 *query, Size length,
+                       int64 *result)
+{
+    ParallelContext *pcxt;
+    PinCountParallelShared *shared;
+    Size shared_size;
+    uint64 work[PIN_COUNT_WORK_WORDS];
+    uint64 local_stats[PIN_COUNT_STATS] = {0};
+    int request;
+    int64 local_count;
+
+    request = Min(pin_count_parallel_workers, max_parallel_workers_per_gather);
+    if (request <= 0 || IsParallelWorker() || IsInParallelMode())
+        return false;
+
+    pin_structure_lock(state->index, false);
+    pin_count_parallel_capture(state->index, query, length, work);
+
+    EnterParallelMode();
+    pcxt = CreateParallelContext("$libdir/pin", "pin_parallel_count_main", request);
+    shared_size = add_size(offsetof(PinCountParallelShared, query), length);
+    shm_toc_estimate_chunk(&pcxt->estimator, shared_size);
+    shm_toc_estimate_keys(&pcxt->estimator, 1);
+    InitializeParallelDSM(pcxt);
+    if (pcxt->seg == NULL)
+    {
+        DestroyParallelContext(pcxt);
+        ExitParallelMode();
+        pin_structure_unlock(state->index, false);
+        return false;
+    }
+
+    shared = shm_toc_allocate(pcxt->toc, shared_size);
+    shared->heaprelid = RelationGetRelid(state->heap);
+    shared->indexrelid = RelationGetRelid(state->index);
+    shared->attribute = state->attribute;
+    shared->query_length = length;
+    SpinLockInit(&shared->mutex);
+    memcpy(shared->work, work, sizeof(work));
+    shared->count = 0;
+    memset(shared->stats, 0, sizeof(shared->stats));
+    memcpy(shared->query, query, length);
+    shm_toc_insert(pcxt->toc, PIN_COUNT_KEY_SHARED, shared);
+
+    LaunchParallelWorkers(pcxt);
+    if (pcxt->nworkers_launched == 0)
+    {
+        DestroyParallelContext(pcxt);
+        ExitParallelMode();
+        pin_structure_unlock(state->index, false);
+        return false;
+    }
+
+    local_count = pin_count_parallel_execute(state->index, state, shared,
+                                             (const uint8 *) shared->query,
+                                             shared->query_length, local_stats);
+    pin_count_parallel_accumulate(shared, local_count, local_stats);
+    WaitForParallelWorkersToAttach(pcxt);
+    WaitForParallelWorkersToFinish(pcxt);
+
+    SpinLockAcquire(&shared->mutex);
+    *result = shared->count;
+    memcpy(state->stats, shared->stats, sizeof(state->stats));
+    SpinLockRelease(&shared->mutex);
+
+    DestroyParallelContext(pcxt);
+    ExitParallelMode();
+    pin_structure_unlock(state->index, false);
+    return true;
+}
+
+void
+pin_parallel_count_main(dsm_segment *seg, shm_toc *toc)
+{
+    PinCountParallelShared *shared;
+    PinCountState state;
+    uint64 stats[PIN_COUNT_STATS] = {0};
+    int64 count;
+
+    (void) seg;
+    shared = shm_toc_lookup(toc, PIN_COUNT_KEY_SHARED, false);
+    pin_count_worker_open(&state, shared);
+    pin_structure_lock(state.index, false);
+    count = pin_count_parallel_execute(state.index, &state, shared,
+                                       (const uint8 *) shared->query,
+                                       shared->query_length, stats);
+    pin_count_parallel_accumulate(shared, count, stats);
+    pin_structure_unlock(state.index, false);
+    pin_count_release(&state);
 }
