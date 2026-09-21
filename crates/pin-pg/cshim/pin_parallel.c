@@ -3,11 +3,20 @@
  */
 #include "postgres.h"
 #include "pin_parallel.h"
+#include "access/parallel.h"
+#include "access/table.h"
+#include "access/tableam.h"
+#include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "executor/instrument.h"
+#include "miscadmin.h"
+#include "pgstat.h"
+#include "storage/bufmgr.h"
+#include "storage/spin.h"
+#include "tcop/tcopprot.h"
 #include "utils/guc.h"
 #include <stdint.h>
 #ifdef PIN_TEST_HOOKS
-#include "access/parallel.h"
 #include "fmgr.h"
 #include "utils/fmgrprotos.h"
 #endif
@@ -19,6 +28,43 @@ StaticAssertDecl(PIN_PARALLEL_VACUUM_OPTIONS <= UINT8_MAX,
                  "parallel vacuum options exceed the AM field");
 StaticAssertDecl((PIN_PARALLEL_VACUUM_OPTIONS & ~VACUUM_OPTION_MAX_VALID_VALUE) == 0,
                  "parallel vacuum options contain unsupported flags");
+
+
+#define PIN_BUILD_KEY_SHARED UINT64CONST(1)
+#define PIN_BUILD_KEY_QUERY UINT64CONST(2)
+#define PIN_BUILD_KEY_WAL UINT64CONST(3)
+#define PIN_BUILD_KEY_BUFFER UINT64CONST(4)
+
+typedef struct PinBuildShared
+{
+    Oid heaprelid;
+    Oid indexrelid;
+    uint64 participant_memory;
+    slock_t mutex;
+    double heap_tuples;
+    uint64 index_tuples;
+} PinBuildShared;
+
+typedef struct PinBuildLocal
+{
+    Relation heap;
+    uint64 participant_memory;
+    uint64 index_tuples;
+} PinBuildLocal;
+
+#define PIN_BUILD_SCAN(shared) \
+    ((ParallelTableScanDesc) ((char *) (shared) + BUFFERALIGN(sizeof(PinBuildShared))))
+
+extern bool pin_parallel_build_tuple(Relation index, Relation heap, ItemPointer tid,
+                                     Datum *values, bool *nulls, uint64 memory_bytes);
+
+static Size pin_parallel_build_shared_size(Relation heap);
+static void pin_parallel_build_scan(PinBuildShared *shared, Relation heap,
+                                    Relation index, bool progress);
+static void pin_parallel_build_callback(Relation index, ItemPointer tid,
+                                        Datum *values, bool *nulls,
+                                        bool tuple_is_alive, void *state);
+PGDLLEXPORT void pin_parallel_build_main(dsm_segment *seg, shm_toc *toc);
 
 static bool pin_enable_parallel_vacuum = false;
 #ifdef PIN_TEST_HOOKS
@@ -63,3 +109,184 @@ pin_parallel_test_event(uint8 stage)
                                    Int32GetDatum(180006), Int32GetDatum(4));
 }
 #endif
+
+
+static Size
+pin_parallel_build_shared_size(Relation heap)
+{
+    return add_size(BUFFERALIGN(sizeof(PinBuildShared)),
+                    table_parallelscan_estimate(heap, SnapshotAny));
+}
+
+static void
+pin_parallel_build_callback(Relation index, ItemPointer tid, Datum *values,
+                            bool *nulls, bool tuple_is_alive, void *state)
+{
+    PinBuildLocal *local = state;
+    (void) tuple_is_alive;
+    if (pin_parallel_build_tuple(index, local->heap, tid, values, nulls,
+                                 local->participant_memory))
+        local->index_tuples++;
+}
+
+static void
+pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
+                        bool progress)
+{
+    PinBuildLocal local = {
+        .heap = heap,
+        .participant_memory = shared->participant_memory,
+        .index_tuples = 0
+    };
+    IndexInfo *info = BuildIndexInfo(index);
+    TableScanDesc scan = table_beginscan_parallel(heap, PIN_BUILD_SCAN(shared));
+    double heap_tuples;
+
+    info->ii_Concurrent = false;
+    heap_tuples = table_index_build_scan(heap, index, info, true, progress,
+                                         pin_parallel_build_callback, &local, scan);
+
+    SpinLockAcquire(&shared->mutex);
+    shared->heap_tuples += heap_tuples;
+    shared->index_tuples += local.index_tuples;
+    SpinLockRelease(&shared->mutex);
+}
+
+bool
+pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
+                   uint64 participant_memory, double *heap_tuples,
+                   uint64 *index_tuples)
+{
+    ParallelContext *pcxt;
+    PinBuildShared *shared;
+    WalUsage *walusage;
+    BufferUsage *bufferusage;
+    Snapshot snapshot = SnapshotAny;
+    Size shared_size;
+    Size total_memory;
+    int request;
+    int max_participants;
+    int querylen = 0;
+
+    if (heap == NULL || index == NULL || info == NULL || heap_tuples == NULL ||
+        index_tuples == NULL || participant_memory == 0 ||
+        info->ii_Concurrent || info->ii_ParallelWorkers <= 0)
+        return false;
+
+    total_memory = mul_size((Size) maintenance_work_mem, (Size) 1024);
+    max_participants = (int) (total_memory / participant_memory);
+    if (max_participants <= 1)
+        return false;
+    request = Min(info->ii_ParallelWorkers, max_participants - 1);
+    if (request <= 0)
+        return false;
+
+    EnterParallelMode();
+    pcxt = CreateParallelContext("$libdir/pin", "pin_parallel_build_main", request);
+    shared_size = pin_parallel_build_shared_size(heap);
+    shm_toc_estimate_chunk(&pcxt->estimator, shared_size);
+    shm_toc_estimate_keys(&pcxt->estimator, 1);
+
+    shm_toc_estimate_chunk(&pcxt->estimator,
+                           mul_size(sizeof(WalUsage), pcxt->nworkers));
+    shm_toc_estimate_keys(&pcxt->estimator, 1);
+    shm_toc_estimate_chunk(&pcxt->estimator,
+                           mul_size(sizeof(BufferUsage), pcxt->nworkers));
+    shm_toc_estimate_keys(&pcxt->estimator, 1);
+
+    if (debug_query_string != NULL)
+    {
+        querylen = strlen(debug_query_string);
+        shm_toc_estimate_chunk(&pcxt->estimator, querylen + 1);
+        shm_toc_estimate_keys(&pcxt->estimator, 1);
+    }
+
+    InitializeParallelDSM(pcxt);
+    if (pcxt->seg == NULL)
+    {
+        DestroyParallelContext(pcxt);
+        ExitParallelMode();
+        return false;
+    }
+
+    shared = shm_toc_allocate(pcxt->toc, shared_size);
+    shared->heaprelid = RelationGetRelid(heap);
+    shared->indexrelid = RelationGetRelid(index);
+    shared->participant_memory = participant_memory;
+    SpinLockInit(&shared->mutex);
+    shared->heap_tuples = 0;
+    shared->index_tuples = 0;
+    table_parallelscan_initialize(heap, PIN_BUILD_SCAN(shared), snapshot);
+    shm_toc_insert(pcxt->toc, PIN_BUILD_KEY_SHARED, shared);
+
+    if (debug_query_string != NULL)
+    {
+        char *query = shm_toc_allocate(pcxt->toc, querylen + 1);
+        memcpy(query, debug_query_string, querylen + 1);
+        shm_toc_insert(pcxt->toc, PIN_BUILD_KEY_QUERY, query);
+    }
+
+    walusage = shm_toc_allocate(pcxt->toc,
+                                mul_size(sizeof(WalUsage), pcxt->nworkers));
+    memset(walusage, 0, mul_size(sizeof(WalUsage), pcxt->nworkers));
+    shm_toc_insert(pcxt->toc, PIN_BUILD_KEY_WAL, walusage);
+    bufferusage = shm_toc_allocate(pcxt->toc,
+                                   mul_size(sizeof(BufferUsage), pcxt->nworkers));
+    memset(bufferusage, 0, mul_size(sizeof(BufferUsage), pcxt->nworkers));
+    shm_toc_insert(pcxt->toc, PIN_BUILD_KEY_BUFFER, bufferusage);
+
+    LaunchParallelWorkers(pcxt);
+    if (pcxt->nworkers_launched == 0)
+    {
+        DestroyParallelContext(pcxt);
+        ExitParallelMode();
+        return false;
+    }
+
+    pin_parallel_build_scan(shared, heap, index, true);
+    WaitForParallelWorkersToAttach(pcxt);
+    WaitForParallelWorkersToFinish(pcxt);
+
+    for (int i = 0; i < pcxt->nworkers_launched; i++)
+        InstrAccumParallelQuery(&bufferusage[i], &walusage[i]);
+
+    SpinLockAcquire(&shared->mutex);
+    *heap_tuples = shared->heap_tuples;
+    *index_tuples = shared->index_tuples;
+    SpinLockRelease(&shared->mutex);
+
+    DestroyParallelContext(pcxt);
+    ExitParallelMode();
+    return true;
+}
+
+void
+pin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
+{
+    PinBuildShared *shared;
+    Relation heap;
+    Relation index;
+    WalUsage *walusage;
+    BufferUsage *bufferusage;
+    char *query;
+
+    (void) seg;
+    shared = shm_toc_lookup(toc, PIN_BUILD_KEY_SHARED, false);
+    query = shm_toc_lookup(toc, PIN_BUILD_KEY_QUERY, true);
+    debug_query_string = query;
+    if (query != NULL)
+        pgstat_report_activity(STATE_RUNNING, query);
+
+    heap = table_open(shared->heaprelid, ShareLock);
+    index = index_open(shared->indexrelid, AccessExclusiveLock);
+
+    InstrStartParallelQuery();
+    pin_parallel_build_scan(shared, heap, index, false);
+    bufferusage = shm_toc_lookup(toc, PIN_BUILD_KEY_BUFFER, false);
+    walusage = shm_toc_lookup(toc, PIN_BUILD_KEY_WAL, false);
+    InstrEndParallelQuery(&bufferusage[ParallelWorkerNumber],
+                          &walusage[ParallelWorkerNumber]);
+
+    index_close(index, AccessExclusiveLock);
+    table_close(heap, ShareLock);
+}
