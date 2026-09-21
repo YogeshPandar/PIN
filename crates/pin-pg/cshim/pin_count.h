@@ -5,7 +5,7 @@
 #include "utils/relcache.h"
 
 /* scalar bridge; PostgreSQL owns the opaque context and all resource handles. */
-extern void pin_count_init(void);
+extern void pin_count_init(Size participant_memory);
 extern uint32 pin_count_owner_lock(void *context, uint32 block, uint8 *out, uint32 capacity);
 extern void pin_count_owner_unlock(void *context);
 extern bool pin_count_all_visible(void *context, uint32 block);
