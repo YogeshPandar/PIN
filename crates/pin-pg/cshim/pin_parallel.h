@@ -2,6 +2,7 @@
 #define PIN_PARALLEL_H
 
 #include "postgres.h"
+#include "access/genam.h"
 
 /* startup owns configuration; no backend-local pointer enters shared state. */
 extern void pin_parallel_init(void);
