@@ -78,7 +78,7 @@ pub(crate) fn pin_handler() -> Internal {
         amrestrpos: None,
         amestimateparallelscan: Some(native::pin_scan_estimate_parallel),
         aminitparallelscan: Some(native::pin_scan_init_parallel),
-        amparallelrescan: Some(native::pin_scan_parallel_rescan),
+        amparallelrescan: Some(parallel_rescan),
         amtranslatestrategy: None,
         amtranslatecmptype: None,
     };
@@ -655,6 +655,14 @@ pub unsafe extern "C-unwind" fn pin_parallel_scan_fill(
         })
     });
     matching::stored(u32::try_from(count).map_err(|_| Error::Limit("parallel scan batch")))
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn parallel_rescan(scan: pg_sys::IndexScanDesc) {
+    // safety: c resets only the fixed shared work state for this live scan.
+    unsafe { native::call(|| native::pin_scan_parallel_rescan(scan)) };
+    // safety: the leader retains its structural barrier and live scan keys.
+    unsafe { prepare_tuple_scan(scan) };
 }
 
 #[pg_guard]

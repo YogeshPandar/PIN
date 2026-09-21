@@ -126,7 +126,7 @@ class SourceTests(unittest.TestCase):
         self.assertIn('amgettuple: Some(native::pin_scan_gettuple)', source)
         self.assertIn('amestimateparallelscan: Some(native::pin_scan_estimate_parallel)', source)
         self.assertIn('aminitparallelscan: Some(native::pin_scan_init_parallel)', source)
-        self.assertIn('amparallelrescan: Some(native::pin_scan_parallel_rescan)', source)
+        self.assertIn('amparallelrescan: Some(parallel_rescan)', source)
         self.assertIn('PinParallelScanState', storage)
         self.assertIn('pin_scan_work_claim', storage)
         self.assertIn('pin_parallel_test_event(19)', source)

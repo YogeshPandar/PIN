@@ -52,7 +52,7 @@ def check_sources(source: dict[str, str]) -> list[str]:
             "amgettuple": "Some(native::pin_scan_gettuple)",
             "amestimateparallelscan": "Some(native::pin_scan_estimate_parallel)",
             "aminitparallelscan": "Some(native::pin_scan_init_parallel)",
-            "amparallelrescan": "Some(native::pin_scan_parallel_rescan)",
+            "amparallelrescan": "Some(parallel_rescan)",
         }
         for field, value in expected_scan.items():
             if values.get(field) != value:
