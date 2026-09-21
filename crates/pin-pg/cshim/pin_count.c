@@ -34,6 +34,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "pin_count.h"
+#include "pin_parallel.h"
 #include "pin_storage.h"
 
 #define PIN_COUNT_STATS 8
@@ -745,6 +746,9 @@ pin_parallel_count_main(dsm_segment *seg, shm_toc *toc)
     (void) seg;
     shared = shm_toc_lookup(toc, PIN_COUNT_KEY_SHARED, false);
     pin_count_worker_open(&state, shared);
+#ifdef PIN_TEST_HOOKS
+    pin_parallel_test_event(17);
+#endif
     pin_structure_lock(state.index, false);
     count = pin_count_parallel_execute(state.index, &state, shared,
                                        (const uint8 *) shared->query,
