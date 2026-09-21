@@ -121,6 +121,7 @@ class SourceTests(unittest.TestCase):
         source = (ROOT / 'crates/pin-pg/src/am.rs').read_text()
         self.assertIn('amcanparallel: false', source)
         self.assertIn('amcanbuildparallel: true', source)
+        self.assertIn('amusemaintenanceworkmem: true', source)
         for callback in ['amestimateparallelscan', 'aminitparallelscan', 'amparallelrescan']:
             self.assertIn(f'{callback}: None', source)
 
