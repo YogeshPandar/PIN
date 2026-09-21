@@ -45,7 +45,7 @@ pub(crate) fn pin_handler() -> Internal {
         amclusterable: false,
         ampredlocks: false,
         amcanparallel: false,
-        amcanbuildparallel: false,
+        amcanbuildparallel: true,
         amcaninclude: false,
         amusemaintenanceworkmem: false,
         amsummarizing: false,
@@ -106,22 +106,41 @@ unsafe extern "C-unwind" fn build(
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: the relation stays open through the synchronous initialization.
     matching::stored(unsafe { storage::with_writer(index, |store| mutable::initialize(store)) });
-    let mut state = BuildState { heap, documents: 0 };
-    let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
-    // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
-    // state lives through all sequential, guarded callback invocations.
-    let heap_tuples = unsafe {
+    let mut heap_tuples = 0.0;
+    let mut documents = 0u64;
+    // safety: core owns the live build descriptor and requested worker count.
+    // PostgreSQL restores worker transaction state; Pin bounds participant memory.
+    let parallel = unsafe {
         native::call(|| {
-            native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr)
+            native::pin_parallel_build(
+                heap,
+                index,
+                info,
+                matching::PREPARE_MEMORY as u64,
+                &mut heap_tuples,
+                &mut documents,
+            )
         })
     };
+    if !parallel {
+        let mut state = BuildState { heap, documents: 0 };
+        let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
+        // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
+        // state lives through all sequential, guarded callback invocations.
+        heap_tuples = unsafe {
+            native::call(|| {
+                native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr)
+            })
+        };
+        documents = state.documents;
+    }
     // safety: palloc returns aligned PostgreSQL-owned memory; both fields are initialized.
     unsafe {
         let result = pg_sys::palloc(std::mem::size_of::<pg_sys::IndexBuildResult>())
             .cast::<pg_sys::IndexBuildResult>();
         result.write(pg_sys::IndexBuildResult {
             heap_tuples,
-            index_tuples: state.documents as f64,
+            index_tuples: documents as f64,
         });
         result
     }
@@ -144,7 +163,16 @@ unsafe extern "C-unwind" fn build_tuple(
     // safety: build keeps this unique state live; callbacks run sequentially.
     let state = unsafe { &mut *state.cast::<BuildState>() };
     // safety: the core build scan supplies one evaluated text key and its HOT root.
-    if unsafe { insert_value(index, state.heap, values, nulls, tid) } {
+    if unsafe {
+        insert_value(
+            index,
+            state.heap,
+            values,
+            nulls,
+            tid,
+            matching::PREPARE_MEMORY,
+        )
+    } {
         state.documents = matching::stored(
             state
                 .documents
@@ -162,6 +190,7 @@ unsafe fn insert_value(
     values: *mut pg_sys::Datum,
     nulls: *mut bool,
     tid: pg_sys::ItemPointer,
+    memory_bytes: usize,
 ) -> bool {
     storage::interrupt();
     // safety: core supplies initialized one-element key and null arrays.
@@ -173,10 +202,7 @@ unsafe fn insert_value(
     let text = unsafe { <&str as FromDatum>::from_datum(*values, false) };
     let text = matching::input(text.ok_or(Error::InvalidDocument));
     let analyzed = matching::input(Analyzed::analyze(text, AnalysisLimits::default()));
-    let document = matching::input(PreparedDocument::prepare(
-        &analyzed,
-        matching::PREPARE_MEMORY,
-    ));
+    let document = matching::input(PreparedDocument::prepare(&analyzed, memory_bytes));
     drop(analyzed);
     // safety: C reads a valid core-owned item pointer without changing its root identity.
     let root = matching::stored(unsafe { storage::root(tid) });
@@ -185,6 +211,35 @@ unsafe fn insert_value(
         storage::with_writer(index, |store| mutable::insert(store, root, &document))
     });
     true
+}
+
+/// Inserts one tuple from a PostgreSQL parallel build participant.
+///
+/// # Safety
+/// all pointers belong to one live table build callback in this worker.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
+    index: pg_sys::Relation,
+    heap: pg_sys::Relation,
+    tid: pg_sys::ItemPointer,
+    values: *mut pg_sys::Datum,
+    nulls: *mut bool,
+    memory_bytes: u64,
+) -> bool {
+    let memory_bytes = matching::stored(
+        usize::try_from(memory_bytes)
+            .map_err(|_| Error::Limit("parallel build memory"))
+            .and_then(|bytes| {
+                if bytes == matching::PREPARE_MEMORY {
+                    Ok(bytes)
+                } else {
+                    Err(Error::InvalidState)
+                }
+            }),
+    );
+    // safety: C forwards the current worker's build callback arguments unchanged.
+    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes) }
 }
 
 #[pg_guard]
@@ -211,7 +266,16 @@ unsafe extern "C-unwind" fn insert(
     // safety: core retains both relations and IndexInfo; C checks persistence/layout.
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: evaluated key arrays and the root belong to this guarded insertion.
-    unsafe { insert_value(index, heap, values, nulls, heap_tid) };
+    unsafe {
+        insert_value(
+            index,
+            heap,
+            values,
+            nulls,
+            heap_tid,
+            matching::PREPARE_MEMORY,
+        )
+    };
     false
 }
 
