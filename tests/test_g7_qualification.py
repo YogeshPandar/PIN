@@ -137,6 +137,7 @@ class SourceTests(unittest.TestCase):
         host = (ROOT / 'crates/pin-pg/cshim/pin_count.c').read_text()
         self.assertIn('WorkState::capture', rust)
         self.assertIn('pin_count_work_claim', rust)
+        self.assertIn('pin_parallel_test_event(18)', rust)
         self.assertIn('pub const WORK_WORDS: usize = 11;', core)
         self.assertNotIn('*mut', core)
         self.assertIn('slock_t mutex;', host)

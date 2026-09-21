@@ -307,6 +307,11 @@ pub unsafe extern "C-unwind" fn pin_count_parallel_execute(
                 }) {
                     continue;
                 }
+                #[cfg(feature = "test-hooks")]
+                {
+                    // safety: the test-only C hook accepts this fixed stage synchronously.
+                    unsafe { native::call(|| native::pin_parallel_test_event(18)) };
+                }
                 batch.for_each(layout, |candidate| counter.push(candidate))?;
             }
             counter.flush()

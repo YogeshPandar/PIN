@@ -296,7 +296,8 @@ def parallel_count_qualification(cluster: Cluster) -> None:
     sql = options + query
     paused_pin_worker(cluster, 17, sql, 'pin-g7-direct-count',
                       expected=str(expected))
-    paused_pin_worker(cluster, 17, sql, 'pin-g7-direct-count-failure',
+    # stage 18 is after this worker successfully claimed one private batch.
+    paused_pin_worker(cluster, 18, sql, 'pin-g7-direct-count-failure',
                       terminate_worker=True)
 
     if cluster.count(where, options) != expected:
