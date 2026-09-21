@@ -40,8 +40,12 @@ def check_sources(source: dict[str, str]) -> list[str]:
             errors.append("AM initializer must match the independently enumerated field order")
         values = dict(entries)
         false_flags = expected[4:23]
-        if any(values.get(flag) != "false" for flag in false_flags):
-            errors.append("G2 cannot advertise an unimplemented boolean capability")
+        implemented_true = {"amcanbuildparallel", "amusemaintenanceworkmem"}
+        if any(
+            values.get(flag) != ("true" if flag in implemented_true else "false")
+            for flag in false_flags
+        ):
+            errors.append("AM boolean capabilities must match implemented gates")
         for field in (
             "amgettuple", "amcanreturn", "amestimateparallelscan",
             "aminitparallelscan", "amparallelrescan",
