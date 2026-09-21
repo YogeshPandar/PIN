@@ -618,10 +618,13 @@ static void
 pin_count_parallel_accumulate(PinCountParallelShared *shared, int64 count,
                               const uint64 *stats)
 {
+    int64 next_count;
+    uint64 next_stats[PIN_COUNT_STATS];
+
     if (count < 0 || stats == NULL)
         elog(ERROR, "invalid PinCount parallel result");
     SpinLockAcquire(&shared->mutex);
-    if (pg_add_s64_overflow(shared->count, count, &shared->count))
+    if (pg_add_s64_overflow(shared->count, count, &next_count))
     {
         SpinLockRelease(&shared->mutex);
         ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
@@ -629,15 +632,15 @@ pin_count_parallel_accumulate(PinCountParallelShared *shared, int64 count,
     }
     for (int i = 0; i < PIN_COUNT_STATS; i++)
     {
-        uint64 next = shared->stats[i] + stats[i];
-        if (next < shared->stats[i])
+        if (pg_add_u64_overflow(shared->stats[i], stats[i], &next_stats[i]))
         {
             SpinLockRelease(&shared->mutex);
             ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
                             errmsg("Pin parallel count instrumentation overflow")));
         }
-        shared->stats[i] = next;
     }
+    shared->count = next_count;
+    memcpy(shared->stats, next_stats, sizeof(next_stats));
     SpinLockRelease(&shared->mutex);
 }
 
