@@ -34,7 +34,12 @@ fn run(command: &mut Command) -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    for name in ["PGRX_PG_CONFIG_PATH", "CC", "AR", "CARGO_FEATURE_TEST_HOOKS"] {
+    for name in [
+        "PGRX_PG_CONFIG_PATH",
+        "CC",
+        "AR",
+        "CARGO_FEATURE_TEST_HOOKS",
+    ] {
         println!("cargo:rerun-if-env-changed={name}");
     }
     for name in [

@@ -97,7 +97,6 @@ unsafe extern "C-unwind" {
     );
 }
 
-
 /// Reads through the default PostgreSQL buffer strategy.
 ///
 /// # Safety
