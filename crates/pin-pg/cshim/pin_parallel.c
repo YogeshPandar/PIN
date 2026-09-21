@@ -51,7 +51,7 @@ typedef struct PinBuildShared
 typedef struct PinBuildLocal
 {
     Relation heap;
-    uint64 participant_memory;
+    uint64 prepare_memory;
     uint64 index_tuples;
 } PinBuildLocal;
 
@@ -132,7 +132,7 @@ pin_parallel_build_callback(Relation index, ItemPointer tid, Datum *values,
     pin_parallel_test_event(16);
 #endif
     if (pin_parallel_build_tuple(index, local->heap, tid, values, nulls,
-                                 local->participant_memory) &&
+                                 local->prepare_memory) &&
         pg_add_u64_overflow(local->index_tuples, 1, &local->index_tuples))
         ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
                         errmsg("Pin parallel build tuple count overflow")));
@@ -144,7 +144,7 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
 {
     PinBuildLocal local = {
         .heap = heap,
-        .participant_memory = shared->prepare_memory,
+        .prepare_memory = shared->prepare_memory,
         .index_tuples = 0
     };
     IndexInfo *info = BuildIndexInfo(index);
