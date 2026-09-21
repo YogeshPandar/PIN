@@ -403,7 +403,7 @@ WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
             terminate_worker=True,
         )
         if cluster.run(
-            "SELECT to_regclass('pin_g7_test.pin_g7_build_failure_idx') IS NULL;"
+            f"SELECT to_regclass('{SCHEMA}.pin_g7_build_failure_idx') IS NULL;"
         ).stdout.strip() != 't':
             raise RuntimeError('failed parallel build left a catalog-visible index')
 
