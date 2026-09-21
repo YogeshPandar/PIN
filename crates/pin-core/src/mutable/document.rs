@@ -92,6 +92,22 @@ impl PreparedDocument {
         })
     }
 
+    /// Copies and validates one complete prepared payload.
+    ///
+    /// # Errors
+    /// Rejects malformed bytes, allocation failure or the supplied memory limit.
+    pub fn copy_from_bytes(input: &[u8], memory_bytes: usize) -> Result<Self> {
+        let (tokens, terms) = validate(input, memory_bytes)?;
+        let mut budget = MemoryBudget::new(memory_bytes);
+        let mut bytes = vector(input.len(), &mut budget)?;
+        bytes.extend_from_slice(input);
+        Ok(Self {
+            bytes,
+            tokens,
+            terms,
+        })
+    }
+
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
