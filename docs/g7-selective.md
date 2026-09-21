@@ -49,8 +49,11 @@ does not introduce a second durable storage protocol.
 Pin computes a conservative participant peak from the prepared-document budget,
 the maximum detoasted input and fixed callback state. The requested worker count
 is capped so leader plus workers cannot exceed `maintenance_work_mem` under that
-peak. `amusemaintenanceworkmem` is therefore true. The leader accumulates worker
-buffer/WAL instrumentation and exact build statistics after workers finish.
+peak. This build accounting is internal to Pin. `amusemaintenanceworkmem` remains
+false because PostgreSQL consults that AM flag when partitioning parallel VACUUM
+worker memory, and Pin VACUUM does not consume `maintenance_work_mem`. The leader
+accumulates worker buffer/WAL instrumentation and exact build statistics after
+workers finish.
 
 ## Parallel direct-count protocol
 
