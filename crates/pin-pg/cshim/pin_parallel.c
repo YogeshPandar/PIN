@@ -9,6 +9,7 @@
 #include "access/tableam.h"
 #include "catalog/index.h"
 #include "commands/vacuum.h"
+#include "common/int.h"
 #include "executor/instrument.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -131,8 +132,10 @@ pin_parallel_build_callback(Relation index, ItemPointer tid, Datum *values,
     pin_parallel_test_event(16);
 #endif
     if (pin_parallel_build_tuple(index, local->heap, tid, values, nulls,
-                                 local->participant_memory))
-        local->index_tuples++;
+                                 local->participant_memory) &&
+        pg_add_u64_overflow(local->index_tuples, 1, &local->index_tuples))
+        ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+                        errmsg("Pin parallel build tuple count overflow")));
 }
 
 static void
@@ -153,8 +156,15 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
                                          pin_parallel_build_callback, &local, scan);
 
     SpinLockAcquire(&shared->mutex);
+    if (pg_add_u64_overflow(shared->index_tuples, local.index_tuples,
+                            &local.index_tuples))
+    {
+        SpinLockRelease(&shared->mutex);
+        ereport(ERROR, (errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+                        errmsg("Pin parallel build tuple count overflow")));
+    }
     shared->heap_tuples += heap_tuples;
-    shared->index_tuples += local.index_tuples;
+    shared->index_tuples = local.index_tuples;
     SpinLockRelease(&shared->mutex);
 }
 
