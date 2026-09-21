@@ -117,12 +117,23 @@ class SourceTests(unittest.TestCase):
         self.assertNotIn('unsafe ', source)
         self.assertNotIn('Vec<', source)
 
-    def test_native_bitmap_does_not_advertise_parallel_index_callbacks(self):
+    def test_parallel_build_does_not_overadvertise_index_scan_callbacks(self):
         source = (ROOT / 'crates/pin-pg/src/am.rs').read_text()
-        for capability in ['amcanparallel', 'amcanbuildparallel']:
-            self.assertIn(f'{capability}: false', source)
+        self.assertIn('amcanparallel: false', source)
+        self.assertIn('amcanbuildparallel: true', source)
         for callback in ['amestimateparallelscan', 'aminitparallelscan', 'amparallelrescan']:
             self.assertIn(f'{callback}: None', source)
+
+    def test_parallel_count_uses_fixed_pointer_free_work(self):
+        rust = (ROOT / 'crates/pin-pg/src/count.rs').read_text()
+        core = (ROOT / 'crates/pin-core/src/mutable/work.rs').read_text()
+        host = (ROOT / 'crates/pin-pg/cshim/pin_count.c').read_text()
+        self.assertIn('WorkState::capture', rust)
+        self.assertIn('pin_count_work_claim', rust)
+        self.assertIn('pub const WORK_WORDS: usize = 11;', core)
+        self.assertNotIn('*mut', core)
+        self.assertIn('slock_t mutex;', host)
+        self.assertIn('CreateParallelContext', host)
 
     def test_real_host_suites_use_existing_driver(self):
         source = (ROOT / 'tools/g2_qualification.sh').read_text()
