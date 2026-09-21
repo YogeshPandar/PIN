@@ -126,6 +126,8 @@ class SourceTests(unittest.TestCase):
         self.assertIn('LWLock writer_lock;', host)
         self.assertIn('LWLockAcquire((LWLock *) lock, LW_EXCLUSIVE)', host)
         self.assertIn('LWLockRelease((LWLock *) lock)', host)
+        self.assertIn('if (info->ii_BrokenHotChain)', host)
+        self.assertIn('info->ii_BrokenHotChain = true;', host)
         for callback in ['amestimateparallelscan', 'aminitparallelscan', 'amparallelrescan']:
             self.assertIn(f'{callback}: None', source)
 

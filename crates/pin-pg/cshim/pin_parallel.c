@@ -49,6 +49,7 @@ typedef struct PinBuildShared
     slock_t mutex;
     double heap_tuples;
     uint64 index_tuples;
+    bool broken_hot_chain;
 } PinBuildShared;
 
 typedef struct PinBuildLocal
@@ -181,11 +182,11 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
     };
     IndexInfo *info;
     TableScanDesc scan;
+    double heap_tuples;
 
     LWLockRegisterTranche(shared->writer_tranche, "PinParallelBuild");
     info = BuildIndexInfo(index);
     scan = table_beginscan_parallel(heap, PIN_BUILD_SCAN(shared));
-    double heap_tuples;
 
     info->ii_Concurrent = false;
     heap_tuples = table_index_build_scan(heap, index, info, true, progress,
@@ -201,6 +202,8 @@ pin_parallel_build_scan(PinBuildShared *shared, Relation heap, Relation index,
     }
     shared->heap_tuples += heap_tuples;
     shared->index_tuples = local.index_tuples;
+    if (info->ii_BrokenHotChain)
+        shared->broken_hot_chain = true;
     SpinLockRelease(&shared->mutex);
 }
 
@@ -270,6 +273,7 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
     SpinLockInit(&shared->mutex);
     shared->heap_tuples = 0;
     shared->index_tuples = 0;
+    shared->broken_hot_chain = false;
     table_parallelscan_initialize(heap, PIN_BUILD_SCAN(shared), snapshot);
     shm_toc_insert(pcxt->toc, PIN_BUILD_KEY_SHARED, shared);
 
@@ -307,6 +311,8 @@ pin_parallel_build(Relation heap, Relation index, struct IndexInfo *info,
     SpinLockAcquire(&shared->mutex);
     *heap_tuples = shared->heap_tuples;
     *index_tuples = shared->index_tuples;
+    if (shared->broken_hot_chain)
+        info->ii_BrokenHotChain = true;
     SpinLockRelease(&shared->mutex);
 
     DestroyParallelContext(pcxt);

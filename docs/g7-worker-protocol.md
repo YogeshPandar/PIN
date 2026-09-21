@@ -71,9 +71,12 @@ inside that critical section for the ordinary nonparallel storage contract.
 
 Each participant is charged a conservative peak covering document preparation,
 the maximum detoasted input and fixed callback state. Pin caps leader plus workers
-so this total does not exceed `maintenance_work_mem`.
-If DSM allocation or worker launch is unavailable, the leader destroys the
-parallel context and runs the established serial build.
+so this Pin preparation budget does not multiply `maintenance_work_mem`.
+Participants OR `IndexInfo.ii_BrokenHotChain` into shared state; after all
+workers finish, the leader copies that fact back to the original core-owned
+`IndexInfo`, matching PostgreSQL's parallel B-tree build contract. If DSM
+allocation or worker launch is unavailable, the leader destroys the parallel
+context and runs the established serial build.
 
 ## Parallel VACUUM
 

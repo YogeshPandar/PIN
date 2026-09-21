@@ -305,8 +305,9 @@ Authority: PostgreSQL 18.6 commit
 `724edf9bde9d356724ad384a2e196edc3c9f80f7`,
 `src/backend/catalog/index.c`, `src/include/access/tableam.h`,
 `src/include/access/parallel.h`, `src/backend/access/transam/parallel.c`,
-`src/backend/access/gin/gininsert.c`, `src/backend/storage/lmgr/lock.c`,
-`src/backend/storage/lmgr/README`, and `src/include/storage/lwlock.h`.
+`src/backend/access/gin/gininsert.c`, `src/backend/access/nbtree/nbtsort.c`,
+`src/backend/storage/lmgr/lock.c`, `src/backend/storage/lmgr/README`, and
+`src/include/storage/lwlock.h`.
 
 PostgreSQL supplies `IndexInfo.ii_ParallelWorkers`. Pin enters parallel mode,
 creates a `ParallelContext`, initializes one parallel table scan, and launches
@@ -325,6 +326,12 @@ participants. Analysis stays outside the DSM lock. Rust asks the C boundary to
 take the DSM `LWLock` only around the existing writer interlock and generic-WAL
 publication, then releases it before returning. PostgreSQL error cleanup releases
 held LWLocks on failure. Rust never dereferences the shared lock.
+
+Parallel scans use participant-local `IndexInfo` values. Each participant records
+`ii_BrokenHotChain` in the shared build state, and the leader propagates the
+OR result to the original core-owned `IndexInfo` before returning from
+`ambuild`. Core can therefore preserve the normal nonconcurrent HOT safety
+horizon.
 
 Fallback: concurrent index build, zero requested workers, unavailable DSM or zero
 launched workers use the established serial build.
