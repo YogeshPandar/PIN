@@ -24,7 +24,7 @@ const COUNTERS: usize = 8;
 static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 unsafe extern "C-unwind" {
-    fn pin_count_init();
+    fn pin_count_init(participant_memory: usize);
     fn pin_count_owner_lock(context: *mut c_void, block: u32, out: *mut u8, capacity: u32) -> u32;
     fn pin_count_owner_unlock(context: *mut c_void);
     fn pin_count_all_visible(context: *mut c_void, block: u32) -> bool;
@@ -48,8 +48,15 @@ unsafe extern "C-unwind" {
 /// # Safety
 /// called once during validated postmaster preloading on the backend main thread.
 pub(crate) unsafe fn initialize() {
+    let analysis = AnalysisLimits::default();
+    let participant_memory = matching::stored(
+        matching::QUERY_MEMORY
+            .checked_add(analysis.memory_bytes)
+            .and_then(|bytes| bytes.checked_add(analysis.input_bytes))
+            .ok_or(Error::Limit("parallel count memory")),
+    );
     // safety: static C methods and the GUC outlive every inherited backend.
-    unsafe { native::call(|| pin_count_init()) };
+    unsafe { native::call(|| pin_count_init(participant_memory)) };
     GucRegistry::define_bool_guc(
         c"pin.enable_count_recheck",
         c"Enable experimental streaming count rechecks.",
