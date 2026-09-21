@@ -46,18 +46,20 @@ The callback analyzes one document outside Pin's writer interlock, then reuses t
 existing WAL-backed insertion path. Publication remains serialized, so parallelism
 does not introduce a second durable storage protocol.
 
-Each participant may prepare at most `matching::PREPARE_MEMORY` bytes. Pin caps
-the requested worker count so leader plus workers cannot exceed
-`maintenance_work_mem` under that bound. `amusemaintenanceworkmem` is therefore
-true. The leader accumulates worker buffer/WAL instrumentation and exact build
-statistics after workers finish.
+Pin computes a conservative participant peak from the prepared-document budget,
+the maximum detoasted input and fixed callback state. The requested worker count
+is capped so leader plus workers cannot exceed `maintenance_work_mem` under that
+peak. `amusemaintenanceworkmem` is therefore true. The leader accumulates worker
+buffer/WAL instrumentation and exact build statistics after workers finish.
 
 ## Parallel direct-count protocol
 
 `pin.parallel_count_workers` defaults to zero. `pin.enable_count_fastpath`
 also remains off by default. Both must be enabled before PinCount attempts its
-internal worker path. The number of requested workers is additionally capped by
-`max_parallel_workers_per_gather`.
+internal worker path. The number of requested workers is capped by `max_parallel_workers_per_gather`
+and by one total `work_mem` budget. The per-participant ceiling includes the
+decoded query, matching scratch, analyzer budget, maximum detoasted input and
+fixed batch state.
 
 The leader captures one duplicate-free `WorkState` while holding the structural
 reader barrier. DSM contains only checked integer work words, relation OIDs,
