@@ -12,6 +12,7 @@ mod query;
 mod reader;
 mod vacuum;
 mod writer;
+pub mod work;
 
 pub use compact::{
     CompactMode, CompactStats, compact, compact_with_mode, recover as recover_compaction,
