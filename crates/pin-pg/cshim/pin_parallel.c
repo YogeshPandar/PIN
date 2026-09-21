@@ -87,7 +87,7 @@ pin_parallel_init(void)
     DefineCustomIntVariable("pin.g7_pause_worker_stage",
                             "Pauses a test worker at a storage transition.",
                             "Disposable test clusters only; the driver holds advisory key (180006, 4).",
-                            &pin_pause_worker_stage, 0, 0, 16, PGC_SUSET,
+                            &pin_pause_worker_stage, 0, 0, 17, PGC_SUSET,
                             GUC_NOT_IN_SAMPLE, NULL, NULL, NULL);
 #endif
 }
@@ -106,7 +106,7 @@ pin_parallel_test_event(uint8 stage)
 {
     /* never run SPI or acquire a session lock inside a parallel worker. */
     if (IsParallelWorker() &&
-        ((stage >= 7 && stage <= 12) || stage == 16) &&
+        ((stage >= 7 && stage <= 12) || stage == 16 || stage == 17) &&
         pin_pause_worker_stage == stage)
         (void) DirectFunctionCall2(pg_advisory_xact_lock_int4,
                                    Int32GetDatum(180006), Int32GetDatum(4));
