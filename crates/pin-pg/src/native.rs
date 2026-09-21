@@ -9,6 +9,14 @@ use std::ffi::c_void;
 unsafe extern "C-unwind" {
     pub(crate) fn pin_parallel_init();
     pub(crate) fn pin_parallel_vacuum_options() -> u8;
+    pub(crate) fn pin_parallel_build(
+        heap: pg_sys::Relation,
+        index: pg_sys::Relation,
+        info: *mut pg_sys::IndexInfo,
+        participant_memory: u64,
+        heap_tuples: *mut f64,
+        index_tuples: *mut u64,
+    ) -> bool;
     #[cfg(feature = "test-hooks")]
     pub(crate) fn pin_parallel_test_event(stage: u8);
     pub(crate) fn pin_storage_check(
