@@ -3,6 +3,7 @@
  */
 #include "postgres.h"
 #include "pin_parallel.h"
+#include "pin_storage.h"
 #include "access/parallel.h"
 #include "access/table.h"
 #include "access/tableam.h"
@@ -15,6 +16,7 @@
 #include "storage/spin.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
+#include "utils/snapmgr.h"
 #include <stdint.h>
 #ifdef PIN_TEST_HOOKS
 #include "fmgr.h"
@@ -279,6 +281,7 @@ pin_parallel_build_main(dsm_segment *seg, shm_toc *toc)
 
     heap = table_open(shared->heaprelid, ShareLock);
     index = index_open(shared->indexrelid, AccessExclusiveLock);
+    pin_storage_check(index, heap, NULL);
 
     InstrStartParallelQuery();
     pin_parallel_build_scan(shared, heap, index, false);
