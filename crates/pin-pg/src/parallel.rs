@@ -110,7 +110,7 @@ pub(crate) unsafe fn with_maintenance<T>(
 ) -> Result<T> {
     // safety: existing maintenance enforces structural-before-writer lock order.
     unsafe {
-        storage::with_maintenance(index, |store| {
+        crate::storage_impl::with_maintenance(index, |store| {
             let mut vacuum = VacuumStore {
                 inner: store,
                 index,
