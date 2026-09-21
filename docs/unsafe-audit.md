@@ -87,6 +87,7 @@ is promoted.
 
 | ID | Operations | Safety argument | Required validation |
 |---|---|---|---|
+| G7SCAN01 | Parallel IndexScan DSM and fixed root output arrays | DSM stores one spinlock, ready flag and eleven integer work words only; Rust receives caller-sized block/offset arrays, bounds every write, retains no raw pointer, and returns before C reuses the arrays | compile/Clippy, source tripwires, real parallel Index Scan, post-claim worker termination, serial equality |
 | G7BUILD01 | C parallel table-scan DSM and Rust build callback | DSM stores OIDs/scalars and a PostgreSQL scan descriptor only; worker callback pointers remain live only for the synchronous call; Rust retains none | C/Rust compile, real worker observation, build equality, ERROR cleanup |
 | G7BUILD01 | `Datum`, null array and `ItemPointer` forwarded to Rust | PostgreSQL owns all callback storage; the guarded Rust entry uses the same validated insertion path and returns before core can reuse inputs | build with NULL/TOAST/large text, worker termination, transactional suite |
 | G7COUNT01 | `slice::from_raw_parts` over DSM query bytes | C allocates and initializes the complete query extent; pointer is non-null and length is bounded by `isize::MAX`; immutable borrow ends after synchronous decode | host compile, malformed query, repeated execution |

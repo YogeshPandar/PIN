@@ -1,7 +1,9 @@
 # G7 worker protocol
 
 G7 uses PostgreSQL processes and PostgreSQL DSM. No Rust thread pool, shared Rust
-object, backend pointer or persistent shared-work format is introduced.
+object, backend pointer or persistent shared-work format is introduced. Native
+plain index scans, direct count and build workers all use PostgreSQL-owned
+process and cleanup lifecycles.
 
 ## Disjoint count work
 

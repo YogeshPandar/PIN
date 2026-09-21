@@ -296,6 +296,43 @@ integration schedules, crash recovery and independent visibility review remain
 unobserved until CI/host execution. See [g5-counts.md](g5-counts.md).
 
 
+## G7SCAN01: native plain and parallel index scans
+
+Modules: `crates/pin-core/src/mutable/work.rs`,
+`crates/pin-pg/src/am.rs`, `crates/pin-pg/src/storage.rs`,
+`crates/pin-pg/cshim/pin_storage.c`.
+
+Authority: PostgreSQL 18.6 commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`,
+`src/backend/access/index/indexam.c`,
+`src/backend/executor/nodeIndexscan.c`,
+`src/backend/optimizer/path/indxpath.c`,
+`src/backend/optimizer/path/costsize.c`, and the PostgreSQL 18 Index AM
+parallel-scan contract.
+
+`amcanparallel` is enabled only with `amgettuple`,
+`amestimateparallelscan`, `aminitparallelscan`, and
+`amparallelrescan` present. PostgreSQL excludes bitmap index paths from this
+AM parallel interface, so bitmap construction remains serial while plain
+Index Scan participants use the new shared work protocol.
+
+AM DSM contains only a PostgreSQL spinlock, a ready flag and eleven checked
+`u64` work words. Each backend owns one fixed root batch. Work preparation
+copies one page outside the spinlock; compare-and-replace assigns that batch to
+exactly one participant. Canonical owner liveness is reread before a root is
+returned. The AM sets `xs_recheck` for every TID, leaving MVCC and exact
+operator semantics to PostgreSQL.
+
+A shared structural barrier is acquired by each plain scan at `amrescan` and
+held through `amendscan`; this prevents posting-page reclamation while captured
+work is consumed. No Rust allocation, page image, relation pointer, snapshot
+pointer or buffer handle enters DSM. Rescan clears the shared scalar state and
+the next participant captures fresh work.
+
+Validation: source-policy tests, full-row serial/parallel equality, actual
+parallel Index Scan workers, leader-on/off execution, post-claim worker
+termination, subsequent reuse, host Clippy and PostgreSQL recovery qualification.
+
 ## G7BUILD01: PostgreSQL parallel build lifecycle
 
 Modules: `crates/pin-pg/src/am.rs`, `crates/pin-pg/src/native.rs`,
