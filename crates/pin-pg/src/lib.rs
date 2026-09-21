@@ -1,4 +1,4 @@
-//! PostgreSQL-owned search, opt-in counts and core-managed parallel maintenance.
+//! PostgreSQL-owned search with gated build, count and maintenance parallelism.
 //! abi, ownership, and error contracts are recorded in docs/api-evidence.md.
 
 #[cfg(not(feature = "pg18"))]
@@ -59,7 +59,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G7: selective compaction and opt-in core parallel maintenance; experiments remain gated"
+    "G7: gated PostgreSQL worker build/count/vacuum and selective compaction"
 }
 
 #[pg_extern(stable, parallel_unsafe)]
