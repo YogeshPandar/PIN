@@ -28,8 +28,9 @@ vtable or synchronization primitive.
 
 The serial G5 `PinCount` node remains the semantic and visibility reference.
 `pin.parallel_count_workers = 0` disables its worker path by default. Enabled
-workers are further capped so leader plus workers fit one `work_mem` budget
-using a conservative decoded-query, matcher, analyzer, detoast and batch peak.
+workers are further capped so the shared query/control DSM plus leader and
+workers fit one `work_mem` budget using a conservative decoded-query, matcher,
+analyzer, detoast and batch peak.
 
 When enabled, the leader:
 
@@ -81,8 +82,10 @@ internally.
 
 The exact `IndexBulkDeleteResult` representation is the only statistics object
 passed between phases. Both phases borrow `IndexVacuumInfo.strategy` and read
-pages through `ReadBufferExtended`. Traversal boundaries call
-`vacuum_delay_point(false)` only outside content locks and generic-WAL batches.
+pages through `ReadBufferExtended`. Traversal keeps cancellation checks active
+while Pin interlocks are held. Cost-delay sleeps run immediately before and after
+the Pin writer/structural critical section, with no Pin interlock, buffer-content
+lock or generic-WAL batch held.
 
 ## Failure and shutdown
 

@@ -59,10 +59,11 @@ workers finish.
 
 `pin.parallel_count_workers` defaults to zero. `pin.enable_count_fastpath`
 also remains off by default. Both must be enabled before PinCount attempts its
-internal worker path. The number of requested workers is capped by `max_parallel_workers_per_gather`
-and by one total `work_mem` budget. The per-participant ceiling includes the
-decoded query, matching scratch, analyzer budget, maximum detoasted input and
-fixed batch state.
+internal worker path. The number of requested workers is capped by
+`max_parallel_workers_per_gather` and one total `work_mem` budget. The shared
+query/control DSM is charged first; the remaining budget caps leader plus workers
+using a per-participant ceiling that includes decoded query, matching scratch,
+analyzer memory, maximum detoasted input and fixed batch state.
 
 The leader captures one duplicate-free `WorkState` while holding the structural
 reader barrier. DSM contains only checked integer work words, relation OIDs,
@@ -90,9 +91,10 @@ One PostgreSQL process owns a complete index in each phase. Pin does not split
 one index internally during VACUUM.
 
 Both phases borrow `IndexVacuumInfo.strategy` for index page reads. Traversal
-boundaries call `vacuum_delay_point(false)` only after content locks and generic
-WAL batches end. PostgreSQL remains responsible for worker memory adjustment,
-shared cost balance, dead-item DSM and serial fallback.
+checks cancellation inside Pin's critical section but does not sleep there.
+`vacuum_delay_point(false)` runs immediately before and after the Pin interlocks,
+after any buffer-content lock or generic-WAL batch has ended. PostgreSQL remains
+responsible for shared cost balance, dead-item DSM and serial fallback.
 
 ## Prefix-retention protocol
 

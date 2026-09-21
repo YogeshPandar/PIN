@@ -357,9 +357,10 @@ relations, fetch state, slot and scratch context. Candidate visibility and count
 certification remain the G5 protocol. A worker failure aborts the whole SQL
 statement rather than returning or retrying partial accounting.
 
-Worker admission is also memory bounded. The leader plus requested workers must
-fit one `work_mem` budget using a conservative peak that includes two query
-budgets, analyzer memory, maximum detoasted input and fixed batch state.
+Worker admission is also memory bounded. The immutable query/control DSM chunk
+is charged against one `work_mem` budget first. The remainder must fit leader
+plus requested workers using a conservative peak that includes two query budgets,
+analyzer memory, maximum detoasted input and fixed batch state.
 
 Validation: pure competing-claim tests, malformed shared-state tests,
 deterministic stage-17 worker observation, worker termination, exact serial count
@@ -380,8 +381,9 @@ standard `IndexBulkDeleteResult` across DSM. Pin appends no private state.
 
 `IndexVacuumInfo.strategy` remains callback-owned and is borrowed only for the
 synchronous phase. Page reads use `ReadBufferExtended` with that strategy.
-`vacuum_delay_point(false)` runs at traversal boundaries outside buffer-content
-locks and generic-WAL batches.
+Traversal uses interrupt-only checks under Pin interlocks. Cost-delay sleeps run
+before and after the writer/structural critical section, with no Pin interlock,
+buffer-content lock or generic-WAL batch held.
 
 Validation: exact stats representation, serial fallback, cancellation and
 worker-failure qualification, plus existing VACUUM/recovery suites.

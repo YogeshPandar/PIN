@@ -40,7 +40,7 @@ def check_sources(source: dict[str, str]) -> list[str]:
             errors.append("AM initializer must match the independently enumerated field order")
         values = dict(entries)
         false_flags = expected[4:23]
-        implemented_true = {"amcanbuildparallel", "amusemaintenanceworkmem"}
+        implemented_true = {"amcanbuildparallel"}
         if any(
             values.get(flag) != ("true" if flag in implemented_true else "false")
             for flag in false_flags
