@@ -1,9 +1,10 @@
 //! opt-in whole-index VACUUM integration with PostgreSQL-managed workers.
-//! this module adds no Pin-owned threads or parallel index-scan callbacks.
+//! this module adds no pin-owned threads; postgres owns every worker lifecycle.
 //! contracts, fallback and review gates: docs/g7-selective.md, G7VACUUM01.
 
 use crate::{native, storage};
-use pgrx::pg_sys;
+use pgrx::{pg_guard, pg_sys};
+use std::ffi::c_void;
 use pin_core::error::Result;
 use pin_core::identity::HeapLayout;
 use pin_core::mutable::page::Page;
@@ -76,6 +77,40 @@ impl PageStore for VacuumStore<'_, '_> {
     fn event(&mut self, stage: Stage) -> Result<()> {
         self.inner.event(stage)
     }
+}
+
+/// postgres external worker entry for parallel index build.
+///
+/// # Safety
+/// postgres supplies one live dsm segment and toc for this worker invocation.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_parallel_build_main(
+    segment: *mut c_void,
+    table: *mut c_void,
+) {
+    if segment.is_null() || table.is_null() {
+        pgrx::error!("invalid Pin parallel build worker state");
+    }
+    // safety: c consumes both postgres-owned pointers only for this worker invocation.
+    unsafe { native::call(|| native::pin_parallel_build_worker(segment, table)) };
+}
+
+/// postgres external worker entry for direct count.
+///
+/// # Safety
+/// postgres supplies one live dsm segment and toc for this worker invocation.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_parallel_count_main(
+    segment: *mut c_void,
+    table: *mut c_void,
+) {
+    if segment.is_null() || table.is_null() {
+        pgrx::error!("invalid Pin parallel count worker state");
+    }
+    // safety: c consumes both postgres-owned pointers only for this worker invocation.
+    unsafe { native::call(|| native::pin_parallel_count_worker(segment, table)) };
 }
 
 /// runs one VACUUM phase with the callback-owned buffer strategy.
