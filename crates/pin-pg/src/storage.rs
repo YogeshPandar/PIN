@@ -76,6 +76,20 @@ pub(crate) unsafe fn with_reader<T>(
     result
 }
 
+/// reads under a structural barrier already held by the host scan.
+///
+/// # Safety
+/// index is validated and remains open/locked for the operation. the caller
+/// must hold the shared structural barrier until all captured work is consumed.
+pub(crate) unsafe fn with_locked_reader<T>(
+    index: pg_sys::Relation,
+    operation: impl FnOnce(&mut PgStore<'_>) -> Result<T>,
+) -> Result<T> {
+    // safety: the caller retains the live relation and structural barrier.
+    let mut store = unsafe { PgStore::read_only(index)? };
+    operation(&mut store)
+}
+
 /// excludes readers before writers, so no captured posting page can be recycled.
 ///
 /// # Safety

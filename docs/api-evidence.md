@@ -294,3 +294,160 @@ the exhaustive bounded visibility model and its negative controls,
 checks are independent of Rust compilation. Rust/C compilation, PostgreSQL
 integration schedules, crash recovery and independent visibility review remain
 unobserved until CI/host execution. See [g5-counts.md](g5-counts.md).
+
+
+## G7SCAN01: native plain and parallel index scans
+
+Modules: `crates/pin-core/src/mutable/work.rs`,
+`crates/pin-pg/src/am.rs`, `crates/pin-pg/src/storage.rs`,
+`crates/pin-pg/cshim/pin_storage.c`.
+
+Authority: PostgreSQL 18.6 commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`,
+`src/backend/access/index/indexam.c`,
+`src/backend/executor/nodeIndexscan.c`,
+`src/backend/optimizer/path/indxpath.c`,
+`src/backend/optimizer/path/costsize.c`, and the PostgreSQL 18 Index AM
+parallel-scan contract.
+
+`amcanparallel` is enabled only with `amgettuple`,
+`amestimateparallelscan`, `aminitparallelscan`, and
+`amparallelrescan` present. PostgreSQL excludes bitmap index paths from this
+AM parallel interface, so bitmap construction remains serial while plain
+Index Scan participants use the new shared work protocol.
+
+AM DSM contains only a PostgreSQL spinlock, a ready flag and eleven checked
+`u64` work words. Each backend owns one fixed root batch. Work preparation
+copies one page outside the spinlock; compare-and-replace assigns that batch to
+exactly one participant. Canonical owner liveness is reread before a root is
+returned. The AM sets `xs_recheck` for every TID, leaving MVCC and exact
+operator semantics to PostgreSQL.
+
+A shared structural barrier is acquired by each plain scan at `amrescan` and
+held through `amendscan`; this prevents posting-page reclamation while captured
+work is consumed. No Rust allocation, page image, relation pointer, snapshot
+pointer or buffer handle enters DSM. Rescan clears the shared scalar state and
+the next participant captures fresh work.
+
+Validation: source-policy tests, full-row serial/parallel equality, actual
+parallel Index Scan workers, leader-on/off execution, post-claim worker
+termination, subsequent reuse, host Clippy and PostgreSQL recovery qualification.
+
+## G7BUILD01: PostgreSQL parallel build lifecycle
+
+Modules: `crates/pin-pg/src/am.rs`, `crates/pin-pg/src/native.rs`,
+`crates/pin-pg/cshim/pin_parallel.c`.
+
+Authority: PostgreSQL 18.6 commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`,
+`src/backend/catalog/index.c`, `src/include/access/tableam.h`,
+`src/include/access/parallel.h`, `src/backend/access/transam/parallel.c`,
+`src/backend/access/gin/gininsert.c`, `src/backend/access/nbtree/nbtsort.c`,
+`src/backend/storage/lmgr/lock.c`, `src/backend/storage/lmgr/README`, and
+`src/include/storage/lwlock.h`.
+
+PostgreSQL supplies `IndexInfo.ii_ParallelWorkers`. Pin enters parallel mode,
+creates a `ParallelContext`, initializes one parallel table scan, and launches
+no more participants than fit a conservative preparation, detoast and fixed-state
+peak inside one `maintenance_work_mem` budget. Shared state contains relation
+OIDs, scalar statistics, the table-scan descriptor and the preparation limit.
+Workers reopen
+relations with the nonconcurrent build lock modes and call
+`table_index_build_scan` with `BuildIndexInfo`.
+
+The Rust worker callback receives only the live callback arguments, validated
+scalar memory limit and an opaque pointer to a build-DSM `LWLock`. PostgreSQL
+lock-group members do not conflict on ordinary heavyweight locks, so the
+existing Pin page-lock interlock alone cannot serialize parallel build
+participants. Analysis stays outside the DSM lock. Rust asks the C boundary to
+take the DSM `LWLock` only around the existing writer interlock and generic-WAL
+publication, then releases it before returning. PostgreSQL error cleanup releases
+held LWLocks on failure. Rust never dereferences the shared lock.
+
+Parallel scans use participant-local `IndexInfo` values. Each participant records
+`ii_BrokenHotChain` in the shared build state, and the leader propagates the
+OR result to the original core-owned `IndexInfo` before returning from
+`ambuild`. Core can therefore preserve the normal nonconcurrent HOT safety
+horizon.
+
+Fallback: concurrent index build, zero requested workers, unavailable DSM or zero
+launched workers use the established serial build.
+
+Validation: C/Rust compilation, AM capability inspection, deterministic stage-16
+worker observation, serial/indexed equality and PostgreSQL transactional/recovery
+qualification. No build-speed claim is attached to this boundary.
+
+## G7COUNT01: disjoint DSM direct-count execution
+
+Modules: `crates/pin-core/src/mutable/work.rs`,
+`crates/pin-pg/src/count.rs`, `crates/pin-pg/cshim/pin_count.c`.
+
+Authority: PostgreSQL 18.6 `src/include/access/parallel.h`,
+`src/backend/access/transam/parallel.c`, `src/backend/executor/nodeCustom.c`,
+the CustomScan execution manual, and the existing G5 visibility authorities.
+Rust authority: Rust 1.98.1
+`slice::from_raw_parts` and checked integer conversion documentation.
+
+DSM contains only relation OIDs, an attribute number, immutable query bytes,
+eleven validated `u64` work words, scalar counters and a PostgreSQL spinlock.
+The spinlock protects fixed copies and compare-and-replace only. Page reads,
+query decoding, Rust execution, visibility checks and heap fetches occur after
+the spinlock is released.
+
+Rust constructs the query slice only after C supplies a non-null pointer and a
+length bounded by `isize::MAX`. The borrow lasts only for the synchronous
+decode call. No shared-memory bytes become a mutable Rust reference. Work batches
+are private page copies. A successful claim assigns one batch to one participant;
+a failed claim discards the private copy.
+
+Workers use PostgreSQL-restored active MVCC snapshots and reopen their own
+relations, fetch state, slot and scratch context. Candidate visibility and count
+certification remain the G5 protocol. A worker failure aborts the whole SQL
+statement rather than returning or retrying partial accounting.
+
+Worker admission is also memory bounded. The immutable query/control DSM chunk
+is charged against one `work_mem` budget first. The remainder must fit leader
+plus requested workers using a conservative peak that includes two query budgets,
+analyzer memory, maximum detoasted input and fixed batch state.
+
+Validation: pure competing-claim tests, malformed shared-state tests,
+deterministic stage-17 worker observation, worker termination, exact serial count
+equality and successful execution after failure.
+
+## G7VACUUM01: PostgreSQL-managed parallel VACUUM
+
+Modules: `crates/pin-pg/src/parallel.rs`,
+`crates/pin-pg/cshim/pin_parallel.c`.
+
+Authority: PostgreSQL 18.6 `src/include/access/amapi.h`,
+`src/include/access/genam.h`, `src/include/commands/vacuum.h`, and
+`src/backend/commands/vacuumparallel.c`.
+
+The restart-only capability gate defaults off. When enabled, Pin advertises only
+parallel bulk-delete and cleanup. PostgreSQL owns worker scheduling and copies the
+standard `IndexBulkDeleteResult` across DSM. Pin appends no private state.
+
+`IndexVacuumInfo.strategy` remains callback-owned and is borrowed only for the
+synchronous phase. Page reads use `ReadBufferExtended` with that strategy.
+Traversal uses interrupt-only checks under Pin interlocks. Cost-delay sleeps run
+before and after the writer/structural critical section, with no Pin interlock,
+buffer-content lock or generic-WAL batch held.
+
+Validation: exact stats representation, serial fallback, cancellation and
+worker-failure qualification, plus existing VACUUM/recovery suites.
+
+## G7MERGE01: retained sealed-prefix ownership transfer
+
+Modules: `crates/pin-core/src/mutable/compact.rs`,
+`crates/pin-pg/src/maintenance.rs`.
+
+This is not reference-counted cross-generation sharing. Under the existing
+exclusive structural barrier and writer interlock, a completely live sealed
+prefix remains owned by the same active term chain while its suffix is replaced.
+Publication updates metapage, dictionary and boundary together in the existing
+bounded generic-WAL batch. Only the detached suffix enters the retirement
+journal.
+
+The copying compactor remains the default differential reference. The opt-in
+control is privileged and default-off. Pure and host recovery tests must prove
+that retained pages never enter the free list while reachable.

@@ -197,5 +197,13 @@ source "$root/tools/g3_qualification.sh"
 source "$root/tools/g5_qualification.sh"
 "${psql[@]}" -f "$root/tests/sql/g6_recheck.sql" | tee "$work/g6-recheck.log"
 
+# g7 qualifies the restart-only parallel VACUUM capability in this disposable cluster.
+printf "\\npin.enable_parallel_vacuum = on\\n" >> "$work/data/postgresql.conf"
+"$bin/pg_ctl" -D "$work/data" -m fast -w restart -l "$work/postgres.log"
+
+source "$root/tools/g7_recovery.sh"
+PGHOST="$work/socket" PGPORT="$port" PGDATABASE=postgres \
+  python3 "$root/tools/g7_qualification.py" --psql "$bin/psql" \
+    --artifacts "$artifacts/g7" --disposable | tee "$work/g7-qualification.log"
 "${psql[@]}" -f "$root/tests/sql/g2_post_restart.sql" | tee "$work/post-crash.log"
 "$bin/pg_ctl" -D "$work/data" -m fast -w stop

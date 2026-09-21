@@ -1,6 +1,7 @@
 //! Streaming replacement of posting chains under a host reader/writer barrier.
-//! Only the dictionary swap publishes output; journal pages are never searchable.
+//! Dictionary/boundary swaps publish output; journal pages are never searchable.
 //! Canonical owners retain all liveness and incarnation authority.
+//! PG18 WAL and Rust 1.98.1 contracts are recorded in docs/api-evidence.md.
 
 use super::page::{
     BUCKETS, NO_BLOCK, OwnerRef, Page, PageKind, RewriteJournal, RewritePhase, SealedBuilder,
@@ -10,6 +11,14 @@ use super::reader::resolve;
 use super::{PageStore, Stage, allocate, following, load, load_posting, posting_next};
 use crate::error::{Error, Result};
 
+/// Selects the reference rewrite or reader-quiescent sealed-prefix retention.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum CompactMode {
+    #[default]
+    Copy,
+    RetainSealedPrefix,
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct CompactStats {
     pub rewritten_terms: u64,
@@ -17,12 +26,22 @@ pub struct CompactStats {
     pub written_pages: u32,
     pub reused_pages: u32,
     pub reclaimed_pages: u32,
+    /// Existing sealed pages kept reachable, not allocations from the free list.
+    pub retained_pages: u32,
 }
 
 #[derive(Default)]
 struct ChainStats {
     mutable_pages: u32,
     dead: u64,
+    prefix: Option<RetainedPrefix>,
+}
+
+#[derive(Clone, Copy)]
+struct RetainedPrefix {
+    boundary: u32,
+    rewrite_head: u32,
+    pages: u32,
 }
 
 /// Rewrites mutable or deletion-bearing chains into sealed posting payloads.
@@ -36,6 +55,20 @@ struct ChainStats {
 /// replacements remain durable on failure. Recovery discards unpublished output
 /// or finishes retirement; it never rolls back an already published replacement.
 pub fn compact<S: PageStore>(store: &mut S) -> Result<CompactStats> {
+    compact_with_mode(store, CompactMode::Copy)
+}
+
+/// Compacts with optional retention of an entirely live sealed prefix.
+///
+/// Retention rewrites the last live sealed page with the suffix to coalesce small
+/// appends. It does not share extents between readers or skip liveness inspection.
+/// Both modes require the same exclusive reader/writer barriers as [`compact`].
+/// Scratch remains a fixed number of page images, with no heap-sized work list.
+///
+/// # Errors
+/// Has the same failure/recovery contract as [`compact`]. A retained boundary is
+/// revalidated before one atomic dictionary, boundary and journal publication.
+pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Result<CompactStats> {
     let mut stats = CompactStats {
         reclaimed_pages: recover(store)?,
         ..CompactStats::default()
@@ -69,8 +102,22 @@ pub fn compact<S: PageStore>(store: &mut S) -> Result<CompactStats> {
                 if summary.mutable_pages == 0 && summary.dead == 0 {
                     continue;
                 }
-                let (written, reused) =
-                    rewrite(store, &mut meta, entry.reference, entry.head, entry.tail)?;
+                let prefix = match mode {
+                    CompactMode::Copy => None,
+                    CompactMode::RetainSealedPrefix => summary.prefix,
+                };
+                let (written, reused) = rewrite(
+                    store,
+                    &mut meta,
+                    entry.reference,
+                    entry.head,
+                    entry.tail,
+                    prefix,
+                )?;
+                stats.retained_pages = stats
+                    .retained_pages
+                    .checked_add(prefix.map_or(0, |prefix| prefix.pages))
+                    .ok_or(Error::Limit("compaction pages"))?;
                 stats.written_pages = stats
                     .written_pages
                     .checked_add(written)
@@ -119,9 +166,13 @@ fn inspect<S: PageStore>(
     let mut remaining = store.blocks()?;
     let mut block = head;
     let mut cache = None;
+    let mut prefix_open = liveness;
+    let mut prefix_tail = None;
+    let mut prefix_pages = 0u32;
     loop {
         let page = load_posting(store, block, term)?;
         stats.mutable_pages += u32::from(page.kind() == PageKind::Postings);
+        let mut page_live = page.kind() == PageKind::SealedPostings;
         for reference in page.posting_refs()? {
             let reference = reference?;
             if previous.is_some_and(|previous| {
@@ -134,7 +185,22 @@ fn inspect<S: PageStore>(
             previous = Some(reference);
             if liveness && resolve(store, &mut cache, reference)?.is_none() {
                 stats.dead += 1;
+                page_live = false;
             }
+        }
+        if prefix_open && page_live {
+            // leave the last live sealed page in the suffix to coalesce its tail.
+            stats.prefix = prefix_tail.map(|boundary| RetainedPrefix {
+                boundary,
+                rewrite_head: block,
+                pages: prefix_pages,
+            });
+            prefix_tail = Some(block);
+            prefix_pages = prefix_pages
+                .checked_add(1)
+                .ok_or(Error::Limit("compaction pages"))?;
+        } else {
+            prefix_open = false;
         }
         match posting_next(&page, tail, &mut remaining)? {
             Some(next) => block = next,
@@ -154,12 +220,14 @@ fn rewrite<S: PageStore>(
     term: TermRef,
     head: u32,
     tail: u32,
+    prefix: Option<RetainedPrefix>,
 ) -> Result<(u32, u32)> {
     if meta.rewrite_journal()?.is_some() {
         return Err(Error::InvalidState);
     }
+    let rewrite_head = prefix.map_or(head, |prefix| prefix.rewrite_head);
     let mut remaining = store.blocks()?;
-    let mut block = head;
+    let mut block = rewrite_head;
     let mut cache = None;
     let mut output: Option<SealedBuilder> = None;
     let mut written = 0u32;
@@ -206,14 +274,30 @@ fn rewrite<S: PageStore>(
         None => (NO_BLOCK, NO_BLOCK),
         _ => return Err(Error::InvalidState),
     };
-    dictionary.set_posting_chain(term, new_head, new_tail)?;
     meta.set_rewrite_journal(Some(RewriteJournal {
-        head,
+        head: rewrite_head,
         tail,
         phase: RewritePhase::Retiring,
     }))?;
-    // one WAL record switches coverage and records the complete retired source.
-    store.commit(&[meta, &dictionary])?;
+    if let Some(prefix) = prefix {
+        let mut boundary = load_posting(store, prefix.boundary, term)?;
+        if boundary.kind() != PageKind::SealedPostings || boundary.next()? != rewrite_head {
+            return Err(Error::InvalidState);
+        }
+        boundary.set_next(new_head)?;
+        let tail = if new_tail == NO_BLOCK {
+            prefix.boundary
+        } else {
+            new_tail
+        };
+        dictionary.set_posting_chain(term, head, tail)?;
+        // the prefix stays owned; only its old suffix enters the retirement journal.
+        store.commit(&[meta, &dictionary, &boundary])?;
+    } else {
+        dictionary.set_posting_chain(term, new_head, new_tail)?;
+        // one WAL record switches coverage and records the complete retired source.
+        store.commit(&[meta, &dictionary])?;
+    }
     store.event(Stage::ReplacementPublished)?;
     Ok((written, reused))
 }

@@ -12,7 +12,11 @@ use pgrx::{FromDatum, Internal, pg_extern, pg_guard, pg_sys};
 use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::candidate::CandidatePlan;
 use pin_core::error::Error;
-use pin_core::mutable::{self, document::PreparedDocument};
+use pin_core::mutable::{
+    self,
+    document::PreparedDocument,
+    work::{WORK_WORDS, WorkState},
+};
 use pin_core::query::{Query, QueryLimits};
 use std::ffi::c_void;
 
@@ -44,12 +48,12 @@ pub(crate) fn pin_handler() -> Internal {
         amstorage: false,
         amclusterable: false,
         ampredlocks: false,
-        amcanparallel: false,
-        amcanbuildparallel: false,
+        amcanparallel: true,
+        amcanbuildparallel: true,
         amcaninclude: false,
         amusemaintenanceworkmem: false,
         amsummarizing: false,
-        amparallelvacuumoptions: 0,
+        amparallelvacuumoptions: crate::parallel::vacuum_options(),
         amkeytype: pg_sys::InvalidOid,
         ambuild: Some(build),
         ambuildempty: Some(build_empty),
@@ -67,14 +71,14 @@ pub(crate) fn pin_handler() -> Internal {
         amadjustmembers: Some(adjust_members),
         ambeginscan: Some(begin_scan),
         amrescan: Some(rescan),
-        amgettuple: None,
+        amgettuple: Some(native::pin_scan_gettuple),
         amgetbitmap: Some(bitmap),
         amendscan: Some(end_scan),
         ammarkpos: None,
         amrestrpos: None,
-        amestimateparallelscan: None,
-        aminitparallelscan: None,
-        amparallelrescan: None,
+        amestimateparallelscan: Some(native::pin_scan_estimate_parallel),
+        aminitparallelscan: Some(native::pin_scan_init_parallel),
+        amparallelrescan: Some(parallel_rescan),
         amtranslatestrategy: None,
         amtranslatecmptype: None,
     };
@@ -106,22 +110,43 @@ unsafe extern "C-unwind" fn build(
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: the relation stays open through the synchronous initialization.
     matching::stored(unsafe { storage::with_writer(index, |store| mutable::initialize(store)) });
-    let mut state = BuildState { heap, documents: 0 };
-    let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
-    // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
-    // state lives through all sequential, guarded callback invocations.
-    let heap_tuples = unsafe {
+    let mut heap_tuples = 0.0;
+    let mut documents = 0u64;
+    let participant_memory = matching::stored(matching::build_participant_memory());
+    // safety: core owns the live build descriptor and requested worker count.
+    // PostgreSQL restores worker transaction state; Pin bounds participant memory.
+    let parallel = unsafe {
         native::call(|| {
-            native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr)
+            native::pin_parallel_build(
+                heap,
+                index,
+                info,
+                matching::PREPARE_MEMORY as u64,
+                participant_memory as u64,
+                &mut heap_tuples,
+                &mut documents,
+            )
         })
     };
+    if !parallel {
+        let mut state = BuildState { heap, documents: 0 };
+        let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
+        // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
+        // state lives through all sequential, guarded callback invocations.
+        heap_tuples = unsafe {
+            native::call(|| {
+                native::pin_heap_build_scan(heap, index, info, Some(build_tuple), state_ptr)
+            })
+        };
+        documents = state.documents;
+    }
     // safety: palloc returns aligned PostgreSQL-owned memory; both fields are initialized.
     unsafe {
         let result = pg_sys::palloc(std::mem::size_of::<pg_sys::IndexBuildResult>())
             .cast::<pg_sys::IndexBuildResult>();
         result.write(pg_sys::IndexBuildResult {
             heap_tuples,
-            index_tuples: state.documents as f64,
+            index_tuples: documents as f64,
         });
         result
     }
@@ -144,7 +169,17 @@ unsafe extern "C-unwind" fn build_tuple(
     // safety: build keeps this unique state live; callbacks run sequentially.
     let state = unsafe { &mut *state.cast::<BuildState>() };
     // safety: the core build scan supplies one evaluated text key and its HOT root.
-    if unsafe { insert_value(index, state.heap, values, nulls, tid) } {
+    if unsafe {
+        insert_value(
+            index,
+            state.heap,
+            values,
+            nulls,
+            tid,
+            matching::PREPARE_MEMORY,
+            std::ptr::null_mut(),
+        )
+    } {
         state.documents = matching::stored(
             state
                 .documents
@@ -162,6 +197,8 @@ unsafe fn insert_value(
     values: *mut pg_sys::Datum,
     nulls: *mut bool,
     tid: pg_sys::ItemPointer,
+    memory_bytes: usize,
+    parallel_writer: *mut c_void,
 ) -> bool {
     storage::interrupt();
     // safety: core supplies initialized one-element key and null arrays.
@@ -173,18 +210,57 @@ unsafe fn insert_value(
     let text = unsafe { <&str as FromDatum>::from_datum(*values, false) };
     let text = matching::input(text.ok_or(Error::InvalidDocument));
     let analyzed = matching::input(Analyzed::analyze(text, AnalysisLimits::default()));
-    let document = matching::input(PreparedDocument::prepare(
-        &analyzed,
-        matching::PREPARE_MEMORY,
-    ));
+    let document = matching::input(PreparedDocument::prepare(&analyzed, memory_bytes));
     drop(analyzed);
     // safety: C reads a valid core-owned item pointer without changing its root identity.
     let root = matching::stored(unsafe { storage::root(tid) });
-    // safety: analysis/allocation precede the writer lock; relation lifetime is unchanged.
-    matching::stored(unsafe {
-        storage::with_writer(index, |store| mutable::insert(store, root, &document))
-    });
+    // safety: analysis/allocation precede both writer locks.
+    if !parallel_writer.is_null() {
+        // safety: c owns the live dsm lwlock for this synchronous build callback.
+        unsafe { native::call(|| native::pin_parallel_build_writer_lock(parallel_writer)) };
+    }
+    // safety: the relation and prepared document stay live through this synchronous insert.
+    let result =
+        unsafe { storage::with_writer(index, |store| mutable::insert(store, root, &document)) };
+    if !parallel_writer.is_null() {
+        // safety: this participant acquired the DSM lock immediately above.
+        unsafe { native::call(|| native::pin_parallel_build_writer_unlock(parallel_writer)) };
+    }
+    matching::stored(result);
     true
+}
+
+/// Inserts one tuple from a PostgreSQL parallel build participant.
+///
+/// # Safety
+/// all pointers belong to one live table build callback in this worker.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
+    index: pg_sys::Relation,
+    heap: pg_sys::Relation,
+    tid: pg_sys::ItemPointer,
+    values: *mut pg_sys::Datum,
+    nulls: *mut bool,
+    memory_bytes: u64,
+    writer_lock: *mut c_void,
+) -> bool {
+    let memory_bytes = matching::stored(
+        usize::try_from(memory_bytes)
+            .map_err(|_| Error::Limit("parallel build memory"))
+            .and_then(|bytes| {
+                if bytes == matching::PREPARE_MEMORY {
+                    Ok(bytes)
+                } else {
+                    Err(Error::InvalidState)
+                }
+            }),
+    );
+    if writer_lock.is_null() {
+        matching::stored::<()>(Err(Error::InvalidState));
+    }
+    // safety: C forwards callback arguments and an opaque DSM LWLock pointer.
+    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes, writer_lock) }
 }
 
 #[pg_guard]
@@ -211,7 +287,17 @@ unsafe extern "C-unwind" fn insert(
     // safety: core retains both relations and IndexInfo; C checks persistence/layout.
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: evaluated key arrays and the root belong to this guarded insertion.
-    unsafe { insert_value(index, heap, values, nulls, heap_tid) };
+    unsafe {
+        insert_value(
+            index,
+            heap,
+            values,
+            nulls,
+            heap_tid,
+            matching::PREPARE_MEMORY,
+            std::ptr::null_mut(),
+        )
+    };
     false
 }
 
@@ -267,12 +353,12 @@ unsafe fn vacuum_pass(
 ) -> *mut pg_sys::IndexBulkDeleteResult {
     crate::compatibility::database();
     // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
-    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    let (index, heap, strategy) = unsafe { ((*info).index, (*info).heaprel, (*info).strategy) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
     // safety: the writer interlock serializes owner liveness and free-list changes.
     let result = matching::stored(unsafe {
-        storage::with_writer(index, |store| {
+        storage::with_vacuum(index, strategy, |store| {
             mutable::vacuum(store, |root| {
                 if callback.is_none() {
                     return Ok(false);
@@ -317,17 +403,18 @@ unsafe fn compact_cleanup(
 ) -> *mut pg_sys::IndexBulkDeleteResult {
     crate::compatibility::database();
     // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
-    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    let (index, heap, strategy) = unsafe { ((*info).index, (*info).heaprel, (*info).strategy) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
     // safety: physical posting reclamation waits for readers, then excludes writers.
     let (compacted, pages) = matching::stored(unsafe {
-        storage::with_maintenance(index, |store| {
-            let compacted = mutable::compact(store)?;
+        storage::with_maintenance(index, strategy, |store| {
+            let compacted = mutable::compact_with_mode(store, crate::maintenance::mode())?;
             let pages = pin_core::mutable::PageStore::blocks(store)?;
             Ok((compacted, pages))
         })
     });
+    crate::maintenance::report(compacted);
     // safety: vacuum_pass always returns a live PostgreSQL-owned statistics record.
     unsafe {
         let free_pages = matching::stored(
@@ -430,20 +517,17 @@ unsafe extern "C-unwind" fn rescan(
     _orderbys: pg_sys::ScanKey,
     orderby_count: i32,
 ) {
-    // safety: core owns scan and key arrays; C bounds the copy and preserves NULL keys.
+    // safety: core owns scan and key arrays; c bounds the copy and preserves null keys.
     unsafe { native::call(|| native::pin_scan_rescan(scan, keys, key_count, orderby_count)) };
+    // safety: plain scans retain the structural barrier acquired by the c rescan.
+    unsafe { prepare_tuple_scan(scan) };
 }
 
-#[pg_guard]
-unsafe extern "C-unwind" fn bitmap(
-    scan: pg_sys::IndexScanDesc,
-    bitmap: *mut pg_sys::TIDBitmap,
-) -> i64 {
-    // safety: core owns the descriptor, current MVCC snapshot and key array.
+unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<Query> {
+    // safety: core owns the descriptor, current mvcc snapshot and key array.
     unsafe { native::call(|| native::pin_scan_validate(scan)) };
-    // safety: C validated the dimensions; copy scalars rather than retain C field borrows.
-    let (index, key_count, keys) =
-        unsafe { ((*scan).indexRelation, (*scan).numberOfKeys, (*scan).keyData) };
+    // safety: c validated the dimensions; copy scalars rather than retain field borrows.
+    let (key_count, keys) = unsafe { ((*scan).numberOfKeys, (*scan).keyData) };
     let mut chosen = None;
     let mut cost = usize::MAX;
     for position in 0..key_count as usize {
@@ -457,10 +541,9 @@ unsafe extern "C-unwind" fn bitmap(
             )
         };
         if null {
-            return 0;
+            return None;
         }
-        // safety: the exact registered operator accepts the validated bytea-based query
-        // domain; pgrx detoasts in this callback's context and no borrow escapes it.
+        // safety: the registered operator accepts the validated bytea query domain.
         let bytes = unsafe { <&[u8] as FromDatum>::from_datum(datum, false) };
         let bytes = matching::input(bytes.ok_or(Error::InvalidParameters));
         let query = matching::input(Query::decode(bytes, QueryLimits::default()));
@@ -476,7 +559,126 @@ unsafe extern "C-unwind" fn bitmap(
             chosen = Some(query);
         }
     }
-    let query = matching::input(chosen.ok_or(Error::InvalidParameters));
+    Some(matching::input(chosen.ok_or(Error::InvalidParameters)))
+}
+
+unsafe fn prepare_tuple_scan(scan: pg_sys::IndexScanDesc) {
+    // safety: core keeps the scan descriptor live for this callback.
+    if unsafe { (*scan).heapRelation.is_null() } {
+        return;
+    }
+    // safety: c reads only backend-local or dsm scalar coordination state.
+    if unsafe { native::call(|| native::pin_scan_work_ready(scan)) } {
+        return;
+    }
+    // safety: chosen_query borrows only this callback's live scan keys.
+    let query = unsafe { chosen_query(scan) };
+    // safety: core keeps the index relation open through the scan.
+    let index = unsafe { (*scan).indexRelation };
+    let state = match query {
+        Some(query) => {
+            // safety: c retains the structural barrier and live relation through capture.
+            matching::stored(unsafe {
+                storage::with_locked_reader(index, |store| {
+                    WorkState::capture(store, &query, matching::QUERY_MEMORY)
+                })
+            })
+        }
+        None => WorkState::DONE,
+    };
+    let words = state.words();
+    // safety: c copies exactly work_words scalar words synchronously.
+    unsafe {
+        native::call(|| native::pin_scan_work_publish(scan, words.as_ptr(), WORK_WORDS as u32))
+    };
+}
+
+/// Fills one claimed plain-index batch with live canonical heap roots.
+///
+/// # Safety
+/// index and scan are live for one plain index scan. blocks and offsets are
+/// distinct writable arrays of capacity elements and remain live for this call.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_parallel_scan_fill(
+    index: pg_sys::Relation,
+    scan: pg_sys::IndexScanDesc,
+    blocks: *mut u32,
+    offsets: *mut u16,
+    capacity: u32,
+) -> u32 {
+    if index.is_null() || scan.is_null() || blocks.is_null() || offsets.is_null() || capacity == 0 {
+        matching::stored::<()>(Err(Error::InvalidState));
+    }
+    let mut count = 0usize;
+    let capacity = capacity as usize;
+    // safety: c retains the shared structural barrier across the complete scan.
+    matching::stored(unsafe {
+        storage::with_locked_reader(index, |store| {
+            loop {
+                let mut words = [0u64; WORK_WORDS];
+                native::call(|| {
+                    native::pin_scan_work_snapshot(scan, words.as_mut_ptr(), WORK_WORDS as u32)
+                });
+                let state = WorkState::from_words(words)?;
+                let Some((next, batch)) = state.prepare(store)? else {
+                    break;
+                };
+                let next_words = next.words();
+                if !native::call(|| {
+                    native::pin_scan_work_claim(
+                        scan,
+                        words.as_ptr(),
+                        next_words.as_ptr(),
+                        WORK_WORDS as u32,
+                    )
+                }) {
+                    continue;
+                }
+                #[cfg(feature = "test-hooks")]
+                {
+                    // safety: the test-only c hook accepts this fixed stage synchronously.
+                    native::call(|| native::pin_parallel_test_event(19));
+                }
+                batch.for_each_root(store, |root| {
+                    if count >= capacity {
+                        return Err(Error::Limit("parallel scan batch"));
+                    }
+                    // safety: count is bounded by both caller-provided writable arrays.
+                    blocks.add(count).write(root.block());
+                    offsets.add(count).write(root.offset());
+                    count += 1;
+                    Ok(())
+                })?;
+                if count != 0 {
+                    break;
+                }
+            }
+            Ok(())
+        })
+    });
+    matching::stored(u32::try_from(count).map_err(|_| Error::Limit("parallel scan batch")))
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn parallel_rescan(scan: pg_sys::IndexScanDesc) {
+    // safety: c resets only the fixed shared work state for this live scan.
+    unsafe { native::call(|| native::pin_scan_parallel_rescan(scan)) };
+    // safety: the leader retains its structural barrier and live scan keys.
+    unsafe { prepare_tuple_scan(scan) };
+}
+
+#[pg_guard]
+unsafe extern "C-unwind" fn bitmap(
+    scan: pg_sys::IndexScanDesc,
+    bitmap: *mut pg_sys::TIDBitmap,
+) -> i64 {
+    // safety: chosen_query borrows only live scan-key values.
+    let Some(query) = (unsafe { chosen_query(scan) }) else {
+        return 0;
+    };
+    // safety: core keeps the index relation live through this callback.
+    let index = unsafe { (*scan).indexRelation };
     // safety: the caller's existing bitmap remains writable for the complete scan.
     let mut sink = unsafe { storage::BitmapSink::new(bitmap) };
     // safety: the read barrier covers all page references, not later heap visibility work.
@@ -493,6 +695,6 @@ unsafe extern "C-unwind" fn bitmap(
 
 #[pg_guard]
 unsafe extern "C-unwind" fn end_scan(scan: pg_sys::IndexScanDesc) {
-    // safety: release only our context-owned capacity record, never the core descriptor.
+    // safety: c releases the scan's structural barrier and context-owned state.
     unsafe { native::call(|| native::pin_scan_end(scan)) };
 }

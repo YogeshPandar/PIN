@@ -24,10 +24,10 @@ class SourceContractTests(unittest.TestCase):
         self.assert_rejected(SOURCE_PATHS[2], "IndexAmRoutine, amgettuple", "IndexAmRoutine, amgetbitmap")
 
     def test_capability_enablement_is_detected(self):
-        self.assert_rejected(SOURCE_PATHS[3], "amcanparallel: false", "amcanparallel: true")
+        self.assert_rejected(SOURCE_PATHS[3], "amcanparallel: true", "amcanparallel: false")
 
     def test_scan_enablement_is_detected(self):
-        self.assert_rejected(SOURCE_PATHS[3], "amgettuple: None", "amgettuple: Some(bitmap)")
+        self.assert_rejected(SOURCE_PATHS[3], "amgettuple: Some(native::pin_scan_gettuple)", "amgettuple: None")
 
     def test_missing_callback_guard_is_detected(self):
         self.assert_rejected(

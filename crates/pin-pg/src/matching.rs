@@ -11,6 +11,24 @@ use pin_core::query::{Query, QueryLimits};
 pub(crate) const QUERY_MEMORY: usize = 1 << 20;
 pub(crate) const PREPARE_MEMORY: usize = 32 << 20;
 pub(crate) const MATCH_STEPS: usize = 1 << 24;
+const PARTICIPANT_FIXED_MEMORY: usize = 64 << 10;
+
+pub(crate) fn build_participant_memory() -> Result<usize> {
+    PREPARE_MEMORY
+        .checked_add(AnalysisLimits::default().input_bytes)
+        .and_then(|bytes| bytes.checked_add(PARTICIPANT_FIXED_MEMORY))
+        .ok_or(Error::Limit("parallel build memory"))
+}
+
+pub(crate) fn count_participant_memory() -> Result<usize> {
+    let limits = AnalysisLimits::default();
+    QUERY_MEMORY
+        .checked_mul(2)
+        .and_then(|bytes| bytes.checked_add(limits.memory_bytes))
+        .and_then(|bytes| bytes.checked_add(limits.input_bytes))
+        .and_then(|bytes| bytes.checked_add(PARTICIPANT_FIXED_MEMORY))
+        .ok_or(Error::Limit("parallel count memory"))
+}
 
 pub(crate) fn input<T>(result: Result<T>) -> T {
     match result {
