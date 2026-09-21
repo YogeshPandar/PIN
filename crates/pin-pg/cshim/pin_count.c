@@ -686,8 +686,15 @@ pin_count_parallel_run(PinCountState *state, const uint8 *query, Size length,
 
     if (pin_count_participant_memory == 0 || IsParallelWorker() || IsInParallelMode())
         return false;
-    max_participants = (int) (mul_size((Size) work_mem, (Size) 1024) /
-                              pin_count_participant_memory);
+    shared_size = add_size(offsetof(PinCountParallelShared, query), length);
+    {
+        Size budget = mul_size((Size) work_mem, (Size) 1024);
+
+        if (shared_size >= budget)
+            return false;
+        max_participants = (int) ((budget - shared_size) /
+                                  pin_count_participant_memory);
+    }
     if (max_participants <= 1)
         return false;
     request = Min(pin_count_parallel_workers, max_parallel_workers_per_gather);
@@ -700,7 +707,6 @@ pin_count_parallel_run(PinCountState *state, const uint8 *query, Size length,
 
     EnterParallelMode();
     pcxt = CreateParallelContext("$libdir/pin", "pin_parallel_count_main", request);
-    shared_size = add_size(offsetof(PinCountParallelShared, query), length);
     shm_toc_estimate_chunk(&pcxt->estimator, shared_size);
     shm_toc_estimate_keys(&pcxt->estimator, 1);
     InitializeParallelDSM(pcxt);
