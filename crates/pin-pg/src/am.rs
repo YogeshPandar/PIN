@@ -108,6 +108,7 @@ unsafe extern "C-unwind" fn build(
     matching::stored(unsafe { storage::with_writer(index, |store| mutable::initialize(store)) });
     let mut heap_tuples = 0.0;
     let mut documents = 0u64;
+    let participant_memory = matching::stored(matching::build_participant_memory());
     // safety: core owns the live build descriptor and requested worker count.
     // PostgreSQL restores worker transaction state; Pin bounds participant memory.
     let parallel = unsafe {
@@ -117,6 +118,7 @@ unsafe extern "C-unwind" fn build(
                 index,
                 info,
                 matching::PREPARE_MEMORY as u64,
+                participant_memory as u64,
                 &mut heap_tuples,
                 &mut documents,
             )
