@@ -47,7 +47,7 @@ pub(crate) fn pin_handler() -> Internal {
         amcanparallel: false,
         amcanbuildparallel: true,
         amcaninclude: false,
-        amusemaintenanceworkmem: false,
+        amusemaintenanceworkmem: true,
         amsummarizing: false,
         amparallelvacuumoptions: crate::parallel::vacuum_options(),
         amkeytype: pg_sys::InvalidOid,
