@@ -187,6 +187,122 @@ def prepared_rescan(cluster: Cluster) -> None:
         raise RuntimeError('own-write fallback failed')
 
 
+def require_pin_count(plan: dict[str, Any]) -> None:
+    tree = list(nodes(plan))
+    custom = [node for node in tree if node.get('Custom Plan Provider') == 'PinCount']
+    if len(custom) != 1:
+        raise RuntimeError('expected one PinCount custom node')
+
+
+def paused_pin_worker(cluster: Cluster, stage: int, sql: str, app: str,
+                      expected: str | None = None, terminate_worker: bool = False) -> str:
+    blocker_app = f'{app}-blocker'
+    blocker = subprocess.Popen(cluster.command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, text=True,
+                               env=dict(os.environ, PGAPPNAME=blocker_app))
+    target = None
+    try:
+        assert blocker.stdin is not None
+        blocker.stdin.write("SELECT pg_advisory_lock(180006, 4); SELECT pg_sleep(120);")
+        blocker.stdin.close()
+        blocker.stdin = None
+
+        deadline = time.monotonic() + 15
+        blocker_pid = None
+        while time.monotonic() < deadline:
+            value = cluster.run(
+                "SELECT a.pid FROM pg_stat_activity a JOIN pg_locks l USING (pid) "
+                f"WHERE a.application_name = '{blocker_app}' "
+                "AND l.locktype = 'advisory' AND l.granted LIMIT 1;").stdout.strip()
+            if value:
+                blocker_pid = int(value)
+                break
+            time.sleep(0.05)
+        if blocker_pid is None:
+            raise RuntimeError(f'{app}: blocker did not acquire advisory lock')
+
+        target = subprocess.Popen(cluster.command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True,
+                                  env=dict(os.environ, PGAPPNAME=app))
+        assert target.stdin is not None
+        target.stdin.write(COMMON + f"SET pin.g7_pause_worker_stage = {stage};\n" + sql)
+        target.stdin.close()
+        target.stdin = None
+
+        deadline = time.monotonic() + 20
+        worker_pid = None
+        while time.monotonic() < deadline and target.poll() is None:
+            value = cluster.run(
+                "SELECT w.pid FROM pg_stat_activity l "
+                "JOIN pg_stat_activity w ON w.leader_pid = l.pid "
+                "JOIN pg_locks k ON k.pid = w.pid "
+                f"WHERE l.application_name = '{app}' "
+                "AND l.backend_type = 'client backend' "
+                "AND w.backend_type = 'parallel worker' "
+                "AND k.locktype = 'advisory' AND NOT k.granted "
+                "ORDER BY w.pid LIMIT 1;").stdout.strip()
+            if value:
+                worker_pid = int(value)
+                break
+            time.sleep(0.05)
+        if worker_pid is None:
+            raise RuntimeError(f'{app}: no paused Pin parallel worker observed')
+
+        if terminate_worker:
+            if cluster.run(f'SELECT pg_terminate_backend({worker_pid});').stdout.strip() != 't':
+                raise RuntimeError(f'{app}: could not terminate Pin worker')
+        if cluster.run(f'SELECT pg_terminate_backend({blocker_pid});').stdout.strip() != 't':
+            raise RuntimeError(f'{app}: could not release blocker')
+
+        stdout, stderr = target.communicate(timeout=30)
+        (cluster.artifacts / f'{app}.log').write_text(stdout + '\nSTDERR:\n' + stderr)
+        if terminate_worker:
+            if target.returncode == 0:
+                raise RuntimeError(f'{app}: worker failure reported query success')
+        elif target.returncode != 0:
+            raise RuntimeError(f'{app}: parallel operation failed\n{stderr}')
+        elif expected is not None and stdout.strip() != expected:
+            raise RuntimeError(f'{app}: expected {expected!r}, got {stdout.strip()!r}')
+        return stdout
+    finally:
+        if target is not None and target.poll() is None:
+            cluster.run("SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                        f"WHERE application_name = '{app}' AND backend_type = 'client backend';")
+            try:
+                target.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                target.kill()
+                target.communicate(timeout=10)
+        if blocker.poll() is None:
+            cluster.run("SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                        f"WHERE application_name = '{blocker_app}' AND backend_type = 'client backend';")
+            try:
+                blocker.communicate(timeout=10)
+            except subprocess.TimeoutExpired:
+                blocker.kill()
+                blocker.communicate(timeout=10)
+
+
+def parallel_count_qualification(cluster: Cluster) -> None:
+    where = predicate('common')
+    expected = cluster.count(where, settings(False, sequential=True))
+    options = settings(True) + (
+        'SET pin.enable_count_fastpath = on;\n'
+        'SET pin.parallel_count_workers = 2;\n'
+    )
+    query = f'SELECT count(*) FROM ONLY {TABLE} WHERE {where};'
+    require_pin_count(cluster.plan(query, options))
+
+    sql = options + query
+    paused_pin_worker(cluster, 17, sql, 'pin-g7-direct-count',
+                      expected=str(expected))
+    paused_pin_worker(cluster, 17, sql, 'pin-g7-direct-count-failure',
+                      terminate_worker=True)
+
+    if cluster.count(where, options) != expected:
+        raise RuntimeError('PinCount result changed after worker termination')
+
+
 def interrupt_workers(cluster: Cluster, terminate_worker: bool) -> None:
     app = 'pin-g7-worker-failure' if terminate_worker else 'pin-g7-leader-cancel'
     options = settings(True) + "SET statement_timeout = '60s';\n"
@@ -268,9 +384,14 @@ def main() -> None:
 CREATE TABLE {TABLE}(id integer PRIMARY KEY, body text, keep boolean NOT NULL, padding text)
 WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
 {insert_sql(1, 16000)}
-CREATE INDEX {INDEX} ON {TABLE} USING pin(body);
-VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};
 """)
+        paused_pin_worker(
+            cluster,
+            16,
+            f"SET maintenance_work_mem = '96MB'; CREATE INDEX {INDEX} ON {TABLE} USING pin(body);",
+            'pin-g7-parallel-build',
+        )
+        cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};')
         cluster.run(insert_sql(16001, 17000))
         compacted = cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};',
                                 COMMON + 'SET client_min_messages = debug1; '
@@ -280,6 +401,7 @@ VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};
         if not retained or sum(retained) == 0:
             raise RuntimeError('host compaction did not exercise sealed-prefix retention')
         observations = matrix(cluster)
+        parallel_count_qualification(cluster)
         prepared_rescan(cluster)
         interrupt_workers(cluster, terminate_worker=False)
         interrupt_workers(cluster, terminate_worker=True)
