@@ -100,16 +100,8 @@ unsafe extern "C-unwind" {
     pub(crate) fn pin_scan_init_parallel(target: *mut c_void);
     pub(crate) fn pin_scan_parallel_rescan(scan: pg_sys::IndexScanDesc);
     pub(crate) fn pin_scan_work_ready(scan: pg_sys::IndexScanDesc) -> bool;
-    pub(crate) fn pin_scan_work_publish(
-        scan: pg_sys::IndexScanDesc,
-        words: *const u64,
-        count: u32,
-    );
-    pub(crate) fn pin_scan_work_snapshot(
-        scan: pg_sys::IndexScanDesc,
-        words: *mut u64,
-        count: u32,
-    );
+    pub(crate) fn pin_scan_work_publish(scan: pg_sys::IndexScanDesc, words: *const u64, count: u32);
+    pub(crate) fn pin_scan_work_snapshot(scan: pg_sys::IndexScanDesc, words: *mut u64, count: u32);
     pub(crate) fn pin_scan_work_claim(
         scan: pg_sys::IndexScanDesc,
         expected: *const u64,

@@ -18,9 +18,9 @@ class CountSourceContracts(unittest.TestCase):
             self.assertIn(f"static bool {name} = false;", self.c)
             self.assertIn(f"&{name}, false, PGC_SUSET", self.c)
 
-    def test_no_synchronous_or_index_only_capability_is_claimed(self):
+    def test_count_does_not_claim_index_only_capability(self):
         am = (ROOT / "crates/pin-pg/src/am.rs").read_text()
-        self.assertIn("amgettuple: None", am)
+        self.assertIn("amgettuple: Some(native::pin_scan_gettuple)", am)
         self.assertIn("amcanreturn: None", am)
 
     def test_owner_copy_keeps_only_a_pin_after_validation(self):

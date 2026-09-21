@@ -4,11 +4,11 @@
 
 use crate::{native, storage};
 use pgrx::{pg_guard, pg_sys};
-use std::ffi::c_void;
 use pin_core::error::Result;
 use pin_core::identity::HeapLayout;
 use pin_core::mutable::page::Page;
 use pin_core::mutable::{PageStore, Stage};
+use std::ffi::c_void;
 
 /// installs a postmaster-only gate before any backend can cache the AM routine.
 ///
@@ -85,10 +85,7 @@ impl PageStore for VacuumStore<'_, '_> {
 /// postgres supplies one live dsm segment and toc for this worker invocation.
 #[pg_guard]
 #[unsafe(no_mangle)]
-pub unsafe extern "C-unwind" fn pin_parallel_build_main(
-    segment: *mut c_void,
-    table: *mut c_void,
-) {
+pub unsafe extern "C-unwind" fn pin_parallel_build_main(segment: *mut c_void, table: *mut c_void) {
     if segment.is_null() || table.is_null() {
         pgrx::error!("invalid Pin parallel build worker state");
     }
@@ -102,10 +99,7 @@ pub unsafe extern "C-unwind" fn pin_parallel_build_main(
 /// postgres supplies one live dsm segment and toc for this worker invocation.
 #[pg_guard]
 #[unsafe(no_mangle)]
-pub unsafe extern "C-unwind" fn pin_parallel_count_main(
-    segment: *mut c_void,
-    table: *mut c_void,
-) {
+pub unsafe extern "C-unwind" fn pin_parallel_count_main(segment: *mut c_void, table: *mut c_void) {
     if segment.is_null() || table.is_null() {
         pgrx::error!("invalid Pin parallel count worker state");
     }

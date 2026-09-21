@@ -12,7 +12,11 @@ use pgrx::{FromDatum, Internal, pg_extern, pg_guard, pg_sys};
 use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::candidate::CandidatePlan;
 use pin_core::error::Error;
-use pin_core::mutable::{self, document::PreparedDocument, work::{WORK_WORDS, WorkState}};
+use pin_core::mutable::{
+    self,
+    document::PreparedDocument,
+    work::{WORK_WORDS, WorkState},
+};
 use pin_core::query::{Query, QueryLimits};
 use std::ffi::c_void;
 
