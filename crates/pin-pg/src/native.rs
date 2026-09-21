@@ -13,6 +13,7 @@ unsafe extern "C-unwind" {
         heap: pg_sys::Relation,
         index: pg_sys::Relation,
         info: *mut pg_sys::IndexInfo,
+        prepare_memory: u64,
         participant_memory: u64,
         heap_tuples: *mut f64,
         index_tuples: *mut u64,
