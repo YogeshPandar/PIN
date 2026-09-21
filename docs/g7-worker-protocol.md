@@ -27,7 +27,9 @@ vtable or synchronization primitive.
 ## Direct count workers
 
 The serial G5 `PinCount` node remains the semantic and visibility reference.
-`pin.parallel_count_workers = 0` disables its worker path by default.
+`pin.parallel_count_workers = 0` disables its worker path by default. Enabled
+workers are further capped so leader plus workers fit one `work_mem` budget
+using a conservative decoded-query, matcher, analyzer, detoast and batch peak.
 
 When enabled, the leader:
 
@@ -64,8 +66,9 @@ analysis and preparation happen independently in each participant. The existing
 Pin writer interlock still serializes generic-WAL publication, so build workers
 do not create a new concurrent page-mutation protocol.
 
-Each participant is charged the fixed document preparation ceiling. Pin caps
-leader plus workers so this total does not exceed `maintenance_work_mem`.
+Each participant is charged a conservative peak covering document preparation,
+the maximum detoasted input and fixed callback state. Pin caps leader plus workers
+so this total does not exceed `maintenance_work_mem`.
 If DSM allocation or worker launch is unavailable, the leader destroys the
 parallel context and runs the established serial build.
 
