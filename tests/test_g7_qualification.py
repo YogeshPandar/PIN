@@ -135,6 +135,8 @@ class SourceTests(unittest.TestCase):
         self.assertNotIn('*mut', core)
         self.assertIn('slock_t mutex;', host)
         self.assertIn('CreateParallelContext', host)
+        self.assertIn('work_mem', host)
+        self.assertIn('pin_count_participant_memory', host)
 
     def test_real_host_suites_use_existing_driver(self):
         source = (ROOT / 'tools/g2_qualification.sh').read_text()
