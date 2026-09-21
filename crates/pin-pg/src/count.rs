@@ -48,13 +48,7 @@ unsafe extern "C-unwind" {
 /// # Safety
 /// called once during validated postmaster preloading on the backend main thread.
 pub(crate) unsafe fn initialize() {
-    let analysis = AnalysisLimits::default();
-    let participant_memory = matching::stored(
-        matching::QUERY_MEMORY
-            .checked_add(analysis.memory_bytes)
-            .and_then(|bytes| bytes.checked_add(analysis.input_bytes))
-            .ok_or(Error::Limit("parallel count memory")),
-    );
+    let participant_memory = matching::stored(matching::count_participant_memory());
     // safety: static C methods and the GUC outlive every inherited backend.
     unsafe { native::call(|| pin_count_init(participant_memory)) };
     GucRegistry::define_bool_guc(
