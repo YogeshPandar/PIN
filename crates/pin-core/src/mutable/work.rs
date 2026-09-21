@@ -9,7 +9,7 @@ use super::{CountCandidate, PageStore, find_term, following, load, load_posting,
 use crate::candidate::CandidatePlan;
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
-use crate::identity::{HeapLayout, Incarnation};
+use crate::identity::{HeapLayout, Incarnation, RootTid};
 use crate::query::Query;
 
 /// Number of scalar words in the transient host coordination protocol.
@@ -215,6 +215,25 @@ impl WorkState {
 }
 
 impl WorkBatch {
+    /// Resolves live canonical owners from this claimed batch.
+    ///
+    /// # Errors
+    /// Propagates corruption, host I/O, identity or callback failures.
+    pub fn for_each_root<S: PageStore>(
+        &self,
+        store: &mut S,
+        mut emit: impl FnMut(RootTid) -> Result<()>,
+    ) -> Result<()> {
+        let layout = store.layout();
+        let mut cache = None;
+        self.for_each(layout, |candidate| {
+            if let Some(root) = super::reader::resolve(store, &mut cache, candidate.owner)? {
+                emit(root)?;
+            }
+            Ok(())
+        })
+    }
+
     /// Emits only this claimed batch; candidates are not visibility-certified.
     ///
     /// # Errors
