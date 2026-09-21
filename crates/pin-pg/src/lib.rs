@@ -1,4 +1,4 @@
-//! PostgreSQL-owned host boundary for streaming search and opt-in G5 counts.
+//! PostgreSQL-owned search, opt-in counts and core-managed parallel maintenance.
 //! abi, ownership, and error contracts are recorded in docs/api-evidence.md.
 
 #[cfg(not(feature = "pg18"))]
@@ -15,7 +15,13 @@ mod count;
 mod maintenance;
 mod matching;
 mod native;
-mod storage;
+mod parallel;
+#[path = "storage.rs"]
+mod storage_impl;
+mod storage {
+    pub(crate) use crate::parallel::{with_maintenance, with_vacuum};
+    pub(crate) use crate::storage_impl::*;
+}
 #[cfg(feature = "test-hooks")]
 mod test_hooks;
 
@@ -44,6 +50,8 @@ pub unsafe extern "C-unwind" fn _PG_init() {
         );
     }
     // safety: validation and the preload-only check precede static hook registration.
+    unsafe { parallel::initialize() };
+    // safety: validation and the preload-only check precede static hook registration.
     unsafe { count::initialize() };
     maintenance::initialize();
 }
@@ -51,7 +59,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G7: selective compaction and native parallel qualification; experiments remain gated"
+    "G7: selective compaction and opt-in core parallel maintenance; experiments remain gated"
 }
 
 #[pg_extern(stable, parallel_unsafe)]

@@ -34,7 +34,7 @@ fn run(command: &mut Command) -> Result<(), Box<dyn Error>> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    for name in ["PGRX_PG_CONFIG_PATH", "CC", "AR"] {
+    for name in ["PGRX_PG_CONFIG_PATH", "CC", "AR", "CARGO_FEATURE_TEST_HOOKS"] {
         println!("cargo:rerun-if-env-changed={name}");
     }
     for name in [
@@ -45,6 +45,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "cshim/pin_storage.h",
         "cshim/pin_count.c",
         "cshim/pin_count.h",
+        "cshim/pin_parallel.c",
+        "cshim/pin_parallel.h",
     ] {
         println!("cargo:rerun-if-changed={name}");
     }
@@ -71,9 +73,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let archive = out.join("libpin_abi.a");
     let cc = env::var_os("CC").unwrap_or_else(|| "cc".into());
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
-    for source in ["pin_abi", "pin_storage", "pin_count"] {
+    for source in ["pin_abi", "pin_storage", "pin_count", "pin_parallel"] {
         let object = out.join(format!("{source}.o"));
         let mut compile = Command::new(&cc);
+        if env::var_os("CARGO_FEATURE_TEST_HOOKS").is_some() {
+            compile.arg("-DPIN_TEST_HOOKS");
+        }
         compile
             .arg("-D_GNU_SOURCE")
             .args([

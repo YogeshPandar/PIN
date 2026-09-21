@@ -7,6 +7,10 @@ use std::ffi::c_void;
 
 // safety: fixed-width scalars and generated PostgreSQL types match the C header.
 unsafe extern "C-unwind" {
+    pub(crate) fn pin_parallel_init();
+    pub(crate) fn pin_parallel_vacuum_options() -> u8;
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_parallel_test_event(stage: u8);
     pub(crate) fn pin_storage_check(
         index: pg_sys::Relation,
         heap: pg_sys::Relation,
@@ -18,11 +22,13 @@ unsafe extern "C-unwind" {
     pub(crate) fn pin_structure_unlock(index: pg_sys::Relation, exclusive: bool);
     pub(crate) fn pin_storage_blocks(index: pg_sys::Relation) -> u32;
     pub(crate) fn pin_storage_extend(index: pg_sys::Relation) -> u32;
-    pub(crate) fn pin_storage_read(
+    #[link_name = "pin_storage_read"]
+    fn pin_storage_read_raw(
         index: pg_sys::Relation,
         block: u32,
         out: *mut u8,
         capacity: u32,
+        strategy: pg_sys::BufferAccessStrategy,
     ) -> u32;
     pub(crate) fn pin_storage_remove_owners(
         index: pg_sys::Relation,
@@ -39,6 +45,7 @@ unsafe extern "C-unwind" {
         full_images: *const bool,
     );
     pub(crate) fn pin_storage_interrupt();
+    pub(crate) fn pin_storage_vacuum_delay();
     pub(crate) fn pin_root_coordinates(tid: pg_sys::ItemPointer, block: *mut u32, offset: *mut u16);
     pub(crate) fn pin_heap_build_scan(
         heap: pg_sys::Relation,
@@ -88,6 +95,36 @@ unsafe extern "C-unwind" {
         correlation: *mut f64,
         pages: *mut f64,
     );
+}
+
+
+/// Reads through the default PostgreSQL buffer strategy.
+///
+/// # Safety
+/// The caller supplies a live relation and one exclusive output extent.
+pub(crate) unsafe fn pin_storage_read(
+    index: pg_sys::Relation,
+    block: u32,
+    out: *mut u8,
+    capacity: u32,
+) -> u32 {
+    // safety: the caller proves the raw FFI extent and relation contract.
+    unsafe { pin_storage_read_raw(index, block, out, capacity, std::ptr::null_mut()) }
+}
+
+/// Reads through a callback-owned PostgreSQL buffer strategy.
+///
+/// # Safety
+/// The caller supplies the same raw extent plus a NULL or live callback strategy.
+pub(crate) unsafe fn pin_storage_read_strategy(
+    index: pg_sys::Relation,
+    block: u32,
+    out: *mut u8,
+    capacity: u32,
+    strategy: pg_sys::BufferAccessStrategy,
+) -> u32 {
+    // safety: the caller proves the raw FFI extent, relation and strategy contract.
+    unsafe { pin_storage_read_raw(index, block, out, capacity, strategy) }
 }
 
 /// catches PostgreSQL ERROR before it crosses destructor-bearing Rust frames.

@@ -15,6 +15,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "nodes/pathnodes.h"
@@ -117,7 +118,8 @@ pin_storage_extend(Relation index)
 }
 
 uint32
-pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity)
+pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
+                 BufferAccessStrategy strategy)
 {
     Buffer buffer;
     Page page;
@@ -125,7 +127,7 @@ pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity)
     if (out == NULL || capacity != PIN_PAYLOAD_BYTES ||
         block >= RelationGetNumberOfBlocks(index))
         pin_corrupt();
-    buffer = ReadBuffer(index, block);
+    buffer = ReadBufferExtended(index, MAIN_FORKNUM, block, RBM_NORMAL, strategy);
     LockBuffer(buffer, BUFFER_LOCK_SHARE);
     page = BufferGetPage(buffer);
     if (PageIsNew(page))
@@ -228,6 +230,13 @@ void
 pin_storage_interrupt(void)
 {
     CHECK_FOR_INTERRUPTS();
+}
+
+void
+pin_storage_vacuum_delay(void)
+{
+    /* called between page operations, never inside a buffer lock or WAL batch. */
+    vacuum_delay_point(false);
 }
 
 void

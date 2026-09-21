@@ -49,7 +49,7 @@ pub(crate) fn pin_handler() -> Internal {
         amcaninclude: false,
         amusemaintenanceworkmem: false,
         amsummarizing: false,
-        amparallelvacuumoptions: 0,
+        amparallelvacuumoptions: crate::parallel::vacuum_options(),
         amkeytype: pg_sys::InvalidOid,
         ambuild: Some(build),
         ambuildempty: Some(build_empty),
@@ -267,12 +267,12 @@ unsafe fn vacuum_pass(
 ) -> *mut pg_sys::IndexBulkDeleteResult {
     crate::compatibility::database();
     // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
-    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    let (index, heap, strategy) = unsafe { ((*info).index, (*info).heaprel, (*info).strategy) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
     // safety: the writer interlock serializes owner liveness and free-list changes.
     let result = matching::stored(unsafe {
-        storage::with_writer(index, |store| {
+        storage::with_vacuum(index, strategy, |store| {
             mutable::vacuum(store, |root| {
                 if callback.is_none() {
                     return Ok(false);
@@ -317,12 +317,12 @@ unsafe fn compact_cleanup(
 ) -> *mut pg_sys::IndexBulkDeleteResult {
     crate::compatibility::database();
     // safety: descriptor fields stay valid while core holds the VACUUM relation locks.
-    let (index, heap) = unsafe { ((*info).index, (*info).heaprel) };
+    let (index, heap, strategy) = unsafe { ((*info).index, (*info).heaprel, (*info).strategy) };
     // safety: only live relation pointers enter the checked C compatibility gate.
     unsafe { native::call(|| native::pin_storage_check(index, heap, std::ptr::null_mut())) };
     // safety: physical posting reclamation waits for readers, then excludes writers.
     let (compacted, pages) = matching::stored(unsafe {
-        storage::with_maintenance(index, |store| {
+        storage::with_maintenance(index, strategy, |store| {
             let compacted = mutable::compact_with_mode(store, crate::maintenance::mode())?;
             let pages = pin_core::mutable::PageStore::blocks(store)?;
             Ok((compacted, pages))

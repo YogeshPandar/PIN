@@ -85,6 +85,11 @@ fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
 }
 
 pub(crate) fn storage_event(stage: pin_core::mutable::Stage) {
+    let transition = stage as u8;
+    // safety: events run outside content locks; held pins and interlocks stay resource-owned.
+    // the test-only worker hook uses a transaction-owned, fixed advisory lock.
+    unsafe { crate::native::call(|| crate::native::pin_parallel_test_event(transition)) };
+
     let action = STORAGE_HOOK.with(|hook| {
         let (target, remaining, pause) = hook.get()?;
         if target != stage as u8 {
