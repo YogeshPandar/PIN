@@ -11,6 +11,7 @@ use pin_core::codec::records::Publication;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
 use pin_core::mutable::page::{Page, PageKind};
+use pin_core::mutable::work::{WORK_WORDS, WorkState};
 use pin_core::mutable::{self, CountCandidate};
 use pin_core::oracle;
 use pin_core::query::{Query, QueryLimits};
@@ -35,6 +36,13 @@ unsafe extern "C-unwind" {
         length: *mut usize,
     ) -> bool;
     fn pin_count_clear(context: *mut c_void);
+    fn pin_count_work_snapshot(shared: *mut c_void, words: *mut u64, count: u32);
+    fn pin_count_work_claim(
+        shared: *mut c_void,
+        expected: *const u64,
+        next: *const u64,
+        count: u32,
+    ) -> bool;
 }
 
 /// # Safety
@@ -197,6 +205,123 @@ impl Counter<'_> {
         self.length = 0;
         Ok(())
     }
+}
+
+/// Captures duplicate-free parallel work under the host reader barrier.
+///
+/// # Safety
+/// index is a live Pin relation; query and words remain valid for this call.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_count_parallel_capture(
+    index: pg_sys::Relation,
+    bytes: *const u8,
+    length: usize,
+    words: *mut u64,
+) {
+    crate::compatibility::database();
+    if index.is_null() || bytes.is_null() || words.is_null() || length > isize::MAX as usize {
+        matching::stored::<()>(Err(Error::InvalidState));
+    }
+    // safety: C owns one immutable query extent through this synchronous call.
+    let input = unsafe { std::slice::from_raw_parts(bytes, length) };
+    let query = matching::input(Query::decode(input, QueryLimits::default()));
+    // safety: C already holds relation lifetime and the nested reader lock is balanced.
+    let state = matching::stored(unsafe {
+        storage::with_reader(index, |store| {
+            WorkState::capture(store, &query, matching::QUERY_MEMORY)
+        })
+    });
+    for (position, value) in state.words().iter().enumerate() {
+        // safety: C reserves WORK_WORDS aligned writable u64 values.
+        unsafe { words.add(position).write(*value) };
+    }
+}
+
+/// Consumes disjoint shared work and returns this participant's exact local count.
+///
+/// # Safety
+/// index and context are local live worker resources; shared points to the
+/// PostgreSQL DSM coordinator; query and counters remain valid for this call.
+#[pg_guard]
+#[unsafe(no_mangle)]
+pub unsafe extern "C-unwind" fn pin_count_parallel_execute(
+    index: pg_sys::Relation,
+    context: *mut c_void,
+    shared: *mut c_void,
+    bytes: *const u8,
+    length: usize,
+    counters: *mut u64,
+) -> i64 {
+    crate::compatibility::database();
+    if index.is_null()
+        || context.is_null()
+        || shared.is_null()
+        || bytes.is_null()
+        || counters.is_null()
+        || length > isize::MAX as usize
+    {
+        matching::stored::<()>(Err(Error::InvalidState));
+    }
+    // safety: the worker owns one immutable query extent for this invocation.
+    let input = unsafe { std::slice::from_raw_parts(bytes, length) };
+    let query = matching::input(Query::decode(input, QueryLimits::default()));
+    let layout = matching::stored(
+        HeapLayout::new(crate::abi::constant(9) as u16).map_err(|_| Error::InvalidState),
+    );
+    let mut counter = Counter {
+        context,
+        query: &query,
+        matcher: if ENABLE_COUNT_RECHECK.get() {
+            SingleTermMatcher::new(&query)
+        } else {
+            None
+        },
+        layout,
+        pending: [None; BATCH],
+        length: 0,
+        stats: [0; COUNTERS],
+    };
+    // safety: every participant holds the structural reader barrier while the
+    // CAS protocol owns each prepared batch exactly once.
+    matching::stored(unsafe {
+        storage::with_reader(index, |store| {
+            loop {
+                let mut words = [0u64; WORK_WORDS];
+                native::call(|| {
+                    pin_count_work_snapshot(shared, words.as_mut_ptr(), WORK_WORDS as u32)
+                });
+                let state = WorkState::from_words(words)?;
+                let Some((next, batch)) = state.prepare(store)? else {
+                    break;
+                };
+                let next_words = next.words();
+                if !native::call(|| {
+                    pin_count_work_claim(
+                        shared,
+                        words.as_ptr(),
+                        next_words.as_ptr(),
+                        WORK_WORDS as u32,
+                    )
+                }) {
+                    continue;
+                }
+                batch.for_each(layout, |candidate| counter.push(candidate))?;
+            }
+            counter.flush()
+        })
+    });
+    let count = matching::stored(
+        counter.stats[4]
+            .checked_add(counter.stats[6])
+            .and_then(|count| i64::try_from(count).ok())
+            .ok_or(Error::Limit("SQL count")),
+    );
+    for (position, value) in counter.stats.iter().enumerate() {
+        // safety: caller reserves COUNTERS aligned writable u64 values.
+        unsafe { counters.add(position).write(*value) };
+    }
+    count
 }
 
 /// Returns whether one validated constant query is eligible for the narrow count path.
