@@ -14,6 +14,7 @@
 #include "commands/defrem.h"
 #include "commands/explain.h"
 #include "commands/explain_format.h"
+#include "common/int.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/extensible.h"
