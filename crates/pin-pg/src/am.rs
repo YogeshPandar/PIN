@@ -212,7 +212,7 @@ unsafe fn insert_value(
     let root = matching::stored(unsafe { storage::root(tid) });
     // safety: analysis/allocation precede both writer locks.
     if !parallel_writer.is_null() {
-        // safety: C owns the live DSM LWLock for this synchronous build callback.
+        // safety: c owns the live dsm lwlock for this synchronous build callback.
         unsafe { native::call(|| native::pin_parallel_build_writer_lock(parallel_writer)) };
     }
     // safety: the relation and prepared document stay live through this synchronous insert.
