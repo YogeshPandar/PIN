@@ -105,6 +105,7 @@ Test builds expose deterministic worker pause stages:
 - stage 16: parallel build callback before Rust document insertion;
 - stage 17: direct-count worker before claiming work;
 - stage 18: direct-count worker after a successful work claim and before consumption;
+- stage 19: native index-scan worker after a successful work claim and before consumption;
 - stages 7 through 12: existing storage/maintenance transition windows.
 
 The disposable qualification harness holds advisory lock `(180006, 4)` only to

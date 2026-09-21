@@ -74,12 +74,38 @@ def require_bitmap(plan: dict[str, Any], parallel: bool, lossy: bool | None = No
     return {'workers_launched': launched, 'lossy_heap_blocks': lossified}
 
 
+def require_parallel_index(plan: dict[str, Any], parallel: bool) -> int:
+    tree = list(nodes(plan))
+    scans = [node for node in tree if node.get('Node Type') == 'Index Scan'
+             and node.get('Index Name') == INDEX and node.get('Relation Name') == 'docs']
+    gathers = [node for node in tree if node.get('Node Type') in ('Gather', 'Gather Merge')]
+    if len(scans) != 1 or not scans[0].get('Index Cond'):
+        raise RuntimeError('expected one Pin plain index scan with an index condition')
+    launched = sum(node.get('Workers Launched', 0) for node in gathers)
+    if parallel:
+        if not scans[0].get('Parallel Aware') or launched < 1:
+            raise RuntimeError('parallel Pin index scan did not actually launch a worker')
+    elif gathers or scans[0].get('Parallel Aware'):
+        raise RuntimeError('serial Pin index reference unexpectedly used parallel execution')
+    return launched
+
+
 def settings(parallel: bool, memory: str = '64MB', leader: bool = True, sequential: bool = False) -> str:
     return (COMMON + f"SET max_parallel_workers_per_gather = {2 if parallel else 0};\n"
             + f"SET work_mem = '{memory}';\n"
             + f"SET parallel_leader_participation = {'on' if leader else 'off'};\n"
             + f"SET enable_seqscan = {'on' if sequential else 'off'};\n"
             + f"SET enable_bitmapscan = {'off' if sequential else 'on'};\n")
+
+
+def index_settings(parallel: bool, leader: bool = True) -> str:
+    return (COMMON + f"SET max_parallel_workers_per_gather = {2 if parallel else 0};\n"
+            + "SET work_mem = '64MB';\n"
+            + f"SET parallel_leader_participation = {'on' if leader else 'off'};\n"
+            + "SET enable_seqscan = off;\n"
+            + "SET enable_bitmapscan = off;\n"
+            + "SET enable_indexscan = on;\n"
+            + "SET enable_indexonlyscan = off;\n")
 
 
 class Cluster:
@@ -283,6 +309,28 @@ def paused_pin_worker(cluster: Cluster, stage: int, sql: str, app: str,
                 blocker.communicate(timeout=10)
 
 
+def parallel_index_qualification(cluster: Cluster) -> None:
+    for query in ['common', 'alpha AND beta', 'NOT gamma']:
+        where = predicate(query)
+        expected = cluster.ids(where, settings(False, sequential=True))
+        serial = index_settings(False)
+        row_sql = f'SELECT id FROM ONLY {TABLE} WHERE {where};'
+        require_parallel_index(cluster.plan(row_sql, serial), parallel=False)
+        if cluster.ids(where, serial) != expected:
+            raise RuntimeError(f'serial plain index multiset differs for {query}')
+        for leader in [True, False]:
+            options = index_settings(True, leader)
+            require_parallel_index(cluster.plan(row_sql, options), parallel=True)
+            if cluster.ids(where, options) != expected:
+                raise RuntimeError(f'parallel plain index multiset differs for {query}')
+
+    where = predicate('common')
+    sql = index_settings(True) + f'SELECT count(*) FROM ONLY {TABLE} WHERE {where};'
+    paused_pin_worker(cluster, 19, sql, 'pin-g7-index-scan-failure', terminate_worker=True)
+    if cluster.ids(where, index_settings(True)) != cluster.ids(where, settings(False, sequential=True)):
+        raise RuntimeError('parallel plain index scan changed after worker termination')
+
+
 def parallel_count_qualification(cluster: Cluster) -> None:
     where = predicate('common')
     expected = cluster.count(where, settings(False, sequential=True))
@@ -452,6 +500,7 @@ WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
         if not retained or sum(retained) == 0:
             raise RuntimeError('host compaction did not exercise sealed-prefix retention')
         observations = matrix(cluster)
+        parallel_index_qualification(cluster)
         parallel_count_qualification(cluster)
         prepared_rescan(cluster)
         interrupt_workers(cluster, terminate_worker=False)

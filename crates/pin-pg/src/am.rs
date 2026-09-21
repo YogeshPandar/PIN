@@ -627,6 +627,11 @@ pub unsafe extern "C-unwind" fn pin_parallel_scan_fill(
                 }) {
                     continue;
                 }
+                #[cfg(feature = "test-hooks")]
+                {
+                    // safety: the test-only c hook accepts this fixed stage synchronously.
+                    native::call(|| native::pin_parallel_test_event(19));
+                }
                 batch.for_each_root(store, |root| {
                     if count >= capacity {
                         return Err(Error::Limit("parallel scan batch"));

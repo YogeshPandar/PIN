@@ -129,6 +129,7 @@ class SourceTests(unittest.TestCase):
         self.assertIn('amparallelrescan: Some(native::pin_scan_parallel_rescan)', source)
         self.assertIn('PinParallelScanState', storage)
         self.assertIn('pin_scan_work_claim', storage)
+        self.assertIn('pin_parallel_test_event(19)', source)
         host = (ROOT / 'crates/pin-pg/cshim/pin_parallel.c').read_text()
         self.assertIn('LWLock writer_lock;', host)
         self.assertIn('LWLockAcquire((LWLock *) lock, LW_EXCLUSIVE)', host)
