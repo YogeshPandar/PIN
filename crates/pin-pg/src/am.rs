@@ -549,6 +549,7 @@ unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<Query> {
             CandidatePlan::Universe => usize::MAX,
             CandidatePlan::Terms(terms) => terms.len(),
         };
+        drop(plan);
         if chosen.is_none() || next_cost < cost {
             cost = next_cost;
             chosen = Some(query);
