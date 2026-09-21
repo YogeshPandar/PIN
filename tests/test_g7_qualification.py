@@ -122,6 +122,10 @@ class SourceTests(unittest.TestCase):
         self.assertIn('amcanparallel: false', source)
         self.assertIn('amcanbuildparallel: true', source)
         self.assertIn('amusemaintenanceworkmem: false', source)
+        host = (ROOT / 'crates/pin-pg/cshim/pin_parallel.c').read_text()
+        self.assertIn('LWLock writer_lock;', host)
+        self.assertIn('LWLockAcquire((LWLock *) lock, LW_EXCLUSIVE)', host)
+        self.assertIn('LWLockRelease((LWLock *) lock)', host)
         for callback in ['amestimateparallelscan', 'aminitparallelscan', 'amparallelrescan']:
             self.assertIn(f'{callback}: None', source)
 

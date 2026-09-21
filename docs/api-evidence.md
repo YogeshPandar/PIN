@@ -305,7 +305,8 @@ Authority: PostgreSQL 18.6 commit
 `724edf9bde9d356724ad384a2e196edc3c9f80f7`,
 `src/backend/catalog/index.c`, `src/include/access/tableam.h`,
 `src/include/access/parallel.h`, `src/backend/access/transam/parallel.c`,
-and `src/backend/access/gin/gininsert.c`.
+`src/backend/access/gin/gininsert.c`, `src/backend/storage/lmgr/lock.c`,
+`src/backend/storage/lmgr/README`, and `src/include/storage/lwlock.h`.
 
 PostgreSQL supplies `IndexInfo.ii_ParallelWorkers`. Pin enters parallel mode,
 creates a `ParallelContext`, initializes one parallel table scan, and launches
@@ -316,11 +317,14 @@ Workers reopen
 relations with the nonconcurrent build lock modes and call
 `table_index_build_scan` with `BuildIndexInfo`.
 
-The Rust worker callback receives only the live callback arguments and the
-validated scalar memory limit. It analyzes the document before acquiring Pin's
-existing writer interlock, then uses the same generic-WAL publication path as
-serial build. The worker does not retain `Datum`, `ItemPointer`, relation or
-value pointers after the callback.
+The Rust worker callback receives only the live callback arguments, validated
+scalar memory limit and an opaque pointer to a build-DSM `LWLock`. PostgreSQL
+lock-group members do not conflict on ordinary heavyweight locks, so the
+existing Pin page-lock interlock alone cannot serialize parallel build
+participants. Analysis stays outside the DSM lock. Rust asks the C boundary to
+take the DSM `LWLock` only around the existing writer interlock and generic-WAL
+publication, then releases it before returning. PostgreSQL error cleanup releases
+held LWLocks on failure. Rust never dereferences the shared lock.
 
 Fallback: concurrent index build, zero requested workers, unavailable DSM or zero
 launched workers use the established serial build.

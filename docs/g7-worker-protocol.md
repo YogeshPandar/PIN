@@ -63,9 +63,11 @@ the nonconcurrent build leader. Each participant calls `BuildIndexInfo`,
 `table_beginscan_parallel`, and `table_index_build_scan`.
 
 The scan callback preserves PostgreSQL's heap/HOT build semantics. Document
-analysis and preparation happen independently in each participant. The existing
-Pin writer interlock still serializes generic-WAL publication, so build workers
-do not create a new concurrent page-mutation protocol.
+analysis and preparation happen independently in each participant. PostgreSQL
+parallel workers join the leader's heavyweight-lock group, whose members do not
+conflict on ordinary heavyweight locks. A DSM `LWLock` therefore serializes Pin
+publication across build participants. The existing writer interlock remains
+inside that critical section for the ordinary nonparallel storage contract.
 
 Each participant is charged a conservative peak covering document preparation,
 the maximum detoasted input and fixed callback state. Pin caps leader plus workers

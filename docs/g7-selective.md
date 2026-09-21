@@ -13,8 +13,8 @@ PostgreSQL source: 18.6 at 724edf9bde9d356724ad384a2e196edc3c9f80f7.
 2. Add PostgreSQL-worker parallel build. `amcanbuildparallel` is true and the
    build uses the core-requested `IndexInfo.ii_ParallelWorkers`, PostgreSQL
    `ParallelContext`, a parallel table scan and `table_index_build_scan`.
-   Expensive text analysis runs in participants while the existing Pin writer
-   interlock serializes durable publication.
+   Expensive text analysis runs in participants while a build-DSM `LWLock`
+   serializes durable publication across PostgreSQL lock-group members.
 3. Add an opt-in PostgreSQL-worker direct-count path. The existing narrow
    `PinCount` eligibility and G5 visibility proof are unchanged. Workers claim
    disjoint pointer-free work batches through fixed DSM words, then perform the
@@ -42,9 +42,11 @@ storage relation before scanning.
 
 Every participant calls `table_index_build_scan` against the same PostgreSQL
 parallel table scan. PostgreSQL keeps heap-build and HOT-root behavior authoritative.
-The callback analyzes one document outside Pin's writer interlock, then reuses the
-existing WAL-backed insertion path. Publication remains serialized, so parallelism
-does not introduce a second durable storage protocol.
+Parallel workers share a heavyweight-lock group, so Pin's ordinary page-lock
+interlock cannot serialize those participants. The callback analyzes one document
+before acquiring a build-DSM `LWLock`, then enters the existing writer interlock
+and WAL-backed insertion path. Publication remains serialized without a second
+durable storage protocol.
 
 Pin computes a conservative participant peak from the prepared-document budget,
 the maximum detoasted input and fixed callback state. The requested worker count
