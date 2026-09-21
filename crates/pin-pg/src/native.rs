@@ -90,6 +90,34 @@ unsafe extern "C-unwind" {
         nkeys: i32,
         norderbys: i32,
     );
+    pub(crate) fn pin_scan_estimate_parallel(
+        index: pg_sys::Relation,
+        nkeys: i32,
+        norderbys: i32,
+    ) -> usize;
+    pub(crate) fn pin_scan_init_parallel(target: *mut c_void);
+    pub(crate) fn pin_scan_parallel_rescan(scan: pg_sys::IndexScanDesc);
+    pub(crate) fn pin_scan_work_ready(scan: pg_sys::IndexScanDesc) -> bool;
+    pub(crate) fn pin_scan_work_publish(
+        scan: pg_sys::IndexScanDesc,
+        words: *const u64,
+        count: u32,
+    );
+    pub(crate) fn pin_scan_work_snapshot(
+        scan: pg_sys::IndexScanDesc,
+        words: *mut u64,
+        count: u32,
+    );
+    pub(crate) fn pin_scan_work_claim(
+        scan: pg_sys::IndexScanDesc,
+        expected: *const u64,
+        next: *const u64,
+        count: u32,
+    ) -> bool;
+    pub(crate) fn pin_scan_gettuple(
+        scan: pg_sys::IndexScanDesc,
+        direction: pg_sys::ScanDirection::Type,
+    ) -> bool;
     pub(crate) fn pin_opclass_validate(opclass: pg_sys::Oid) -> bool;
     pub(crate) fn pin_opclass_adjust(
         opclass: pg_sys::Oid,

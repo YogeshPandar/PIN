@@ -6,6 +6,7 @@
 #include "postgres.h"
 #include "pin_storage.h"
 #include "access/generic_xlog.h"
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
 #include "access/relscan.h"
@@ -24,6 +25,7 @@
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
 #include "storage/lmgr.h"
+#include "storage/spin.h"
 #include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/selfuncs.h"
@@ -33,6 +35,8 @@
 #define PIN_BATCH_PAGES 3
 #define PIN_BITMAP_BATCH 256
 #define PIN_PAYLOAD_BYTES (BLCKSZ - MAXALIGN(SizeOfPageHeaderData))
+#define PIN_SCAN_WORK_WORDS 11
+#define PIN_SCAN_BATCH_ROOTS ((PIN_PAYLOAD_BYTES / 3) + 1)
 
 StaticAssertDecl(PG_VERSION_NUM == 180006, "Pin requires PostgreSQL 18.6 headers");
 StaticAssertDecl(BLCKSZ == 8192 && MAXALIGN(SizeOfPageHeaderData) == 24,
@@ -327,10 +331,39 @@ pin_scan_validate(IndexScanDesc scan)
     }
 }
 
+typedef struct PinParallelScanState
+{
+    slock_t mutex;
+    bool work_ready;
+    uint64 work[PIN_SCAN_WORK_WORDS];
+} PinParallelScanState;
+
 typedef struct PinScanState
 {
     int capacity;
+    bool structure_locked;
+    bool work_ready;
+    uint64 work[PIN_SCAN_WORK_WORDS];
+    uint32 root_count;
+    uint32 root_position;
+    uint32 blocks[PIN_SCAN_BATCH_ROOTS];
+    uint16 offsets[PIN_SCAN_BATCH_ROOTS];
 } PinScanState;
+
+extern uint32 pin_parallel_scan_fill(Relation index, IndexScanDesc scan,
+                                     uint32 *blocks, uint16 *offsets,
+                                     uint32 capacity);
+
+static PinParallelScanState *
+pin_scan_parallel_state(IndexScanDesc scan)
+{
+    if (scan->parallel_scan == NULL)
+        return NULL;
+    if (scan->parallel_scan->ps_offset_am == 0)
+        elog(ERROR, "invalid Pin parallel scan state");
+    return (PinParallelScanState *)
+        OffsetToPointer(scan->parallel_scan, scan->parallel_scan->ps_offset_am);
+}
 
 IndexScanDesc
 pin_scan_begin(Relation index, int nkeys, int norderbys)
@@ -341,7 +374,7 @@ pin_scan_begin(Relation index, int nkeys, int norderbys)
         ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
                         errmsg("Pin supports keyed forward bitmap scans only")));
     scan = RelationGetIndexScan(index, nkeys, 0);
-    state = palloc(sizeof(PinScanState));
+    state = palloc0(sizeof(PinScanState));
     state->capacity = nkeys;
     scan->opaque = state;
     return scan;
@@ -361,6 +394,193 @@ pin_scan_rescan(IndexScanDesc scan, ScanKey keys, int nkeys, int norderbys)
         memmove(scan->keyData, keys, nkeys * sizeof(ScanKeyData));
         scan->numberOfKeys = nkeys;
     }
+    state->root_count = 0;
+    state->root_position = 0;
+    if (scan->heapRelation != NULL)
+    {
+        if (state->structure_locked)
+            pin_structure_unlock(scan->indexRelation, false);
+        pin_structure_lock(scan->indexRelation, false);
+        state->structure_locked = true;
+        if (scan->parallel_scan == NULL)
+        {
+            state->work_ready = false;
+            memset(state->work, 0, sizeof(state->work));
+        }
+    }
+}
+
+Size
+pin_scan_estimate_parallel(Relation index, int nkeys, int norderbys)
+{
+    (void) index;
+    if (nkeys <= 0 || nkeys > 1024 || norderbys != 0)
+        elog(ERROR, "invalid Pin parallel scan dimensions");
+    return MAXALIGN(sizeof(PinParallelScanState));
+}
+
+void
+pin_scan_init_parallel(void *target)
+{
+    PinParallelScanState *state = target;
+    if (state == NULL)
+        elog(ERROR, "invalid Pin parallel scan target");
+    SpinLockInit(&state->mutex);
+    state->work_ready = false;
+    memset(state->work, 0, sizeof(state->work));
+}
+
+void
+pin_scan_parallel_rescan(IndexScanDesc scan)
+{
+    PinParallelScanState *shared = pin_scan_parallel_state(scan);
+    PinScanState *state;
+    if (shared == NULL || scan->opaque == NULL)
+        elog(ERROR, "invalid Pin parallel rescan");
+    state = (PinScanState *) scan->opaque;
+    SpinLockAcquire(&shared->mutex);
+    shared->work_ready = false;
+    memset(shared->work, 0, sizeof(shared->work));
+    SpinLockRelease(&shared->mutex);
+    state->root_count = 0;
+    state->root_position = 0;
+}
+
+bool
+pin_scan_work_ready(IndexScanDesc scan)
+{
+    PinScanState *state;
+    PinParallelScanState *shared;
+    bool ready;
+    if (scan == NULL || scan->opaque == NULL)
+        elog(ERROR, "invalid Pin scan work state");
+    state = (PinScanState *) scan->opaque;
+    shared = pin_scan_parallel_state(scan);
+    if (shared == NULL)
+        return state->work_ready;
+    SpinLockAcquire(&shared->mutex);
+    ready = shared->work_ready;
+    SpinLockRelease(&shared->mutex);
+    return ready;
+}
+
+void
+pin_scan_work_publish(IndexScanDesc scan, const uint64 *words, uint32 count)
+{
+    PinScanState *state;
+    PinParallelScanState *shared;
+    if (scan == NULL || scan->opaque == NULL || words == NULL ||
+        count != PIN_SCAN_WORK_WORDS)
+        elog(ERROR, "invalid Pin scan work publication");
+    state = (PinScanState *) scan->opaque;
+    shared = pin_scan_parallel_state(scan);
+    if (shared == NULL)
+    {
+        memcpy(state->work, words, sizeof(state->work));
+        state->work_ready = true;
+        return;
+    }
+    SpinLockAcquire(&shared->mutex);
+    if (!shared->work_ready)
+    {
+        memcpy(shared->work, words, sizeof(shared->work));
+        shared->work_ready = true;
+    }
+    SpinLockRelease(&shared->mutex);
+}
+
+void
+pin_scan_work_snapshot(IndexScanDesc scan, uint64 *words, uint32 count)
+{
+    PinScanState *state;
+    PinParallelScanState *shared;
+    if (scan == NULL || scan->opaque == NULL || words == NULL ||
+        count != PIN_SCAN_WORK_WORDS)
+        elog(ERROR, "invalid Pin scan work snapshot");
+    state = (PinScanState *) scan->opaque;
+    shared = pin_scan_parallel_state(scan);
+    if (shared == NULL)
+    {
+        if (!state->work_ready)
+            elog(ERROR, "Pin scan work is not initialized");
+        memcpy(words, state->work, sizeof(state->work));
+        return;
+    }
+    SpinLockAcquire(&shared->mutex);
+    if (!shared->work_ready)
+    {
+        SpinLockRelease(&shared->mutex);
+        elog(ERROR, "Pin parallel scan work is not initialized");
+    }
+    memcpy(words, shared->work, sizeof(shared->work));
+    SpinLockRelease(&shared->mutex);
+}
+
+bool
+pin_scan_work_claim(IndexScanDesc scan, const uint64 *expected,
+                    const uint64 *next, uint32 count)
+{
+    PinScanState *state;
+    PinParallelScanState *shared;
+    bool claimed = false;
+    if (scan == NULL || scan->opaque == NULL || expected == NULL || next == NULL ||
+        count != PIN_SCAN_WORK_WORDS)
+        elog(ERROR, "invalid Pin scan work claim");
+    state = (PinScanState *) scan->opaque;
+    shared = pin_scan_parallel_state(scan);
+    if (shared == NULL)
+    {
+        if (state->work_ready && memcmp(state->work, expected, sizeof(state->work)) == 0)
+        {
+            memcpy(state->work, next, sizeof(state->work));
+            claimed = true;
+        }
+        return claimed;
+    }
+    SpinLockAcquire(&shared->mutex);
+    if (shared->work_ready &&
+        memcmp(shared->work, expected, sizeof(shared->work)) == 0)
+    {
+        memcpy(shared->work, next, sizeof(shared->work));
+        claimed = true;
+    }
+    SpinLockRelease(&shared->mutex);
+    return claimed;
+}
+
+bool
+pin_scan_gettuple(IndexScanDesc scan, ScanDirection direction)
+{
+    PinScanState *state;
+    uint32 block;
+    uint16 offset;
+    if (scan == NULL || scan->opaque == NULL || scan->heapRelation == NULL ||
+        direction != ForwardScanDirection)
+        ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+                        errmsg("Pin supports forward heap index scans only")));
+    state = (PinScanState *) scan->opaque;
+    if (!state->structure_locked)
+        elog(ERROR, "Pin index scan lacks its structural barrier");
+    if (state->root_position >= state->root_count)
+    {
+        state->root_count = pin_parallel_scan_fill(scan->indexRelation, scan,
+                                                   state->blocks, state->offsets,
+                                                   PIN_SCAN_BATCH_ROOTS);
+        state->root_position = 0;
+        if (state->root_count == 0)
+            return false;
+        if (state->root_count > PIN_SCAN_BATCH_ROOTS)
+            elog(ERROR, "invalid Pin scan root batch");
+    }
+    block = state->blocks[state->root_position];
+    offset = state->offsets[state->root_position++];
+    if (block == InvalidBlockNumber || offset == InvalidOffsetNumber ||
+        offset > MaxHeapTuplesPerPage)
+        elog(ERROR, "invalid Pin scan root");
+    ItemPointerSet(&scan->xs_heaptid, block, offset);
+    scan->xs_recheck = true;
+    scan->xs_recheckorderby = false;
+    return true;
 }
 
 void
@@ -368,6 +588,9 @@ pin_scan_end(IndexScanDesc scan)
 {
     if (scan->opaque != NULL)
     {
+        PinScanState *state = (PinScanState *) scan->opaque;
+        if (state->structure_locked)
+            pin_structure_unlock(scan->indexRelation, false);
         pfree(scan->opaque);
         scan->opaque = NULL;
     }

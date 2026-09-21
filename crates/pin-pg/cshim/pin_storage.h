@@ -38,6 +38,15 @@ extern IndexScanDesc pin_scan_begin(Relation index, int nkeys, int norderbys);
 extern void pin_scan_end(IndexScanDesc scan);
 extern void pin_scan_validate(IndexScanDesc scan);
 extern void pin_scan_rescan(IndexScanDesc scan, ScanKey keys, int nkeys, int norderbys);
+extern Size pin_scan_estimate_parallel(Relation index, int nkeys, int norderbys);
+extern void pin_scan_init_parallel(void *target);
+extern void pin_scan_parallel_rescan(IndexScanDesc scan);
+extern bool pin_scan_work_ready(IndexScanDesc scan);
+extern void pin_scan_work_publish(IndexScanDesc scan, const uint64 *words, uint32 count);
+extern void pin_scan_work_snapshot(IndexScanDesc scan, uint64 *words, uint32 count);
+extern bool pin_scan_work_claim(IndexScanDesc scan, const uint64 *expected,
+                                const uint64 *next, uint32 count);
+extern bool pin_scan_gettuple(IndexScanDesc scan, ScanDirection direction);
 extern bool pin_opclass_validate(Oid opclass);
 extern void pin_opclass_adjust(Oid opclass, List *operators, List *functions);
 extern void pin_index_cost(struct PlannerInfo *root, struct IndexPath *path, double loops,
