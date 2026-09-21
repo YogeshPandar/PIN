@@ -377,6 +377,8 @@ def main() -> None:
         raise RuntimeError('qualification requires PostgreSQL 18.6')
     if cluster.run('SHOW pin.enable_compact_reuse;').stdout.strip() != 'off':
         raise RuntimeError('compaction retention must default off')
+    if cluster.run('SHOW pin.enable_parallel_vacuum;').stdout.strip() != 'on':
+        raise RuntimeError('qualification requires parallel VACUUM enabled at postmaster start')
     # CREATE fails rather than dropping any pre-existing user schema.
     cluster.run(f'CREATE SCHEMA {SCHEMA};')
     try:
@@ -388,11 +390,59 @@ WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
         paused_pin_worker(
             cluster,
             16,
-            f"SET maintenance_work_mem = '96MB'; CREATE INDEX {INDEX} ON {TABLE} USING pin(body);",
+            f"SET maintenance_work_mem = '128MB'; CREATE INDEX {INDEX} ON {TABLE} USING pin(body);",
             'pin-g7-parallel-build',
         )
+        # a killed build participant must abort CREATE INDEX without damaging the live index.
+        paused_pin_worker(
+            cluster,
+            16,
+            f"SET maintenance_work_mem = '128MB'; "
+            f"CREATE INDEX pin_g7_build_failure_idx ON {TABLE} USING pin(body);",
+            'pin-g7-parallel-build-failure',
+            terminate_worker=True,
+        )
+        if cluster.run(
+            "SELECT to_regclass('pin_g7_test.pin_g7_build_failure_idx') IS NULL;"
+        ).stdout.strip() != 't':
+            raise RuntimeError('failed parallel build left a catalog-visible index')
+
         cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};')
         cluster.run(insert_sql(16001, 17000))
+
+        # two Pin indexes make a Pin worker assignment deterministic enough for
+        # the disposable parallel-VACUUM lifecycle check; drop the shadow after.
+        cluster.run(
+            f"SET maintenance_work_mem = '128MB'; "
+            f"CREATE INDEX pin_g7_vacuum_shadow_idx ON {TABLE} USING pin(body);"
+        )
+        cluster.run(
+            f"INSERT INTO {TABLE} "
+            "SELECT 50000 + g, 'vacuumdead common alpha', true, repeat('v', 1000) "
+            "FROM generate_series(1, 64) g;"
+        )
+        cluster.run(f'DELETE FROM {TABLE} WHERE id BETWEEN 50001 AND 50064;')
+        paused_pin_worker(
+            cluster,
+            7,
+            f'VACUUM (PARALLEL 2, INDEX_CLEANUP ON) {TABLE};',
+            'pin-g7-parallel-vacuum',
+        )
+        cluster.run(
+            f"INSERT INTO {TABLE} "
+            "SELECT 50100 + g, 'vacuumfail common alpha', true, repeat('w', 1000) "
+            "FROM generate_series(1, 64) g;"
+        )
+        cluster.run(f'DELETE FROM {TABLE} WHERE id BETWEEN 50101 AND 50164;')
+        paused_pin_worker(
+            cluster,
+            7,
+            f'VACUUM (PARALLEL 2, INDEX_CLEANUP ON) {TABLE};',
+            'pin-g7-parallel-vacuum-failure',
+            terminate_worker=True,
+        )
+        cluster.run(f'VACUUM (PARALLEL 2, INDEX_CLEANUP ON) {TABLE};')
+        cluster.run(f'DROP INDEX {SCHEMA}.pin_g7_vacuum_shadow_idx;')
         compacted = cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};',
                                 COMMON + 'SET client_min_messages = debug1; '
                                 'SET pin.enable_compact_reuse = on;\n')
