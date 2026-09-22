@@ -540,3 +540,14 @@ multi-backend, restart/crash, parallel bitmap and RLS suites also apply.
 
 Self-review status: proof and tests are recorded, not independent approval of
 the extension's existing storage/FFI implementation. Release review remains open.
+
+## R03: measured decoder inline hints (2026-09-22)
+
+Read Rust's codegen inline attribute contract at
+https://doc.rust-lang.org/reference/attributes/codegen.html#the-inline-attribute
+for the existing Rust 1.98.1 toolchain. `#[inline]` is an optimization hint;
+checked decoding, errors and iterator state remain unchanged. Four hints target
+software-profiled varint and posting iterator boundaries. Full pure tests pass;
+SQL identity checks and repeated measurements are archived under
+`docs/runs/2026-09-22-exact-bitmap`. No FFI, storage or visibility contract changes.
+Self-reviewed; no speed guarantee outside the measured workload.

@@ -60,6 +60,7 @@ impl<'a> Reader<'a> {
     }
 
     // rejects overflow and redundant groups; failure leaves the cursor unchanged.
+    #[inline]
     pub fn var_u32(&mut self) -> Result<u32> {
         let mut input = *self;
         let start = input.offset;
@@ -82,6 +83,7 @@ impl<'a> Reader<'a> {
     }
 
     // the tenth group has one payload bit; failed reads preserve the cursor.
+    #[inline]
     pub fn var_u64(&mut self) -> Result<u64> {
         let mut input = *self;
         let start = input.offset;

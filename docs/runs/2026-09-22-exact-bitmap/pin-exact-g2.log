@@ -1,0 +1,673 @@
+waiting for server to start.... done
+server started
+CREATE EXTENSION
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+INSERT 0 5
+CREATE INDEX
+ANALYZE
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+BEGIN
+INSERT 0 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+SAVEPOINT
+INSERT 0 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ROLLBACK
+ g2_expect 
+-----------
+ 
+(1 row)
+
+COMMIT
+BEGIN
+INSERT 0 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ROLLBACK
+ g2_expect 
+-----------
+ 
+(1 row)
+
+INSERT 0 0
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ pg_stat_reset_single_table_counters 
+-------------------------------------
+ 
+(1 row)
+
+UPDATE 1
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+DO
+ g2_expect 
+-----------
+ 
+(1 row)
+
+UPDATE 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+INSERT 0 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+VACUUM
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+CREATE TABLE
+INSERT 0 1
+CREATE INDEX
+CREATE TABLE
+INSERT 0 1
+DELETE 1
+VACUUM
+INSERT 0 1
+DO
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+CREATE TABLE
+INSERT 0 8
+CREATE INDEX
+ANALYZE
+CREATE TABLE
+INSERT 0 1
+CREATE INDEX
+ g2_expect 
+-----------
+ 
+(1 row)
+
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+CREATE TABLE
+INSERT 0 10
+CREATE INDEX
+ANALYZE
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+BEGIN
+INSERT 0 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+SAVEPOINT
+UPDATE 1
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ROLLBACK
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ROLLBACK
+ g2_expect 
+-----------
+ 
+(1 row)
+
+UPDATE 1
+UPDATE 1
+DELETE 1
+VACUUM
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+CREATE TABLE
+INSERT 0 3300
+CREATE INDEX
+VACUUM
+INSERT 0 700
+ANALYZE
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+DO
+DELETE 800
+VACUUM
+ g2_expect 
+-----------
+ 
+(1 row)
+
+SET
+SET
+SET
+SET
+CREATE TABLE
+INSERT 0 16000
+CREATE INDEX
+ANALYZE
+CREATE FUNCTION
+ check_exact_bitmap 
+--------------------
+ 
+ 
+ 
+ 
+ 
+(5 rows)
+
+ check_exact_bitmap 
+--------------------
+ 
+ 
+ 
+ 
+(4 rows)
+
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+SET
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+SET
+UPDATE 2000
+UPDATE 1000
+DELETE 1000
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+BEGIN
+SAVEPOINT
+INSERT 0 1
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+ROLLBACK
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+COMMIT
+VACUUM
+INSERT 0 4000
+ check_exact_bitmap 
+--------------------
+ 
+(1 row)
+
+DROP TABLE
+RESET
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+DO
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+VACUUM
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+SET
+SET
+DO
+CREATE TABLE
+INSERT 0 4096
+CREATE INDEX
+ANALYZE
+CREATE FUNCTION
+ g6_expect 
+-----------
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+(11 rows)
+
+ g6_expect 
+-----------
+ 
+(1 row)
+
+ g6_expect 
+-----------
+ 
+(1 row)
+
+ g6_expect 
+-----------
+ 
+(1 row)
+
+ g6_expect 
+-----------
+ 
+(1 row)
+
+BEGIN
+ g6_expect 
+-----------
+ 
+(1 row)
+
+COMMIT
+ALTER TABLE
+ g6_expect 
+-----------
+ 
+(1 row)
+
+ALTER TABLE
+VACUUM
+ g6_expect 
+-----------
+ 
+(1 row)
+
+UPDATE 585
+UPDATE 1
+DELETE 1
+ g6_expect 
+-----------
+ 
+(1 row)
+
+BEGIN
+SAVEPOINT
+INSERT 0 1
+ g6_expect 
+-----------
+ 
+(1 row)
+
+ROLLBACK
+ g6_expect 
+-----------
+ 
+(1 row)
+
+COMMIT
+SET
+SET
+SET
+SET
+SET
+SET
+SET
+PREPARE
+DO
+DEALLOCATE
+RESET
+RESET
+RESET
+RESET
+RESET
+RESET
+RESET
+RESET
+RESET
+DROP TABLE
+CREATE ROLE
+SET
+DO
+RESET
+DROP ROLE
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+waiting for server to shut down.... done
+server stopped
+waiting for server to start.... done
+server started
+G7: 20 parallel cases, prepared executions and worker cleanup passed
+Qualification evidence only; no throughput, latency or total-memory claim.
+SET
+CREATE FUNCTION
+CREATE FUNCTION
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+DO
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+ g2_expect 
+-----------
+ 
+(1 row)
+
+waiting for server to shut down.... done
+server stopped

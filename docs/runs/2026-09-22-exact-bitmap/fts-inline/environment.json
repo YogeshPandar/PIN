@@ -1,0 +1,21 @@
+{
+  "platform": "Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43",
+  "cpu_count": 4,
+  "server_build_revision": "unrecorded",
+  "pgoptions": "-c enable_seqscan=off -c enable_bitmapscan=on -c enable_indexscan=off -c enable_indexonlyscan=off -c max_parallel_workers_per_gather=0 -c jit=off -c pin.enable_count_fastpath=off -c pin.enable_count_vm=off -c statement_timeout=120s -c pin.enable_exact_bitmap=on",
+  "settings": {
+    "block_size": "8192",
+    "fsync": "on",
+    "full_page_writes": "on",
+    "server_version": "18.6",
+    "shared_buffers": "16384",
+    "synchronous_commit": "on",
+    "work_mem": "4096"
+  },
+  "samples": 3,
+  "seconds": 3,
+  "clients": 4,
+  "threads": 2,
+  "revision": "bce0749f040577166184dea0b321ed92c06921a3",
+  "dirty": true
+}

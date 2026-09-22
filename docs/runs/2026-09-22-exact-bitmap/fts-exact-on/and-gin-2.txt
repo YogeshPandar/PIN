@@ -1,0 +1,13 @@
+pgbench (18.6)
+transaction type: .artifacts/fts-exact-on/and-gin.sql
+scaling factor: 1
+query mode: prepared
+number of clients: 4
+number of threads: 2
+maximum number of tries: 1
+duration: 3 s
+number of transactions actually processed: 2011
+number of failed transactions: 0 (0.000%)
+latency average = 5.969 ms
+initial connection time = 4.381 ms
+tps = 670.182766 (without initial connection time)

@@ -1058,6 +1058,7 @@ pub struct Postings<'a> {
 impl Iterator for Postings<'_> {
     type Item = Result<OwnerRef>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.failed {
             return None;
@@ -1117,6 +1118,7 @@ impl OwnedPostings {
 impl Iterator for OwnedPostings {
     type Item = Result<OwnerRef>;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.failed {
             return None;
