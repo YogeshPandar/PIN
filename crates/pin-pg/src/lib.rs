@@ -59,7 +59,23 @@ pub unsafe extern "C-unwind" fn _PG_init() {
 #[pg_extern(stable, parallel_unsafe)]
 fn build_stage() -> &'static str {
     compatibility::database();
-    "G7: gated PostgreSQL worker build/count/vacuum and selective compaction"
+    "G8: operational qualification; experimental features remain gated"
+}
+
+#[pg_extern(stable, parallel_unsafe)]
+fn build_profile() -> &'static str {
+    compatibility::database();
+    if cfg!(feature = "test-hooks") {
+        "test-hooks"
+    } else {
+        "normal"
+    }
+}
+
+#[pg_extern(stable, parallel_unsafe)]
+fn build_revision() -> &'static str {
+    compatibility::database();
+    env!("PIN_BUILD_REVISION")
 }
 
 #[pg_extern(stable, parallel_unsafe)]

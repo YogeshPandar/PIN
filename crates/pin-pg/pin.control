@@ -1,4 +1,4 @@
-comment = 'Pin G4 streaming bitmap query execution'
+comment = 'Pin transactional search; experimental G8 qualification build'
 default_version = '0.0.0'
 module_pathname = '$libdir/pin'
 relocatable = false

@@ -39,6 +39,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "CC",
         "AR",
         "CARGO_FEATURE_TEST_HOOKS",
+        "PIN_RELEASE_PACKAGE",
+        "PIN_BUILD_REVISION",
     ] {
         println!("cargo:rerun-if-env-changed={name}");
     }
@@ -55,6 +57,23 @@ fn main() -> Result<(), Box<dyn Error>> {
     ] {
         println!("cargo:rerun-if-changed={name}");
     }
+    // deployment builds must carry a commit and exclude error injection.
+    let deployment = env::var_os("PIN_RELEASE_PACKAGE");
+    if deployment.is_some() && deployment.as_deref() != Some(OsStr::new("1")) {
+        return Err("PIN_RELEASE_PACKAGE must be unset or 1".into());
+    }
+    let revision = env::var("PIN_BUILD_REVISION").unwrap_or_else(|_| "unrecorded".into());
+    let valid_revision = revision.len() == 40
+        && revision.bytes().all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase());
+    if deployment.is_some()
+        && (!valid_revision || env::var_os("CARGO_FEATURE_TEST_HOOKS").is_some())
+    {
+        return Err("deployment builds require a source commit and forbid test-hooks".into());
+    }
+    if revision != "unrecorded" && !valid_revision {
+        return Err("PIN_BUILD_REVISION must be a lowercase 40-digit commit".into());
+    }
+    println!("cargo:rustc-env=PIN_BUILD_REVISION={revision}");
     let host = env::var("HOST")?;
     let target = env::var("TARGET")?;
     if host != target || target != "x86_64-unknown-linux-gnu" {
