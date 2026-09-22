@@ -633,3 +633,27 @@ to 7,022.44 QPS on the 20,000-row fixture; GIN remained much faster. Pure Rust,
 G2, Python, Clippy, normal-package G8 (234/234), and direct-page hard recovery
 checks passed. Self-reviewed; no generalized speed or production claim.
 Generation-safe page-group masks remain a separate design and correctness gate.
+
+## GS01: generation-safe logical groups (2026-09-23)
+
+Modules: `pin-core/src/grouped/` and `pin-kernels/src/grouped.rs`.
+Authority: Rust 1.98.1 (`48a229cea`) checked slices, `as_chunks`, little-endian
+integer conversion, bit operations, `array::from_fn` and `Iterator::min_by_key`.
+Versioned official links, the byte layout, bounds and scalar/merge correctness
+arguments are recorded in [g9-grouped-storage.md](g9-grouped-storage.md).
+The PostgreSQL 18.6 and pgrx 0.19.2 immutable references above remain unchanged;
+this change adds no host API, PostgreSQL pointer, allocation or unsafe operation.
+
+Local obligations: one immutable incarnation per coordinate within a complete
+segment; owner-checked term sealing; no cross-segment partial Boolean matching;
+clear-only shared liveness; source-local liveness filtering before merge union;
+fresh durable host identities and consistent private source snapshots. A full
+membership/liveness open is eager and is not an I/O-pruning performance proof.
+
+Evidence: independent incarnation-set oracle, scalar truth tables, malformed and
+unaligned records, explicit TID reuse, checked sealing, logical merge conflicts,
+cancellation, private-image retirement replay, decoding counters and a golden
+wire image. Executable results are recorded by exact commit in PR #13 and its
+G6 CI artifacts. Self-reviewed only. Physical extent publication, WAL/VACUUM
+integration, migration, PostgreSQL crash qualification and default-off SQL
+activation remain open; the existing owner-aware SQL path is unchanged.
