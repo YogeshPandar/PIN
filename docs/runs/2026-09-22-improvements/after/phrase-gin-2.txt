@@ -1,0 +1,13 @@
+pgbench (18.6)
+transaction type: .artifacts/fts-after/phrase-gin.sql
+scaling factor: 1
+query mode: prepared
+number of clients: 4
+number of threads: 2
+maximum number of tries: 1
+duration: 3 s
+number of transactions actually processed: 12
+number of failed transactions: 0 (0.000%)
+latency average = 1157.933 ms
+initial connection time = 3.844 ms
+tps = 3.454432 (without initial connection time)

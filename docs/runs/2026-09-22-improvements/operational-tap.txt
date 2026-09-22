@@ -1,0 +1,246 @@
+/home/reing/projects/fts0/PIN/tests/tap/001_operational.pl .. 
+# initializing database system by running initdb
+ok 1 - normal library loaded
+ok 2 - library matches candidate commit
+ok 3 - no test SQL, definer privilege or leakproof promise
+ok 4 - enable_count_fastpath remains default off
+ok 5 - enable_count_vm remains default off
+ok 6 - enable_compact_reuse remains default off
+ok 7 - enable_parallel_vacuum remains default off
+ok 8 - parallel count remains opt-in
+ok 9 - fresh installation: actual Pin bitmap plan for alpha
+ok 10 - fresh installation: exact identities for alpha
+ok 11 - fresh installation: actual Pin bitmap plan for beta AND gamma
+ok 12 - fresh installation: exact identities for beta AND gamma
+ok 13 - fresh installation: actual Pin bitmap plan for "alpha beta"
+ok 14 - fresh installation: exact identities for "alpha beta"
+ok 15 - fresh installation: actual Pin bitmap plan for NOT alpha
+ok 16 - fresh installation: exact identities for NOT alpha
+ok 17 - fresh installation: actual Pin bitmap plan for missing
+ok 18 - fresh installation: exact identities for missing
+ok 19 - take a synchronized online backup
+ok 20 - physical backup manifest and WAL verify
+ok 21 - physical restore: actual Pin bitmap plan for alpha
+ok 22 - physical restore: exact identities for alpha
+ok 23 - physical restore: preserved heap rows for alpha
+ok 24 - physical restore: actual Pin bitmap plan for beta AND gamma
+ok 25 - physical restore: exact identities for beta AND gamma
+ok 26 - physical restore: preserved heap rows for beta AND gamma
+ok 27 - physical restore: actual Pin bitmap plan for "alpha beta"
+ok 28 - physical restore: exact identities for "alpha beta"
+ok 29 - physical restore: preserved heap rows for "alpha beta"
+ok 30 - physical restore: actual Pin bitmap plan for NOT alpha
+ok 31 - physical restore: exact identities for NOT alpha
+ok 32 - physical restore: preserved heap rows for NOT alpha
+ok 33 - physical restore: actual Pin bitmap plan for missing
+ok 34 - physical restore: exact identities for missing
+ok 35 - physical restore: preserved heap rows for missing
+ok 36 - standby sequential predicate is available
+ok 37 - standby Pin index execution fails closed: rejected
+ok 38 - standby Pin index execution fails closed: diagnostic
+ok 39 - PITR excludes later commit
+ok 40 - named-target PITR: actual Pin bitmap plan for alpha
+ok 41 - named-target PITR: exact identities for alpha
+ok 42 - named-target PITR: preserved heap rows for alpha
+ok 43 - named-target PITR: actual Pin bitmap plan for beta AND gamma
+ok 44 - named-target PITR: exact identities for beta AND gamma
+ok 45 - named-target PITR: preserved heap rows for beta AND gamma
+ok 46 - named-target PITR: actual Pin bitmap plan for "alpha beta"
+ok 47 - named-target PITR: exact identities for "alpha beta"
+ok 48 - named-target PITR: preserved heap rows for "alpha beta"
+ok 49 - named-target PITR: actual Pin bitmap plan for NOT alpha
+ok 50 - named-target PITR: exact identities for NOT alpha
+ok 51 - named-target PITR: preserved heap rows for NOT alpha
+ok 52 - named-target PITR: actual Pin bitmap plan for missing
+ok 53 - named-target PITR: exact identities for missing
+ok 54 - named-target PITR: preserved heap rows for missing
+ok 55 - standby promotion completed
+ok 56 - promotion: actual Pin bitmap plan for alpha
+ok 57 - promotion: exact identities for alpha
+ok 58 - promotion: preserved heap rows for alpha
+ok 59 - promotion: actual Pin bitmap plan for beta AND gamma
+ok 60 - promotion: exact identities for beta AND gamma
+ok 61 - promotion: preserved heap rows for beta AND gamma
+ok 62 - promotion: actual Pin bitmap plan for "alpha beta"
+ok 63 - promotion: exact identities for "alpha beta"
+ok 64 - promotion: preserved heap rows for "alpha beta"
+ok 65 - promotion: actual Pin bitmap plan for NOT alpha
+ok 66 - promotion: exact identities for NOT alpha
+ok 67 - promotion: preserved heap rows for NOT alpha
+ok 68 - promotion: actual Pin bitmap plan for missing
+ok 69 - promotion: exact identities for missing
+ok 70 - promotion: preserved heap rows for missing
+ok 71 - post-promotion write: actual Pin bitmap plan for alpha
+ok 72 - post-promotion write: exact identities for alpha
+ok 73 - post-promotion write: actual Pin bitmap plan for beta AND gamma
+ok 74 - post-promotion write: exact identities for beta AND gamma
+ok 75 - post-promotion write: actual Pin bitmap plan for "alpha beta"
+ok 76 - post-promotion write: exact identities for "alpha beta"
+ok 77 - post-promotion write: actual Pin bitmap plan for NOT alpha
+ok 78 - post-promotion write: exact identities for NOT alpha
+ok 79 - post-promotion write: actual Pin bitmap plan for missing
+ok 80 - post-promotion write: exact identities for missing
+ok 81 - dump extension and table
+ok 82 - restore with matching installed extension
+ok 83 - logical restore: actual Pin bitmap plan for alpha
+ok 84 - logical restore: exact identities for alpha
+ok 85 - logical restore: preserved heap rows for alpha
+ok 86 - logical restore: actual Pin bitmap plan for beta AND gamma
+ok 87 - logical restore: exact identities for beta AND gamma
+ok 88 - logical restore: preserved heap rows for beta AND gamma
+ok 89 - logical restore: actual Pin bitmap plan for "alpha beta"
+ok 90 - logical restore: exact identities for "alpha beta"
+ok 91 - logical restore: preserved heap rows for "alpha beta"
+ok 92 - logical restore: actual Pin bitmap plan for NOT alpha
+ok 93 - logical restore: exact identities for NOT alpha
+ok 94 - logical restore: preserved heap rows for NOT alpha
+ok 95 - logical restore: actual Pin bitmap plan for missing
+ok 96 - logical restore: exact identities for missing
+ok 97 - logical restore: preserved heap rows for missing
+ok 98 - REINDEX INDEX docs_pin: actual Pin bitmap plan for alpha
+ok 99 - REINDEX INDEX docs_pin: exact identities for alpha
+ok 100 - REINDEX INDEX docs_pin: preserved heap rows for alpha
+ok 101 - REINDEX INDEX docs_pin: actual Pin bitmap plan for beta AND gamma
+ok 102 - REINDEX INDEX docs_pin: exact identities for beta AND gamma
+ok 103 - REINDEX INDEX docs_pin: preserved heap rows for beta AND gamma
+ok 104 - REINDEX INDEX docs_pin: actual Pin bitmap plan for "alpha beta"
+ok 105 - REINDEX INDEX docs_pin: exact identities for "alpha beta"
+ok 106 - REINDEX INDEX docs_pin: preserved heap rows for "alpha beta"
+ok 107 - REINDEX INDEX docs_pin: actual Pin bitmap plan for NOT alpha
+ok 108 - REINDEX INDEX docs_pin: exact identities for NOT alpha
+ok 109 - REINDEX INDEX docs_pin: preserved heap rows for NOT alpha
+ok 110 - REINDEX INDEX docs_pin: actual Pin bitmap plan for missing
+ok 111 - REINDEX INDEX docs_pin: exact identities for missing
+ok 112 - REINDEX INDEX docs_pin: preserved heap rows for missing
+ok 113 - VACUUM FULL docs: actual Pin bitmap plan for alpha
+ok 114 - VACUUM FULL docs: exact identities for alpha
+ok 115 - VACUUM FULL docs: preserved heap rows for alpha
+ok 116 - VACUUM FULL docs: actual Pin bitmap plan for beta AND gamma
+ok 117 - VACUUM FULL docs: exact identities for beta AND gamma
+ok 118 - VACUUM FULL docs: preserved heap rows for beta AND gamma
+ok 119 - VACUUM FULL docs: actual Pin bitmap plan for "alpha beta"
+ok 120 - VACUUM FULL docs: exact identities for "alpha beta"
+ok 121 - VACUUM FULL docs: preserved heap rows for "alpha beta"
+ok 122 - VACUUM FULL docs: actual Pin bitmap plan for NOT alpha
+ok 123 - VACUUM FULL docs: exact identities for NOT alpha
+ok 124 - VACUUM FULL docs: preserved heap rows for NOT alpha
+ok 125 - VACUUM FULL docs: actual Pin bitmap plan for missing
+ok 126 - VACUUM FULL docs: exact identities for missing
+ok 127 - VACUUM FULL docs: preserved heap rows for missing
+ok 128 - CLUSTER docs USING docs_pkey: actual Pin bitmap plan for alpha
+ok 129 - CLUSTER docs USING docs_pkey: exact identities for alpha
+ok 130 - CLUSTER docs USING docs_pkey: preserved heap rows for alpha
+ok 131 - CLUSTER docs USING docs_pkey: actual Pin bitmap plan for beta AND gamma
+ok 132 - CLUSTER docs USING docs_pkey: exact identities for beta AND gamma
+ok 133 - CLUSTER docs USING docs_pkey: preserved heap rows for beta AND gamma
+ok 134 - CLUSTER docs USING docs_pkey: actual Pin bitmap plan for "alpha beta"
+ok 135 - CLUSTER docs USING docs_pkey: exact identities for "alpha beta"
+ok 136 - CLUSTER docs USING docs_pkey: preserved heap rows for "alpha beta"
+ok 137 - CLUSTER docs USING docs_pkey: actual Pin bitmap plan for NOT alpha
+ok 138 - CLUSTER docs USING docs_pkey: exact identities for NOT alpha
+ok 139 - CLUSTER docs USING docs_pkey: preserved heap rows for NOT alpha
+ok 140 - CLUSTER docs USING docs_pkey: actual Pin bitmap plan for missing
+ok 141 - CLUSTER docs USING docs_pkey: exact identities for missing
+ok 142 - CLUSTER docs USING docs_pkey: preserved heap rows for missing
+ok 143 - BEGIN; TRUNCATE docs; ROLLBACK: actual Pin bitmap plan for alpha
+ok 144 - BEGIN; TRUNCATE docs; ROLLBACK: exact identities for alpha
+ok 145 - BEGIN; TRUNCATE docs; ROLLBACK: preserved heap rows for alpha
+ok 146 - BEGIN; TRUNCATE docs; ROLLBACK: actual Pin bitmap plan for beta AND gamma
+ok 147 - BEGIN; TRUNCATE docs; ROLLBACK: exact identities for beta AND gamma
+ok 148 - BEGIN; TRUNCATE docs; ROLLBACK: preserved heap rows for beta AND gamma
+ok 149 - BEGIN; TRUNCATE docs; ROLLBACK: actual Pin bitmap plan for "alpha beta"
+ok 150 - BEGIN; TRUNCATE docs; ROLLBACK: exact identities for "alpha beta"
+ok 151 - BEGIN; TRUNCATE docs; ROLLBACK: preserved heap rows for "alpha beta"
+ok 152 - BEGIN; TRUNCATE docs; ROLLBACK: actual Pin bitmap plan for NOT alpha
+ok 153 - BEGIN; TRUNCATE docs; ROLLBACK: exact identities for NOT alpha
+ok 154 - BEGIN; TRUNCATE docs; ROLLBACK: preserved heap rows for NOT alpha
+ok 155 - BEGIN; TRUNCATE docs; ROLLBACK: actual Pin bitmap plan for missing
+ok 156 - BEGIN; TRUNCATE docs; ROLLBACK: exact identities for missing
+ok 157 - BEGIN; TRUNCATE docs; ROLLBACK: preserved heap rows for missing
+ok 158 - concurrent build remains explicitly unsupported: rejected
+ok 159 - concurrent build remains explicitly unsupported: diagnostic
+ok 160 - unreleased upgrade path is not invented: rejected
+ok 161 - unreleased upgrade path is not invented: diagnostic
+ok 162 - RLS bitmap and sequential rows agree
+ok 163 - RLS count declines custom execution
+ok 164 - ordinary role cannot enable retained-prefix compaction: rejected
+ok 165 - ordinary role cannot enable retained-prefix compaction: diagnostic
+ok 166 - revoked table permission is enforced: rejected
+ok 167 - revoked table permission is enforced: diagnostic
+ok 168 - truncate and replacement identities: actual Pin bitmap plan for alpha
+ok 169 - truncate and replacement identities: exact identities for alpha
+ok 170 - truncate and replacement identities: actual Pin bitmap plan for beta AND gamma
+ok 171 - truncate and replacement identities: exact identities for beta AND gamma
+ok 172 - truncate and replacement identities: actual Pin bitmap plan for "alpha beta"
+ok 173 - truncate and replacement identities: exact identities for "alpha beta"
+ok 174 - truncate and replacement identities: actual Pin bitmap plan for NOT alpha
+ok 175 - truncate and replacement identities: exact identities for NOT alpha
+ok 176 - truncate and replacement identities: actual Pin bitmap plan for missing
+ok 177 - truncate and replacement identities: exact identities for missing
+ok 178 - old terms cannot survive truncate
+ok 179 - negation includes empty documents but not nulls
+ok 180 - unclean restart: actual Pin bitmap plan for alpha
+ok 181 - unclean restart: exact identities for alpha
+ok 182 - unclean restart: actual Pin bitmap plan for beta AND gamma
+ok 183 - unclean restart: exact identities for beta AND gamma
+ok 184 - unclean restart: actual Pin bitmap plan for "alpha beta"
+ok 185 - unclean restart: exact identities for "alpha beta"
+ok 186 - unclean restart: actual Pin bitmap plan for NOT alpha
+ok 187 - unclean restart: exact identities for NOT alpha
+ok 188 - unclean restart: actual Pin bitmap plan for missing
+ok 189 - unclean restart: exact identities for missing
+ok 190 - drop removes access method
+ok 191 - drop preserves heap source of truth
+ok 192 - recreate after drop: actual Pin bitmap plan for alpha
+ok 193 - recreate after drop: exact identities for alpha
+ok 194 - recreate after drop: actual Pin bitmap plan for beta AND gamma
+ok 195 - recreate after drop: exact identities for beta AND gamma
+ok 196 - recreate after drop: actual Pin bitmap plan for "alpha beta"
+ok 197 - recreate after drop: exact identities for "alpha beta"
+ok 198 - recreate after drop: actual Pin bitmap plan for NOT alpha
+ok 199 - recreate after drop: exact identities for NOT alpha
+ok 200 - recreate after drop: actual Pin bitmap plan for missing
+ok 201 - recreate after drop: exact identities for missing
+1..201
+ok
+/home/reing/projects/fts0/PIN/tests/tap/002_logical.pl ...... 
+# initializing database system by running initdb
+# initializing database system by running initdb
+ok 1 - logical node uses normal library
+ok 2 - logical node uses normal library
+ok 3 - initial copy: subscriber uses local Pin index
+ok 4 - initial copy: exact local identities for alpha
+ok 5 - initial copy: subscriber uses local Pin index
+ok 6 - initial copy: exact local identities for beta
+ok 7 - initial copy: subscriber uses local Pin index
+ok 8 - initial copy: exact local identities for NOT alpha
+ok 9 - replica-identity update and delete: subscriber uses local Pin index
+ok 10 - replica-identity update and delete: exact local identities for alpha
+ok 11 - replica-identity update and delete: subscriber uses local Pin index
+ok 12 - replica-identity update and delete: exact local identities for beta
+ok 13 - replica-identity update and delete: subscriber uses local Pin index
+ok 14 - replica-identity update and delete: exact local identities for NOT alpha
+ok 15 - subscriber vacuum: subscriber uses local Pin index
+ok 16 - subscriber vacuum: exact local identities for alpha
+ok 17 - subscriber vacuum: subscriber uses local Pin index
+ok 18 - subscriber vacuum: exact local identities for beta
+ok 19 - subscriber vacuum: subscriber uses local Pin index
+ok 20 - subscriber vacuum: exact local identities for NOT alpha
+ok 21 - replicated truncate: subscriber uses local Pin index
+ok 22 - replicated truncate: exact local identities for alpha
+ok 23 - replicated truncate: subscriber uses local Pin index
+ok 24 - replicated truncate: exact local identities for beta
+ok 25 - replicated truncate: subscriber uses local Pin index
+ok 26 - replicated truncate: exact local identities for NOT alpha
+ok 27 - reused subscriber identity: subscriber uses local Pin index
+ok 28 - reused subscriber identity: exact local identities for alpha
+ok 29 - reused subscriber identity: subscriber uses local Pin index
+ok 30 - reused subscriber identity: exact local identities for beta
+ok 31 - reused subscriber identity: subscriber uses local Pin index
+ok 32 - reused subscriber identity: exact local identities for NOT alpha
+ok 33 - subscription cleanup removes its publisher slot
+1..33
+ok
+All tests successful.
+Files=2, Tests=234,  5 wallclock secs ( 0.03 usr  0.00 sys +  1.82 cusr  1.25 csys =  3.10 CPU)
+Result: PASS

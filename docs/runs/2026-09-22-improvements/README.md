@@ -38,5 +38,38 @@ source, all 63 checks passed. Native runtime tests use the compiled library.
 
 ## Performance
 
-Repeated normal-build SQL comparison is being collected separately. No TIN
-measurement or production-readiness claim is made by these qualification tests.
+Normal release baseline: 0cf93c0776619dcae17fa669f549bed10b50910e.
+Normal release changed build: 895d271a543ea40015226f53e62a941fd3c95805.
+The baseline library was rebuilt with the old matching.rs; other executable
+source was unchanged. Benchmark harness changes are separate from that binary.
+
+Same 20,000-document G6 corpus including 20 rareplanet rows, four clients,
+two threads, serial bitmap plans, three three-second samples with one-second
+warmup per sample and alternating engine order. Both full before/after phases
+ran sequentially. Data on tmpfs; PostgreSQL assertions and durability settings
+on. Four virtual CPUs, Intel Xeon Platinum 8581C. This shared development VM and
+short runs do not establish statistical significance or production throughput.
+
+| Workload | Pin before QPS | Pin after QPS | GIN after QPS |
+|---|---:|---:|---:|
+| Common term | 11.72 | 12.85 | 908.76 |
+| Rare term | 7014.73 | 7615.67 | 63009.37 |
+| AND | 11.42 | 11.57 | 769.35 |
+| OR | 11.16 | 11.43 | 863.36 |
+| Phrase | 14.91 | 15.04 | 3.32 |
+
+Values are medians of per-run throughput. Common-term median per-run p95 changed
+from 356.980 to 321.405 ms. Rare-term GIN control varied by 11%, so the observed
+8.6% Pin rare-term change is inconclusive. Compound paths were unchanged.
+
+All five cases passed exact cross-engine row-identity comparison in both phases,
+with zero benchmark failures. Plans were checked for the intended indexes.
+Raw summaries, SQL, plans and per-sample latency statistics are in before/after.
+Transaction logs remain in .artifacts/fts-before and .artifacts/fts-after;
+their hashes are archived here. Text qualification logs trim trailing whitespace.
+No TIN measurement or production-readiness claim is made.
+
+Normal-build G8 completed all 234 assertions after an initial disk-quota failure;
+removing disposable debug build artifacts freed space for the successful rerun.
+See operational-tap.txt. This is separate from the test-hooks fault qualification.
+
