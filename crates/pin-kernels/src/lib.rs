@@ -2,6 +2,7 @@
 //! CPU selection is process-local; no PostgreSQL pointers or shared state enter.
 //! Contracts and independent review gate: docs/g6-api-evidence.md.
 
+pub mod grouped;
 mod scalar;
 #[cfg(all(target_arch = "x86_64", not(miri)))]
 mod x86_avx2;
