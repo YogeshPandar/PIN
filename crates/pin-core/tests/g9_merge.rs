@@ -45,7 +45,11 @@ impl Fixture {
             bytes.truncate(len);
             bytes
         });
-        Self { owners, live, terms }
+        Self {
+            owners,
+            live,
+            terms,
+        }
     }
 
     fn retire(&mut self, member: Member) {
@@ -59,7 +63,10 @@ impl Fixture {
 
     fn matches(&self, query: &[Node]) -> BTreeSet<(u64, u64)> {
         let group = self.group();
-        let terms = self.terms.each_ref().map(|bytes| Bitmap::open(bytes).unwrap());
+        let terms = self
+            .terms
+            .each_ref()
+            .map(|bytes| Bitmap::open(bytes).unwrap());
         let mut matches = BTreeSet::new();
         evaluate(
             &group,
@@ -105,7 +112,11 @@ fn merge(sources: &[&Fixture]) -> Fixture {
         bytes.truncate(len);
         bytes
     });
-    Fixture { owners, live, terms }
+    Fixture {
+        owners,
+        live,
+        terms,
+    }
 }
 
 #[test]
@@ -161,7 +172,11 @@ fn logical_merge_preserves_full_boolean_results_and_duplicate_coverage() {
         vec![Node::Term(0), Node::Term(1), Node::Or(0, 1)],
         vec![Node::Term(0), Node::Term(1), Node::Difference(0, 1)],
     ] {
-        let expected = first.matches(&query).union(&second.matches(&query)).copied().collect();
+        let expected = first
+            .matches(&query)
+            .union(&second.matches(&query))
+            .copied()
+            .collect();
         assert_eq!(merged.matches(&query), expected);
     }
 }
@@ -183,10 +198,15 @@ fn absent_terms_empty_sources_and_capacity_failures_are_explicit() {
     assert!(plan.encode_liveness(&mut output, || Ok(())).is_err());
     assert_eq!(output, [0xa5; HEADER_BYTES]);
     let term = Some(Bitmap::open(&fixture.terms[0]).unwrap());
-    assert!(plan.encode_posting(&[term], &mut output, || Ok(())).is_err());
+    assert!(
+        plan.encode_posting(&[term], &mut output, || Ok(()))
+            .is_err()
+    );
     assert!(plan.encode_posting(&[], &mut output, || Ok(())).is_err());
     assert_eq!(output, [0xa5; HEADER_BYTES]);
-    let len = plan.encode_posting(&[None], &mut output, || Ok(())).unwrap();
+    let len = plan
+        .encode_posting(&[None], &mut output, || Ok(()))
+        .unwrap();
     assert_eq!(len, HEADER_BYTES);
     assert_eq!(*Bitmap::open(&output).unwrap().pages(), [0; 4]);
 }
@@ -204,14 +224,19 @@ fn malformed_or_foreign_term_fails_before_target_mutation() {
     let mut output = [0xa5; 256];
     for bytes in [&broken, &foreign.terms[0], &fixture.live] {
         let term = Bitmap::open(bytes).unwrap();
-        assert!(plan.encode_posting(&[Some(term)], &mut output, || Ok(())).is_err());
+        assert!(
+            plan.encode_posting(&[Some(term)], &mut output, || Ok(()))
+                .is_err()
+        );
         assert_eq!(output, [0xa5; 256]);
     }
 }
 
 #[test]
 fn cancellation_reaches_long_retired_runs_and_aborts_private_outputs() {
-    let docs: Vec<_> = (1..=512).map(|offset| member(0, offset, u64::from(offset))).collect();
+    let docs: Vec<_> = (1..=512)
+        .map(|offset| member(0, offset, u64::from(offset)))
+        .collect();
     let mut fixture = Fixture::new(1, &docs, [&docs, &[]]);
     for &doc in &docs {
         fixture.retire(doc);
@@ -221,15 +246,28 @@ fn cancellation_reaches_long_retired_runs_and_aborts_private_outputs() {
     let mut checks = 0;
     let plan = MergePlan::new(key(2), &refs, || {
         checks += 1;
-        if checks == 3 { Err(Error::Limit("cancelled")) } else { Ok(()) }
+        if checks == 3 {
+            Err(Error::Limit("cancelled"))
+        } else {
+            Ok(())
+        }
     });
     assert!(matches!(plan, Err(Error::Limit("cancelled"))));
     assert_eq!(checks, 3);
     let plan = MergePlan::new(key(2), &refs, || Ok(())).unwrap();
     let mut output = [0xa5; HEADER_BYTES];
     let cancel = || Err(Error::Limit("cancelled"));
-    assert_eq!(plan.encode_members(&mut output, cancel), Err(Error::Limit("cancelled")));
-    assert_eq!(plan.encode_liveness(&mut output, cancel), Err(Error::Limit("cancelled")));
-    assert_eq!(plan.encode_posting(&[None], &mut output, cancel), Err(Error::Limit("cancelled")));
+    assert_eq!(
+        plan.encode_members(&mut output, cancel),
+        Err(Error::Limit("cancelled"))
+    );
+    assert_eq!(
+        plan.encode_liveness(&mut output, cancel),
+        Err(Error::Limit("cancelled"))
+    );
+    assert_eq!(
+        plan.encode_posting(&[None], &mut output, cancel),
+        Err(Error::Limit("cancelled"))
+    );
     assert_eq!(output, [0xa5; HEADER_BYTES]);
 }

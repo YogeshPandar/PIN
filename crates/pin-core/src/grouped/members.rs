@@ -293,8 +293,11 @@ pub fn retire(members: &Members<'_>, live: &mut [u8], member: Member) -> Result<
         return Err(Error::InvalidState);
     }
     let page = member.root.block() as u8;
-    view.offsets(page)?;
+    let current = view.offsets(page)?;
     let all = members.page_offsets(page)?;
+    if current.iter().zip(all).any(|(&live, all)| live & !all != 0) {
+        return Err(Error::InvalidState);
+    }
     let (start, len) = view.span(page).ok_or(Error::InvalidState)?;
     if len != bitmap_len(members.key(), &all)? {
         return Err(Error::InvalidState);

@@ -9,7 +9,9 @@ fn scalar_truth_tables_cover_every_page_and_offset_bit() {
                 for live in [false, true] {
                     let make = |set| {
                         let mut words = [0; 8];
-                        if set { words[bit / 64] = 1 << (bit % 64); }
+                        if set {
+                            words[bit / 64] = 1 << (bit % 64);
+                        }
                         words
                     };
                     for (op, expected) in [
@@ -17,7 +19,10 @@ fn scalar_truth_tables_cover_every_page_and_offset_bit() {
                         (BitmapOp::Union, (left || right) && live),
                         (BitmapOp::Difference, left && !right && live),
                     ] {
-                        assert_eq!(offsets(op, &make(left), &make(right), &make(live)), make(expected));
+                        assert_eq!(
+                            offsets(op, &make(left), &make(right), &make(live)),
+                            make(expected)
+                        );
                     }
                 }
             }
@@ -27,7 +32,10 @@ fn scalar_truth_tables_cover_every_page_and_offset_bit() {
         let mut mask = [0; 4];
         mask[page / 64] = 1 << (page % 64);
         assert_eq!(candidates(BitmapOp::Difference, &mask, &mask, &mask), mask);
-        assert_eq!(candidates(BitmapOp::Intersection, &mask, &[0; 4], &mask), [0; 4]);
+        assert_eq!(
+            candidates(BitmapOp::Intersection, &mask, &[0; 4], &mask),
+            [0; 4]
+        );
         assert_eq!(candidates(BitmapOp::Union, &mask, &[0; 4], &mask), mask);
     }
 }
@@ -41,5 +49,8 @@ fn page_iteration_is_ordered_and_fused_including_word_boundaries() {
     assert_eq!(pages.next(), None);
     assert_eq!(pages.next(), None);
     assert_eq!(Pages::new([0; 4]).next(), None);
-    assert_eq!(Pages::new([1 << 63, 1, 0, 1 << 63]).collect::<Vec<_>>(), vec![63, 64, 255]);
+    assert_eq!(
+        Pages::new([1 << 63, 1, 0, 1 << 63]).collect::<Vec<_>>(),
+        vec![63, 64, 255]
+    );
 }

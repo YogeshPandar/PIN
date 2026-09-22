@@ -38,7 +38,9 @@ impl<'a, 'data> MergePlan<'a, 'data> {
                 || source_key.relation() != key.relation()
                 || source_key.layout() != key.layout()
                 || source_key.segment() == key.segment()
-                || sources[..index].iter().any(|prior| prior.key() == source_key)
+                || sources[..index]
+                    .iter()
+                    .any(|prior| prior.key() == source_key)
             {
                 return Err(Error::InvalidState);
             }
@@ -160,7 +162,11 @@ impl<'a, 'data> MergePlan<'a, 'data> {
         let mut mask = [0; 4];
         for page in Pages::new(pages) {
             interrupt()?;
-            if self.term_offsets(terms, page)?.iter().any(|&word| word != 0) {
+            if self
+                .term_offsets(terms, page)?
+                .iter()
+                .any(|&word| word != 0)
+            {
                 super::insert(&mut mask, page);
             }
         }
@@ -246,14 +252,16 @@ fn visit(
             return Ok(());
         };
         for cursor in cursors[..sources.len()].iter_mut().flatten() {
-            if let Some(current) = cursor.current {
-                if current.root == member.root {
-                    if current.incarnation != member.incarnation {
-                        return Err(Error::InvalidState);
-                    }
-                    cursor.advance(interrupt)?;
-                }
+            let Some(current) = cursor.current else {
+                continue;
+            };
+            if current.root != member.root {
+                continue;
             }
+            if current.incarnation != member.incarnation {
+                return Err(Error::InvalidState);
+            }
+            cursor.advance(interrupt)?;
         }
         emit(member)?;
     }
