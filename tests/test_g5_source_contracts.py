@@ -96,7 +96,7 @@ class CountSourceContracts(unittest.TestCase):
         for name in ("CountOwnerPinned", "CountBeforeVisibility", "CountAfterVisibility"):
             self.assertIn(name, module)
             self.assertIn(name, self.rust)
-        self.assertIn("(1..=15)", hooks)
+        self.assertIn("(1..=16)", hooks)
 
 
 if __name__ == "__main__":

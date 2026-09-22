@@ -551,3 +551,35 @@ software-profiled varint and posting iterator boundaries. Full pure tests pass;
 SQL identity checks and repeated measurements are archived under
 `docs/runs/2026-09-22-exact-bitmap`. No FFI, storage or visibility contract changes.
 Self-reviewed; no speed guarantee outside the measured workload.
+
+## DT01: experimental direct coordinates in sealed postings (2026-09-22)
+
+Before implementation, re-read PostgreSQL 18 index-scanning/index-locking and
+immutable upstream 724edf9bde9d356724ad384a2e196edc3c9f80f7
+`src/backend/access/heap/vacuumlazy.c`: lazy_vacuum calls index bulk deletion
+before lazy_vacuum_heap_rel permits LP_DEAD slot reuse. Cleanup/compaction occurs
+later and cannot substitute for bulk deletion. Existing MVCC-only bitmap reads
+retain heap snapshot checks, including HOT. Generic WAL commits still use the
+existing synchronous private-page API and at most three pages per record.
+
+The experimental tag-8 page contains copied heap coordinates and monotonically
+cleared local live flags beside ordered incarnation-qualified owner references.
+Compaction publishes these only from live, published canonical owners while
+holding the existing exclusive structural and writer barriers. A bulk-delete
+pass must clear all copies of removed owners before returning. Interrupted
+passes may leave stale copies but cannot authorize heap reuse; retries clear
+copies from durable canonical liveness even when no new owner is removed.
+This duplicates liveness per term and increases maintenance work; it is a
+measurable bridge toward shared per-segment liveness, not the final layout.
+
+Ordinary sealed and mutable pages remain supported by this binary. Older
+binaries reject the new page tag; REINDEX with direct segment creation disabled
+is required before downgrade. This experiment is default-off. No new unsafe
+operation, host pointer, visibility shortcut, or external dependency is added.
+Safe checked slice operations and existing checked delta codecs bound all page
+work. pgrx 0.19.2 static SUSET GUC registration follows AM02. Cargo.lock is fixed.
+
+Required evidence: codec corruption/truncation, Boolean oracle equality, mixed
+mutable/direct chains, forced heap-coordinate reuse, interrupted bulk deletion
+and compaction at every durable stage, PostgreSQL mutation/recovery tests and
+matched SQL benchmarks. Self-review only; experimental status remains explicit.

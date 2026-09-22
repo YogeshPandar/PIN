@@ -191,6 +191,7 @@ impl<'q> Plan<'q> {
                 if cursor != UNUSED && duplicate == text {
                     self.cursors[cursor] = Cursor {
                         current: Some(first),
+                        direct: None,
                         chain: Some(Chain {
                             reference,
                             block: head,
@@ -397,6 +398,7 @@ fn combine<'q>(nodes: &mut Vec<Node<'q>>, left: usize, right: usize, and: bool) 
 
 struct Cursor {
     current: Option<OwnerRef>,
+    direct: Option<Option<RootTid>>,
     chain: Option<Chain>,
 }
 
@@ -413,6 +415,7 @@ impl Cursor {
     fn empty() -> Self {
         Self {
             current: None,
+            direct: None,
             chain: None,
         }
     }
@@ -433,6 +436,10 @@ impl Cursor {
                 .as_mut()
                 .ok_or(Error::InvalidState)?
                 .advance(store)?;
+            self.direct = match self.chain.as_ref().and_then(|chain| chain.page.as_ref()) {
+                Some(page) if self.current.is_some() => page.current_direct(store.layout())?,
+                _ => None,
+            };
         }
         Ok(self.current)
     }
@@ -613,7 +620,16 @@ pub fn scan_query_with_recheck<S: PageStore>(
             return Err(Error::InvalidState);
         }
         previous = Some(owner);
-        if let Some(root) = resolve(store, &mut cache, owner)? {
+        let direct = plan.cursors.iter().find_map(|cursor| {
+            (cursor.current == Some(owner))
+                .then_some(cursor.direct)
+                .flatten()
+        });
+        let root = match direct {
+            Some(root) => root,
+            None => resolve(store, &mut cache, owner)?,
+        };
+        if let Some(root) = root {
             emit(root, recheck)?;
             count = count
                 .checked_add(1)

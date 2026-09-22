@@ -78,6 +78,24 @@ pub fn vacuum<S: PageStore>(
         match page.kind() {
             PageKind::Zero => has_zero = true,
             PageKind::Free => stats.free_pages += 1,
+            PageKind::DirectPostings => {
+                // bulk deletion must retire every copied coordinate before heap reuse.
+                let mut updated = page.clone();
+                let mut changed = false;
+                let mut cache = None;
+                for (slot, reference) in page.posting_refs()?.enumerate() {
+                    if page.direct_root(slot as u16, store.layout())?.is_some()
+                        && super::reader::resolve(store, &mut cache, reference?)?.is_none()
+                    {
+                        updated.remove_direct_root(slot as u16, store.layout())?;
+                        changed = true;
+                    }
+                }
+                if changed {
+                    store.commit(&[&updated])?;
+                    store.event(Stage::DirectRemoved)?;
+                }
+            }
             PageKind::Fragment => {
                 let (reference, _, _) = page.fragment_data()?;
                 let owners = load(store, reference.page, PageKind::Owners)?;
@@ -163,7 +181,7 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
                     }
                 }
             }
-            PageKind::Postings | PageKind::SealedPostings => {
+            PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings => {
                 if page.posting_term()?.page == target {
                     return Err(Error::InvalidState);
                 }

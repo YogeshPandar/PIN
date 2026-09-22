@@ -17,6 +17,7 @@ pub enum CompactMode {
     #[default]
     Copy,
     RetainSealedPrefix,
+    DirectTid,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -33,6 +34,7 @@ pub struct CompactStats {
 #[derive(Default)]
 struct ChainStats {
     mutable_pages: u32,
+    indirect_pages: u32,
     dead: u64,
     prefix: Option<RetainedPrefix>,
 }
@@ -99,11 +101,14 @@ pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Resu
                     Some(entry.first),
                     true,
                 )?;
-                if summary.mutable_pages == 0 && summary.dead == 0 {
+                if summary.mutable_pages == 0
+                    && summary.dead == 0
+                    && !(mode == CompactMode::DirectTid && summary.indirect_pages != 0)
+                {
                     continue;
                 }
                 let prefix = match mode {
-                    CompactMode::Copy => None,
+                    CompactMode::Copy | CompactMode::DirectTid => None,
                     CompactMode::RetainSealedPrefix => summary.prefix,
                 };
                 let (written, reused) = rewrite(
@@ -113,6 +118,7 @@ pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Resu
                     entry.head,
                     entry.tail,
                     prefix,
+                    mode == CompactMode::DirectTid,
                 )?;
                 stats.retained_pages = stats
                     .retained_pages
@@ -172,6 +178,7 @@ fn inspect<S: PageStore>(
     loop {
         let page = load_posting(store, block, term)?;
         stats.mutable_pages += u32::from(page.kind() == PageKind::Postings);
+        stats.indirect_pages += u32::from(page.kind() != PageKind::DirectPostings);
         let mut page_live = page.kind() == PageKind::SealedPostings;
         for reference in page.posting_refs()? {
             let reference = reference?;
@@ -221,6 +228,7 @@ fn rewrite<S: PageStore>(
     head: u32,
     tail: u32,
     prefix: Option<RetainedPrefix>,
+    direct: bool,
 ) -> Result<(u32, u32)> {
     if meta.rewrite_journal()?.is_some() {
         return Err(Error::InvalidState);
@@ -236,11 +244,15 @@ fn rewrite<S: PageStore>(
         let page = load_posting(store, block, term)?;
         for reference in page.posting_refs()? {
             let reference = reference?;
-            if resolve(store, &mut cache, reference)?.is_none() {
+            let Some(root) = resolve(store, &mut cache, reference)? else {
                 continue;
-            }
+            };
             if let Some(builder) = output.as_mut() {
-                if builder.push(reference)? {
+                if if direct {
+                    builder.push_direct(reference, root)?
+                } else {
+                    builder.push(reference)?
+                } {
                     continue;
                 }
                 let full = output.take().ok_or(Error::InvalidState)?.finish()?;
@@ -248,8 +260,17 @@ fn rewrite<S: PageStore>(
                 written += 1;
             }
             reused += u32::from(meta.free_head()? != NO_BLOCK);
-            let mut builder = SealedBuilder::new(output_block(store, meta)?, term)?;
-            if !builder.push(reference)? {
+            let block = output_block(store, meta)?;
+            let mut builder = if direct {
+                SealedBuilder::new_direct(block, term)?
+            } else {
+                SealedBuilder::new(block, term)?
+            };
+            if !(if direct {
+                builder.push_direct(reference, root)?
+            } else {
+                builder.push(reference)?
+            }) {
                 return Err(Error::InvalidState);
             }
             output = Some(builder);
@@ -326,7 +347,12 @@ fn persist_output<S: PageStore>(store: &mut S, meta: &mut Page, page: Page) -> R
         }
         Some(journal) if journal.phase == RewritePhase::Building => {
             let mut previous = load_posting(store, journal.tail, page.posting_term()?)?;
-            if previous.next()? != NO_BLOCK || previous.kind() != PageKind::SealedPostings {
+            if previous.next()? != NO_BLOCK
+                || !matches!(
+                    previous.kind(),
+                    PageKind::SealedPostings | PageKind::DirectPostings
+                )
+            {
                 return Err(Error::InvalidState);
             }
             previous.set_next(page.block())?;

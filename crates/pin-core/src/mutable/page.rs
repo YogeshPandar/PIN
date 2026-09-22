@@ -33,6 +33,7 @@ pub enum PageKind {
     Dictionary,
     Postings,
     SealedPostings,
+    DirectPostings,
     Fragment,
     Free,
 }
@@ -196,6 +197,7 @@ impl Page {
             5 => PageKind::Fragment,
             6 => PageKind::Free,
             7 => PageKind::SealedPostings,
+            8 => PageKind::DirectPostings,
             _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
         };
         if reader.u8()? != 0 || reader.u32()? != block {
@@ -218,6 +220,7 @@ impl Page {
             PageKind::Dictionary => 3,
             PageKind::Postings => 4,
             PageKind::SealedPostings => 7,
+            PageKind::DirectPostings => 8,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -397,13 +400,18 @@ impl Page {
                     term?;
                 }
             }
-            PageKind::Postings | PageKind::SealedPostings => {
+            PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings => {
                 let term = self.posting_term()?;
                 if !block_valid(term.page) || usize::from(term.offset) < HEADER {
                     return Err(corrupt(16));
                 }
                 for reference in self.posting_refs()? {
                     reference?;
+                }
+                if self.kind == PageKind::DirectPostings {
+                    for slot in 0..self.u16(22)? {
+                        self.direct_root(slot, layout)?;
+                    }
                 }
             }
             PageKind::Fragment => {
@@ -783,7 +791,10 @@ impl Page {
     }
 
     pub fn posting_term(&self) -> Result<TermRef> {
-        if !matches!(self.kind, PageKind::Postings | PageKind::SealedPostings) {
+        if !matches!(
+            self.kind,
+            PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings
+        ) {
             return Err(corrupt(6));
         }
         if self.kind == PageKind::Postings && self.u16(22)? != 0 {
@@ -797,7 +808,7 @@ impl Page {
 
     pub fn posting_refs(&self) -> Result<Postings<'_>> {
         self.posting_term()?;
-        let compressed = self.kind == PageKind::SealedPostings;
+        let compressed = self.kind != PageKind::Postings;
         let count = if compressed {
             let count = self.u16(22)?;
             if count == 0 || usize::from(count) > (self.len - POSTING_HEADER) / 3 {
@@ -811,12 +822,54 @@ impl Page {
             ((self.len - POSTING_HEADER) / 16) as u16
         };
         Ok(Postings {
-            reader: Reader::new(&self.bytes()[POSTING_HEADER..]),
+            reader: Reader::new(
+                self.bytes()
+                    .get(self.posting_start()?..)
+                    .ok_or_else(|| corrupt(22))?,
+            ),
             compressed,
             remaining: count,
             previous: None,
             failed: false,
         })
+    }
+
+    fn posting_start(&self) -> Result<usize> {
+        Ok(POSTING_HEADER
+            + if self.kind == PageKind::DirectPostings {
+                usize::from(self.u16(22)?) * 8
+            } else {
+                0
+            })
+    }
+
+    /// Reads a local live coordinate; it never certifies snapshot visibility.
+    pub fn direct_root(&self, slot: u16, layout: HeapLayout) -> Result<Option<RootTid>> {
+        self.require(PageKind::DirectPostings)?;
+        if slot >= self.u16(22)? {
+            return Err(corrupt(22));
+        }
+        let offset = POSTING_HEADER + usize::from(slot) * 8;
+        let bytes = self
+            .bytes()
+            .get(offset..offset + 8)
+            .ok_or_else(|| corrupt(offset))?;
+        let mut reader = Reader::new(bytes);
+        let block = reader.u32()?;
+        let offset = reader.u16()?;
+        let live = reader.u8()?;
+        if live > 1 || reader.u8()? != 0 {
+            return Err(corrupt(POSTING_HEADER));
+        }
+        let root = RootTid::new(block, offset, layout).map_err(|_| corrupt(POSTING_HEADER))?;
+        Ok((live == 1).then_some(root))
+    }
+
+    /// Clears a copied coordinate before the host can recycle its heap slot.
+    pub fn remove_direct_root(&mut self, slot: u16, layout: HeapLayout) -> Result<()> {
+        self.direct_root(slot, layout)?;
+        self.bytes[POSTING_HEADER + usize::from(slot) * 8 + 6] = 0;
+        Ok(())
     }
 
     pub fn append_posting(&mut self, owner: OwnerRef) -> Result<bool> {
@@ -903,8 +956,42 @@ impl SealedBuilder {
         })
     }
 
+    pub fn new_direct(block: u32, term: TermRef) -> Result<Self> {
+        let mut builder = Self::new(block, term)?;
+        builder.page.kind = PageKind::DirectPostings;
+        builder.page.bytes[6] = 8;
+        Ok(builder)
+    }
+
+    /// Builds parallel fixed coordinate and compressed identity streams.
+    pub fn push_direct(&mut self, owner: OwnerRef, root: RootTid) -> Result<bool> {
+        self.page.require(PageKind::DirectPostings)?;
+        let mut bytes = [0u8; 20];
+        let mut writer = Writer::new(&mut bytes);
+        write_delta(&mut writer, owner, self.previous)?;
+        let len = writer.len();
+        if self.page.len + len + 8 > CAPACITY {
+            return Ok(false);
+        }
+        let start = POSTING_HEADER + usize::from(self.count) * 8;
+        self.page.bytes.copy_within(start..self.page.len, start + 8);
+        let mut coordinate = Writer::new(&mut self.page.bytes[start..start + 8]);
+        coordinate.u32(root.block())?;
+        coordinate.u16(root.offset())?;
+        coordinate.u8(1)?;
+        coordinate.u8(0)?;
+        self.page.len += 8;
+        self.page.bytes[self.page.len..self.page.len + len].copy_from_slice(&bytes[..len]);
+        self.page.len += len;
+        self.count += 1;
+        self.page.put_u16(22, self.count)?;
+        self.previous = Some(owner);
+        Ok(true)
+    }
+
     /// Returns false without mutation when this page has no room for the owner.
     pub fn push(&mut self, owner: OwnerRef) -> Result<bool> {
+        self.page.require(PageKind::SealedPostings)?;
         let mut bytes = [0u8; 20];
         let mut writer = Writer::new(&mut bytes);
         write_delta(&mut writer, owner, self.previous)?;
@@ -1100,9 +1187,10 @@ impl OwnedPostings {
     pub(super) fn new(page: Page) -> Result<Self> {
         let postings = page.posting_refs()?;
         let (compressed, remaining) = (postings.compressed, postings.remaining);
+        let offset = page.posting_start()?;
         Ok(Self {
             page,
-            offset: POSTING_HEADER,
+            offset,
             compressed,
             remaining,
             previous: None,
@@ -1112,6 +1200,18 @@ impl OwnedPostings {
 
     pub(super) fn page(&self) -> &Page {
         &self.page
+    }
+
+    pub(super) fn current_direct(&self, layout: HeapLayout) -> Result<Option<Option<RootTid>>> {
+        if self.page.kind != PageKind::DirectPostings {
+            return Ok(None);
+        }
+        let slot = self
+            .page
+            .u16(22)?
+            .checked_sub(self.remaining + 1)
+            .ok_or(Error::InvalidState)?;
+        Ok(Some(self.page.direct_root(slot, layout)?))
     }
 }
 

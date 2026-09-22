@@ -46,6 +46,7 @@ pub enum Stage {
     CountOwnerPinned = 13,
     CountBeforeVisibility = 14,
     CountAfterVisibility = 15,
+    DirectRemoved = 16,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
