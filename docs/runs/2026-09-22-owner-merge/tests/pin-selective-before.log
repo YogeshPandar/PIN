@@ -1,0 +1,6 @@
+selective_and-pin sample=0 tps=4462.782728
+selective_and-gin sample=0 tps=28998.155722
+selective_and-gin sample=1 tps=29501.145995
+selective_and-pin sample=1 tps=4538.786907
+selective_and-pin sample=2 tps=4460.453648
+selective_and-gin sample=2 tps=30168.483449

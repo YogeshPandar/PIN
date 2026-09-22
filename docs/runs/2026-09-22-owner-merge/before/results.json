@@ -1,0 +1,140 @@
+[
+  {
+    "case": "selective_and-pin",
+    "sample": 0,
+    "tps": 4462.782728,
+    "latency": {
+      "files": 2,
+      "lines": 13375,
+      "service_latency": {
+        "count": 13375,
+        "mean_us": 892.0265420560747,
+        "p50_us": 873,
+        "p95_us": 1021,
+        "p99_us": 1523,
+        "max_us": 3162
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  },
+  {
+    "case": "selective_and-gin",
+    "sample": 0,
+    "tps": 28998.155722,
+    "latency": {
+      "files": 2,
+      "lines": 86887,
+      "service_latency": {
+        "count": 86887,
+        "mean_us": 135.21176930956298,
+        "p50_us": 119,
+        "p95_us": 238,
+        "p99_us": 314,
+        "max_us": 1989
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  },
+  {
+    "case": "selective_and-gin",
+    "sample": 1,
+    "tps": 29501.145995,
+    "latency": {
+      "files": 2,
+      "lines": 88388,
+      "service_latency": {
+        "count": 88388,
+        "mean_us": 132.98402498076663,
+        "p50_us": 115,
+        "p95_us": 243,
+        "p99_us": 319,
+        "max_us": 1836
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  },
+  {
+    "case": "selective_and-pin",
+    "sample": 1,
+    "tps": 4538.786907,
+    "latency": {
+      "files": 2,
+      "lines": 13602,
+      "service_latency": {
+        "count": 13602,
+        "mean_us": 878.2333480370534,
+        "p50_us": 865,
+        "p95_us": 1010,
+        "p99_us": 1284,
+        "max_us": 6053
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  },
+  {
+    "case": "selective_and-pin",
+    "sample": 2,
+    "tps": 4460.453648,
+    "latency": {
+      "files": 2,
+      "lines": 13365,
+      "service_latency": {
+        "count": 13365,
+        "mean_us": 889.7768799102132,
+        "p50_us": 869,
+        "p95_us": 1037,
+        "p99_us": 1500,
+        "max_us": 3223
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  },
+  {
+    "case": "selective_and-gin",
+    "sample": 2,
+    "tps": 30168.483449,
+    "latency": {
+      "files": 2,
+      "lines": 90389,
+      "service_latency": {
+        "count": 90389,
+        "mean_us": 129.78872429167265,
+        "p50_us": 115,
+        "p95_us": 231,
+        "p99_us": 299,
+        "max_us": 2798
+      },
+      "failures": {
+        "deadlock": 0,
+        "failed": 0,
+        "serialization": 0,
+        "skipped": 0
+      }
+    }
+  }
+]

@@ -1,0 +1,54 @@
+SET
+SET
+SET
+SET
+SET
+CREATE TABLE
+INSERT 0 4000
+CREATE INDEX
+VACUUM
+CREATE FUNCTION
+ check_direct_tid 
+------------------
+ 
+ 
+ 
+ 
+ 
+ 
+(6 rows)
+
+INSERT 0 1
+UPDATE 100
+ check_direct_tid 
+------------------
+ 
+ 
+ 
+ 
+ 
+(5 rows)
+
+DELETE 1000
+VACUUM
+INSERT 0 1000
+ check_direct_tid 
+------------------
+ 
+ 
+ 
+ 
+ 
+ 
+(6 rows)
+
+VACUUM
+ check_direct_tid 
+------------------
+ 
+ 
+ 
+(3 rows)
+
+DROP TABLE
+RESET

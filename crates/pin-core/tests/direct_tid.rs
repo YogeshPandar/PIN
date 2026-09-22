@@ -274,3 +274,20 @@ fn sealed_term_scans_eliminate_per_document_owner_page_resolution() {
         "only the dictionary's first owner needs resolution"
     );
 }
+
+#[test]
+fn selective_and_seeks_across_direct_page_ranges() {
+    let mut store = MemoryStore::default();
+    mutable::initialize(&mut store).unwrap();
+    let common = prepared("alpha");
+    let rare = prepared("alpha rareplanet");
+    for i in 0..1200 {
+        mutable::insert(&mut store, root(i), if i == 1199 { &rare } else { &common }).unwrap();
+    }
+    mutable::compact_with_mode(&mut store, CompactMode::DirectTid).unwrap();
+    assert_eq!(
+        scan(&mut store, "alpha AND rareplanet"),
+        BTreeSet::from([root(1199)])
+    );
+    assert!(scan(&mut store, "alpha AND missing").is_empty());
+}

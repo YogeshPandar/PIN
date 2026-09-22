@@ -612,3 +612,24 @@ and interrupted durable stages. The final small warm fixture beats GIN only
 for the common-term count. An attempted TID-only AND/OR merge failed an owner
 incarnation oracle and was reverted. Independent storage/FFI review, write-load
 and replica evidence remain open.
+
+## OE01: owner-aware direct-page seek pruning (2026-09-22)
+
+PostgreSQL 18's [index-scanning contract](https://www.postgresql.org/docs/18/index-scanning.html)
+requires `amgetbitmap` to preserve candidate TIDs while the heap remains
+responsible for visibility. The immutable PostgreSQL 18.6 source reviewed for
+DT01 remains `724edf9bde9d356724ad384a2e196edc3c9f80f7`; no AM, FFI,
+VACUUM or WAL boundary changes here. The on-disk tag-9 direct page from DT02
+has validated first/last owner endpoints and a complete decoded-payload check
+on every load. A Boolean seek may omit a second decode only when the page's
+last owner is before the target (or equal for an exclusive seek). It advances
+the previous owner to that validated endpoint, then checks the next page's
+ordering and incarnation as usual. Copied TIDs are read only for surviving
+owners. A pure owner oracle and SQL row-identity comparisons remain mandatory.
+
+The selective AND benchmark and tests are archived under
+`docs/runs/2026-09-22-owner-merge/`. The matched Pin median rose from 4,462.78
+to 7,022.44 QPS on the 20,000-row fixture; GIN remained much faster. Pure Rust,
+G2, Python and Clippy checks passed. Self-reviewed; no generalized speed or
+production claim. Generation-safe page-group masks remain a separate design
+and correctness gate.
