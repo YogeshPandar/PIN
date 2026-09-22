@@ -91,7 +91,15 @@ pub fn evaluate(
             continue;
         }
         stats.live_pages += 1;
+        let needed = dependencies(program, &scratch.pages, page);
         for (index, node) in program.iter().enumerate() {
+            if needed & (1 << index) == 0 {
+                continue;
+            }
+            if !super::contains(&scratch.pages[index], page) {
+                scratch.offsets[index] = [0; 8];
+                continue;
+            }
             scratch.offsets[index] = match *node {
                 Node::Term(term) => {
                     let bytes = terms[term].payload_bytes(page);
@@ -124,6 +132,24 @@ pub fn evaluate(
         }
     }
     Ok(stats)
+}
+
+// empty subexpressions supply zero without decoding their descendants.
+fn dependencies(program: &[Node], pages: &[PageMask; MAX_NODES], page: u8) -> u64 {
+    let mut needed = 1u64 << (program.len() - 1);
+    for (index, node) in program.iter().enumerate().rev() {
+        if needed & (1 << index) == 0 || !super::contains(&pages[index], page) {
+            continue;
+        }
+        match *node {
+            Node::Not(child) => needed |= 1 << child,
+            Node::And(left, right) | Node::Or(left, right) | Node::Difference(left, right) => {
+                needed |= (1 << left) | (1 << right);
+            }
+            Node::Term(_) | Node::All => {}
+        }
+    }
+    needed
 }
 
 fn operation(node: Node) -> BitmapOp {

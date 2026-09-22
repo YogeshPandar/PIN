@@ -53,7 +53,7 @@ impl<'a> Bitmap<'a> {
             return Err(Error::InvalidState);
         }
         let mut end = 0;
-        for entry in bytes[HEADER_BYTES..body].chunks_exact(DIRECTORY_BYTES) {
+        for entry in bytes[HEADER_BYTES..body].as_chunks::<DIRECTORY_BYTES>().0 {
             let start = usize::from(u16::from_le_bytes([entry[0], entry[1]]));
             let len = usize::from(entry[2]);
             if start != end

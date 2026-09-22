@@ -82,8 +82,8 @@ impl<'a> Members<'a> {
         if reader.u16()? != 0 {
             return Err(Error::InvalidState);
         }
-        let root = RootTid::new(block, offset, self.header.key.layout)
-            .map_err(|_| Error::InvalidState)?;
+        let root =
+            RootTid::new(block, offset, self.header.key.layout).map_err(|_| Error::InvalidState)?;
         let incarnation = Incarnation::new(reader.u64()?).map_err(|_| Error::InvalidState)?;
         Ok(Member { root, incarnation })
     }
@@ -113,6 +113,41 @@ impl<'a> Members<'a> {
             output,
             |page| self.page_offsets(page),
         )
+    }
+
+    /// Seals sorted term members only after checking every owner incarnation.
+    /// The segment key is inherited, never supplied by a term flush caller.
+    ///
+    /// # Errors
+    /// Rejects unknown, repeated or reused coordinates before writing output.
+    pub fn encode_posting(&self, members: &[Member], output: &mut [u8]) -> Result<usize> {
+        if members.len() > self.len() {
+            return Err(Error::Limit("term group members"));
+        }
+        let mut mask = [0; 4];
+        let mut previous = None;
+        for member in members {
+            if previous.is_some_and(|previous| previous >= member.root)
+                || self.find(member.root)? != Some(*member)
+            {
+                return Err(Error::InvalidState);
+            }
+            super::insert(&mut mask, member.root.block() as u8);
+            previous = Some(member.root);
+        }
+        encode_with(self.key(), BitmapKind::Posting, mask, output, |page| {
+            let block = self.key().block(page)?;
+            let start = members.partition_point(|member| member.root.block() < block);
+            let mut offsets = [0; 8];
+            for member in &members[start..] {
+                if member.root.block() != block {
+                    break;
+                }
+                let bit = usize::from(member.root.offset() - 1);
+                offsets[bit / 64] |= 1 << (bit % 64);
+            }
+            Ok(offsets)
+        })
     }
 
     pub(super) fn page_offsets(&self, page: u8) -> Result<OffsetMask> {
