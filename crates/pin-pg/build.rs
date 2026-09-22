@@ -64,7 +64,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
     let revision = env::var("PIN_BUILD_REVISION").unwrap_or_else(|_| "unrecorded".into());
     let valid_revision = revision.len() == 40
-        && revision.bytes().all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase());
+        && revision
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase());
     if deployment.is_some()
         && (!valid_revision || env::var_os("CARGO_FEATURE_TEST_HOOKS").is_some())
     {
