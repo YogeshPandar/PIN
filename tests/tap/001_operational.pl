@@ -121,10 +121,10 @@ equivalent($primary, 'postgres', 'fresh installation');
 my $base = snapshot_results($primary);
 
 # online physical backup includes the native index pages and generic WAL.
-command_ok(['pg_basebackup', '--pgdata=' . $primary->backup_dir . '/base',
+my $backup_ok = PostgreSQL::Test::Utils::run_log(['pg_basebackup', '--pgdata=' . $primary->backup_dir . '/base',
     '--host=' . $primary->host, '--port=' . $primary->port,
-    '--checkpoint=fast', '--wal-method=stream'], 'take a synchronized online backup')
-    or BAIL_OUT('online backup failed');
+    '--checkpoint=fast', '--wal-method=stream']);
+ok($backup_ok, 'take a synchronized online backup') or BAIL_OUT('online backup failed');
 command_ok(['pg_verifybackup', $primary->backup_dir . '/base'], 'physical backup manifest and WAL verify');
 my $restored = PostgreSQL::Test::Cluster->new('g8_restored');
 $restored->init_from_backup($primary, 'base');
