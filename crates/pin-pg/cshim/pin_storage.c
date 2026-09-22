@@ -262,7 +262,7 @@ pin_heap_build_scan(Relation heap, Relation index, struct IndexInfo *info,
 
 void
 pin_bitmap_add(TIDBitmap *bitmap, uint32 count,
-               const uint32 *blocks, const uint16 *offsets)
+               const uint32 *blocks, const uint16 *offsets, bool recheck)
 {
     ItemPointerData roots[PIN_BITMAP_BATCH];
     if (bitmap == NULL || count > PIN_BITMAP_BATCH)
@@ -274,8 +274,8 @@ pin_bitmap_add(TIDBitmap *bitmap, uint32 count,
             elog(ERROR, "invalid Pin bitmap root");
         ItemPointerSet(&roots[i], blocks[i], offsets[i]);
     }
-    /* all candidates require exact SQL rechecks, including lossy bitmap pages. */
-    tbm_add_tuples(bitmap, roots, (int) count, true);
+    /* core independently forces rechecks when the bitmap becomes lossy. */
+    tbm_add_tuples(bitmap, roots, (int) count, recheck);
 }
 
 bool

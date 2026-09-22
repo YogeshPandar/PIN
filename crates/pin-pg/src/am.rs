@@ -523,7 +523,7 @@ unsafe extern "C-unwind" fn rescan(
     unsafe { prepare_tuple_scan(scan) };
 }
 
-unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<Query> {
+unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<(Query, bool)> {
     // safety: core owns the descriptor, current mvcc snapshot and key array.
     unsafe { native::call(|| native::pin_scan_validate(scan)) };
     // safety: c validated the dimensions; copy scalars rather than retain field borrows.
@@ -559,7 +559,10 @@ unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<Query> {
             chosen = Some(query);
         }
     }
-    Some(matching::input(chosen.ok_or(Error::InvalidParameters)))
+    Some((
+        matching::input(chosen.ok_or(Error::InvalidParameters)),
+        key_count == 1,
+    ))
 }
 
 unsafe fn prepare_tuple_scan(scan: pg_sys::IndexScanDesc) {
@@ -576,7 +579,7 @@ unsafe fn prepare_tuple_scan(scan: pg_sys::IndexScanDesc) {
     // safety: core keeps the index relation open through the scan.
     let index = unsafe { (*scan).indexRelation };
     let state = match query {
-        Some(query) => {
+        Some((query, _)) => {
             // safety: c retains the structural barrier and live relation through capture.
             matching::stored(unsafe {
                 storage::with_locked_reader(index, |store| {
@@ -674,7 +677,7 @@ unsafe extern "C-unwind" fn bitmap(
     bitmap: *mut pg_sys::TIDBitmap,
 ) -> i64 {
     // safety: chosen_query borrows only live scan-key values.
-    let Some(query) = (unsafe { chosen_query(scan) }) else {
+    let Some((query, single_key)) = (unsafe { chosen_query(scan) }) else {
         return 0;
     };
     // safety: core keeps the index relation live through this callback.
@@ -684,9 +687,12 @@ unsafe extern "C-unwind" fn bitmap(
     // safety: the read barrier covers all page references, not later heap visibility work.
     let count = matching::stored(unsafe {
         storage::with_reader(index, |store| {
-            mutable::scan_query(store, &query, matching::QUERY_MEMORY, |root| {
-                sink.push(root)
-            })
+            mutable::scan_query_with_recheck(
+                store,
+                &query,
+                matching::QUERY_MEMORY,
+                |root, recheck| sink.push(root, recheck || !single_key),
+            )
         })
     });
     sink.flush();

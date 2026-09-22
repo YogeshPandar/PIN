@@ -37,11 +37,13 @@ def main() -> None:
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--samples', type=int, default=3)
     parser.add_argument('--seconds', type=int, default=5)
+    parser.add_argument('--exact-bitmap', choices=('on', 'off'), default='on')
     args = parser.parse_args()
     if not 1 <= args.samples <= 20 or not 1 <= args.seconds <= 120:
         parser.error('samples must be 1..20 and seconds 1..120')
     args.output.mkdir(parents=True, exist_ok=False)
-    env = dict(os.environ, PGOPTIONS=OPTIONS)
+    options = OPTIONS + f' -c pin.enable_exact_bitmap={args.exact_bitmap}'
+    env = dict(os.environ, PGOPTIONS=options)
     psql = [str(args.bindir / 'psql'), '-X', '-qAt', '-v', 'ON_ERROR_STOP=1']
 
     def sql(statement: str) -> str:
@@ -55,7 +57,7 @@ def main() -> None:
                              "'fsync','full_page_writes','synchronous_commit','block_size')"))
     save('environment.json', {'platform': platform.platform(), 'cpu_count': os.cpu_count(),
                              'server_build_revision': sql('SELECT pin.build_revision()'),
-                             'pgoptions': OPTIONS, 'settings': settings,
+                             'pgoptions': options, 'settings': settings,
                              'samples': args.samples, 'seconds': args.seconds,
                              'clients': 4, 'threads': 2,
                              'revision': subprocess.check_output(

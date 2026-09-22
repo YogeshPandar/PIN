@@ -1,5 +1,6 @@
 //! Bounded streaming intersections and unions over stable owner identities.
-//! This evaluates necessary conditions, never SQL visibility or phrase positions.
+//! Positive Boolean plans can prove membership; covers retain recheck obligations.
+//! Neither path evaluates SQL visibility or phrase positions.
 //! Contracts: docs/g4-query-execution.md and PostgreSQL 18 index-scanning.
 
 use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, TermRef};
@@ -562,11 +563,30 @@ pub fn scan_query<S: PageStore>(
     memory_bytes: usize,
     mut emit: impl FnMut(RootTid) -> Result<()>,
 ) -> Result<u64> {
+    scan_query_with_recheck(store, query, memory_bytes, |root, _| emit(root))
+}
+
+/// Streams roots with the predicate recheck obligation of the executed plan.
+///
+/// A false flag proves only positive term/AND/OR membership for this query,
+/// after published-owner and incarnation validation. It never proves visibility.
+/// The host must still enforce all other scan keys and SQL qualifications.
+/// Approximate operators and every budget fallback emit with recheck required.
+/// PostgreSQL bitmap lossification may independently require rechecks.
+///
+/// # Errors
+/// Has the same bounded-work and structural-barrier contract as `scan_query`.
+pub fn scan_query_with_recheck<S: PageStore>(
+    store: &mut S,
+    query: &Query,
+    memory_bytes: usize,
+    mut emit: impl FnMut(RootTid, bool) -> Result<()>,
+) -> Result<u64> {
     let mut plan = match Plan::build(query, memory_bytes) {
         Ok(plan) => plan,
         Err(Error::Budget(_)) => {
             let cover = CandidatePlan::build(query, memory_bytes)?;
-            return scan(store, &cover, emit);
+            return scan(store, &cover, |root| emit(root, true));
         }
         Err(error) => return Err(error),
     };
@@ -574,8 +594,14 @@ pub fn scan_query<S: PageStore>(
         return Ok(0);
     }
     if plan.root == UNIVERSE {
-        return scan(store, &CandidatePlan::Universe, emit);
+        return scan(store, &CandidatePlan::Universe, |root| emit(root, true));
     }
+    let recheck = query.nodes.iter().any(|node| {
+        !matches!(
+            node.kind,
+            Kind::None | Kind::Term(_) | Kind::And(_, _) | Kind::Or(_, _)
+        )
+    });
     plan.open(store)?;
     let mut previous = None;
     let mut cache: Option<Page> = None;
@@ -588,7 +614,7 @@ pub fn scan_query<S: PageStore>(
         }
         previous = Some(owner);
         if let Some(root) = resolve(store, &mut cache, owner)? {
-            emit(root)?;
+            emit(root, recheck)?;
             count = count
                 .checked_add(1)
                 .ok_or(Error::Limit("candidate count"))?;

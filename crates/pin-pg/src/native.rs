@@ -72,6 +72,7 @@ unsafe extern "C-unwind" {
         count: u32,
         blocks: *const u32,
         offsets: *const u16,
+        recheck: bool,
     );
     pub(crate) fn pin_vacuum_removable(
         callback: pg_sys::IndexBulkDeleteCallback,

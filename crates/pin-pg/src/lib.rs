@@ -54,6 +54,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
     // safety: validation and the preload-only check precede static hook registration.
     unsafe { count::initialize() };
     maintenance::initialize();
+    storage::initialize();
 }
 
 #[pg_extern(stable, parallel_unsafe)]

@@ -31,7 +31,7 @@ extern void pin_root_coordinates(ItemPointer tid, uint32 *block, uint16 *offset)
 extern double pin_heap_build_scan(Relation heap, Relation index, struct IndexInfo *info,
                                   IndexBuildCallback callback, void *state);
 extern void pin_bitmap_add(TIDBitmap *bitmap, uint32 count,
-                           const uint32 *blocks, const uint16 *offsets);
+                           const uint32 *blocks, const uint16 *offsets, bool recheck);
 extern bool pin_vacuum_removable(IndexBulkDeleteCallback callback, void *state,
                                  uint32 block, uint16 offset);
 extern IndexScanDesc pin_scan_begin(Relation index, int nkeys, int norderbys);

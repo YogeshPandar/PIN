@@ -4,12 +4,26 @@
 //! contracts and independent-review obligations: docs/g3-storage.md.
 
 use crate::native;
+use pgrx::guc::{GucContext, GucFlags, GucRegistry, GucSetting};
 use pgrx::pg_sys;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
 use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
 use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
+
+static ENABLE_EXACT_BITMAP: GucSetting<bool> = GucSetting::<bool>::new(true);
+
+pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_exact_bitmap",
+        c"Use proven exact term and Boolean bitmap matches.",
+        c"Off forces predicate rechecks; heap visibility checks always remain enabled.",
+        &ENABLE_EXACT_BITMAP,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+}
 
 pub(crate) struct PgStore<'rel> {
     index: pg_sys::Relation,
@@ -253,6 +267,8 @@ pub(crate) struct BitmapSink {
     blocks: [u32; 256],
     offsets: [u16; 256],
     len: usize,
+    recheck: bool,
+    force_recheck: bool,
 }
 
 impl BitmapSink {
@@ -264,10 +280,17 @@ impl BitmapSink {
             blocks: [0; 256],
             offsets: [0; 256],
             len: 0,
+            recheck: true,
+            force_recheck: !ENABLE_EXACT_BITMAP.get(),
         }
     }
 
-    pub(crate) fn push(&mut self, root: RootTid) -> Result<()> {
+    pub(crate) fn push(&mut self, root: RootTid, recheck: bool) -> Result<()> {
+        let recheck = recheck || self.force_recheck;
+        if self.recheck != recheck {
+            self.flush();
+            self.recheck = recheck;
+        }
         self.blocks[self.len] = root.block();
         self.offsets[self.len] = root.offset();
         self.len += 1;
@@ -285,9 +308,10 @@ impl BitmapSink {
         let count = self.len as u32;
         let blocks = self.blocks.as_ptr();
         let offsets = self.offsets.as_ptr();
-        // safety: count initialized coordinates fit both arrays; C sets every tuple's
-        // recheck flag and synchronously adds to the existing caller-owned bitmap.
-        unsafe { native::call(|| native::pin_bitmap_add(bitmap, count, blocks, offsets)) };
+        let recheck = self.recheck;
+        // safety: count initialized coordinates fit both arrays; c copies them
+        // synchronously. the executed plan and all scan keys determine recheck.
+        unsafe { native::call(|| native::pin_bitmap_add(bitmap, count, blocks, offsets, recheck)) };
         self.len = 0;
     }
 }

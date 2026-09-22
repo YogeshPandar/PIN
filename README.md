@@ -7,8 +7,9 @@ PostgreSQL-native, Rust-first full-text search under development.
 The repository implements a logged permanent-heap search baseline: versioned
 text/query semantics, durable complete-document publication, bitmap/heap scans,
 canonical owner liveness, copying posting compaction, and bounded streaming
-Boolean candidate execution. PostgreSQL performs snapshot visibility and exact
-predicate rechecks on the ordinary bitmap path.
+Boolean candidate execution. PostgreSQL performs snapshot visibility on the ordinary bitmap path.
+[Proven exact term/Boolean matches](docs/exact-bitmap.md) avoid repeating the text
+predicate; approximate candidates and lossy bitmap pages retain rechecks.
 
 Ordinary single-term SQL predicates use a streaming exact matcher; compound
 queries retain the materialized document oracle. Both preserve the analyzer

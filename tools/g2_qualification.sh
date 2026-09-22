@@ -53,6 +53,7 @@ fi
 
 "${psql[@]}" -f "$root/tests/sql/g2_transactions.sql" | tee "$work/transactions.log"
 "${psql[@]}" -f "$root/tests/sql/g4_queries.sql" | tee "$work/g4-queries.log"
+"${psql[@]}" -f "$root/tests/sql/exact_bitmap.sql" | tee "$work/exact-bitmap.log"
 
 start_blocker() {
   local app=$1

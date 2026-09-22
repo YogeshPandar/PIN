@@ -75,7 +75,16 @@ fn independent_oracle_matches_are_always_covered() {
     }
     for source in sources {
         let query = Query::parse(&source, QueryLimits::default()).unwrap();
-        let rows = run(&mut store, &source, 1 << 20).unwrap();
+        let mut rows = Vec::new();
+        let mut proven = BTreeSet::new();
+        mutable::scan_query_with_recheck(&mut store, &query, 1 << 20, |root, recheck| {
+            rows.push(root);
+            if !recheck {
+                proven.insert(root);
+            }
+            Ok(())
+        })
+        .unwrap();
         let candidates: BTreeSet<_> = rows.iter().copied().collect();
         assert_eq!(rows.len(), candidates.len(), "duplicate owner: {source}");
         for (index, text) in documents.iter().enumerate() {
@@ -84,6 +93,10 @@ fn independent_oracle_matches_are_always_covered() {
             assert!(
                 !exact || candidates.contains(&root(index as u32)),
                 "{source:?} on {text:?}"
+            );
+            assert!(
+                !proven.contains(&root(index as u32)) || exact,
+                "false proof for {source:?} on {text:?}"
             );
         }
     }
@@ -202,6 +215,19 @@ fn cursor_budget_falls_back_before_emission_without_truncating_matches() {
         vec![root(0), root(1)]
     );
     assert!(run(&mut store, "a AND b", 0).is_err());
+    let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
+    for (budget, expected) in [
+        (1 << 20, vec![(root(1), false)]),
+        (256, vec![(root(0), true), (root(1), true)]),
+    ] {
+        let mut rows = Vec::new();
+        mutable::scan_query_with_recheck(&mut store, &query, budget, |root, recheck| {
+            rows.push((root, recheck));
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(rows, expected, "fallback must discard exactness proof");
+    }
     let query = Query::parse("a OR b", QueryLimits::default()).unwrap();
     let mut calls = 0;
     assert_eq!(

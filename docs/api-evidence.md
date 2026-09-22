@@ -489,3 +489,54 @@ suite compares streaming SQL predicates with count mode off (materialized
 oracle) and on (streaming), preserving an independent reference.
 Self-review only; existing independent FFI/storage review gates remain open.
 See `docs/runs/2026-09-22-improvements/README.md` for observed results.
+
+## AM02: predicate proof carried into PostgreSQL bitmaps (2026-09-22)
+
+Authority: PostgreSQL 18 [index scanning](https://www.postgresql.org/docs/18/index-scanning.html),
+[index locking](https://www.postgresql.org/docs/18/index-locking.html), and
+[HOT](https://www.postgresql.org/docs/18/storage-hot.html). Inspected immutable
+upstream `724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+`src/backend/nodes/tidbitmap.c` (tbm_add_tuples, union/intersection, private/shared
+iteration), `src/backend/executor/nodeBitmapHeapscan.c` (BitmapHeapNext and
+BitmapHeapRecheck), and `src/backend/utils/adt/tsginidx.c`
+(gin_tsquery_consistent). GIN's exact versus maybe distinction is an upstream
+example of this contract, not a proof for Pin's representation.
+
+A false tbm_add_tuples recheck flag means exact satisfaction of all scan keys,
+not snapshot visibility. Core still fetches heap tuples using the statement
+snapshot and follows HOT chains. Core lossification and intersections with lossy
+pages independently require predicate rechecks. Pin already rejects non-MVCC
+snapshots in pin_scan_validate; the structural barrier covers index production.
+No VM certification, heap bypass, lock lifetime, WAL or disk-format change.
+
+The pure executor now emits `(root, requires_recheck)`. Only a successfully built
+positive term/AND/OR plan can emit false. Matching is on canonical OwnerRef,
+including incarnation, before resolution to published live roots. Phrase,
+prefix and negation shapes remain approximate. Every allocation-budget fallback
+emits true, even if its input query was positive. This is critical: a term cover
+for `a AND b` can contain rows with only `a`. Errors after emission still abort;
+no partial-result fallback is added. Multiple SQL scan keys force true because
+chosen_query evaluates only one of them. Plain index scans retain their existing
+recheck behavior.
+
+The existing C/Rust pin_bitmap_add ABI gains one bool, using the same mapped
+PostgreSQL bool ABI already used throughout the shim. Existing pointer arrays,
+bounds and synchronous copy lifetimes are unchanged. No new raw pointer access
+or unsafe block is introduced. Read pgrx 0.19.2 (`70383e884582d1bcc7cd681d10886b995a2830cb`)
+`src/guc.rs`: define_bool_guc retains static names and setting storage. The
+static SUSET pin.enable_exact_bitmap control is captured once per bitmap sink;
+off forces the original rechecks. It does not change SQL function semantics.
+Rust's safe iterator/matches operations inspect the already validated AST and
+retain no borrowed PostgreSQL data. Cargo.lock remains unchanged.
+
+Tests: the exhaustive query matrix checks every false-recheck emission against
+the independent document oracle. A 256-byte budget forces an AND term-cover
+fallback and verifies true flags on its false-positive candidates. Host tests
+check exact row identities and actual pin.matches calls through PostgreSQL's
+continuously updated pg_stat_xact_user_functions; low work_mem must report real
+lossy pages. Multi-key contradictions, positional false positives, Unicode,
+HOT/indexed updates, own writes, rollback and VACUUM/reuse are included. Existing
+multi-backend, restart/crash, parallel bitmap and RLS suites also apply.
+
+Self-review status: proof and tests are recorded, not independent approval of
+the extension's existing storage/FFI implementation. Release review remains open.
