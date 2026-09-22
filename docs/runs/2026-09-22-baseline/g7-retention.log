@@ -1,0 +1,4 @@
+
+STDERR:
+DEBUG:  starting parallel vacuum worker
+DEBUG:  Pin compaction: retained_pages=0 written_pages=0 reclaimed_pages=0 reused_pages=0

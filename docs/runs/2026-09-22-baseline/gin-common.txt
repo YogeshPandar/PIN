@@ -1,0 +1,15 @@
+pgbench (18.6)
+transaction type: /tmp/pin-gin-count.sql
+scaling factor: 1
+query mode: prepared
+number of clients: 4
+number of threads: 2
+maximum number of tries: 1
+duration: 5 s
+number of transactions actually processed: 4474
+number of failed transactions: 0 (0.000%)
+latency average = 4.470 ms
+initial connection time = 4.162 ms
+tps = 894.923857 (without initial connection time)
+statement latencies in milliseconds and failures:
+         4.459           0 SELECT count(*) FROM public.pin_g6_bench WHERE to_tsvector('simple', body) @@ to_tsquery('simple', 'alpha');
