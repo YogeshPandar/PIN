@@ -630,6 +630,6 @@ owners. A pure owner oracle and SQL row-identity comparisons remain mandatory.
 The selective AND benchmark and tests are archived under
 `docs/runs/2026-09-22-owner-merge/`. The matched Pin median rose from 4,462.78
 to 7,022.44 QPS on the 20,000-row fixture; GIN remained much faster. Pure Rust,
-G2, Python and Clippy checks passed. Self-reviewed; no generalized speed or
-production claim. Generation-safe page-group masks remain a separate design
-and correctness gate.
+G2, Python, Clippy, normal-package G8 (234/234), and direct-page hard recovery
+checks passed. Self-reviewed; no generalized speed or production claim.
+Generation-safe page-group masks remain a separate design and correctness gate.

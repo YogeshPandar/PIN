@@ -26,8 +26,10 @@ comparison, and the fixture is too small and hot for a production claim.
 
 Validation: focused direct and Boolean owner-oracle tests, full release pure
 Rust suite, warning-free release Clippy, 63 Python tests, contract check, and
-full test-hooks G2 PostgreSQL qualification passed. A new focused pure test
-puts the rare match after multiple direct pages. The earlier
+full test-hooks G2 PostgreSQL qualification, normal-package G8 (234/234), and
+hard postmaster WAL recovery with indexed identity checks passed. The recovery
+fixture retained four direct pages out of 51 total pages after restart. A new
+focused pure test puts the rare match after multiple direct pages. The earlier
 [direct-segment run](../2026-09-22-direct-segments/README.md) covers the
 unchanged page format and WAL protocol.
 
