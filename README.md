@@ -10,21 +10,20 @@ canonical owner liveness, copying posting compaction, and bounded streaming
 Boolean candidate execution. PostgreSQL performs snapshot visibility and exact
 predicate rechecks on the ordinary bitmap path.
 
-This G5 branch adds an experimental, default-off `PinCount` upper plan for plain
-`COUNT(*)` with one constant exact-term search predicate. It streams candidate accounting without a result
-bitmap, keeps mutable and uncertified candidates on HOT-aware heap visibility,
-and may certify exact sealed-term candidates with fresh visibility-map status
-while a canonical owner pin protects liveness. A real PostgreSQL aggregate
-remains available as runtime fallback. Both `pin.enable_count_fastpath` and
-`pin.enable_count_vm` default to `off` and are superuser-settable.
+Ordinary single-term SQL predicates use a streaming exact matcher; compound
+queries retain the materialized document oracle. Both preserve the analyzer
+profile and validate document limits. PostgreSQL still performs heap visibility
+and exact predicate rechecks.
 
-This is not the full blueprint's G4/G5 acceptance gate. Synchronous `amgettuple`,
-SQL ranked CustomScan, general Boolean/phrase VM certification, parallel
-execution and SIMD remain unsupported. G5 Rust/C compilation and PostgreSQL host
-qualification must be observed in CI; there is no production-readiness or
-measured performance-parity claim. See
-[docs/g5-counts.md](docs/g5-counts.md) for eligibility, proof obligations and
-remaining gates.
+Experimental count/visibility-map shortcuts default off. Plain and parallel
+index scans, parallel build and gated parallel maintenance are implemented;
+qualification results and limitations are recorded in the run reports. SQL
+ranked execution and hot-standby search remain unsupported. This is a development
+candidate, with no production-readiness or fastest-extension claim.
+
+See the [design charter](pin_plan.md), [implementation priorities](docs/fts-roadmap.md),
+[baseline run](docs/runs/2026-09-22-baseline/README.md), and
+[G5 count contracts](docs/g5-counts.md).
 
 The selected target is PostgreSQL 18.6, Rust 1.98.1, matching pgrx/cargo-pgrx/
 pgrx-pg-sys 0.19.2, native x86_64 GNU/Linux, UTF-8 databases, and 8 KiB pages.
@@ -106,5 +105,5 @@ around visibility decisions. SQL and multi-backend schedules are wired into
 and PUBLIC execution is revoked. Never deploy a test-hook build to production.
 
 The development VM does not install Rust. CI is the authority for Rust/C
-compilation, rustfmt, Clippy, rustdoc and real PostgreSQL execution. Performance
-remains unmeasured until a controlled benchmark gate is run.
+compilation, rustfmt, Clippy, rustdoc and real PostgreSQL execution. Local measurements are workload-specific; see the run reports. Broader
+performance and sustained resource qualification remain release gates.

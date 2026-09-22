@@ -1,0 +1,182 @@
+[
+  {
+    "query": "common",
+    "residual": false,
+    "memory": "64MB",
+    "leader": true,
+    "rows": 15158,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "common",
+    "residual": false,
+    "memory": "64MB",
+    "leader": false,
+    "rows": 15158,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "common",
+    "residual": false,
+    "memory": "64kB",
+    "leader": true,
+    "rows": 15158,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "common",
+    "residual": false,
+    "memory": "64kB",
+    "leader": false,
+    "rows": 15158,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "alpha AND beta",
+    "residual": false,
+    "memory": "64MB",
+    "leader": true,
+    "rows": 7580,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "alpha AND beta",
+    "residual": false,
+    "memory": "64MB",
+    "leader": false,
+    "rows": 7580,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "alpha AND beta",
+    "residual": false,
+    "memory": "64kB",
+    "leader": true,
+    "rows": 7580,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "alpha AND beta",
+    "residual": false,
+    "memory": "64kB",
+    "leader": false,
+    "rows": 7580,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "\"alpha beta\"",
+    "residual": false,
+    "memory": "64MB",
+    "leader": true,
+    "rows": 2526,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "\"alpha beta\"",
+    "residual": false,
+    "memory": "64MB",
+    "leader": false,
+    "rows": 2526,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "\"alpha beta\"",
+    "residual": false,
+    "memory": "64kB",
+    "leader": true,
+    "rows": 2526,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "\"alpha beta\"",
+    "residual": false,
+    "memory": "64kB",
+    "leader": false,
+    "rows": 2526,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "NOT gamma",
+    "residual": false,
+    "memory": "64MB",
+    "leader": true,
+    "rows": 13474,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "NOT gamma",
+    "residual": false,
+    "memory": "64MB",
+    "leader": false,
+    "rows": 13474,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "NOT gamma",
+    "residual": false,
+    "memory": "64kB",
+    "leader": true,
+    "rows": 13474,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "NOT gamma",
+    "residual": false,
+    "memory": "64kB",
+    "leader": false,
+    "rows": 13474,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "common",
+    "residual": true,
+    "memory": "64MB",
+    "leader": true,
+    "rows": 10393,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "common",
+    "residual": true,
+    "memory": "64MB",
+    "leader": false,
+    "rows": 10393,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 0
+  },
+  {
+    "query": "common",
+    "residual": true,
+    "memory": "64kB",
+    "leader": true,
+    "rows": 10393,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  },
+  {
+    "query": "common",
+    "residual": true,
+    "memory": "64kB",
+    "leader": false,
+    "rows": 10393,
+    "workers_launched": 2,
+    "lossy_heap_blocks": 2062
+  }
+]

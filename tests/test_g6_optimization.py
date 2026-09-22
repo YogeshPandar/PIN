@@ -68,10 +68,10 @@ class RecheckSourceTests(unittest.TestCase):
         self.assertIn('GucContext::Suset', self.rust)
         self.assertIn('let streaming = ENABLE_COUNT_RECHECK.get();', self.rust)
 
-    def test_sequential_sql_keeps_the_independent_document_oracle(self):
+    def test_sql_streams_single_terms_and_keeps_the_complex_query_oracle(self):
         matching = (ROOT / 'crates/pin-pg/src/matching.rs').read_text()
         self.assertIn('oracle::matches(', matching)
-        self.assertNotIn('SingleTermMatcher', matching)
+        self.assertIn('SingleTermMatcher::new(&query)', matching)
         self.assertIn('oracle::matches(', self.rust)
         self.assertIn('if query.node_count() != 1', self.core)
         self.assertIn('Kind::Term(term)', self.core)

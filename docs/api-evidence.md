@@ -451,3 +451,41 @@ journal.
 The copying compactor remains the default differential reference. The opt-in
 control is privileged and default-off. Pure and host recovery tests must prove
 that retained pages never enter the free list while reachable.
+
+## SQL02: ordinary single-term predicate streaming (2026-09-22)
+
+Module: `crates/pin-pg/src/matching.rs`; existing pure matcher in
+`crates/pin-core/src/recheck.rs`. No new unsafe operations or dependencies.
+
+Reviewed PostgreSQL 18.6 executor source at
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`,
+`src/backend/executor/nodeBitmapHeapscan.c`, especially BitmapHeapNext and
+BitmapHeapRecheck. Heap visibility and executor rechecks remain PostgreSQL's
+responsibility. This patch changes the predicate's internal evaluation only;
+it does not certify postings or suppress rechecks.
+
+Reviewed pgrx 0.19.2 (`70383e884582d1bcc7cd681d10886b995a2830cb`),
+`pgrx/src/datum/from.rs` implementations for `&str` and `&[u8]`, and
+[pg_extern](https://docs.rs/pgrx/0.19.2/pgrx/attr.pg_extern.html).
+Arguments remain borrowed only for the current call; no cached Datum, retained
+PostgreSQL pointer, or new memory-context ownership is introduced.
+[CREATE FUNCTION](https://www.postgresql.org/docs/18/sql-createfunction.html)
+contracts for IMMUTABLE, STRICT and PARALLEL SAFE are unchanged: evaluation
+uses only validated input and the fixed analyzer profile, with no table reads.
+
+Reviewed Rust 1.98.1 (`48a229cea`) str::eq_ignore_ascii_case contract:
+ASCII folding does not perform Unicode normalization. The existing matcher
+uses it only for ASCII documents; other text uses the budgeted normalizer.
+The single-term path validates the full input even after a match. Compound,
+phrase and prefix expressions retain materialized oracle evaluation. Removing
+scratch buffers can avoid allocation/budget failures of the old path; document,
+term, token and work limits still apply. Cargo's documented `test --locked`
+workflow preserves the committed dependency selection.
+
+Validation obligations: pure matcher versus independent materialized oracle;
+SQL sequential/index/custom-count result agreement; transaction, recovery and
+parallel lifecycle qualification; measured ordinary SQL latency. The G6 SQL
+suite compares streaming SQL predicates with count mode off (materialized
+oracle) and on (streaming), preserving an independent reference.
+Self-review only; existing independent FFI/storage review gates remain open.
+See `docs/runs/2026-09-22-improvements/README.md` for observed results.

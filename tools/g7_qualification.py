@@ -99,7 +99,10 @@ def settings(parallel: bool, memory: str = '64MB', leader: bool = True, sequenti
 
 
 def index_settings(parallel: bool, leader: bool = True) -> str:
+    # make per-tuple work outweigh the conservative index I/O estimate.
+    # this selects the lifecycle under test, not a production cost calibration.
     return (COMMON + f"SET max_parallel_workers_per_gather = {2 if parallel else 0};\n"
+            + "SET cpu_tuple_cost = 0.1;\n"
             + "SET work_mem = '64MB';\n"
             + f"SET parallel_leader_participation = {'on' if leader else 'off'};\n"
             + "SET enable_seqscan = off;\n"
@@ -337,6 +340,9 @@ def parallel_count_qualification(cluster: Cluster) -> None:
     options = settings(True) + (
         'SET pin.enable_count_fastpath = on;\n'
         'SET pin.parallel_count_workers = 2;\n'
+        # core Gather must not replace the custom worker lifecycle under test.
+        'SET parallel_setup_cost = 1000000;\n'
+        'SET cpu_operator_cost = 0.1;\n'
     )
     query = f'SELECT count(*) FROM ONLY {TABLE} WHERE {where};'
     require_pin_count(cluster.plan(query, options))
@@ -457,7 +463,6 @@ WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
             raise RuntimeError('failed parallel build left a catalog-visible index')
 
         cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};')
-        cluster.run(insert_sql(16001, 17000))
 
         # two Pin indexes make a Pin worker assignment deterministic enough for
         # the disposable parallel-VACUUM lifecycle check; drop the shadow after.
@@ -492,6 +497,9 @@ WITH (parallel_workers = 2, fillfactor = 80, autovacuum_enabled = false);
         )
         cluster.run(f'VACUUM (PARALLEL 2, INDEX_CLEANUP ON) {TABLE};')
         cluster.run(f'DROP INDEX {SCHEMA}.pin_g7_vacuum_shadow_idx;')
+        # append after the worker checks: their VACUUMs consume mutable tails.
+        # retention needs a sealed prefix and fresh work in this exact VACUUM.
+        cluster.run(insert_sql(16001, 17000))
         compacted = cluster.run(f'VACUUM (ANALYZE, INDEX_CLEANUP ON) {TABLE};',
                                 COMMON + 'SET client_min_messages = debug1; '
                                 'SET pin.enable_compact_reuse = on;\n')

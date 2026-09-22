@@ -7,6 +7,7 @@ use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::error::{Error, Result};
 use pin_core::oracle;
 use pin_core::query::{Query, QueryLimits};
+use pin_core::recheck::SingleTermMatcher;
 
 pub(crate) const QUERY_MEMORY: usize = 1 << 20;
 pub(crate) const PREPARE_MEMORY: usize = 32 << 20;
@@ -98,13 +99,17 @@ fn matches(body: &str, bytes: &[u8]) -> bool {
     crate::compatibility::database();
     crate::storage::interrupt();
     let query = input(Query::decode(bytes, QueryLimits::default()));
-    let document = input(Analyzed::analyze(body, AnalysisLimits::default()));
-    let result = input(oracle::matches(
-        &document,
-        &query,
-        QUERY_MEMORY,
-        MATCH_STEPS,
-    ));
+    let result = if let Some(matcher) = SingleTermMatcher::new(&query) {
+        input(matcher.matches(body, AnalysisLimits::default(), MATCH_STEPS))
+    } else {
+        let document = input(Analyzed::analyze(body, AnalysisLimits::default()));
+        input(oracle::matches(
+            &document,
+            &query,
+            QUERY_MEMORY,
+            MATCH_STEPS,
+        ))
+    };
     crate::storage::interrupt();
     result
 }

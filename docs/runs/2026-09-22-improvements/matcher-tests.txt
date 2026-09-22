@@ -1,0 +1,22 @@
+   Compiling tinyvec v1.13.3
+   Compiling unicode-case-mapping v1.0.0
+   Compiling unicode-segmentation v1.12.0
+   Compiling pin-kernels v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-kernels)
+   Compiling unicode-normalization v0.1.24
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `release` profile [optimized + debuginfo] target(s) in 5.54s
+     Running tests/g6_recheck.rs (/tmp/pin-cargo-target/release/deps/g6_recheck-fa9f90fd0df239cd)
+
+running 9 tests
+test ascii_needs_no_private_buffer_budget_and_unicode_stays_budgeted ... ok
+test early_hits_do_not_hide_invalid_tails_or_analysis_errors ... ok
+test input_and_normalized_limits_match_the_reference ... ok
+test repeated_calls_and_query_bindings_do_not_retain_document_state ... ok
+test unsupported_query_shapes_keep_the_oracle ... ok
+test work_accounting_matches_the_oracle_for_first_last_absent_and_empty ... ok
+test unicode_normalization_is_not_replaced_by_ascii_folding ... ok
+test all_ascii_byte_pairs_preserve_word_boundaries_and_folding ... ok
+test deterministic_mixed_documents_match_the_reference ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
