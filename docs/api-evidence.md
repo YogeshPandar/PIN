@@ -510,8 +510,9 @@ snapshots in pin_scan_validate; the structural barrier covers index production.
 No VM certification, heap bypass, lock lifetime, WAL or disk-format change.
 
 The pure executor now emits `(root, requires_recheck)`. Only a successfully built
-positive term/AND/OR plan can emit false. Matching is on canonical OwnerRef,
-including incarnation, before resolution to published live roots. Phrase,
+positive term/AND/OR plan can emit false. Matching initially uses canonical
+OwnerRef, including incarnation. The experimental direct sealed path described in DT01 can read a copied live heap
+coordinate after compaction; its VACUUM retirement and snapshot proof apply. Phrase,
 prefix and negation shapes remain approximate. Every allocation-budget fallback
 emits true, even if its input query was positive. This is critical: a term cover
 for `a AND b` can contain rows with only `a`. Errors after emission still abort;
@@ -562,7 +563,7 @@ later and cannot substitute for bulk deletion. Existing MVCC-only bitmap reads
 retain heap snapshot checks, including HOT. Generic WAL commits still use the
 existing synchronous private-page API and at most three pages per record.
 
-The experimental tag-8 page contains copied heap coordinates and monotonically
+The experimental tag-9 page contains copied heap coordinates and monotonically
 cleared local live flags beside ordered incarnation-qualified owner references.
 Compaction publishes these only from live, published canonical owners while
 holding the existing exclusive structural and writer barriers. A bulk-delete
@@ -583,3 +584,21 @@ Required evidence: codec corruption/truncation, Boolean oracle equality, mixed
 mutable/direct chains, forced heap-coordinate reuse, interrupted bulk deletion
 and compaction at every durable stage, PostgreSQL mutation/recovery tests and
 matched SQL benchmarks. Self-review only; experimental status remains explicit.
+
+## DT02: direct term iteration and endpoint proof (2026-09-22)
+
+The tag-9 page adds first and last owner identities to the fixed header. Page
+validation checks their equality with the decoded stream and enforces strict
+owner/page/slot and incarnation order. A single-term scan checks the boundary
+between pages, reads local live TIDs from direct pages, and resolves owners on
+mutable and ordinary sealed pages. The existing Boolean executor continues to
+intersect owner identities. These operations use safe Rust slices and checked
+arithmetic; they add no host pointers or unsafe calls. Exact bitmap flags still
+certify only predicate membership, never PostgreSQL visibility.
+
+The count and parallel-work paths recognize direct pages as sealed sources but
+continue to reread canonical owners under their existing VM/count protection.
+The existing default-off count gates and PostgreSQL AM contracts remain.
+Required review: pure corruption and query-oracle tests, small SQL mutation and
+lossy bitmap tests, hard postmaster crash/replay, matched SQL latency and index
+size. Self-reviewed until independent storage/FFI review is recorded.

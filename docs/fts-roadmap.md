@@ -58,8 +58,10 @@ semantics. Any parity claim needs an explicit shared test corpus.
 
 The [TIN architecture article](https://planetscale.com/blog/introducing-tin)
 points to physical tuple locality, page-group operations and avoiding unnecessary
-work as useful design directions. Pin already uses physical tuple identities;
-the current measurements show predicate work can dominate the index lookup.
+work as useful design directions. Pin starts with physical heap identities but previously stored owner references
+in postings, requiring a second lookup per result. Experimental direct sealed
+pages copy heap TIDs into postings and remove that lookup after compaction.
+The current measurements show predicate work can dominate the index lookup.
 Optimize the measured whole query before adding ISA-specific code. Published
 TIN performance figures remain vendor measurements, with no local TIN comparison.
 

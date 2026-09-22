@@ -202,7 +202,11 @@ impl WorkState {
         } else {
             next = Self::DONE;
         }
-        let sealed_term = self.0[10] == 1 && page.kind() == PageKind::SealedPostings;
+        let sealed_term = self.0[10] == 1
+            && matches!(
+                page.kind(),
+                PageKind::SealedPostings | PageKind::DirectPostings
+            );
         Ok(Some((
             next,
             WorkBatch {

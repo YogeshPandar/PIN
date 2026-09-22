@@ -21,7 +21,9 @@ Pinned source references and reviewed boundaries are in API evidence AM02.
 1. The existing term cursors compare complete normalized dictionary terms and
    combine postings by canonical owner identity, not bare heap coordinates.
 2. A successful positive term/AND/OR plan establishes membership for that query.
-   Resolving its owner validates the incarnation and published/live state.
+   On ordinary pages, resolving its owner validates the incarnation and
+   published/live state. Direct sealed pages use a coordinate and local live bit
+   copied from a published owner during compaction; VACUUM clears it before reuse.
 3. The pure scan emits the root and its predicate-recheck obligation together.
    Its existing callback API remains conservative and discards the proof.
 4. Phrases, prefixes and negation remain candidates. Any memory-budget fallback

@@ -589,6 +589,9 @@ pub fn scan_query_with_recheck<S: PageStore>(
     memory_bytes: usize,
     mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
+    if let Kind::Term(text) = &query.nodes[query.root].kind {
+        return scan_single_term(store, text, |root| emit(root, false));
+    }
     let mut plan = match Plan::build(query, memory_bytes) {
         Ok(plan) => plan,
         Err(Error::Budget(_)) => {
@@ -634,6 +637,74 @@ pub fn scan_query_with_recheck<S: PageStore>(
             count = count
                 .checked_add(1)
                 .ok_or(Error::Limit("candidate count"))?;
+        }
+    }
+    Ok(count)
+}
+
+// direct pages already carry checked roots; mutable pages still resolve owners.
+// the caller supplies the query's complete single-term predicate proof.
+fn scan_single_term<S: PageStore>(
+    store: &mut S,
+    text: &str,
+    mut emit: impl FnMut(RootTid) -> Result<()>,
+) -> Result<u64> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let Some((dictionary, reference)) = find_term(store, &meta, text)? else {
+        return Ok(0);
+    };
+    let term = dictionary.term(reference)?;
+    let mut count = 0u64;
+    let mut owner_page = None;
+    if let Some(root) = resolve(store, &mut owner_page, term.first)? {
+        emit(root)?;
+        count = 1;
+    }
+    if term.head == NO_BLOCK {
+        return Ok(count);
+    }
+    let mut block = term.head;
+    let mut remaining = store.blocks()?;
+    let mut previous = term.first;
+    loop {
+        let page = load_posting(store, block, reference)?;
+        if page.kind() == PageKind::DirectPostings {
+            let (first, last) = page.direct_endpoints()?;
+            if compare(previous, first)? != Ordering::Less
+                || first.incarnation <= previous.incarnation
+            {
+                return Err(Error::InvalidState);
+            }
+            previous = last;
+            let slots = page.posting_count()?;
+            for slot in 0..slots {
+                if let Some(root) = page.direct_root(slot, store.layout())? {
+                    emit(root)?;
+                    count = count
+                        .checked_add(1)
+                        .ok_or(Error::Limit("candidate count"))?;
+                }
+            }
+        } else {
+            for owner in page.posting_refs()? {
+                let owner = owner?;
+                if compare(previous, owner)? != Ordering::Less
+                    || owner.incarnation <= previous.incarnation
+                {
+                    return Err(Error::InvalidState);
+                }
+                previous = owner;
+                if let Some(root) = resolve(store, &mut owner_page, owner)? {
+                    emit(root)?;
+                    count = count
+                        .checked_add(1)
+                        .ok_or(Error::Limit("candidate count"))?;
+                }
+            }
+        }
+        match posting_next(&page, term.tail, &mut remaining)? {
+            Some(next) => block = next,
+            None => break,
         }
     }
     Ok(count)

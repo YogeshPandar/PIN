@@ -132,7 +132,7 @@ fn direct_codec_roundtrip_tombstones_and_truncation() {
             "truncation {len}"
         );
     }
-    for byte in [24 + 6, 24 + 7] {
+    for byte in [56 + 6, 56 + 7] {
         let mut damaged = page.bytes().to_vec();
         damaged[byte] = 2;
         let decoded = Page::read_with(22, |out| {
@@ -156,7 +156,7 @@ fn boolean_scans_mix_direct_and_mutable_then_reuse_heap_coordinates() {
         })
         .collect();
     mutable::compact_with_mode(&mut store, CompactMode::DirectTid).unwrap();
-    assert!(store.pages.iter().any(|p| p.get(6) == Some(&8)));
+    assert!(store.pages.iter().any(|p| p.get(6) == Some(&9)));
     verify(&mut store, &before);
     for i in 1800..1900 {
         mutable::insert(&mut store, root(i), &prepared("alpha gamma")).unwrap();

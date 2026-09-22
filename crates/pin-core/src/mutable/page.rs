@@ -21,6 +21,7 @@ const OWNER_HEADER: usize = 20;
 const OWNER_BYTES: usize = 40;
 const DICTIONARY_ENTRY: usize = 32;
 const POSTING_HEADER: usize = 24;
+const DIRECT_HEADER: usize = POSTING_HEADER + 32;
 const FRAGMENT_HEADER: usize = 36;
 pub const FRAGMENT_BYTES: usize = CAPACITY - FRAGMENT_HEADER;
 pub const INLINE_BYTES: usize = CAPACITY - OWNER_HEADER - OWNER_BYTES;
@@ -197,7 +198,7 @@ impl Page {
             5 => PageKind::Fragment,
             6 => PageKind::Free,
             7 => PageKind::SealedPostings,
-            8 => PageKind::DirectPostings,
+            9 => PageKind::DirectPostings,
             _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
         };
         if reader.u8()? != 0 || reader.u32()? != block {
@@ -220,7 +221,7 @@ impl Page {
             PageKind::Dictionary => 3,
             PageKind::Postings => 4,
             PageKind::SealedPostings => 7,
-            PageKind::DirectPostings => 8,
+            PageKind::DirectPostings => 9,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -405,10 +406,24 @@ impl Page {
                 if !block_valid(term.page) || usize::from(term.offset) < HEADER {
                     return Err(corrupt(16));
                 }
+                let mut first = None;
+                let mut previous: Option<OwnerRef> = None;
                 for reference in self.posting_refs()? {
-                    reference?;
+                    let reference = reference?;
+                    if previous.is_some_and(|previous| {
+                        (reference.page, reference.slot) <= (previous.page, previous.slot)
+                            || reference.incarnation <= previous.incarnation
+                    }) {
+                        return Err(corrupt(POSTING_HEADER));
+                    }
+                    first.get_or_insert(reference);
+                    previous = Some(reference);
                 }
                 if self.kind == PageKind::DirectPostings {
+                    let (header_first, header_last) = self.direct_endpoints()?;
+                    if first != Some(header_first) || previous != Some(header_last) {
+                        return Err(corrupt(POSTING_HEADER));
+                    }
                     for slot in 0..self.u16(22)? {
                         self.direct_root(slot, layout)?;
                     }
@@ -835,12 +850,38 @@ impl Page {
     }
 
     fn posting_start(&self) -> Result<usize> {
-        Ok(POSTING_HEADER
-            + if self.kind == PageKind::DirectPostings {
-                usize::from(self.u16(22)?) * 8
-            } else {
-                0
-            })
+        Ok(if self.kind == PageKind::DirectPostings {
+            DIRECT_HEADER
+        } else {
+            POSTING_HEADER
+        } + if self.kind == PageKind::DirectPostings {
+            usize::from(self.u16(22)?) * 8
+        } else {
+            0
+        })
+    }
+
+    /// Returns the number of records in a checked direct page.
+    pub fn posting_count(&self) -> Result<u16> {
+        self.require(PageKind::DirectPostings)?;
+        self.u16(22)
+    }
+
+    /// Bounds the ordered owner range of one direct page without decoding it.
+    pub fn direct_endpoints(&self) -> Result<(OwnerRef, OwnerRef)> {
+        self.require(PageKind::DirectPostings)?;
+        let first = self
+            .bytes()
+            .get(POSTING_HEADER..POSTING_HEADER + 16)
+            .ok_or_else(|| corrupt(POSTING_HEADER))?;
+        let last = self
+            .bytes()
+            .get(POSTING_HEADER + 16..DIRECT_HEADER)
+            .ok_or_else(|| corrupt(POSTING_HEADER + 16))?;
+        Ok((
+            OwnerRef::read(&mut Reader::new(first))?,
+            OwnerRef::read(&mut Reader::new(last))?,
+        ))
     }
 
     /// Reads a local live coordinate; it never certifies snapshot visibility.
@@ -849,7 +890,7 @@ impl Page {
         if slot >= self.u16(22)? {
             return Err(corrupt(22));
         }
-        let offset = POSTING_HEADER + usize::from(slot) * 8;
+        let offset = DIRECT_HEADER + usize::from(slot) * 8;
         let bytes = self
             .bytes()
             .get(offset..offset + 8)
@@ -868,7 +909,7 @@ impl Page {
     /// Clears a copied coordinate before the host can recycle its heap slot.
     pub fn remove_direct_root(&mut self, slot: u16, layout: HeapLayout) -> Result<()> {
         self.direct_root(slot, layout)?;
-        self.bytes[POSTING_HEADER + usize::from(slot) * 8 + 6] = 0;
+        self.bytes[DIRECT_HEADER + usize::from(slot) * 8 + 6] = 0;
         Ok(())
     }
 
@@ -959,7 +1000,8 @@ impl SealedBuilder {
     pub fn new_direct(block: u32, term: TermRef) -> Result<Self> {
         let mut builder = Self::new(block, term)?;
         builder.page.kind = PageKind::DirectPostings;
-        builder.page.bytes[6] = 8;
+        builder.page.bytes[6] = 9;
+        builder.page.len = DIRECT_HEADER;
         Ok(builder)
     }
 
@@ -973,7 +1015,7 @@ impl SealedBuilder {
         if self.page.len + len + 8 > CAPACITY {
             return Ok(false);
         }
-        let start = POSTING_HEADER + usize::from(self.count) * 8;
+        let start = DIRECT_HEADER + usize::from(self.count) * 8;
         self.page.bytes.copy_within(start..self.page.len, start + 8);
         let mut coordinate = Writer::new(&mut self.page.bytes[start..start + 8]);
         coordinate.u32(root.block())?;
@@ -983,6 +1025,14 @@ impl SealedBuilder {
         self.page.len += 8;
         self.page.bytes[self.page.len..self.page.len + len].copy_from_slice(&bytes[..len]);
         self.page.len += len;
+        if self.count == 0 {
+            owner.write(&mut Writer::new(
+                &mut self.page.bytes[POSTING_HEADER..POSTING_HEADER + 16],
+            ))?;
+        }
+        owner.write(&mut Writer::new(
+            &mut self.page.bytes[POSTING_HEADER + 16..DIRECT_HEADER],
+        ))?;
         self.count += 1;
         self.page.put_u16(22, self.count)?;
         self.previous = Some(owner);

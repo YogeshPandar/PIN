@@ -58,7 +58,10 @@ pub fn scan_count<S: PageStore>(
             let mut remaining = store.blocks()?;
             loop {
                 let page = load_posting(store, block, reference)?;
-                let sealed = page.kind() == PageKind::SealedPostings;
+                let sealed = matches!(
+                    page.kind(),
+                    PageKind::SealedPostings | PageKind::DirectPostings
+                );
                 for owner in page.posting_refs()? {
                     let owner = owner?;
                     if (owner.page, owner.slot) <= (previous.page, previous.slot)
