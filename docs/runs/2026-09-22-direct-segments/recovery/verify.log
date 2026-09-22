@@ -1,0 +1,7 @@
+DO
+ replacement_rows | stale_alpha_rows 
+------------------+------------------
+             1000 |                0
+(1 row)
+
+CHECKPOINT

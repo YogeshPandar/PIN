@@ -602,3 +602,13 @@ The existing default-off count gates and PostgreSQL AM contracts remain.
 Required review: pure corruption and query-oracle tests, small SQL mutation and
 lossy bitmap tests, hard postmaster crash/replay, matched SQL latency and index
 size. Self-reviewed until independent storage/FFI review is recorded.
+
+Local evidence on `dbae7afd376e083e7e2c580d617ac682047bb76c` is archived in
+`docs/runs/2026-09-22-direct-segments/`: pure Rust suite, 63 Python tests,
+release Clippy, G2, normal-package G8 (234/234), hard postmaster replay and
+matched SQL results with row-identity checks all passed. The direct SQL case
+includes mutation; pure tests cover corruption, mixed chains, forced TID reuse
+and interrupted durable stages. The final small warm fixture beats GIN only
+for the common-term count. An attempted TID-only AND/OR merge failed an owner
+incarnation oracle and was reverted. Independent storage/FFI review, write-load
+and replica evidence remain open.

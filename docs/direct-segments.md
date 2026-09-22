@@ -69,6 +69,12 @@ heap visibility, HOT handling, lossification and residual filters.
 ## Remaining gates
 
 The tested fixture is small, warm, synthetic, serial, and stored on tmpfs.
+The final matched local checkpoint measured 878.58 Pin versus 785.80 GIN QPS
+for the common-term count, while Pin remained behind GIN for rare, AND and OR
+counts. The direct index used about 1.3% more allocated file space. See the
+[run record](runs/2026-09-22-direct-segments/README.md) for the exact fixture,
+all samples, validation and limits. A TID-only Boolean merge failed an
+incarnation-sensitive oracle and was reverted.
 Direct pages have not been measured under sustained writes, cold storage,
 replication replay or high term cardinality. The current layout keeps owner
 identities and copies liveness per term, so it is not yet the intended
