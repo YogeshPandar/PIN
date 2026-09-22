@@ -428,11 +428,9 @@ impl Cursor {
             if order == Ordering::Greater || (order == Ordering::Equal && !exclusive) {
                 break;
             }
-            self.current = self
-                .chain
-                .as_mut()
-                .ok_or(Error::InvalidState)?
-                .advance(store)?;
+            let chain = self.chain.as_mut().ok_or(Error::InvalidState)?;
+            chain.skip_direct_before(target, exclusive)?;
+            self.current = chain.advance(store)?;
         }
         Ok(self.current)
     }
@@ -507,6 +505,29 @@ fn seek_pair_or<S: PageStore>(
 }
 
 impl Chain {
+    fn skip_direct_before(&mut self, target: OwnerRef, exclusive: bool) -> Result<()> {
+        let Some(page) = self.page.as_ref() else {
+            return Ok(());
+        };
+        if page.page().kind() != PageKind::DirectPostings {
+            return Ok(());
+        }
+        let (_, last) = page.page().direct_endpoints()?;
+        let order = compare(last, target)?;
+        if order == Ordering::Greater || (order == Ordering::Equal && !exclusive) {
+            return Ok(());
+        }
+        if compare(self.previous, last)? == Ordering::Greater
+            || self.previous.incarnation > last.incarnation
+        {
+            return Err(Error::InvalidState);
+        }
+        self.previous = last;
+        self.block = posting_next(page.page(), self.tail, &mut self.remaining)?.unwrap_or(NO_BLOCK);
+        self.page = None;
+        Ok(())
+    }
+
     fn advance<S: PageStore>(&mut self, store: &mut S) -> Result<Option<OwnerRef>> {
         loop {
             if let Some(page) = &mut self.page {

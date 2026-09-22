@@ -21,6 +21,7 @@ CASES = {
     'common': ('alpha', 'alpha'),
     'rare': ('rareplanet', 'rareplanet'),
     'and': ('alpha AND beta', 'alpha & beta'),
+    'selective_and': ('alpha AND rareplanet', 'alpha & rareplanet'),
     'or': ('alpha OR rareplanet', 'alpha | rareplanet'),
     'phrase': ('"beta gamma"', 'beta <-> gamma'),
 }
@@ -38,6 +39,7 @@ def main() -> None:
     parser.add_argument('--samples', type=int, default=3)
     parser.add_argument('--seconds', type=int, default=5)
     parser.add_argument('--exact-bitmap', choices=('on', 'off'), default='on')
+    parser.add_argument('--cases', nargs='+', choices=CASES.keys(), default=list(CASES))
     args = parser.parse_args()
     if not 1 <= args.samples <= 20 or not 1 <= args.seconds <= 120:
         parser.error('samples must be 1..20 and seconds 1..120')
@@ -65,7 +67,8 @@ def main() -> None:
                              'dirty': bool(subprocess.check_output(
                                  ['git', 'status', '--porcelain'], text=True))})
     queries = {}
-    for name, (pin, gin) in CASES.items():
+    for name in args.cases:
+        pin, gin = CASES[name]
         predicates = {'pin': f"body OPERATOR(pin.@@@) pin.parse_query('{pin}')",
                       'gin': f"to_tsvector('simple', body) @@ to_tsquery('simple', '{gin}')"}
         rows = {engine: f'SELECT id FROM ONLY public.pin_g6_bench WHERE {predicate}'
