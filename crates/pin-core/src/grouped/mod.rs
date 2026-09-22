@@ -5,10 +5,12 @@
 
 mod bitmap;
 mod members;
+mod merge;
 mod query;
 
 pub use bitmap::{Bitmap, BitmapKind, PageOffsets, encode_bitmap};
 pub use members::{Member, Members, SegmentGroup, encode_members, retire};
+pub use merge::{MAX_MERGE_SOURCES, MergePlan};
 pub use query::{Node, QueryScratch, QueryStats, evaluate};
 
 use crate::codec::bytes::{Reader, Writer};
