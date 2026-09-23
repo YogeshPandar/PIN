@@ -3,6 +3,13 @@
 //! Owner slots and dictionary offsets remain stable across posting compaction.
 //! Format and publication obligations: docs/g3-storage.md.
 
+#[path = "page_grouped.rs"]
+mod grouped;
+pub use grouped::{
+    CatalogEntry, GroupData, GroupJournal, GroupPageKind, GroupSnapshot, GroupState,
+    CATALOG_ENTRIES, GROUP_DATA_BYTES, MAX_CATALOG_LEVEL,
+};
+
 use super::document::{MAX_DOCUMENT_BYTES, MAX_DOCUMENT_TOKENS, MAX_TERM_BYTES};
 use crate::analysis::PROFILE_ID;
 use crate::codec::bytes::{Reader, Writer};
@@ -35,6 +42,7 @@ pub enum PageKind {
     Postings,
     SealedPostings,
     DirectPostings,
+    Grouped,
     Fragment,
     Free,
 }
@@ -199,6 +207,7 @@ impl Page {
             6 => PageKind::Free,
             7 => PageKind::SealedPostings,
             9 => PageKind::DirectPostings,
+            10 => PageKind::Grouped,
             _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
         };
         if reader.u8()? != 0 || reader.u32()? != block {
@@ -222,6 +231,7 @@ impl Page {
             PageKind::Postings => 4,
             PageKind::SealedPostings => 7,
             PageKind::DirectPostings => 9,
+            PageKind::Grouped => 10,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -362,7 +372,7 @@ impl Page {
         }
         match self.kind {
             PageKind::Meta => {
-                if self.len != META_HEADER + BUCKETS * 8
+                if !matches!(self.len, grouped::META_LEGACY_BYTES | grouped::META_GROUPED_BYTES)
                     || self.u32(16)? != PROFILE_ID
                     || self.u32(20)? != 8192
                     || self.u16(24)? != layout.max_offset()
@@ -375,10 +385,12 @@ impl Page {
                 self.owner_chain()?;
                 self.free_head()?;
                 self.rewrite_journal()?;
+                self.grouped_state()?;
                 for bucket in 0..BUCKETS {
                     self.bucket(bucket)?;
                 }
             }
+            PageKind::Grouped => self.validate_grouped(layout)?,
             PageKind::Owners => {
                 let count = self.owner_count()?;
                 let mut payload = OWNER_HEADER + usize::from(count) * OWNER_BYTES;

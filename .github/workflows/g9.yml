@@ -31,3 +31,5 @@ jobs:
         run: cargo check --locked -p pin-kernels --no-default-features --lib
       - name: Check scalar grouped truth tables
         run: cargo test --locked -p pin-kernels --test grouped
+      - name: Check grouped physical storage and recovery
+        run: cargo test --locked -p pin-core --test g9_storage

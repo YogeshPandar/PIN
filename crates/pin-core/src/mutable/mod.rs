@@ -7,6 +7,7 @@
 mod compact;
 mod count;
 pub mod document;
+pub mod grouped;
 pub mod page;
 mod query;
 mod reader;
@@ -47,6 +48,11 @@ pub enum Stage {
     CountBeforeVisibility = 14,
     CountAfterVisibility = 15,
     DirectRemoved = 16,
+    GroupReserved = 17,
+    GroupStored = 18,
+    GroupPublished = 19,
+    GroupReclaimed = 20,
+    GroupRetired = 21,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.

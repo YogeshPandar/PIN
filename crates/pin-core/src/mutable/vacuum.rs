@@ -19,6 +19,8 @@ pub struct VacuumStats {
 }
 
 /// Removes each callback-approved owner once, then reclaims dead fragments.
+/// The callback certifies globally dead roots and stays stable across the pass.
+/// Shared liveness may test a root before its canonical owner is tested.
 ///
 /// # Errors
 /// Rejects corruption or any host/callback failure. Partial completed batches are
@@ -28,7 +30,10 @@ pub fn vacuum<S: PageStore>(
     store: &mut S,
     mut removable: impl FnMut(RootTid) -> Result<bool>,
 ) -> Result<VacuumStats> {
-    let recovered = super::recover_compaction(store)?;
+    let recovered = super::recover_compaction(store)?
+        .checked_add(super::grouped::recover(store)?)
+        .ok_or(Error::Limit("recovered pages"))?;
+    super::grouped::retire(store, &mut removable)?;
     let mut meta = load(store, 0, PageKind::Meta)?;
     let mut stats = VacuumStats {
         reclaimed_pages: recovered,
@@ -144,7 +149,7 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
         if page.kind() == PageKind::Zero {
             continue;
         }
-        if page.next()? == target {
+        if page.next()? == target || super::grouped::references(&page, target)? {
             return Err(Error::InvalidState);
         }
         match page.kind() {
