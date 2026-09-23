@@ -6,8 +6,8 @@
 #[path = "page_grouped.rs"]
 mod grouped;
 pub use grouped::{
-    CatalogEntry, GroupData, GroupJournal, GroupPageKind, GroupSnapshot, GroupState,
-    CATALOG_ENTRIES, GROUP_DATA_BYTES, MAX_CATALOG_LEVEL,
+    CATALOG_ENTRIES, CatalogEntry, GROUP_DATA_BYTES, GroupData, GroupJournal, GroupPageKind,
+    GroupSnapshot, GroupState, MAX_CATALOG_LEVEL,
 };
 
 use super::document::{MAX_DOCUMENT_BYTES, MAX_DOCUMENT_TOKENS, MAX_TERM_BYTES};
@@ -372,8 +372,10 @@ impl Page {
         }
         match self.kind {
             PageKind::Meta => {
-                if !matches!(self.len, grouped::META_LEGACY_BYTES | grouped::META_GROUPED_BYTES)
-                    || self.u32(16)? != PROFILE_ID
+                if !matches!(
+                    self.len,
+                    grouped::META_LEGACY_BYTES | grouped::META_GROUPED_BYTES
+                ) || self.u32(16)? != PROFILE_ID
                     || self.u32(20)? != 8192
                     || self.u16(24)? != layout.max_offset()
                     || usize::from(self.u16(26)?) != BUCKETS
