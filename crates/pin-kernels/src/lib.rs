@@ -2,9 +2,11 @@
 //! CPU selection is process-local; no PostgreSQL pointers or shared state enter.
 //! Contracts and independent review gate: docs/g6-api-evidence.md.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
 pub mod grouped;
 mod scalar;
-#[cfg(all(target_arch = "x86_64", not(miri)))]
+#[cfg(all(feature = "std", target_arch = "x86_64", not(miri)))]
 mod x86_avx2;
 
 /// Explicit CPU policy; automatic selection is an opt-in experiment.
@@ -33,7 +35,7 @@ pub enum KernelError {
 #[derive(Clone, Copy, Debug)]
 enum Backend {
     Scalar,
-    #[cfg(all(target_arch = "x86_64", not(miri)))]
+    #[cfg(all(feature = "std", target_arch = "x86_64", not(miri)))]
     Avx2,
 }
 
@@ -60,7 +62,7 @@ impl Kernels {
         if mode == CpuMode::Scalar {
             return Ok(Self::scalar());
         }
-        #[cfg(all(target_arch = "x86_64", not(miri)))]
+        #[cfg(all(feature = "std", target_arch = "x86_64", not(miri)))]
         {
             static AVX2: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
             if *AVX2.get_or_init(|| std::arch::is_x86_feature_detected!("avx2")) {
@@ -80,7 +82,7 @@ impl Kernels {
     pub const fn mode(self) -> CpuMode {
         match self.backend {
             Backend::Scalar => CpuMode::Scalar,
-            #[cfg(all(target_arch = "x86_64", not(miri)))]
+            #[cfg(all(feature = "std", target_arch = "x86_64", not(miri)))]
             Backend::Avx2 => CpuMode::Avx2,
         }
     }
@@ -117,7 +119,7 @@ impl Kernels {
     ) {
         match self.backend {
             Backend::Scalar => scalar::combine::<UNION, DIFFERENCE>(left, right, output),
-            #[cfg(all(target_arch = "x86_64", not(miri)))]
+            #[cfg(all(feature = "std", target_arch = "x86_64", not(miri)))]
             Backend::Avx2 => {
                 // safety: only runtime detection constructs this backend; combine
                 // checked equal lengths, and output exclusively borrows live storage.

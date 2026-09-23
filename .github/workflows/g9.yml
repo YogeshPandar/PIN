@@ -1,0 +1,33 @@
+name: G9 grouped storage
+
+on:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - '.github/workflows/g9.yml'
+      - 'tests/sql/g9_*'
+      - 'tools/g9_*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: g9-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bare-kernels:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select pinned Rust
+        run: rustup toolchain install 1.98.1 --profile minimal
+      - name: Check allocation-free no_std kernels
+        run: cargo check --locked -p pin-kernels --no-default-features --lib
+      - name: Check scalar grouped truth tables
+        run: cargo test --locked -p pin-kernels --test grouped

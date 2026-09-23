@@ -17,7 +17,7 @@ pub fn candidates(
     right: &PageMask,
     live: &PageMask,
 ) -> PageMask {
-    std::array::from_fn(|index| {
+    core::array::from_fn(|index| {
         let value = match operation {
             BitmapOp::Intersection => left[index] & right[index],
             BitmapOp::Union => left[index] | right[index],
@@ -35,7 +35,7 @@ pub fn offsets(
     right: &OffsetMask,
     live: &OffsetMask,
 ) -> OffsetMask {
-    std::array::from_fn(|index| {
+    core::array::from_fn(|index| {
         let value = match operation {
             BitmapOp::Intersection => left[index] & right[index],
             BitmapOp::Union => left[index] | right[index],
@@ -75,4 +75,4 @@ impl Iterator for Pages {
     }
 }
 
-impl std::iter::FusedIterator for Pages {}
+impl core::iter::FusedIterator for Pages {}
