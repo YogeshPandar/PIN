@@ -58,7 +58,10 @@ pub struct CatalogEntry {
 
 impl Default for CatalogEntry {
     fn default() -> Self {
-        Self { key: [0; 2], value: [0; 64] }
+        Self {
+            key: [0; 2],
+            value: [0; 64],
+        }
     }
 }
 
@@ -76,37 +79,45 @@ fn pair(head: u32, tail: u32) -> bool {
 }
 
 fn valid_key(key: [u64; 2]) -> bool {
-    key[1] <= u64::from(u32::MAX - 255) && key[1] & 255 == 0
-        && (key[0] == 0 || (key[0] >> 16 > 0 && key[0] >> 16 < u64::from(NO_BLOCK)
-            && key[0] as u16 >= HEADER as u16 && usize::from(key[0] as u16) < super::CAPACITY))
+    key[1] <= u64::from(u32::MAX - 255)
+        && key[1] & 255 == 0
+        && (key[0] == 0
+            || (key[0] >> 16 > 0
+                && key[0] >> 16 < u64::from(NO_BLOCK)
+                && key[0] as u16 >= HEADER as u16
+                && usize::from(key[0] as u16) < super::CAPACITY))
 }
 
 impl GroupState {
     fn validate(self) -> Result<()> {
-        if let Some(active) = self.active {
-            if !pair(active.head, active.tail)
+        if let Some(active) = self.active
+            && (!pair(active.head, active.tail)
                 || (active.head == NO_BLOCK) != (active.root == NO_BLOCK)
                 || active.root != active.tail
                 || (active.root != NO_BLOCK && !super::block_valid(active.root))
-                || active.after.is_some_and(|owner| owner.incarnation.get() >= active.id.get())
-            {
-                return Err(Error::InvalidState);
-            }
+                || active
+                    .after
+                    .is_some_and(|owner| owner.incarnation.get() >= active.id.get()))
+        {
+            return Err(Error::InvalidState);
         }
-        if let Some(journal) = self.journal {
-            if !pair(journal.head, journal.tail)
-                || (journal.phase == RewritePhase::Retiring && (journal.head == NO_BLOCK || self.active.is_none()))
+        if let Some(journal) = self.journal
+            && (!pair(journal.head, journal.tail)
+                || (journal.phase == RewritePhase::Retiring
+                    && (journal.head == NO_BLOCK || self.active.is_none()))
                 || self.active.is_some_and(|active| {
                     let ordered = match journal.phase {
                         RewritePhase::Building => journal.id > active.id,
                         RewritePhase::Retiring => journal.id < active.id,
                     };
-                    !ordered || (journal.head != NO_BLOCK && [active.head, active.tail].contains(&journal.head))
-                        || (journal.tail != NO_BLOCK && [active.head, active.tail].contains(&journal.tail))
-                })
-            {
-                return Err(Error::InvalidState);
-            }
+                    !ordered
+                        || (journal.head != NO_BLOCK
+                            && [active.head, active.tail].contains(&journal.head))
+                        || (journal.tail != NO_BLOCK
+                            && [active.head, active.tail].contains(&journal.tail))
+                }))
+        {
+            return Err(Error::InvalidState);
         }
         Ok(())
     }
@@ -134,7 +145,9 @@ impl Page {
             return Err(Error::InvalidState);
         }
         let owner = reader.take(16)?;
-        let after = if owner == [0; 16] { None } else {
+        let after = if owner == [0; 16] {
+            None
+        } else {
             Some(OwnerRef::read(&mut Reader::new(owner))?)
         };
         let active = if id == 0 {
@@ -144,7 +157,11 @@ impl Page {
             None
         } else {
             Some(GroupSnapshot {
-                id: SegmentId::new(id).map_err(|_| Error::InvalidState)?, head, tail, root, after,
+                id: SegmentId::new(id).map_err(|_| Error::InvalidState)?,
+                head,
+                tail,
+                root,
+                after,
             })
         };
         let id = reader.u64()?;
@@ -162,7 +179,9 @@ impl Page {
             None
         } else {
             Some(GroupJournal {
-                id: SegmentId::new(id).map_err(|_| Error::InvalidState)?, head, tail,
+                id: SegmentId::new(id).map_err(|_| Error::InvalidState)?,
+                head,
+                tail,
                 phase: match phase {
                     1 => RewritePhase::Building,
                     2 => RewritePhase::Retiring,
@@ -174,8 +193,12 @@ impl Page {
         state.validate()?;
         let next = self.u64(32)?;
         if state.active.is_some_and(|active| active.id.get() >= next)
-            || state.journal.is_some_and(|journal| journal.id.get() >= next)
-        { return Err(Error::InvalidState); }
+            || state
+                .journal
+                .is_some_and(|journal| journal.id.get() >= next)
+        {
+            return Err(Error::InvalidState);
+        }
         Ok(state)
     }
 
@@ -185,8 +208,12 @@ impl Page {
         state.validate()?;
         let next = self.u64(32)?;
         if state.active.is_some_and(|active| active.id.get() >= next)
-            || state.journal.is_some_and(|journal| journal.id.get() >= next)
-        { return Err(Error::InvalidState); }
+            || state
+                .journal
+                .is_some_and(|journal| journal.id.get() >= next)
+        {
+            return Err(Error::InvalidState);
+        }
         let mut bytes = [0u8; 72];
         let mut writer = Writer::new(&mut bytes);
         writer.put(b"PG09")?;
@@ -241,13 +268,21 @@ impl Page {
         if reader.u8()? != 0 {
             return Err(Error::InvalidState);
         }
-        Ok((SegmentId::new(reader.u64()?).map_err(|_| Error::InvalidState)?, kind))
+        Ok((
+            SegmentId::new(reader.u64()?).map_err(|_| Error::InvalidState)?,
+            kind,
+        ))
     }
 
     /// creates one bounded record fragment; allocation links are independent of keys.
     pub fn group_record(
-        block: u32, id: SegmentId, kind: GroupPageKind, key: [u64; 2],
-        total: u32, offset: u32, bytes: &[u8],
+        block: u32,
+        id: SegmentId,
+        kind: GroupPageKind,
+        key: [u64; 2],
+        total: u32,
+        offset: u32,
+        bytes: &[u8],
     ) -> Result<Self> {
         let mut page = Self::new_grouped(block, id, kind)?;
         if bytes.len() > GROUP_DATA_BYTES {
@@ -266,7 +301,10 @@ impl Page {
 
     pub fn group_data(&self) -> Result<GroupData<'_>> {
         let (id, kind) = self.group_identity()?;
-        if !matches!(kind, GroupPageKind::Members | GroupPageKind::Liveness | GroupPageKind::Posting) {
+        if !matches!(
+            kind,
+            GroupPageKind::Members | GroupPageKind::Liveness | GroupPageKind::Posting
+        ) {
             return Err(Error::InvalidState);
         }
         let mut reader = Reader::new(&self.bytes()[GROUP_HEADER..]);
@@ -274,22 +312,45 @@ impl Page {
         let total = reader.u32()?;
         let offset = reader.u32()?;
         let bytes = self.bytes().get(DATA_HEADER..).ok_or(Error::InvalidState)?;
-        let maximum = if kind == GroupPageKind::Members { 72 + 256 * 512 * 16 } else { 72 + 256 * 68 };
-        if !valid_key(key) || (kind == GroupPageKind::Posting) != (key[0] != 0)
-            || total < 72 || total as usize > maximum
-            || offset >= total || !(offset as usize).is_multiple_of(GROUP_DATA_BYTES)
+        let maximum = if kind == GroupPageKind::Members {
+            72 + 256 * 512 * 16
+        } else {
+            72 + 256 * 68
+        };
+        if !valid_key(key)
+            || (kind == GroupPageKind::Posting) != (key[0] != 0)
+            || total < 72
+            || total as usize > maximum
+            || offset >= total
+            || !(offset as usize).is_multiple_of(GROUP_DATA_BYTES)
             || bytes.len() != ((total - offset) as usize).min(GROUP_DATA_BYTES)
         {
             return Err(Error::InvalidState);
         }
-        Ok(GroupData { id, kind, key, total, offset, bytes })
+        Ok(GroupData {
+            id,
+            kind,
+            key,
+            total,
+            offset,
+            bytes,
+        })
     }
 
-    pub fn group_node(block: u32, id: SegmentId, level: u8, entries: &[CatalogEntry]) -> Result<Self> {
+    pub fn group_node(
+        block: u32,
+        id: SegmentId,
+        level: u8,
+        entries: &[CatalogEntry],
+    ) -> Result<Self> {
         if level > MAX_CATALOG_LEVEL || entries.is_empty() || entries.len() > CATALOG_ENTRIES {
             return Err(Error::Limit("group catalog node"));
         }
-        let kind = if level == 0 { GroupPageKind::Leaf } else { GroupPageKind::Branch };
+        let kind = if level == 0 {
+            GroupPageKind::Leaf
+        } else {
+            GroupPageKind::Branch
+        };
         let mut page = Self::new_grouped(block, id, kind)?;
         let mut writer = Writer::new(&mut page.bytes[GROUP_HEADER..]);
         writer.u8(level)?;
@@ -310,10 +371,18 @@ impl Page {
         let (_, kind) = self.group_identity()?;
         let level = *self.bytes().get(GROUP_HEADER).ok_or(Error::InvalidState)?;
         let count = self.u16(GROUP_HEADER + 2)?;
-        if level > MAX_CATALOG_LEVEL || count == 0 || usize::from(count) > CATALOG_ENTRIES
-            || self.bytes[GROUP_HEADER + 1] != 0 || self.u32(GROUP_HEADER + 4)? != 0
+        if level > MAX_CATALOG_LEVEL
+            || count == 0
+            || usize::from(count) > CATALOG_ENTRIES
+            || self.bytes[GROUP_HEADER + 1] != 0
+            || self.u32(GROUP_HEADER + 4)? != 0
             || self.len != NODE_HEADER + usize::from(count) * ENTRY_BYTES
-            || kind != if level == 0 { GroupPageKind::Leaf } else { GroupPageKind::Branch }
+            || kind
+                != if level == 0 {
+                    GroupPageKind::Leaf
+                } else {
+                    GroupPageKind::Branch
+                }
         {
             return Err(Error::InvalidState);
         }
@@ -322,7 +391,9 @@ impl Page {
 
     pub fn group_entry(&self, index: u16) -> Result<CatalogEntry> {
         let (_, count) = self.group_node_info()?;
-        if index >= count { return Err(Error::InvalidParameters); }
+        if index >= count {
+            return Err(Error::InvalidParameters);
+        }
         let start = NODE_HEADER + usize::from(index) * ENTRY_BYTES;
         let mut reader = Reader::new(&self.bytes[start..start + ENTRY_BYTES]);
         let key = [reader.u64()?, reader.u64()?];
@@ -340,8 +411,13 @@ impl Page {
                 return Err(Error::InvalidState);
             }
             if level != 0 {
-                let child = u32::from_le_bytes(entry.value[..4].try_into().map_err(|_| Error::InvalidState)?);
-                if !super::block_valid(child) || child == self.block || entry.value[4..] != [0; 60] {
+                let child = u32::from_le_bytes(
+                    entry.value[..4]
+                        .try_into()
+                        .map_err(|_| Error::InvalidState)?,
+                );
+                if !super::block_valid(child) || child == self.block || entry.value[4..] != [0; 60]
+                {
                     return Err(Error::InvalidState);
                 }
             }
