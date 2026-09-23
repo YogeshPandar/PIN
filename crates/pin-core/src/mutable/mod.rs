@@ -48,11 +48,13 @@ pub enum Stage {
     CountBeforeVisibility = 14,
     CountAfterVisibility = 15,
     DirectRemoved = 16,
-    GroupReserved = 17,
-    GroupStored = 18,
-    GroupPublished = 19,
-    GroupReclaimed = 20,
-    GroupRetired = 21,
+    GroupReserved = 32,
+    GroupStored = 33,
+    GroupPublished = 34,
+    GroupReclaimed = 35,
+    GroupRetired = 36,
+    GroupScan = 37,
+    GroupSortReady = 38,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
