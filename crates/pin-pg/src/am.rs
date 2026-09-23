@@ -51,7 +51,7 @@ pub(crate) fn pin_handler() -> Internal {
         amcanparallel: true,
         amcanbuildparallel: true,
         amcaninclude: false,
-        amusemaintenanceworkmem: false,
+        amusemaintenanceworkmem: true,
         amsummarizing: false,
         amparallelvacuumoptions: crate::parallel::vacuum_options(),
         amkeytype: pg_sys::InvalidOid,
@@ -139,6 +139,12 @@ unsafe extern "C-unwind" fn build(
             })
         };
         documents = state.documents;
+    }
+    if crate::grouped::storage_enabled() {
+        // safety: heap participants have finished; acquire structure before writer.
+        matching::stored(unsafe {
+            crate::storage_impl::with_maintenance(index, |store| crate::grouped::rebuild(store))
+        });
     }
     // safety: palloc returns aligned PostgreSQL-owned memory; both fields are initialized.
     unsafe {
@@ -409,7 +415,20 @@ unsafe fn compact_cleanup(
     // safety: physical posting reclamation waits for readers, then excludes writers.
     let (compacted, pages) = matching::stored(unsafe {
         storage::with_maintenance(index, strategy, |store| {
-            let compacted = mutable::compact_with_mode(store, crate::maintenance::mode())?;
+            let mut compacted = mutable::compact_with_mode(store, crate::maintenance::mode())?;
+            let grouped = crate::grouped::rebuild(store)?;
+            compacted.reclaimed_pages = compacted
+                .reclaimed_pages
+                .checked_add(grouped.reclaimed_pages)
+                .ok_or(Error::Limit("group maintenance pages"))?;
+            compacted.reused_pages = compacted
+                .reused_pages
+                .checked_add(grouped.reused_pages)
+                .ok_or(Error::Limit("group maintenance pages"))?;
+            compacted.written_pages = compacted
+                .written_pages
+                .checked_add(grouped.written_pages)
+                .ok_or(Error::Limit("group maintenance pages"))?;
             let pages = pin_core::mutable::PageStore::blocks(store)?;
             Ok((compacted, pages))
         })
@@ -687,12 +706,9 @@ unsafe extern "C-unwind" fn bitmap(
     // safety: the read barrier covers all page references, not later heap visibility work.
     let count = matching::stored(unsafe {
         storage::with_reader(index, |store| {
-            mutable::scan_query_with_recheck(
-                store,
-                &query,
-                matching::QUERY_MEMORY,
-                |root, recheck| sink.push(root, recheck || !single_key),
-            )
+            crate::grouped::scan(store, &query, matching::QUERY_MEMORY, |root, recheck| {
+                sink.push(root, recheck || !single_key)
+            })
         })
     });
     sink.flush();
