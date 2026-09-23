@@ -16,7 +16,9 @@ const MAX_BYTES: usize = 72 + 256 * 68;
 /// rejects foreign identities, corrupt payloads and callback errors before mutation.
 /// the function performs no allocation, persistence or visibility certification.
 pub fn retire_roots(
-    bytes: &mut [u8], key: GroupKey, mut removable: impl FnMut(RootTid) -> Result<bool>,
+    bytes: &mut [u8],
+    key: GroupKey,
+    mut removable: impl FnMut(RootTid) -> Result<bool>,
 ) -> Result<u32> {
     let view = Bitmap::open(bytes)?;
     if view.kind() != BitmapKind::Liveness || view.key() != key {
@@ -41,6 +43,8 @@ pub fn retire_roots(
             }
         }
     }
-    for (byte, clear) in bytes.iter_mut().zip(clear) { *byte &= !clear; }
+    for (byte, clear) in bytes.iter_mut().zip(clear) {
+        *byte &= !clear;
+    }
     Ok(removed)
 }

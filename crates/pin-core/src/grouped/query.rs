@@ -60,10 +60,17 @@ pub fn evaluate(
     mut interrupt: impl FnMut() -> Result<()>,
     mut emit: impl FnMut(u32, &OffsetMask) -> Result<()>,
 ) -> Result<QueryStats> {
-    if terms.iter().any(|term| term.key() != segment.key() || term.kind() != BitmapKind::Posting) {
+    if terms
+        .iter()
+        .any(|term| term.key() != segment.key() || term.kind() != BitmapKind::Posting)
+    {
         return Err(Error::InvalidState);
     }
-    let mut source = MemorySource { segment, terms, interrupt: &mut interrupt };
+    let mut source = MemorySource {
+        segment,
+        terms,
+        interrupt: &mut interrupt,
+    };
     evaluate_source(&mut source, program, scratch, &mut emit)
 }
 
@@ -85,19 +92,36 @@ struct MemorySource<'a, 'b, I> {
 }
 
 impl<I: FnMut() -> Result<()>> Source for MemorySource<'_, '_, I> {
-    fn key(&self) -> GroupKey { self.segment.key() }
-    fn terms(&self) -> usize { self.terms.len() }
-    fn live_pages(&self) -> PageMask { *self.segment.live().pages() }
-    fn term_pages(&self, term: usize) -> PageMask { *self.terms[term].pages() }
-    fn live_offsets(&mut self, page: u8) -> Result<OffsetMask> { self.segment.live().offsets(page) }
-    fn term_offsets(&mut self, term: usize, page: u8) -> Result<(OffsetMask, usize)> {
-        Ok((self.terms[term].offsets(page)?, self.terms[term].payload_bytes(page)))
+    fn key(&self) -> GroupKey {
+        self.segment.key()
     }
-    fn interrupt(&mut self) -> Result<()> { (self.interrupt)() }
+    fn terms(&self) -> usize {
+        self.terms.len()
+    }
+    fn live_pages(&self) -> PageMask {
+        *self.segment.live().pages()
+    }
+    fn term_pages(&self, term: usize) -> PageMask {
+        *self.terms[term].pages()
+    }
+    fn live_offsets(&mut self, page: u8) -> Result<OffsetMask> {
+        self.segment.live().offsets(page)
+    }
+    fn term_offsets(&mut self, term: usize, page: u8) -> Result<(OffsetMask, usize)> {
+        Ok((
+            self.terms[term].offsets(page)?,
+            self.terms[term].payload_bytes(page),
+        ))
+    }
+    fn interrupt(&mut self) -> Result<()> {
+        (self.interrupt)()
+    }
 }
 
 pub(crate) fn evaluate_source(
-    source: &mut impl Source, program: &[Node], scratch: &mut QueryScratch,
+    source: &mut impl Source,
+    program: &[Node],
+    scratch: &mut QueryScratch,
     mut emit: impl FnMut(u32, &OffsetMask) -> Result<()>,
 ) -> Result<QueryStats> {
     source.interrupt()?;
@@ -222,15 +246,26 @@ fn validate_program(terms: usize, program: &[Node]) -> Result<()> {
 
 // resolves demand using summaries alone, before the adapter reads bitmap extents.
 pub(crate) fn needed_terms(
-    program: &[Node], live: PageMask, terms: &[PageMask], scratch: &mut QueryScratch,
+    program: &[Node],
+    live: PageMask,
+    terms: &[PageMask],
+    scratch: &mut QueryScratch,
 ) -> Result<(PageMask, u64)> {
     validate_program(terms.len(), program)?;
     for (index, node) in program.iter().enumerate() {
         scratch.pages[index] = match *node {
-            Node::Term(term) => grouped::candidates(BitmapOp::Intersection, &terms[term], &live, &live),
+            Node::Term(term) => {
+                grouped::candidates(BitmapOp::Intersection, &terms[term], &live, &live)
+            }
             Node::All | Node::Not(_) => live,
-            Node::And(left, right) | Node::Or(left, right) | Node::Difference(left, right) =>
-                grouped::candidates(operation(*node), &scratch.pages[left], &scratch.pages[right], &live),
+            Node::And(left, right) | Node::Or(left, right) | Node::Difference(left, right) => {
+                grouped::candidates(
+                    operation(*node),
+                    &scratch.pages[left],
+                    &scratch.pages[right],
+                    &live,
+                )
+            }
         };
     }
     let pages = scratch.pages[program.len() - 1];
@@ -238,8 +273,11 @@ pub(crate) fn needed_terms(
     for page in Pages::new(pages) {
         let needed = dependencies(program, &scratch.pages, page);
         for (index, node) in program.iter().enumerate() {
-            if needed & (1 << index) != 0 && super::contains(&scratch.pages[index], page) {
-                if let Node::Term(term) = *node { terms |= 1 << term; }
+            if needed & (1 << index) != 0
+                && super::contains(&scratch.pages[index], page)
+                && let Node::Term(term) = *node
+            {
+                terms |= 1 << term;
             }
         }
     }

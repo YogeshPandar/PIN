@@ -12,9 +12,9 @@ mod retire;
 pub use bitmap::{Bitmap, BitmapKind, PageOffsets, encode_bitmap};
 pub use members::{Member, Members, SegmentGroup, encode_members, retire};
 pub use merge::{MAX_MERGE_SOURCES, MergePlan};
-pub use retire::retire_roots;
-pub(crate) use query::{Source, evaluate_source, needed_terms};
 pub use query::{Node, QueryScratch, QueryStats, evaluate};
+pub(crate) use query::{Source, evaluate_source, needed_terms};
+pub use retire::retire_roots;
 
 use crate::codec::bytes::{Reader, Writer};
 use crate::error::{Error, Result};
