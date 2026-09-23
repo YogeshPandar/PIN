@@ -1,23 +1,26 @@
 # G9 generation-safe grouped storage
 
-Status: logical storage, scalar query, retirement and merge foundation. The
-PostgreSQL storage/SQL path is not connected. This is not a completed migration
-or a performance claim. Base: `ffc48f54d8a02996bba9405bb3c743dcb2db0fc6`.
+Status: logical and physical grouped storage with a default-off PostgreSQL adapter.
+Native validation of the new adapter and independent storage review remain pending.
+This document specifies the logical format and its conditional correctness argument.
+See [g9-integration.md](g9-integration.md) for host APIs, publication, activation,
+rollback, memory budgets and the exact limits of locally executed tests.
 
 ## Implemented boundary
 
 `crates/pin-core/src/grouped/` contains checked borrowed bitmap records,
 immutable generation membership, shared clear-only liveness, owner-checked
 term sealing, a scalar Boolean evaluator, and bounded logical compaction.
-`crates/pin-kernels/src/grouped.rs` contains the safe fixed-mask operations.
-No unsafe block, allocator call, host pointer, external dependency or change to
-Cargo.lock is introduced. Caller-owned input/output storage is not free memory.
+`crates/pin-kernels/src/grouped.rs` contains safe fixed-mask operations. The
+logical kernel adds no unsafe block or PostgreSQL pointer and uses caller-owned
+scratch. Caller-owned input/output storage is not free memory.
 
-The existing mutable, sealed and tag-9 direct pages remain the SQL path. This
-PR does not change `mutable/page.rs`, `mutable/compact.rs`, `mutable/query.rs`,
-`mutable/writer.rs`, `mutable/vacuum.rs`, `pin-pg/src/storage.rs` or
-`pin-pg/src/am.rs`. The new APIs operate on private logical byte images; they do
-not read buffers, publish pages, write WAL or perform PostgreSQL VACUUM.
+`mutable/page_grouped.rs` and `mutable/grouped/` add physical framing, a catalog,
+complete-owner capture, shared retirement and journaled publication/recovery.
+`pin-pg/src/grouped.rs` and its C sort bridge connect this core to build, VACUUM
+cleanup and bitmap scans. The new path retains canonical owners, legacy postings
+and positions. Both host settings remain off by default. It is neither completed
+legacy-storage removal nor a performance qualification.
 
 ## Identity comes before bit operations
 
@@ -133,12 +136,14 @@ Cancellation can leave a partial private target, which must never be published.
 
 ## Performance limitations still requiring design work
 
-The tested optimization is avoided term offset decoding after page pruning.
+The scalar optimization is avoided term offset decoding after page pruning.
 There is no measured SQL speedup in this PR. `SegmentGroup::open` eagerly checks
 all membership and liveness; the borrowed view can be reused while its backing
 snapshot remains valid. Repeating that full open on every cold query could
-negate pruning. A physical adapter needs a budgeted validation/cache strategy
-and separately addressable group directories before any I/O reduction claim.
+negate pruning. The physical reader uses separately addressable catalog entries and validates
+selected records without reopening the complete membership roster on each scan.
+It still copies selected record fragments; decoded-byte reductions are not a
+measured physical-I/O reduction. Cache strategy and I/O costs remain benchmark gates.
 
 The membership representation uses 16 bytes per owner once per segment, not
 per term. That is not a claim of optimal index size. Singleton/sparse offset
@@ -168,8 +173,11 @@ to the host memory budget in addition to the fixed query scratch.
    visibility checks, bitmap recheck flags, MVCC-only scans, interruption,
    memory budgets and the server's generic WAL registration bound.
 
-These gates remain open. Do not switch SQL scans merely because the pure Rust
-oracle passes. Existing legacy crash tests do not certify this physical format.
+The physical core and gated adapter implement these protocols. Native execution,
+crash qualification and independent review remain open acceptance gates. Do not
+enable them by default merely because the pure Rust oracle passes. Existing legacy
+crash tests do not certify this physical format. The new G9 driver is a test suite,
+not evidence that its schedules have successfully executed.
 
 ## Evidence and review status
 
@@ -185,8 +193,7 @@ not evidence of success. The PR records exact validated commits and CI runs.
 
 Self-reviewed only. Independent storage review remains open. PostgreSQL SQL
 row-identity equality across UPDATE, HOT, DELETE, VACUUM, mixed-format compaction,
-long snapshots and hard crashes remains required. No new physical crash suite
-has run. Existing ignored Unicode fixture tests remain a separate CI gate.
+long snapshots and hard crashes remains required. The newly added PostgreSQL physical crash suite has not run for the adapter. Existing ignored Unicode fixture tests remain a separate CI gate.
 
 After correctness, require selective/common AND, broad OR, warm/cold cache,
 concurrent writes, bytes decoded/read, private memory, index size, WAL, build
