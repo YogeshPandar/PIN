@@ -2,19 +2,20 @@
 //! maintenance requires the exclusive structural barrier before the writer lock.
 
 mod build;
-mod storage;
 mod scan;
+mod storage;
 mod vacuum;
 
+pub use build::{BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, needs_rebuild, rebuild};
 pub use scan::scan_query;
-pub use build::{BuildStats, GroupSort, SORT_BATCH, SortRecord, rebuild};
 
 pub(super) fn recover<S: super::PageStore>(store: &mut S) -> crate::error::Result<u32> {
     storage::recover(store)
 }
 
 pub(super) fn retire<S: super::PageStore>(
-    store: &mut S, removable: impl FnMut(crate::identity::RootTid) -> crate::error::Result<bool>,
+    store: &mut S,
+    removable: impl FnMut(crate::identity::RootTid) -> crate::error::Result<bool>,
 ) -> crate::error::Result<u64> {
     vacuum::retire(store, removable)
 }
