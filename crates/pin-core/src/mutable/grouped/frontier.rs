@@ -424,6 +424,11 @@ fn scan_owner_frontier<S: PageStore>(
     memory_bytes: usize,
     mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<Option<u64>> {
+    let ceiling = snapshot
+        .id
+        .get()
+        .checked_add(span)
+        .ok_or(Error::InvalidState)?;
     let Some(available) = memory_bytes.checked_sub(OWNER_FRONTIER_FIXED) else {
         return Ok(None);
     };
@@ -459,7 +464,7 @@ fn scan_owner_frontier<S: PageStore>(
     let mut anchor = snapshot.after;
     let mut previous = snapshot.after;
     let mut work = 0u8;
-    while block != NO_BLOCK {
+    'owners: while block != NO_BLOCK {
         let page = load(store, block, PageKind::Owners)?;
         if let Some(expected) = anchor.take()
             && page.owner(expected.slot, store.layout())?.reference != expected
@@ -472,8 +477,13 @@ fn scan_owner_frontier<S: PageStore>(
             if let Some(previous) = previous {
                 ordered(previous, owner.reference)?;
             }
-            if owner.reference.incarnation.get() <= snapshot.id.get() {
+            let incarnation = owner.reference.incarnation.get();
+            if incarnation <= snapshot.id.get() {
                 return Err(Error::InvalidState);
+            }
+            // stop at the metapage allocation fence captured before this scan.
+            if incarnation > ceiling {
+                break 'owners;
             }
             previous = Some(owner.reference);
             if owner.publication == Publication::Published && owner.live {
