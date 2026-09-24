@@ -44,11 +44,12 @@ intuition.
 
 For an eligible scan, PIN performs these steps:
 
-1. Capture the grouped snapshot and query-term posting tails under the existing
-   structural read protocol.
+1. Capture the grouped snapshot, metapage incarnation ceiling, and query-term
+   posting tails under the existing structural read protocol.
 2. Probe only the captured term tails needed to decide whether the delta is
    sufficiently dense for owner-native evaluation.
-3. Walk canonical owner records strictly after the snapshot owner fence.
+3. Walk canonical owner records strictly after the snapshot owner fence and no
+   later than the captured metapage allocation ceiling.
 4. Ignore owners that are unpublished or not live.
 5. Parse each complete prepared-document term envelope once and build a query
    membership mask. Boolean membership does not decode unused position deltas.
@@ -87,10 +88,14 @@ qualification must report gains and regressions by query class and delta size.
 ## Correctness invariants
 
 The grouped snapshot fence is an index publication boundary, not a PostgreSQL
-visibility decision. The owner scan may return candidates inserted after the
-statement snapshot. PostgreSQL's bitmap heap scan still applies MVCC visibility,
-HOT-chain handling, lossy-page rechecks, other scan keys, and executor quals.
-The implementation does not claim an index-only count path.
+visibility decision. The scan also captures the metapage's next-incarnation
+value and treats the preceding incarnation as an upper work fence. A concurrent
+writer can append a later owner to the same physical tail page after capture;
+that later incarnation is ignored by the current scan and becomes eligible on a
+subsequent scan. PostgreSQL permits a concurrent index scan to omit entries
+inserted after the scan began. PostgreSQL's bitmap heap scan still applies MVCC
+visibility, HOT-chain handling, lossy-page rechecks, other scan keys, and
+executor quals. The implementation does not claim an index-only count path.
 
 Every candidate retains the full owner reference and original root TID. Owner
 incarnation ordering is checked while walking the chain. A reused heap slot from
@@ -131,9 +136,10 @@ the remaining operation budget. Inline documents do not allocate per owner.
 Query term sorting uses a fixed 64-byte index array.
 
 The allocator may return more capacity than requested. The implementation checks
-actual `Vec::capacity()` against the operation budget before scanning. This is a
-bounded allocation path in `pin-core`; it does not change the allocation-free
-`no_std` contract of `pin-kernels`.
+actual `Vec::capacity()` against the operation budget before scanning. A failed
+optional owner-frontier reservation returns to the term-addressed path before
+any candidate is emitted. This is a bounded allocation path in `pin-core`; it
+does not change the allocation-free `no_std` contract of `pin-kernels`.
 
 ## Activation
 
@@ -158,8 +164,9 @@ and CPU-profile connections.
 ## Correctness qualification
 
 Pure-engine tests cover a 1,024-owner related delta, exact row identities,
-bounded posting-tail probes, unrelated-write avoidance, and memory fallback
-before emission. The native PostgreSQL qualification adds a 1,024-owner related
+bounded posting-tail probes, unrelated-write avoidance, memory fallback before
+emission, and a concurrent owner appended to the already captured physical tail
+page after the metapage fence is read. The native PostgreSQL qualification adds a 1,024-owner related
 fixture with an independent sequential-scan oracle, Boolean query classes,
 HOT-eligible updates, indexed-column updates, DELETE, VACUUM, concurrent INSERT,
 statement-snapshot retention, immediate crash/restart, and stage 41 selection.
