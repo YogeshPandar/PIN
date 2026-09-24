@@ -120,18 +120,17 @@ fn match_phrase_words(
     let width = terms.len();
     let mut cursor = 0;
     let mut filled = 0;
-    let mut tokens = 0u32;
+    let token_limit = limits.tokens as usize;
     let mut found = false;
     let mut work = Work::new(max_steps);
     let mut exhausted = work.charge(1).err();
-    for word in text.unicode_words() {
+    for (token_index, word) in text.unicode_words().enumerate() {
         if word.len() > limits.term_bytes {
             return Err(Error::Limit("term bytes"));
         }
-        if tokens == limits.tokens {
+        if token_index == token_limit {
             return Err(Error::Limit("element count"));
         }
-        tokens += 1;
         // a hit or exhausted work skips comparisons, never validation of the tail.
         if found || exhausted.is_some() {
             continue;
