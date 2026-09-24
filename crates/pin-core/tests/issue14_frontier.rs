@@ -80,8 +80,12 @@ impl PageStore for Store {
 }
 
 fn tid(index: u32) -> RootTid {
-    RootTid::new(index / 200, (index % 200 + 1) as u16, HeapLayout::new(291).unwrap())
-        .unwrap()
+    RootTid::new(
+        index / 200,
+        (index % 200 + 1) as u16,
+        HeapLayout::new(291).unwrap(),
+    )
+    .unwrap()
 }
 
 fn insert(store: &mut impl PageStore, index: u32, text: &str) {
@@ -118,8 +122,19 @@ fn exact(store: &mut impl PageStore, source: &str, documents: &[(u32, &str)]) {
         .collect();
     let actual = scan(store, source, 8 << 20).unwrap();
     assert!(actual.iter().all(|(_, recheck)| !recheck), "{source}");
-    assert_eq!(actual.len(), expected.len(), "duplicate candidate: {source}");
-    assert_eq!(actual.into_iter().map(|(root, _)| root).collect::<BTreeSet<_>>(), expected, "{source}");
+    assert_eq!(
+        actual.len(),
+        expected.len(),
+        "duplicate candidate: {source}"
+    );
+    assert_eq!(
+        actual
+            .into_iter()
+            .map(|(root, _)| root)
+            .collect::<BTreeSet<_>>(),
+        expected,
+        "{source}"
+    );
 }
 
 #[test]
@@ -131,8 +146,11 @@ fn unrelated_writes_do_not_create_boolean_candidates_or_owner_reads() {
     }
     snapshot(&mut store);
     let queries = [
-        "alpha AND beta", "beta AND alpha", "alpha OR beta",
-        "alpha AND NOT missing", "missing AND alpha",
+        "alpha AND beta",
+        "beta AND alpha",
+        "alpha OR beta",
+        "alpha AND NOT missing",
+        "missing AND alpha",
     ];
     let mut reference = Vec::new();
     for query in queries {
@@ -148,9 +166,17 @@ fn unrelated_writes_do_not_create_boolean_candidates_or_owner_reads() {
         for (query, (expected, reads)) in queries.iter().zip(&reference) {
             store.reads = 0;
             store.owners = 0;
-            assert_eq!(&scan(&mut store, query, 8 << 20).unwrap(), expected, "{query}: {size}");
+            assert_eq!(
+                &scan(&mut store, query, 8 << 20).unwrap(),
+                expected,
+                "{query}: {size}"
+            );
             assert_eq!(store.owners, 0, "{query}: {size}");
-            assert!(store.reads <= reads + 2, "{query}: {size}, reads={}", store.reads);
+            assert!(
+                store.reads <= reads + 2,
+                "{query}: {size}, reads={}",
+                store.reads
+            );
         }
     }
 }
@@ -172,11 +198,24 @@ fn boolean_oracle_covers_new_terms_negation_empty_documents_and_tail_suffixes() 
         documents.push((index, text));
     }
     for query in [
-        "a", "c", "missing", "a AND b", "b AND a", "a OR c",
-        "a AND NOT c", "NOT a", "NOT missing", "NOT NOT c",
-        "NOT (a OR b)", "a AND a", "a AND NOT a", "a OR NOT a",
-        "(a OR NOT b) AND (c OR NOT a)", "(a AND b) OR (c AND NOT b)",
-        "NOT (a AND NOT (b OR c))", "(missing OR c) AND NOT b",
+        "a",
+        "c",
+        "missing",
+        "a AND b",
+        "b AND a",
+        "a OR c",
+        "a AND NOT c",
+        "NOT a",
+        "NOT missing",
+        "NOT NOT c",
+        "NOT (a OR b)",
+        "a AND a",
+        "a AND NOT a",
+        "a OR NOT a",
+        "(a OR NOT b) AND (c OR NOT a)",
+        "(a AND b) OR (c AND NOT b)",
+        "NOT (a AND NOT (b OR c))",
+        "(missing OR c) AND NOT b",
     ] {
         exact(&mut store, query, &documents);
     }
@@ -204,7 +243,11 @@ fn suffix_spanning_multiple_pages_never_jumps_over_earlier_new_matches() {
 
 #[test]
 fn unchanged_sealed_and_direct_tails_and_new_mutable_pages_share_the_fence() {
-    for mode in [CompactMode::Copy, CompactMode::RetainSealedPrefix, CompactMode::DirectTid] {
+    for mode in [
+        CompactMode::Copy,
+        CompactMode::RetainSealedPrefix,
+        CompactMode::DirectTid,
+    ] {
         let mut store = Store::default();
         mutable::initialize(&mut store).unwrap();
         let mut documents = Vec::new();
@@ -253,7 +296,12 @@ fn unpublished_owner_is_excluded_at_every_insert_failure_boundary() {
     let document = PreparedDocument::prepare(&analyzed, 8 << 20).unwrap();
     let mut probe = base.clone();
     mutable::insert(&mut probe, tid(1), &document).unwrap();
-    for boundary in 0..probe.events.iter().position(|&stage| stage == Stage::Published).unwrap() {
+    for boundary in 0..probe
+        .events
+        .iter()
+        .position(|&stage| stage == Stage::Published)
+        .unwrap()
+    {
         let mut store = base.clone();
         store.fail_at = Some(boundary);
         assert!(mutable::insert(&mut store, tid(1), &document).is_err());
@@ -290,13 +338,18 @@ fn small_budget_and_unsupported_syntax_preserve_the_reference_fallback() {
     snapshot(&mut store);
     insert(&mut store, 1, "a b");
     insert(&mut store, 2, "unrelated");
-    for (query, budget) in [("a AND b", 128 << 10), ("\"a b\"", 8 << 20), ("a*", 8 << 20)] {
+    for (query, budget) in [
+        ("a AND b", 128 << 10),
+        ("\"a b\"", 8 << 20),
+        ("a*", 8 << 20),
+    ] {
         let parsed = Query::parse(query, QueryLimits::default()).unwrap();
         let mut expected = Vec::new();
         mutable::scan_query_with_recheck(&mut store, &parsed, budget, |root, recheck| {
             expected.push((root, recheck));
             Ok(())
-        }).unwrap();
+        })
+        .unwrap();
         assert_eq!(scan(&mut store, query, budget).unwrap(), expected);
     }
 }

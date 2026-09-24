@@ -574,9 +574,7 @@ impl Cursor {
             if page.group_identity()?.0 != snapshot.id
                 || expected.is_some_and(|expected| level != expected)
                 || lower.is_some_and(|key| node.key(0).is_ok_and(|first| first != key))
-                || upper.is_some_and(|key| {
-                    node.key(count - 1).is_ok_and(|last| last >= key)
-                })
+                || upper.is_some_and(|key| node.key(count - 1).is_ok_and(|last| last >= key))
             {
                 return Err(Error::InvalidState);
             }

@@ -261,7 +261,8 @@ pub fn scan_query<S: PageStore>(
             Some(name) => {
                 let found = find_term(store, &meta, name)?;
                 if let Some((dictionary, reference)) = &found {
-                    captured[index] = Some(frontier::CapturedTerm::new(dictionary.term(*reference)?));
+                    captured[index] =
+                        Some(frontier::CapturedTerm::new(dictionary.term(*reference)?));
                 }
                 if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
                     let Some((dictionary, reference)) = found else {

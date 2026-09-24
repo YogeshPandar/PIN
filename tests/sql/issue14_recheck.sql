@@ -43,3 +43,5 @@ PREPARE issue14_phrase_query(text, pin.query) AS
 EXECUTE issue14_phrase_query('a b c', pin.parse_query('"a b"'));
 EXECUTE issue14_phrase_query('a b c', pin.parse_query('"c a"'));
 DEALLOCATE issue14_phrase_query;
+
+\ir issue14_frontier.sql

@@ -287,7 +287,11 @@ pub(super) fn scan<S: PageStore>(
     let mut owners = Owners::new(meta, snapshot)?;
     let mut cache = None;
     let mut count = 0u64;
-    let mut target = snapshot.id.get().checked_add(1).ok_or(Error::InvalidState)?;
+    let mut target = snapshot
+        .id
+        .get()
+        .checked_add(1)
+        .ok_or(Error::InvalidState)?;
     loop {
         store.interrupt()?;
         for (index, cursor) in cursors.iter_mut().enumerate() {
