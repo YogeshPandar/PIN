@@ -8,6 +8,11 @@ The measurements below are historical for the named code head, not measurements
 of the September 23 grouped-storage adapter. Its unmeasured implementation and
 remaining gates are recorded in the final section of this document.
 
+**Update, 24 September:** The merged G9 grouped-storage adapter was qualified
+locally and measured on the 20,000-row fixture. See the
+[G9 review](docs/runs/2026-09-24-g9-review/README.md) for results and limits.
+The historical measurements below remain tied to their stated code head.
+
 ## What the benchmark actually says
 
 The latest comparison uses one 20,000-row synthetic `pin_g6_bench` table,

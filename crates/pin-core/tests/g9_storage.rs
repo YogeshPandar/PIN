@@ -403,7 +403,10 @@ fn maintenance_cutoff_skips_unchanged_and_retired_only_snapshots() {
     build(&mut store).unwrap();
     assert!(!grouped::needs_rebuild(&mut store).unwrap());
     assert!(raw(&mut store, "a AND b", 8 << 20).unwrap().is_empty());
-    assert_eq!(raw(&mut store, "b", 8 << 20).unwrap(), vec![(root(3, 1), false)]);
+    assert_eq!(
+        raw(&mut store, "b", 8 << 20).unwrap(),
+        vec![(root(3, 1), false)]
+    );
 }
 
 #[test]
@@ -422,7 +425,9 @@ fn build_memory_floor_is_checked_before_sort_or_storage_changes() {
     assert!(!sort.finished);
     assert_eq!(store.pages, before);
     assert_eq!(
-        grouped::rebuild(&mut store, &mut sort, required).unwrap().documents,
+        grouped::rebuild(&mut store, &mut sort, required)
+            .unwrap()
+            .documents,
         1
     );
 }
@@ -441,7 +446,15 @@ fn finished_sort_error_keeps_previous_snapshot_and_has_no_journal() {
     assert_eq!(store.events, vec![Stage::GroupSortReady]);
     assert_eq!(store.pages, before);
     store.fail_at = None;
-    assert!(store.read(0).unwrap().grouped_state().unwrap().journal.is_none());
+    assert!(
+        store
+            .read(0)
+            .unwrap()
+            .grouped_state()
+            .unwrap()
+            .journal
+            .is_none()
+    );
     check(
         &mut store,
         &BTreeMap::from([(root(1, 1), "a"), (root(1, 2), "a b")]),

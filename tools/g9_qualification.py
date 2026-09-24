@@ -125,6 +125,18 @@ class Cluster:
             time.sleep(0.05)
         raise AssertionError(f'backend did not reach expected advisory lock: {app}')
 
+    def wait_structure_lock(self, app: str) -> None:
+        sql = f"""SELECT EXISTS (
+            SELECT FROM pg_stat_activity a JOIN pg_locks l USING (pid)
+            WHERE a.application_name = {literal(app)} AND l.locktype = 'page'
+              AND l.page = 1 AND l.mode = 'ExclusiveLock' AND NOT l.granted)"""
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            if self.run(sql, label='structure-lock') == 't':
+                return
+            time.sleep(0.05)
+        raise AssertionError(f'backend did not wait for the structural page lock: {app}')
+
     def signal(self, app: str, function: str) -> None:
         if function not in ('pg_cancel_backend', 'pg_terminate_backend'):
             raise ValueError('unexpected backend signal')
@@ -282,7 +294,7 @@ def concurrent_reader_writer_maintenance(cluster: Cluster) -> None:
     cluster.run("SET statement_timeout = '10s'; INSERT INTO g9_crash VALUES (5, 'alpha');",
                 label='writer-during-grouped-read')
     maintenance = cluster.start(cluster.vacuum(), 'g9-maintenance')
-    cluster.wait_lock('g9-maintenance', False)
+    cluster.wait_structure_lock('g9-maintenance')
     cluster.release('g9-reader-blocker', blocker)
     if json.loads(cluster.finish(reader)) != expected:
         raise AssertionError('reader observed a later tuple generation')

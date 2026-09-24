@@ -6,7 +6,9 @@ mod scan;
 mod storage;
 mod vacuum;
 
-pub use build::{BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, needs_rebuild, rebuild};
+pub use build::{
+    BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, needs_rebuild, rebuild,
+};
 pub use scan::scan_query;
 
 pub(super) fn recover<S: super::PageStore>(store: &mut S) -> crate::error::Result<u32> {

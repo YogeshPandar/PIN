@@ -1,11 +1,11 @@
 # G9 PostgreSQL integration
 
-Status: default-off implementation with native qualification pending. This extends
-PR #13 head `f04ed8047ad331b084b340fbe99de5a98b056ae5`; the physical core in that
-head is now connected to PostgreSQL maintenance and bitmap scans. The new Rust and
-PostgreSQL paths have not been compiled or executed in the development container.
-Do not treat the test harness or earlier commits' CI results as a successful run
-of this adapter. No throughput, index-size or production-readiness claim is made.
+Status: default-off implementation, locally qualified on PostgreSQL 18.6 at
+merged commit `86d49b984df277c14f453698a118a68920b6604b`. The physical core
+is connected to PostgreSQL maintenance and bitmap scans. Native normal and
+test-hook qualification passed locally on 24 September 2026. See the
+[G9 run record](runs/2026-09-24-g9-review/README.md) for measured performance,
+index size and limitations. Production readiness remains unestablished.
 
 The supported host remains PostgreSQL 18.6, pgrx 0.19.2, Rust 1.98.1 and native
 x86_64 Linux GNU. The scalar `pin-kernels` library supports `no_std` without default
@@ -43,8 +43,9 @@ Both settings are superuser-controlled and default to `off`:
 | `pin.enable_grouped_storage` | Allows supplemental snapshot creation after CREATE INDEX and during VACUUM cleanup |
 | `pin.enable_grouped_scan` | Allows supported Boolean bitmap scans to use an existing grouped snapshot |
 
-Use only a disposable qualification database until native tests and independent
-review pass. For example, after installing and preloading the candidate binary:
+Use only a disposable qualification database until independent review and the
+remaining operational gates pass. For example, after installing and preloading
+the candidate binary:
 
 ```sql
 SET maintenance_work_mem = '64MB';
@@ -209,9 +210,10 @@ output, memory preflight and normal cleanup. It does not link PostgreSQL, execut
 Rust, model real sorting/spill, or certify the PG ABI, locks, WAL or error cleanup.
 
 Four additional physical-core Rust tests cover cutoff detection, scratch preflight,
-sort-ready failure and positive grouped-scan selection. They are not executed
-locally. G0 and G9 workflows now schedule the native checks; no successful run of
-these new commits has been observed. Independent unsafe/storage review remains open.
+sort-ready failure and positive grouped-scan selection. The release Rust suite,
+normal and test-hook native qualification, 80 Python tests, source-contract checks
+and formatting check passed locally on 24 September 2026. Independent
+unsafe/storage review remains open.
 
 ## Migration limits and rollback
 

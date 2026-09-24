@@ -8,7 +8,8 @@ if [[ $(id -u) == 0 ]]; then
 fi
 root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 bin=$("$PGRX_PG_CONFIG_PATH" --bindir)
-if [[ $("$PGRX_PG_CONFIG_PATH" --version) != 'PostgreSQL 18.6' ]]; then
+version=$("$PGRX_PG_CONFIG_PATH" --version)
+if [[ $version != 'PostgreSQL 18.6' && $version != 'PostgreSQL 18.6 '* ]]; then
   echo 'G9 qualification requires PostgreSQL 18.6.' >&2
   exit 2
 fi
