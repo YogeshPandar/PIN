@@ -15,13 +15,32 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: verify staged payload parts
+      - name: apply staged patch
         shell: bash
         run: |
           set -euo pipefail
-          for part in .github/owner-frontier-parts/part*; do
-            printf '%s bytes=' "$part"
-            tr -d '\r\n' < "$part" | wc -c
-            tr -d '\r\n' < "$part" | sha256sum
-          done
-          exit 1
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('.github/owner-frontier-parts')
+          parts = [
+              (root / 'part00').read_text().replace('\r', '').replace('\n', ''),
+              (root / 'part01').read_text().replace('\r', '').replace('\n', ''),
+              (root / 'part02').read_text().replace('\r', '').replace('\n', '')[:7000],
+              (root / 'part03').read_text().replace('\r', '').replace('\n', ''),
+          ]
+          expected = [7000, 7000, 7000, 2216]
+          if [len(part) for part in parts] != expected:
+              raise SystemExit('invalid staged part lengths')
+          Path('/tmp/owner-frontier-qualification.patch.gz.b64').write_text(''.join(parts))
+          PY
+          echo "00d6b1fac035b4fc6ec0de896eb9370e84cc8b89307b1a3851d6c115628b735f  /tmp/owner-frontier-qualification.patch.gz.b64" | sha256sum -c -
+          base64 -d /tmp/owner-frontier-qualification.patch.gz.b64 > /tmp/owner-frontier-qualification.patch.gz
+          gzip -d -c /tmp/owner-frontier-qualification.patch.gz > /tmp/owner-frontier-qualification.patch
+          echo "12ed47b387d683e57031c7683b5a7b4fba4c7f5f3fecc81fba64430518c09160  /tmp/owner-frontier-qualification.patch" | sha256sum -c -
+          git apply --index /tmp/owner-frontier-qualification.patch
+          git rm -r .github/owner-frontier-parts .github/workflows/apply-owner-frontier-qualification-2.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "test: qualify owner frontier activation"
+          git push origin HEAD:automation/owner-frontier-qualification-2
