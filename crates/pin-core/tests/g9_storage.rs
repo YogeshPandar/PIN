@@ -550,7 +550,11 @@ fn selective_and_seeks_past_common_groups_in_both_operand_orders() {
         insert(
             &mut inner,
             root(group * 256, 1),
-            if group == 255 { "common rare" } else { "common" },
+            if group == 255 {
+                "common rare"
+            } else {
+                "common"
+            },
         );
     }
     build(&mut inner).unwrap();
@@ -692,7 +696,10 @@ fn sparse_policy_covers_mutable_sealed_direct_and_retired_postings() {
     for (mode, kind) in [
         (None, PageKind::Postings),
         (Some(mutable::CompactMode::Copy), PageKind::SealedPostings),
-        (Some(mutable::CompactMode::DirectTid), PageKind::DirectPostings),
+        (
+            Some(mutable::CompactMode::DirectTid),
+            PageKind::DirectPostings,
+        ),
     ] {
         let mut inner = MemoryStore::default();
         mutable::initialize(&mut inner).unwrap();
@@ -702,7 +709,9 @@ fn sparse_policy_covers_mutable_sealed_direct_and_retired_postings() {
         if let Some(mode) = mode {
             mutable::compact_with_mode(&mut inner, mode).unwrap();
         }
-        assert!((1..inner.blocks().unwrap()).any(|block| inner.read(block).unwrap().kind() == kind));
+        assert!(
+            (1..inner.blocks().unwrap()).any(|block| inner.read(block).unwrap().kind() == kind)
+        );
         build(&mut inner).unwrap();
         mutable::vacuum(&mut inner, |tid| Ok(tid == root(0, 2))).unwrap();
         let mut store = Measured {

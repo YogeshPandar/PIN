@@ -673,13 +673,3 @@ impl Cursor {
         self.current(store, snapshot)
     }
 }
-
-pub(super) fn lookup<S: PageStore>(
-    store: &mut S,
-    snapshot: GroupSnapshot,
-    key: [u64; 2],
-) -> Result<Option<CatalogEntry>> {
-    Ok(Cursor::new()
-        .seek(store, snapshot, key)?
-        .filter(|entry| entry.key == key))
-}

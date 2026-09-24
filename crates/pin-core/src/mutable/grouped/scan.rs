@@ -145,10 +145,7 @@ fn compile(query: &Query) -> Option<Program<'_>> {
                 Node::And(*left, *right),
                 universe[*left] && universe[*right],
             ),
-            Kind::Or(left, right) => (
-                Node::Or(*left, *right),
-                universe[*left] || universe[*right],
-            ),
+            Kind::Or(left, right) => (Node::Or(*left, *right), universe[*left] || universe[*right]),
             Kind::Not(child) => (Node::Not(*child), true),
             Kind::Prefix(_) | Kind::Phrase(_) => return None,
         };

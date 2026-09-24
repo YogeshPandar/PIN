@@ -267,7 +267,10 @@ mod decode_tests {
                     let len = encode_bitmap(
                         key,
                         kind,
-                        &[PageOffsets { page: 255, offsets: expected }],
+                        &[PageOffsets {
+                            page: 255,
+                            offsets: expected,
+                        }],
                         &mut bytes[1..],
                     )
                     .unwrap();

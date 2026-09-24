@@ -274,9 +274,8 @@ pub(crate) fn needed_terms(
     let mut terms = 0u64;
     // parents precede children in this reverse pass, including shared children.
     for (index, node) in program.iter().enumerate().rev() {
-        let active: PageMask = core::array::from_fn(|word| {
-            demanded[index][word] & scratch.pages[index][word]
-        });
+        let active: PageMask =
+            core::array::from_fn(|word| demanded[index][word] & scratch.pages[index][word]);
         if active == [0; 4] {
             continue;
         }
@@ -311,12 +310,21 @@ mod demand_tests {
             &[Node::Term(0), Node::Term(1), Node::Or(0, 1)],
             &[Node::Term(0), Node::Not(0)],
             &[
-                Node::Term(0), Node::Term(1), Node::Term(2), Node::And(0, 1),
-                Node::Not(2), Node::Or(3, 4), Node::Difference(5, 1),
+                Node::Term(0),
+                Node::Term(1),
+                Node::Term(2),
+                Node::And(0, 1),
+                Node::Not(2),
+                Node::Or(3, 4),
+                Node::Difference(5, 1),
             ],
             &[
-                Node::Term(0), Node::All, Node::Difference(1, 0), Node::Not(2),
-                Node::Or(0, 2), Node::And(3, 4),
+                Node::Term(0),
+                Node::All,
+                Node::Difference(1, 0),
+                Node::Not(2),
+                Node::Or(0, 2),
+                Node::And(3, 4),
             ],
         ];
         let mut seed = 0x735a_2d97_168c_b40fu64;
@@ -329,9 +337,8 @@ mod demand_tests {
                     seed
                 };
                 let live = core::array::from_fn(|_| next());
-                let terms: [PageMask; 3] = core::array::from_fn(|_| {
-                    core::array::from_fn(|_| next())
-                });
+                let terms: [PageMask; 3] =
+                    core::array::from_fn(|_| core::array::from_fn(|_| next()));
                 let mut scratch = QueryScratch::default();
                 let (pages, actual) = needed_terms(program, live, &terms, &mut scratch).unwrap();
                 let mut expected = 0u64;
