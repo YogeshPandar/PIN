@@ -114,8 +114,14 @@ impl<'a> Bitmap<'a> {
         {
             return Err(Error::InvalidState);
         }
-        for (index, &byte) in bytes.iter().enumerate() {
-            result[index / 8] |= u64::from(byte) << ((index % 8) * 8);
+        let (words, tail) = bytes.as_chunks::<8>();
+        for (output, word) in result.iter_mut().zip(words) {
+            *output = u64::from_le_bytes(*word);
+        }
+        if !tail.is_empty() {
+            let mut word = [0; 8];
+            word[..tail.len()].copy_from_slice(tail);
+            result[words.len()] = u64::from_le_bytes(word);
         }
         Ok(result)
     }
@@ -233,4 +239,46 @@ pub(super) fn bitmap_len(key: GroupKey, offsets: &OffsetMask) -> Result<usize> {
         return Err(Error::InvalidState);
     }
     Ok(bits.div_ceil(8))
+}
+
+#[cfg(test)]
+mod decode_tests {
+    use super::*;
+    use crate::identity::{Generation, HeapLayout, SegmentId};
+
+    #[test]
+    fn word_decoding_covers_every_width_and_unaligned_record() {
+        for maximum in [291, 512] {
+            let key = GroupKey::new(
+                Generation::new(1).unwrap(),
+                SegmentId::new(1).unwrap(),
+                0,
+                HeapLayout::new(maximum).unwrap(),
+            )
+            .unwrap();
+            for offset in 1..=maximum {
+                let mut expected = [0; 8];
+                // fill every bit below the last offset, including every word boundary.
+                for bit in 0..usize::from(offset) {
+                    expected[bit / 64] |= 1 << (bit % 64);
+                }
+                for kind in [BitmapKind::Posting, BitmapKind::Liveness] {
+                    let mut bytes = [0; MAX_BITMAP_BYTES + 1];
+                    let len = encode_bitmap(
+                        key,
+                        kind,
+                        &[PageOffsets {
+                            page: 255,
+                            offsets: expected,
+                        }],
+                        &mut bytes[1..],
+                    )
+                    .unwrap();
+                    let bitmap = Bitmap::open(&bytes[1..1 + len]).unwrap();
+                    assert_eq!(bitmap.offsets(255).unwrap(), expected);
+                    assert_eq!(bitmap.offsets(0).unwrap(), [0; 8]);
+                }
+            }
+        }
+    }
 }

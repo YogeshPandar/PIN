@@ -1,0 +1,66 @@
+name: Issue 14 performance contracts
+
+on:
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'tools/issue14_*'
+      - 'tests/test_issue14_*'
+      - '.github/workflows/issue14.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: issue14-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Select repository-pinned Rust
+        run: rustup toolchain install 1.98.1 --profile minimal --component rustfmt --component clippy
+      - name: Preserve commands and results even when a gate fails
+        shell: python
+        run: |
+          import pathlib, subprocess
+          out = pathlib.Path('issue14-evidence')
+          out.mkdir()
+          commands = [
+              ['python3', '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'test_issue14_*.py', '-v'],
+              ['cargo', 'fmt', '--all', '--', '--check'],
+              ['cargo', 'check', '--locked', '-p', 'pin-kernels', '--no-default-features', '--lib'],
+              ['cargo', 'test', '--locked', '-p', 'pin-core', '-p', 'pin-kernels'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '-p', 'pin-kernels'],
+              ['cargo', 'clippy', '--locked', '-p', 'pin-core', '-p', 'pin-kernels', '--all-targets', '--', '-D', 'warnings'],
+              ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'issue14_phrase', '--', '--iterations', '64', '--samples', '3'],
+          ]
+          failed = False
+          for index, command in enumerate(commands):
+              result = subprocess.run(command, capture_output=True, text=True)
+              (out / f'{index}.log').write_text(' '.join(command) + '\n' + result.stdout + result.stderr)
+              if '--example' in command:
+                  (out / 'phrase.csv').write_text(result.stdout)
+              failed |= result.returncode != 0
+              print(' '.join(command), 'exit=', result.returncode, flush=True)
+          (out / 'head.txt').write_text(subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True))
+          lock = subprocess.check_output(['git', 'diff', '--', 'Cargo.lock'], text=True)
+          (out / 'lock.patch').write_text(lock)
+          (out / 'status').write_text('1' if failed or lock else '0')
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: issue14-evidence-${{ github.run_id }}
+          path: issue14-evidence/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Enforce current-head evidence
+        if: always()
+        run: test "$(cat issue14-evidence/status)" = 0

@@ -1,4 +1,4 @@
-//! exact single-term rechecks without a token-range or expression-result buffer.
+//! exact single-term and bounded phrase rechecks without document token buffers.
 //! matchers borrow one validated query; text borrows end before each call returns.
 //! ASCII uses borrowed text. Unicode uses the existing budgeted normalizer.
 //! contracts and the default-off PostgreSQL integration: docs/g6-optimization.md.
@@ -58,6 +58,113 @@ impl<'q> SingleTermMatcher<'q> {
         let (normalized, _) = profile_text(text, limits.normalized_bytes, &mut budget)?;
         u32::try_from(normalized.len()).map_err(|_| Error::Limit("normalized bytes"))?;
         match_words(&normalized, limits, max_steps, |word| word == self.term)
+    }
+}
+
+/// borrows one phrase and keeps at most 64 document-token references on the stack.
+/// longer phrases and compound expressions retain the document oracle.
+#[derive(Clone, Copy, Debug)]
+pub struct PhraseMatcher<'q> {
+    terms: &'q [String],
+}
+
+impl<'q> PhraseMatcher<'q> {
+    /// accepts a single, nonempty phrase with bounded window scratch.
+    pub fn new(query: &'q Query) -> Option<Self> {
+        if query.node_count() != 1 {
+            return None;
+        }
+        match &query.nodes[query.root].kind {
+            Kind::Phrase(terms) if !terms.is_empty() && terms.len() <= 64 => Some(Self { terms }),
+            _ => None,
+        }
+    }
+
+    /// checks consecutive token windows without retaining a document token vector.
+    /// ASCII borrows its input; Unicode uses the existing budgeted normalizer.
+    /// The stack window contains references only, and none escape this call.
+    ///
+    /// # Errors
+    /// preserves input, normalized-byte, term and token limits, including invalid
+    /// tails after a hit. Search work matches the single-phrase oracle, including
+    /// incomplete final windows and analysis errors preceding search-work errors.
+    /// Unicode allocation and memory-budget failures propagate without a result.
+    pub fn matches(&self, text: &str, limits: AnalysisLimits, max_steps: usize) -> Result<bool> {
+        check_input(text, limits)?;
+        if text.is_ascii() {
+            if text.len() > limits.normalized_bytes {
+                return Err(Error::Limit("normalized bytes"));
+            }
+            u32::try_from(text.len()).map_err(|_| Error::Limit("normalized bytes"))?;
+            return match_phrase_words(text, self.terms, limits, max_steps, |word, term| {
+                word.eq_ignore_ascii_case(term)
+            });
+        }
+        let mut budget = MemoryBudget::new(limits.memory_bytes);
+        let (normalized, _) = profile_text(text, limits.normalized_bytes, &mut budget)?;
+        u32::try_from(normalized.len()).map_err(|_| Error::Limit("normalized bytes"))?;
+        match_phrase_words(&normalized, self.terms, limits, max_steps, |word, term| {
+            word == term
+        })
+    }
+}
+
+fn match_phrase_words(
+    text: &str,
+    terms: &[String],
+    limits: AnalysisLimits,
+    max_steps: usize,
+    mut equal: impl FnMut(&str, &str) -> bool,
+) -> Result<bool> {
+    let mut window = [""; 64];
+    let width = terms.len();
+    let mut cursor = 0;
+    let mut filled = 0;
+    let token_limit = limits.tokens as usize;
+    let mut found = false;
+    let mut work = Work::new(max_steps);
+    let mut exhausted = work.charge(1).err();
+    for (token_index, word) in text.unicode_words().enumerate() {
+        if word.len() > limits.term_bytes {
+            return Err(Error::Limit("term bytes"));
+        }
+        if token_index == token_limit {
+            return Err(Error::Limit("element count"));
+        }
+        // a hit or exhausted work skips comparisons, never validation of the tail.
+        if found || exhausted.is_some() {
+            continue;
+        }
+        window[cursor] = word;
+        cursor += 1;
+        if cursor == width {
+            cursor = 0;
+        }
+        filled = (filled + 1).min(width);
+        if filled != width {
+            continue;
+        }
+        let mut matches = true;
+        for (word, term) in window[cursor..width]
+            .iter()
+            .chain(&window[..cursor])
+            .zip(terms)
+        {
+            if let Err(error) = work.charge(1) {
+                exhausted = Some(error);
+                matches = false;
+                break;
+            }
+            if !equal(word, term) {
+                matches = false;
+                break;
+            }
+        }
+        found = matches;
+    }
+    match exhausted {
+        Some(error) => Err(error),
+        None => Ok(found),
     }
 }
 

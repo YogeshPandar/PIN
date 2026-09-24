@@ -269,17 +269,92 @@ pub(crate) fn needed_terms(
         };
     }
     let pages = scratch.pages[program.len() - 1];
+    let mut demanded = [[0; 4]; MAX_NODES];
+    demanded[program.len() - 1] = pages;
     let mut terms = 0u64;
-    for page in Pages::new(pages) {
-        let needed = dependencies(program, &scratch.pages, page);
-        for (index, node) in program.iter().enumerate() {
-            if needed & (1 << index) != 0
-                && super::contains(&scratch.pages[index], page)
-                && let Node::Term(term) = *node
-            {
-                terms |= 1 << term;
+    // parents precede children in this reverse pass, including shared children.
+    for (index, node) in program.iter().enumerate().rev() {
+        let active: PageMask =
+            core::array::from_fn(|word| demanded[index][word] & scratch.pages[index][word]);
+        if active == [0; 4] {
+            continue;
+        }
+        match *node {
+            Node::Term(term) => terms |= 1 << term,
+            Node::All => {}
+            Node::Not(child) => {
+                for (word, &mask) in active.iter().enumerate() {
+                    demanded[child][word] |= mask;
+                }
+            }
+            Node::And(left, right) | Node::Or(left, right) | Node::Difference(left, right) => {
+                for (word, &mask) in active.iter().enumerate() {
+                    demanded[left][word] |= mask;
+                    demanded[right][word] |= mask;
+                }
             }
         }
     }
     Ok((pages, terms))
+}
+
+#[cfg(test)]
+mod demand_tests {
+    use super::*;
+
+    #[test]
+    fn backward_masks_equal_the_page_by_page_dependency_oracle() {
+        let programs: &[&[Node]] = &[
+            &[Node::Term(0)],
+            &[Node::Term(0), Node::Term(1), Node::And(0, 1)],
+            &[Node::Term(0), Node::Term(1), Node::Or(0, 1)],
+            &[Node::Term(0), Node::Not(0)],
+            &[
+                Node::Term(0),
+                Node::Term(1),
+                Node::Term(2),
+                Node::And(0, 1),
+                Node::Not(2),
+                Node::Or(3, 4),
+                Node::Difference(5, 1),
+            ],
+            &[
+                Node::Term(0),
+                Node::All,
+                Node::Difference(1, 0),
+                Node::Not(2),
+                Node::Or(0, 2),
+                Node::And(3, 4),
+            ],
+        ];
+        let mut seed = 0x735a_2d97_168c_b40fu64;
+        for program in programs {
+            for _ in 0..512 {
+                let mut next = || {
+                    seed ^= seed << 13;
+                    seed ^= seed >> 7;
+                    seed ^= seed << 17;
+                    seed
+                };
+                let live = core::array::from_fn(|_| next());
+                let terms: [PageMask; 3] =
+                    core::array::from_fn(|_| core::array::from_fn(|_| next()));
+                let mut scratch = QueryScratch::default();
+                let (pages, actual) = needed_terms(program, live, &terms, &mut scratch).unwrap();
+                let mut expected = 0u64;
+                for page in Pages::new(pages) {
+                    let needed = dependencies(program, &scratch.pages, page);
+                    for (index, node) in program.iter().enumerate() {
+                        if needed & (1 << index) != 0
+                            && super::super::contains(&scratch.pages[index], page)
+                            && let Node::Term(term) = *node
+                        {
+                            expected |= 1 << term;
+                        }
+                    }
+                }
+                assert_eq!(actual, expected, "{program:?}");
+            }
+        }
+    }
 }

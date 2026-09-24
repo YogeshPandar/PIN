@@ -3,7 +3,7 @@
 //! Neither path evaluates SQL visibility or phrase positions.
 //! Contracts: docs/g4-query-execution.md and PostgreSQL 18 index-scanning.
 
-use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, TermRef};
+use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef};
 use super::reader::resolve;
 use super::{PageStore, find_term, load, load_posting, posting_next, scan};
 use crate::budget::MemoryBudget;
@@ -673,7 +673,23 @@ fn scan_single_term<S: PageStore>(
     let Some((dictionary, reference)) = find_term(store, &meta, text)? else {
         return Ok(0);
     };
-    let term = dictionary.term(reference)?;
+    scan_term_entry(store, dictionary.term(reference)?, None, &mut emit)
+}
+
+// reuse captured term metadata and an optional validated head page before emission.
+// the caller retains the structural barrier and proves a complete term predicate.
+pub(super) fn scan_term_entry<S: PageStore>(
+    store: &mut S,
+    term: Term<'_>,
+    mut first_page: Option<Page>,
+    mut emit: impl FnMut(RootTid) -> Result<()>,
+) -> Result<u64> {
+    let reference = term.reference;
+    if let Some(page) = &first_page
+        && (page.block() != term.head || page.posting_term()? != reference)
+    {
+        return Err(Error::InvalidState);
+    }
     let mut count = 0u64;
     let mut owner_page = None;
     if let Some(root) = resolve(store, &mut owner_page, term.first)? {
@@ -687,7 +703,10 @@ fn scan_single_term<S: PageStore>(
     let mut remaining = store.blocks()?;
     let mut previous = term.first;
     loop {
-        let page = load_posting(store, block, reference)?;
+        let page = match first_page.take() {
+            Some(page) => page,
+            None => load_posting(store, block, reference)?,
+        };
         if page.kind() == PageKind::DirectPostings {
             let (first, last) = page.direct_endpoints()?;
             if compare(previous, first)? != Ordering::Less

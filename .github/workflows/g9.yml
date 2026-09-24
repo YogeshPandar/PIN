@@ -6,6 +6,7 @@ on:
       - 'crates/**'
       - '.github/workflows/g9.yml'
       - 'tests/sql/g9_*'
+      - 'tests/sql/issue14_recheck.sql'
       - 'tools/g9_*'
       - 'tests/test_g9_*'
       - 'tests/support/g9_*'
@@ -34,10 +35,10 @@ jobs:
       - name: Check scalar grouped truth tables
         run: cargo test --locked -p pin-kernels --test grouped
       - name: Check grouped physical storage and recovery
-        run: cargo test --locked -p pin-core --test g9_storage
+        run: cargo test --locked -p pin-core --lib --test g9_grouped --test g9_storage
       - name: Check optimized grouped storage and scalar kernels
         run: |
-          cargo test --locked --release -p pin-core --test g9_storage
+          cargo test --locked --release -p pin-core --lib --test g9_grouped --test g9_storage
           cargo test --locked --release -p pin-kernels --test grouped
       - name: Lint grouped contracts
         run: cargo clippy --locked -p pin-core -p pin-kernels --all-targets -- -D warnings

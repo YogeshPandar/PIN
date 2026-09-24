@@ -217,13 +217,15 @@ class Cluster:
 
 def prove_scan_selection(cluster: Cluster) -> None:
     # each session consumes or discards its one-shot hook independently.
-    statement = select_rows('g9_small', 'beta')
+    statement = select_rows('g9_small', 'beta AND NOT missingplanet')
     prefix = SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
     cluster.run(prefix + 'SELECT pin.g2_inject(37, 1, false);\n' + statement,
                 error='Pin injected storage error', label='prove-grouped-scan')
     cluster.run(prefix + 'SET pin.enable_grouped_scan = off;\n'
                 'SELECT pin.g2_inject(37, 1, false);\n' + statement,
                 label='prove-gated-fallback')
+    cluster.run(prefix + 'SELECT pin.g2_inject(37, 1, false);\n'
+                + select_rows('g9_small', 'beta'), label='prove-sparse-fallback')
     cluster.run(prefix + 'SELECT pin.g2_inject(37, 1, false);\n'
                 + select_rows('g9_small', '"alpha beta"'), label='prove-phrase-fallback')
 
@@ -284,12 +286,13 @@ def cancellation(cluster: Cluster) -> None:
 
 def concurrent_reader_writer_maintenance(cluster: Cluster) -> None:
     cluster.fixture()
+    query = 'alpha AND NOT missingplanet'
     # the reader snapshot predates both the insert and replacement publication.
-    expected = json.loads(cluster.run(SETTINGS + select_rows('g9_crash', 'alpha')))
+    expected = json.loads(cluster.run(SETTINGS + select_rows('g9_crash', query)))
     blocker = cluster.blocker('g9-reader-blocker')
     reader = cluster.start(SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
                            'SELECT pin.g2_inject(37, 1, true);\n'
-                           + select_rows('g9_crash', 'alpha'), 'g9-reader')
+                           + select_rows('g9_crash', query), 'g9-reader')
     cluster.wait_lock('g9-reader', False)
     cluster.run("SET statement_timeout = '10s'; INSERT INTO g9_crash VALUES (5, 'alpha');",
                 label='writer-during-grouped-read')
@@ -302,13 +305,13 @@ def concurrent_reader_writer_maintenance(cluster: Cluster) -> None:
     cluster.compare('g9_crash')
 
     # repeatable read retains old heap versions across grouped rebuild and vacuum.
-    expected = json.loads(cluster.run(SETTINGS + select_rows('g9_crash', 'alpha')))
+    expected = json.loads(cluster.run(SETTINGS + select_rows('g9_crash', query)))
     blocker = cluster.blocker('g9-snapshot-blocker')
     reader = cluster.start(SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
                            'BEGIN ISOLATION LEVEL REPEATABLE READ;\n'
-                           + select_rows('g9_crash', 'alpha') + ';\n'
+                           + select_rows('g9_crash', query) + ';\n'
                            'SELECT pg_advisory_xact_lock(180006, 2);\n'
-                           + select_rows('g9_crash', 'alpha') + '; COMMIT;', 'g9-snapshot')
+                           + select_rows('g9_crash', query) + '; COMMIT;', 'g9-snapshot')
     cluster.wait_lock('g9-snapshot', False)
     cluster.run("UPDATE g9_crash SET body = 'beta replacement' WHERE id = 3;")
     cluster.run(cluster.vacuum(), label='snapshot-vacuum')
