@@ -383,7 +383,8 @@ def owner_frontier_qualification(cluster: Cluster, hooks: bool) -> None:
 def anchor_seek_qualification(cluster: Cluster) -> None:
     query = 'alpha AND rareplanet'
     statement = select_rows('g9_anchor', query)
-    prefix = SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
+    prefix = (SETTINGS + 'SET pin.enable_owner_frontier = off;\n'
+              + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n')
     expected = json.loads(cluster.run(prefix + statement, label='anchor-before-pause'))
     cluster.run(prefix + 'SELECT pin.g2_inject(40, 1, false);\n' + statement,
                 error='Pin injected storage error', label='prove-frontier-seek')
