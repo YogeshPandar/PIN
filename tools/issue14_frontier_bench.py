@@ -298,8 +298,8 @@ def concurrent(args) -> None:
     def writer() -> None:
         try:
             with closing(
-        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
-    ) as conn, conn.cursor() as cur:
+                connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+            ) as conn, conn.cursor() as cur:
                 index = 0
                 while not stop.is_set():
                     body = ('alpha beta rareplanet' if args.concurrent_related
@@ -389,8 +389,8 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=False)
     try:
         with closing(
-        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
-    ) as conn, conn.cursor() as cur:
+            connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+        ) as conn, conn.cursor() as cur:
             cur.execute("SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
                         "('server_version_num','block_size','fsync','full_page_writes','synchronous_commit',"
                         "'shared_buffers','work_mem','maintenance_work_mem','autovacuum',"
