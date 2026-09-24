@@ -1,7 +1,8 @@
-//! page-group pruning over a complete snapshot plus an owner-ordered write delta.
+//! page-group pruning over a complete snapshot plus term-addressable Boolean suffixes.
 //! bitmap output remains subject to PostgreSQL heap visibility and rechecks.
 
 use super::super::page::{CatalogEntry, GroupSnapshot, NO_BLOCK, PageKind};
+use super::super::frontier::SuffixTerm;
 use super::super::{PageStore, find_term, following, load, load_posting};
 use super::storage::{self, BITMAP_BYTES, Cursor, Value};
 use crate::codec::records::Publication;
@@ -11,7 +12,7 @@ use crate::identity::RootTid;
 use crate::query::{Kind, Query};
 use pin_kernels::grouped::{OffsetMask, PageMask};
 
-const NODES: usize = 64;
+pub(super) const NODES: usize = 64;
 // at most one canonical posting page and 64 owner resolutions, including inline.
 const SPARSE_POSTINGS: usize = 64;
 
@@ -98,13 +99,13 @@ impl<S: PageStore> Source for Loaded<'_, '_, S> {
     }
 }
 
-struct Program<'a> {
-    nodes: [Node; NODES],
+pub(super) struct Program<'a> {
+    pub(super) nodes: [Node; NODES],
     names: [Option<&'a str>; NODES],
     terms: usize,
-    len: usize,
+    pub(super) len: usize,
     universe: bool,
-    seek_terms: u64,
+    pub(super) seek_terms: u64,
 }
 
 fn compile(query: &Query) -> Option<Program<'_>> {
@@ -228,7 +229,7 @@ fn next_group<S: PageStore>(
     }
 }
 
-/// scans grouped Boolean matches, then a conservative cover of newer complete owners.
+/// scans exact grouped and canonical-suffix Boolean matches; visibility stays with the host.
 /// unsupported syntax, unavailable snapshots and small budgets use the legacy kernel.
 /// the host holds a shared structural barrier; only MVCC bitmap consumers are allowed.
 ///
@@ -253,10 +254,14 @@ pub fn scan_query<S: PageStore>(
         return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
     };
     let mut terms = Vec::new();
-    for name in &program.names[..program.terms] {
+    let mut suffixes = [None; NODES];
+    for (index, name) in program.names[..program.terms].iter().enumerate() {
         let key = match name {
             Some(name) => {
                 let found = find_term(store, &meta, name)?;
+                if let Some((dictionary, reference)) = &found {
+                    suffixes[index] = Some(SuffixTerm::from(dictionary.term(*reference)?));
+                }
                 if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
                     let Some((dictionary, reference)) = found else {
                         return Ok(0);
@@ -397,10 +402,30 @@ pub fn scan_query<S: PageStore>(
         }
         target = base.checked_add(256);
     }
-    delta(store, &meta, snapshot, count, emit)
+    // release group-sized heap scratch before reserving canonical suffix cursors.
+    drop(bytes);
+    drop(terms);
+    let complete = super::frontier::scan(
+        store,
+        &meta,
+        snapshot,
+        &program,
+        &suffixes[..program.terms],
+        memory_bytes,
+        |root| {
+            emit(root, false)?;
+            count = count.checked_add(1).ok_or(Error::Limit("group delta"))?;
+            Ok(())
+        },
+    )?;
+    if complete {
+        Ok(count)
+    } else {
+        delta(store, &meta, snapshot, count, emit)
+    }
 }
 
-fn delta<S: PageStore>(
+pub(super) fn delta<S: PageStore>(
     store: &mut S,
     meta: &super::super::page::Page,
     snapshot: GroupSnapshot,

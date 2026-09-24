@@ -2,6 +2,7 @@
 //! maintenance requires the exclusive structural barrier before the writer lock.
 
 mod build;
+mod frontier;
 mod scan;
 mod storage;
 mod vacuum;

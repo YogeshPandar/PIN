@@ -7,6 +7,7 @@
 mod compact;
 mod count;
 pub mod document;
+mod frontier;
 pub mod grouped;
 pub mod page;
 mod query;
