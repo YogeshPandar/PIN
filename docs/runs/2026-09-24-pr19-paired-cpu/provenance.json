@@ -1,0 +1,17 @@
+{
+  "baseline_commit": "a2242210b3115a274ebaf4a5a3bec5402fd5d1d3",
+  "initial_head_commit": "37093c4198122c3afc0520335fcac23eb7247023",
+  "fixed_commit": "ac26b1aff2eb3fb5ecd08abdd7dea2d659a45802",
+  "library_sha256": {
+    "baseline": "4b659f3897f469d433bf09541e10054fc103916d52c581a67696867e22199718",
+    "initial_head": "e3619d348b0a31e5de8f5a799aa9acd0f1b74977fb9dc1de4e213a426398f869",
+    "fixed": "8c35917b786a1c8a3a8bb5b1f66e42694191243418a2c562ae1cb4ccbb65678b"
+  },
+  "package_target_directories": {
+    "baseline": "/home/reing/projects/fts0/.pr19_baseline_target",
+    "head": "/home/reing/projects/fts0/.pr19_target"
+  },
+  "postgres_version": "18.6",
+  "benchmark_driver_revision": "ac26b1aff2eb3fb5ecd08abdd7dea2d659a45802",
+  "local_anchor_sql_exit_code": 0
+}

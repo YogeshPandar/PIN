@@ -1,0 +1,87 @@
+SET
+SET
+SET
+SET
+SET
+SET
+SET
+SET
+CREATE TABLE
+INSERT 0 16384
+CREATE INDEX
+CREATE INDEX
+CREATE FUNCTION
+ anchor_check 
+--------------
+ 
+(1 row)
+
+SET
+VACUUM
+SET
+ anchor_check 
+--------------
+ 
+(1 row)
+
+INSERT 0 1000
+ anchor_check 
+--------------
+ 
+(1 row)
+
+INSERT 0 64
+ anchor_check 
+--------------
+ 
+(1 row)
+
+INSERT 0 4096
+ anchor_check 
+--------------
+ 
+(1 row)
+
+BEGIN
+INSERT 0 1
+ anchor_check 
+--------------
+ 
+(1 row)
+
+ROLLBACK
+UPDATE 10
+UPDATE 1
+DELETE 1
+ anchor_check 
+--------------
+ 
+(1 row)
+
+SET
+SET
+VACUUM
+SET
+SET
+INSERT 0 1
+ anchor_check 
+--------------
+ 
+(1 row)
+
+SET
+VACUUM
+ anchor_check 
+--------------
+ 
+(1 row)
+
+SET
+INSERT 0 1000
+INSERT 0 64
+ anchor_check 
+--------------
+ 
+(1 row)
+
+RESET
