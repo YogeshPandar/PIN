@@ -46,6 +46,11 @@ python3 "$root/tools/g9_qualification.py" \
   --psql "$bin/psql" --pg-ctl "$bin/pg_ctl" --data "$work/data" \
   --server-log "$work/postgres.log" --artifacts "$artifacts" --hooks "$mode"
 
+"$bin/createdb" pin_anchor_qualification
+PGDATABASE=pin_anchor_qualification python3 "$root/tools/issue14_anchor_qualification.py" \
+  --psql "$bin/psql" --pg-ctl "$bin/pg_ctl" --data "$work/data" \
+  --server-log "$work/postgres.log" --artifacts "$artifacts/anchors" --hooks "$mode"
+
 if [[ $mode == 0 ]]; then
   "$bin/psql" -X -w -v ON_ERROR_STOP=1 -f "$root/tests/sql/g9_profile.sql"
   python3 "$root/tools/g9_profile.py" --bindir "$bin" \

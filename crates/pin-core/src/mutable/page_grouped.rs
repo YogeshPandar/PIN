@@ -279,7 +279,9 @@ impl Page {
         let frontier = state.active.and_then(|active| active.frontier_root);
         writer.put(b"PG09")?;
         writer.u16(if frontier.is_some() { 2 } else { 1 })?;
-        writer.u16(u16::from(state.active.is_some_and(|active| active.frontier_valid)))?;
+        writer.u16(u16::from(
+            state.active.is_some_and(|active| active.frontier_valid),
+        ))?;
         writer.u64(state.active.map_or(0, |active| active.id.get()))?;
         writer.u32(state.active.map_or(NO_BLOCK, |active| active.head))?;
         writer.u32(state.active.map_or(NO_BLOCK, |active| active.tail))?;

@@ -230,9 +230,9 @@ def prove_scan_selection(cluster: Cluster) -> None:
                 + select_rows('g9_small', '"alpha beta"'), label='prove-phrase-fallback')
 
 
-def crash_boundaries(cluster: Cluster) -> None:
+def crash_boundaries(cluster: Cluster, *, stages: tuple[int, ...] = STAGES) -> None:
     cluster.run('CREATE TABLE g9_wal_witness(stage integer PRIMARY KEY);')
-    for stage in STAGES:
+    for stage in stages:
         cluster.fixture()
         cluster.run(cluster.vacuum(hook=stage), error='Pin injected storage error',
                     label=f'error-{stage}')

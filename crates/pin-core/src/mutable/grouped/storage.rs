@@ -14,7 +14,8 @@ use pin_kernels::grouped::PageMask;
 pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
 pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
 const LEVELS: usize = MAX_CATALOG_LEVEL as usize + 1;
-pub(super) const CATALOG_MEMORY: usize = LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
+pub(super) const CATALOG_MEMORY: usize =
+    LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Value {
@@ -301,7 +302,10 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
         return Err(Error::InvalidState);
     }
     let written = inspect(store, snapshot.id, snapshot.head, snapshot.tail)?;
-    for root in [Some(snapshot.root), snapshot.frontier_root].into_iter().flatten() {
+    for root in [Some(snapshot.root), snapshot.frontier_root]
+        .into_iter()
+        .flatten()
+    {
         if root != NO_BLOCK {
             let page = load(store, root, PageKind::Grouped)?;
             if page.group_identity()?.0 != snapshot.id {

@@ -163,8 +163,15 @@ fn capture<S: PageStore, T: GroupSort>(
                 let mut previous = entry.first;
                 if entry.head == NO_BLOCK {
                     if store.frontier_anchors() {
-                        batch.push(sort, Anchor::new(entry.head, entry.tail, previous.incarnation.get())?.sort_record(key))?;
-                        stats.frontier_terms = stats.frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
+                        batch.push(
+                            sort,
+                            Anchor::new(entry.head, entry.tail, previous.incarnation.get())?
+                                .sort_record(key),
+                        )?;
+                        stats.frontier_terms = stats
+                            .frontier_terms
+                            .checked_add(1)
+                            .ok_or(Error::Limit("frontier terms"))?;
                     }
                     continue;
                 }
@@ -196,8 +203,15 @@ fn capture<S: PageStore, T: GroupSort>(
                     }
                 }
                 if store.frontier_anchors() {
-                    batch.push(sort, Anchor::new(entry.head, entry.tail, previous.incarnation.get())?.sort_record(key))?;
-                    stats.frontier_terms = stats.frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
+                    batch.push(
+                        sort,
+                        Anchor::new(entry.head, entry.tail, previous.incarnation.get())?
+                            .sort_record(key),
+                    )?;
+                    stats.frontier_terms = stats
+                        .frontier_terms
+                        .checked_add(1)
+                        .ok_or(Error::Limit("frontier terms"))?;
                 }
             }
             match following(&dictionary, tail)? {
@@ -346,9 +360,15 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
                 if anchor.last >= snapshot.id.get() {
                     return Err(Error::InvalidState);
                 }
-                anchors.as_mut().ok_or(Error::InvalidState)?.push(store, &mut snapshot, anchor.entry(term))?;
+                anchors.as_mut().ok_or(Error::InvalidState)?.push(
+                    store,
+                    &mut snapshot,
+                    anchor.entry(term),
+                )?;
                 frontier_term = Some(term);
-                frontier_terms = frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
+                frontier_terms = frontier_terms
+                    .checked_add(1)
+                    .ok_or(Error::Limit("frontier terms"))?;
                 continue;
             }
             let (term, member) = row.fields(store.layout())?;

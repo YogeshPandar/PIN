@@ -41,6 +41,7 @@ jobs:
               ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '-p', 'pin-kernels'],
               ['cargo', 'clippy', '--locked', '-p', 'pin-core', '-p', 'pin-kernels', '--all-targets', '--', '-D', 'warnings'],
               ['cargo', 'run', '--locked', '--release', '-p', 'pin-core', '--example', 'issue14_phrase', '--', '--iterations', '64', '--samples', '3'],
+              ['cargo', 'test', '--locked', '--release', '-p', 'pin-core', '--test', 'issue14_anchors', 'related_write_work', '--', '--nocapture'],
           ]
           failed = False
           for index, command in enumerate(commands):

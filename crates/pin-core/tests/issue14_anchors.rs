@@ -78,7 +78,10 @@ impl PageStore for Store {
         let page = self.inner.read(block)?;
         self.work.reads += 1;
         self.work.owner_reads += usize::from(page.kind() == PageKind::Owners);
-        if matches!(page.kind(), PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings) {
+        if matches!(
+            page.kind(),
+            PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings
+        ) {
             self.work.posting_reads += 1;
             self.work.posting_bytes += page.bytes().len();
         }
@@ -107,11 +110,20 @@ impl PageStore for Store {
 }
 
 fn tid(index: u32) -> RootTid {
-    RootTid::new(index / 200, (index % 200 + 1) as u16, HeapLayout::new(291).unwrap()).unwrap()
+    RootTid::new(
+        index / 200,
+        (index % 200 + 1) as u16,
+        HeapLayout::new(291).unwrap(),
+    )
+    .unwrap()
 }
 
 fn document(text: &str) -> PreparedDocument {
-    PreparedDocument::prepare(&Analyzed::analyze(text, AnalysisLimits::default()).unwrap(), 8 << 20).unwrap()
+    PreparedDocument::prepare(
+        &Analyzed::analyze(text, AnalysisLimits::default()).unwrap(),
+        8 << 20,
+    )
+    .unwrap()
 }
 
 fn insert(store: &mut Store, index: u32, text: &str) {
@@ -123,7 +135,13 @@ fn build(store: &mut Store) -> Result<grouped::BuildStats> {
 }
 
 fn active(store: &mut Store) -> GroupSnapshot {
-    store.read(0).unwrap().grouped_state().unwrap().active.unwrap()
+    store
+        .read(0)
+        .unwrap()
+        .grouped_state()
+        .unwrap()
+        .active
+        .unwrap()
 }
 
 fn scan(store: &mut Store, text: &str) -> Result<Vec<(RootTid, bool)>> {
@@ -139,14 +157,26 @@ fn scan(store: &mut Store, text: &str) -> Result<Vec<(RootTid, bool)>> {
 
 fn exact(store: &mut Store, text: &str, docs: &[(u32, &str)]) {
     let query = Query::parse(text, QueryLimits::default()).unwrap();
-    let expected: BTreeSet<_> = docs.iter().filter_map(|&(index, text)| {
-        let analyzed = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
-        oracle::matches(&analyzed, &query, 1 << 20, 1 << 20).unwrap().then_some(tid(index))
-    }).collect();
+    let expected: BTreeSet<_> = docs
+        .iter()
+        .filter_map(|&(index, text)| {
+            let analyzed = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
+            oracle::matches(&analyzed, &query, 1 << 20, 1 << 20)
+                .unwrap()
+                .then_some(tid(index))
+        })
+        .collect();
     let actual = scan(store, text).unwrap();
     assert!(actual.iter().all(|(_, recheck)| !recheck), "{text}");
     assert_eq!(actual.len(), expected.len(), "{text}");
-    assert_eq!(actual.into_iter().map(|(root, _)| root).collect::<BTreeSet<_>>(), expected, "{text}");
+    assert_eq!(
+        actual
+            .into_iter()
+            .map(|(root, _)| root)
+            .collect::<BTreeSet<_>>(),
+        expected,
+        "{text}"
+    );
 }
 
 fn measured(store: &mut Store, query: &str, enabled: bool) -> (Vec<(RootTid, bool)>, Work) {
@@ -164,12 +194,22 @@ fn related_write_work_skips_history_after_an_unrelated_incarnation_gap() {
         let common = document("alpha beta");
         let rare = document("alpha beta rareplanet");
         for index in 0..history {
-            mutable::insert(&mut store, tid(index), if index < 20 { &rare } else { &common }).unwrap();
+            mutable::insert(
+                &mut store,
+                tid(index),
+                if index < 20 { &rare } else { &common },
+            )
+            .unwrap();
         }
         mutable::compact(&mut store).unwrap();
         build(&mut store).unwrap();
         assert!(active(&mut store).frontier_valid);
-        let queries = ["rareplanet", "alpha AND rareplanet", "alpha AND beta", "alpha OR rareplanet"];
+        let queries = [
+            "rareplanet",
+            "alpha AND rareplanet",
+            "alpha AND beta",
+            "alpha OR rareplanet",
+        ];
         for query in queries {
             let old = measured(&mut store, query, false);
             let new = measured(&mut store, query, true);
@@ -189,19 +229,34 @@ fn related_write_work_skips_history_after_an_unrelated_incarnation_gap() {
         }
         for query in queries {
             let (old, old_work) = measured(&mut store, query, false);
+            store.inner.events.clear();
             let (new, new_work) = measured(&mut store, query, true);
             assert_eq!(new, old, "{query}");
             let rare_query = query == "rareplanet" || query == "alpha AND rareplanet";
             let expected: BTreeSet<_> = (0..if rare_query { 20 } else { history })
-                .chain(history + 1000..history + 1064).map(tid).collect();
+                .chain(history + 1000..history + 1064)
+                .map(tid)
+                .collect();
             assert_eq!(new.len(), expected.len());
             assert!(new.iter().all(|(_, recheck)| !recheck));
-            assert_eq!(new.into_iter().map(|(root, _)| root).collect::<BTreeSet<_>>(), expected);
+            assert_eq!(
+                new.into_iter()
+                    .map(|(root, _)| root)
+                    .collect::<BTreeSet<_>>(),
+                expected
+            );
             assert_eq!(new_work.owner_reads, old_work.owner_reads);
             assert!(new_work.posting_reads <= 6, "{query}: {new_work:?}");
             if history == 16384 && query != "rareplanet" {
-                assert!(new_work.posting_reads < old_work.posting_reads, "{query}: {old_work:?} -> {new_work:?}");
-                assert!(new_work.posting_bytes < old_work.posting_bytes, "{query}: {old_work:?} -> {new_work:?}");
+                assert!(store.inner.events.contains(&Stage::FrontierSeek));
+                assert!(
+                    new_work.posting_reads < old_work.posting_reads,
+                    "{query}: {old_work:?} -> {new_work:?}"
+                );
+                assert!(
+                    new_work.posting_bytes < old_work.posting_bytes,
+                    "{query}: {old_work:?} -> {new_work:?}"
+                );
             }
             println!("history={history},query={query},legacy={old_work:?},anchors={new_work:?}");
         }
@@ -226,10 +281,21 @@ fn mixed_boolean_oracle_covers_inline_anchors_new_terms_and_multi_page_suffixes(
         docs.push((index, text));
     }
     for query in [
-        "a AND b", "b AND a", "a OR c", "single AND a", "NOT a", "NOT missing",
-        "a AND NOT c", "NOT NOT c", "a AND NOT a", "a OR NOT a",
-        "(a OR NOT b) AND (c OR NOT a)", "(a AND b) OR (c AND NOT b)",
-        "NOT (a AND NOT (b OR c))", "single AND NOT c", "c AND NOT single",
+        "a AND b",
+        "b AND a",
+        "a OR c",
+        "single AND a",
+        "NOT a",
+        "NOT missing",
+        "a AND NOT c",
+        "NOT NOT c",
+        "a AND NOT a",
+        "a OR NOT a",
+        "(a OR NOT b) AND (c OR NOT a)",
+        "(a AND b) OR (c AND NOT b)",
+        "NOT (a AND NOT (b OR c))",
+        "single AND NOT c",
+        "c AND NOT single",
     ] {
         exact(&mut store, query, &docs);
     }
@@ -276,7 +342,11 @@ fn empty_snapshots_empty_documents_dead_terms_and_legacy_upgrades_are_readable()
 
 #[test]
 fn compaction_invalidates_before_every_rewrite_and_recovery_boundary() {
-    for mode in [CompactMode::Copy, CompactMode::RetainSealedPrefix, CompactMode::DirectTid] {
+    for mode in [
+        CompactMode::Copy,
+        CompactMode::RetainSealedPrefix,
+        CompactMode::DirectTid,
+    ] {
         let mut base = Store::default();
         mutable::initialize(&mut base).unwrap();
         let docs: Vec<_> = (0..768).map(|index| (index, "a b")).collect();
@@ -287,12 +357,26 @@ fn compaction_invalidates_before_every_rewrite_and_recovery_boundary() {
         base.inner.events.clear();
         let mut probe = base.clone();
         mutable::compact_with_mode(&mut probe, mode).unwrap();
-        assert_eq!(probe.inner.events.first(), Some(&Stage::FrontierInvalidated));
-        assert_eq!(probe.inner.events.iter().filter(|&&stage| stage == Stage::FrontierInvalidated).count(), 1);
+        assert_eq!(
+            probe.inner.events.first(),
+            Some(&Stage::FrontierInvalidated)
+        );
+        assert_eq!(
+            probe
+                .inner
+                .events
+                .iter()
+                .filter(|&&stage| stage == Stage::FrontierInvalidated)
+                .count(),
+            1
+        );
         for boundary in 0..probe.inner.events.len() {
             let mut store = base.clone();
             store.inner.fail_at = Some(boundary);
-            assert!(mutable::compact_with_mode(&mut store, mode).is_err(), "{mode:?}: {boundary}");
+            assert!(
+                mutable::compact_with_mode(&mut store, mode).is_err(),
+                "{mode:?}: {boundary}"
+            );
             store.inner.fail_at = None;
             assert!(!active(&mut store).frontier_valid);
             mutable::recover_compaction(&mut store).unwrap();
@@ -346,7 +430,12 @@ fn unpublished_writes_and_reused_tids_never_create_false_conjunctions() {
     let new = document("a b c");
     let mut probe = base.clone();
     mutable::insert(&mut probe, tid(128), &new).unwrap();
-    let published = probe.inner.events.iter().position(|&stage| stage == Stage::Published).unwrap();
+    let published = probe
+        .inner
+        .events
+        .iter()
+        .position(|&stage| stage == Stage::Published)
+        .unwrap();
     for boundary in 0..published {
         let mut store = base.clone();
         store.inner.fail_at = Some(boundary);
@@ -381,18 +470,24 @@ fn legacy_fallback_and_cancellation_remain_correct_with_anchored_storage() {
     for index in 1024..2048 {
         insert(&mut store, index, "a b c");
     }
-    for (text, budget) in [("a*", 8 << 20), ("\"a b\"", 8 << 20), ("a AND b", 128 << 10)] {
+    for (text, budget) in [
+        ("a*", 8 << 20),
+        ("\"a b\"", 8 << 20),
+        ("a AND b", 128 << 10),
+    ] {
         let query = Query::parse(text, QueryLimits::default()).unwrap();
         let mut old = Vec::new();
         mutable::scan_query_with_recheck(&mut store, &query, budget, |root, recheck| {
             old.push((root, recheck));
             Ok(())
-        }).unwrap();
+        })
+        .unwrap();
         let mut new = Vec::new();
         grouped::scan_query(&mut store, &query, budget, |root, recheck| {
             new.push((root, recheck));
             Ok(())
-        }).unwrap();
+        })
+        .unwrap();
         assert_eq!(new, old, "{text}");
     }
     store.polls = 0;
