@@ -1,0 +1,28 @@
+name: apply owner frontier staging
+
+on:
+  push:
+    branches:
+      - automation/owner-frontier-staging
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: apply staged patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .github/owner-frontier.patch.gz.b64 | gzip -d > /tmp/owner-frontier.patch
+          git apply --index /tmp/owner-frontier.patch
+          git rm .github/owner-frontier.patch.gz.b64 .github/workflows/apply-owner-frontier.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "perf: add one-pass dense owner frontier"
+          git push origin HEAD:automation/owner-frontier-staging
