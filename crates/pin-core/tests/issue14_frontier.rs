@@ -185,6 +185,15 @@ fn dense_multi_term_delta_uses_one_owner_frontier_pass() {
     assert!(store.inner.events.contains(&Stage::OwnerFrontierScan));
     assert!(store.owners > 0);
     assert_eq!(store.postings, 2);
+
+    for query in ["b AND a", "c AND a", "c OR b", "b AND NOT c", "NOT b"] {
+        store.inner.events.clear();
+        exact(&mut store, query, &documents);
+        assert!(
+            store.inner.events.contains(&Stage::OwnerFrontierScan),
+            "{query}"
+        );
+    }
 }
 
 #[test]
