@@ -1,15 +1,17 @@
-//! page-group pruning over a complete snapshot plus an owner-ordered write delta.
+//! page-group pruning over a complete snapshot plus a term-addressed write frontier.
 //! bitmap output remains subject to PostgreSQL heap visibility and rechecks.
 
 use super::super::page::{CatalogEntry, GroupSnapshot, NO_BLOCK, PageKind};
-use super::super::{PageStore, find_term, following, load, load_posting};
+use super::super::{PageStore, find_term, load, load_posting};
 use super::storage::{self, BITMAP_BYTES, Cursor, Value};
-use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::{Bitmap, GroupKey, Node, QueryScratch, Source, evaluate_source, needed_terms};
 use crate::identity::RootTid;
 use crate::query::{Kind, Query};
 use pin_kernels::grouped::{OffsetMask, PageMask};
+
+#[path = "frontier.rs"]
+mod frontier;
 
 const NODES: usize = 64;
 // at most one canonical posting page and 64 owner resolutions, including inline.
@@ -228,7 +230,7 @@ fn next_group<S: PageStore>(
     }
 }
 
-/// scans grouped Boolean matches, then a conservative cover of newer complete owners.
+/// scans exact grouped and newer-owner boolean matches without heap visibility claims.
 /// unsupported syntax, unavailable snapshots and small budgets use the legacy kernel.
 /// the host holds a shared structural barrier; only MVCC bitmap consumers are allowed.
 ///
@@ -245,7 +247,7 @@ pub fn scan_query<S: PageStore>(
         return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
     };
     let required = program.terms * (BITMAP_BYTES + core::mem::size_of::<Term>()) + 128 * 1024;
-    if memory_bytes < required {
+    if memory_bytes < required.max(frontier::memory(program.terms)) {
         return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
     }
     let meta = load(store, 0, PageKind::Meta)?;
@@ -253,10 +255,14 @@ pub fn scan_query<S: PageStore>(
         return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
     };
     let mut terms = Vec::new();
-    for name in &program.names[..program.terms] {
+    let mut captured = [None; NODES];
+    for (index, name) in program.names[..program.terms].iter().enumerate() {
         let key = match name {
             Some(name) => {
                 let found = find_term(store, &meta, name)?;
+                if let Some((dictionary, reference)) = &found {
+                    captured[index] = Some(frontier::CapturedTerm::new(dictionary.term(*reference)?));
+                }
                 if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
                     let Some((dictionary, reference)) = found else {
                         return Ok(0);
@@ -339,22 +345,18 @@ pub fn scan_query<S: PageStore>(
             &mut scratch,
         )?;
         if candidate_pages != [0; 4] {
-            storage::read_bitmap(store, snapshot, live_entry, &mut live_bytes)?;
+            let (_, live) =
+                storage::read_bitmap_view(store, snapshot, live_entry, &mut live_bytes)?;
+            let mut parsed = [None; NODES];
             for (index, chunk) in bytes.chunks_mut(BITMAP_BYTES).enumerate() {
                 if needed & (1 << index) != 0 {
-                    storage::read_bitmap(
+                    let (_, view) = storage::read_bitmap_view(
                         store,
                         snapshot,
                         entries[index].ok_or(Error::InvalidState)?,
                         chunk,
                     )?;
-                }
-            }
-            let mut parsed = [None; NODES];
-            for (index, chunk) in bytes.chunks(BITMAP_BYTES).enumerate() {
-                if needed & (1 << index) != 0 {
-                    let len = Value::read(entries[index].ok_or(Error::InvalidState)?)?.len as usize;
-                    parsed[index] = Some(Bitmap::open(&chunk[..len])?);
+                    parsed[index] = Some(view);
                 }
             }
             let layout = store.layout();
@@ -362,7 +364,7 @@ pub fn scan_query<S: PageStore>(
             let mut source = Loaded {
                 store,
                 key,
-                live: Bitmap::open(&live_bytes[..live_value.len as usize])?,
+                live,
                 masks: &masks[..program.terms],
                 terms: &parsed[..program.terms],
             };
@@ -397,51 +399,18 @@ pub fn scan_query<S: PageStore>(
         }
         target = base.checked_add(256);
     }
-    delta(store, &meta, snapshot, count, emit)
-}
-
-fn delta<S: PageStore>(
-    store: &mut S,
-    meta: &super::super::page::Page,
-    snapshot: GroupSnapshot,
-    mut count: u64,
-    mut emit: impl FnMut(RootTid, bool) -> Result<()>,
-) -> Result<u64> {
-    let (head, tail) = meta.owner_chain()?;
-    if head == NO_BLOCK {
-        return Ok(count);
-    }
-    let mut block = snapshot.after.map_or(head, |after| after.page);
-    let mut first = true;
-    loop {
-        let page = load(store, block, PageKind::Owners)?;
-        let start = if first {
-            first = false;
-            if let Some(after) = snapshot.after {
-                if page.owner(after.slot, store.layout())?.reference != after {
-                    return Err(Error::InvalidState);
-                }
-                after.slot + 1
-            } else {
-                0
-            }
-        } else {
-            0
-        };
-        for slot in start..page.owner_count()? {
-            let owner = page.owner(slot, store.layout())?;
-            if owner.reference.incarnation.get() <= snapshot.id.get() {
-                return Err(Error::InvalidState);
-            }
-            if owner.publication == Publication::Published && owner.live {
-                emit(owner.root, true)?;
-                count = count.checked_add(1).ok_or(Error::Limit("group delta"))?;
-            }
-        }
-        match following(&page, tail)? {
-            Some(next) => block = next,
-            None => break,
-        }
-    }
-    Ok(count)
+    // release snapshot payloads before allocating owner-ordered suffix cursors.
+    drop(bytes);
+    drop(terms);
+    let delta = frontier::scan(
+        store,
+        &program,
+        &captured[..program.terms],
+        &meta,
+        snapshot,
+        emit,
+    )?;
+    count
+        .checked_add(delta)
+        .ok_or(Error::Limit("group candidates"))
 }

@@ -251,6 +251,15 @@ pub(super) fn read_bitmap<S: PageStore>(
     entry: CatalogEntry,
     output: &mut [u8],
 ) -> Result<Value> {
+    read_bitmap_view(store, snapshot, entry, output).map(|(value, _)| value)
+}
+
+pub(super) fn read_bitmap_view<'a, S: PageStore>(
+    store: &mut S,
+    snapshot: GroupSnapshot,
+    entry: CatalogEntry,
+    output: &'a mut [u8],
+) -> Result<(Value, Bitmap<'a>)> {
     let value = Value::read(entry)?;
     let output = output
         .get_mut(..value.len as usize)
@@ -281,7 +290,7 @@ pub(super) fn read_bitmap<S: PageStore>(
     {
         return Err(Error::InvalidState);
     }
-    Ok(value)
+    Ok((value, view))
 }
 
 pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
@@ -532,13 +541,14 @@ impl Cursor {
         key: [u64; 2],
     ) -> Result<Option<CatalogEntry>> {
         if let Some(page) = &self.leaf {
-            let count = page.group_node_info()?.1;
-            if page.group_entry(0)?.key <= key && key <= page.group_entry(count - 1)?.key {
+            let node = page.group_node_view()?;
+            let count = node.count;
+            if node.key(0)? <= key && key <= node.key(count - 1)? {
                 let mut lo = 0;
                 let mut hi = count;
                 while lo < hi {
                     let mid = lo + (hi - lo) / 2;
-                    if page.group_entry(mid)?.key < key {
+                    if node.key(mid)? < key {
                         lo = mid + 1;
                     } else {
                         hi = mid;
@@ -559,13 +569,13 @@ impl Cursor {
         let mut upper = None;
         loop {
             let page = load(store, block, PageKind::Grouped)?;
-            let (level, count) = page.group_node_info()?;
+            let node = page.group_node_view()?;
+            let (level, count) = (node.level, node.count);
             if page.group_identity()?.0 != snapshot.id
                 || expected.is_some_and(|expected| level != expected)
-                || lower.is_some_and(|key| page.group_entry(0).is_ok_and(|entry| entry.key != key))
+                || lower.is_some_and(|key| node.key(0).is_ok_and(|first| first != key))
                 || upper.is_some_and(|key| {
-                    page.group_entry(count - 1)
-                        .is_ok_and(|entry| entry.key >= key)
+                    node.key(count - 1).is_ok_and(|last| last >= key)
                 })
             {
                 return Err(Error::InvalidState);
@@ -574,7 +584,7 @@ impl Cursor {
             let mut hi = count;
             while lo < hi {
                 let mid = lo + (hi - lo) / 2;
-                if page.group_entry(mid)?.key < key {
+                if node.key(mid)? < key {
                     lo = mid + 1;
                 } else {
                     hi = mid;
@@ -585,12 +595,12 @@ impl Cursor {
                 self.leaf = Some(page);
                 return self.current(store, snapshot);
             }
-            let slot = if lo < count && page.group_entry(lo)?.key == key {
+            let slot = if lo < count && node.key(lo)? == key {
                 lo
             } else {
                 lo.saturating_sub(1)
             };
-            let entry = page.group_entry(slot)?;
+            let entry = node.entry(slot)?;
             if self.depth >= LEVELS {
                 return Err(Error::InvalidState);
             }
@@ -598,7 +608,7 @@ impl Cursor {
             self.depth += 1;
             lower = Some(entry.key);
             if slot + 1 < count {
-                upper = Some(page.group_entry(slot + 1)?.key);
+                upper = Some(node.key(slot + 1)?);
             }
             expected = Some(level - 1);
             block = child(entry)?;
