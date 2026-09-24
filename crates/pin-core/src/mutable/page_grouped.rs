@@ -56,6 +56,32 @@ pub struct CatalogEntry {
     pub value: [u8; 64],
 }
 
+/// borrows only a checked private page image, never a host buffer.
+pub(crate) struct GroupNode<'a> {
+    bytes: &'a [u8],
+    pub level: u8,
+    pub count: u16,
+}
+
+impl GroupNode<'_> {
+    pub fn key(&self, index: u16) -> Result<[u64; 2]> {
+        if index >= self.count {
+            return Err(Error::InvalidParameters);
+        }
+        let start = usize::from(index) * ENTRY_BYTES;
+        let mut reader = Reader::new(&self.bytes[start..start + 16]);
+        Ok([reader.u64()?, reader.u64()?])
+    }
+
+    pub fn entry(&self, index: u16) -> Result<CatalogEntry> {
+        let key = self.key(index)?;
+        let start = usize::from(index) * ENTRY_BYTES + 16;
+        let mut value = [0; 64];
+        value.copy_from_slice(&self.bytes[start..start + 64]);
+        Ok(CatalogEntry { key, value })
+    }
+}
+
 impl Default for CatalogEntry {
     fn default() -> Self {
         Self {
@@ -124,6 +150,16 @@ impl GroupState {
 }
 
 impl Page {
+    /// tests a captured allocation fence, not transaction visibility.
+    pub(crate) fn grouped_has_delta(&self, snapshot: GroupSnapshot) -> Result<bool> {
+        self.require(PageKind::Meta)?;
+        let next = self.u64(32)?;
+        if next <= snapshot.id.get() {
+            return Err(Error::InvalidState);
+        }
+        Ok(next - 1 > snapshot.id.get())
+    }
+
     /// reads either legacy metadata or the versioned grouped state tail.
     pub fn grouped_state(&self) -> Result<GroupState> {
         self.require(PageKind::Meta)?;
@@ -389,28 +425,29 @@ impl Page {
         Ok((level, count))
     }
 
+    pub(crate) fn group_node_view(&self) -> Result<GroupNode<'_>> {
+        let (level, count) = self.group_node_info()?;
+        Ok(GroupNode {
+            bytes: &self.bytes[NODE_HEADER..self.len],
+            level,
+            count,
+        })
+    }
+
     pub fn group_entry(&self, index: u16) -> Result<CatalogEntry> {
-        let (_, count) = self.group_node_info()?;
-        if index >= count {
-            return Err(Error::InvalidParameters);
-        }
-        let start = NODE_HEADER + usize::from(index) * ENTRY_BYTES;
-        let mut reader = Reader::new(&self.bytes[start..start + ENTRY_BYTES]);
-        let key = [reader.u64()?, reader.u64()?];
-        let mut value = [0; 64];
-        value.copy_from_slice(reader.take(64)?);
-        Ok(CatalogEntry { key, value })
+        self.group_node_view()?.entry(index)
     }
 
     fn validate_group_node(&self) -> Result<()> {
-        let (level, count) = self.group_node_info()?;
+        let node = self.group_node_view()?;
         let mut previous = None;
-        for index in 0..count {
-            let entry = self.group_entry(index)?;
-            if !valid_key(entry.key) || previous.is_some_and(|key| key >= entry.key) {
+        for index in 0..node.count {
+            let key = node.key(index)?;
+            if !valid_key(key) || previous.is_some_and(|previous| previous >= key) {
                 return Err(Error::InvalidState);
             }
-            if level != 0 {
+            if node.level != 0 {
+                let entry = node.entry(index)?;
                 let child = u32::from_le_bytes(
                     entry.value[..4]
                         .try_into()
@@ -421,7 +458,7 @@ impl Page {
                     return Err(Error::InvalidState);
                 }
             }
-            previous = Some(entry.key);
+            previous = Some(key);
         }
         Ok(())
     }
