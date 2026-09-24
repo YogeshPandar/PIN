@@ -29,6 +29,7 @@ jobs:
           python3 tools/check_contracts.py
           bash -n tools/pg_smoke.sh
           bash -n tools/g2_qualification.sh
+          bash -n tools/g9_qualification.sh
           bash -n tools/g8_qualification.sh tools/g8_release.sh
       - name: Check formatting
         run: cargo fmt --all --check
@@ -46,7 +47,7 @@ jobs:
 
   postgres:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -85,6 +86,8 @@ jobs:
           git diff --exit-code -- ../../Cargo.lock
       - name: Test normal installation and lifecycle
         run: bash tools/pg_smoke.sh
+      - name: Test normal grouped storage lifecycle
+        run: bash tools/g9_qualification.sh
       - name: Qualify and package the normal G8 candidate
         env:
           PIN_PG_SOURCE: ${{ runner.temp }}/postgres-src
@@ -100,6 +103,10 @@ jobs:
         env:
           PIN_G0_TEST_HOOKS: '1'
         run: bash tools/pg_smoke.sh
+      - name: Test grouped WAL recovery and concurrency
+        env:
+          PIN_G9_TEST_HOOKS: '1'
+        run: bash tools/g9_qualification.sh
       - name: Test G2 transactional and recovery qualification
         run: bash tools/g2_qualification.sh
       - name: Preserve disposable cluster logs

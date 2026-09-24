@@ -122,7 +122,7 @@ class SourceTests(unittest.TestCase):
         storage = (ROOT / 'crates/pin-pg/cshim/pin_storage.c').read_text()
         self.assertIn('amcanparallel: true', source)
         self.assertIn('amcanbuildparallel: true', source)
-        self.assertIn('amusemaintenanceworkmem: false', source)
+        self.assertIn('amusemaintenanceworkmem: true', source)
         self.assertIn('amgettuple: Some(native::pin_scan_gettuple)', source)
         self.assertIn('amestimateparallelscan: Some(native::pin_scan_estimate_parallel)', source)
         self.assertIn('aminitparallelscan: Some(native::pin_scan_init_parallel)', source)

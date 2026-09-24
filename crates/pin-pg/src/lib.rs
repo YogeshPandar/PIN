@@ -12,6 +12,7 @@ mod abi;
 mod am;
 mod compatibility;
 mod count;
+mod grouped;
 mod maintenance;
 mod matching;
 mod native;
@@ -54,6 +55,7 @@ pub unsafe extern "C-unwind" fn _PG_init() {
     // safety: validation and the preload-only check precede static hook registration.
     unsafe { count::initialize() };
     maintenance::initialize();
+    grouped::initialize();
     storage::initialize();
 }
 

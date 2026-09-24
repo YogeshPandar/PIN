@@ -8,6 +8,7 @@ pub mod budget;
 pub mod candidate;
 pub mod codec;
 pub mod error;
+pub mod grouped;
 pub mod identity;
 pub mod index;
 mod memory;

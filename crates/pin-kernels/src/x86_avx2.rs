@@ -2,7 +2,7 @@
 // full chunks belong to live slices; tails never use a wide load or store.
 // contracts: docs/g6-api-evidence.md and core::arch::x86_64.
 
-use std::arch::x86_64::{
+use core::arch::x86_64::{
     _mm256_and_si256, _mm256_andnot_si256, _mm256_loadu_si256, _mm256_or_si256, _mm256_storeu_si256,
 };
 

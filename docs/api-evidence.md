@@ -633,3 +633,120 @@ to 7,022.44 QPS on the 20,000-row fixture; GIN remained much faster. Pure Rust,
 G2, Python, Clippy, normal-package G8 (234/234), and direct-page hard recovery
 checks passed. Self-reviewed; no generalized speed or production claim.
 Generation-safe page-group masks remain a separate design and correctness gate.
+
+## GS01: generation-safe logical groups (2026-09-23)
+
+Modules: `pin-core/src/grouped/` and `pin-kernels/src/grouped.rs`.
+Authority: Rust 1.98.1 (`48a229cea`) checked slices, `as_chunks`, little-endian
+integer conversion, bit operations, `array::from_fn` and `Iterator::min_by_key`.
+Versioned official links, the byte layout, bounds and scalar/merge correctness
+arguments are recorded in [g9-grouped-storage.md](g9-grouped-storage.md).
+The PostgreSQL 18.6 and pgrx 0.19.2 immutable references above remain unchanged;
+this change adds no host API, PostgreSQL pointer, allocation or unsafe operation.
+
+Local obligations: one immutable incarnation per coordinate within a complete
+segment; owner-checked term sealing; no cross-segment partial Boolean matching;
+clear-only shared liveness; source-local liveness filtering before merge union;
+fresh durable host identities and consistent private source snapshots. A full
+membership/liveness open is eager and is not an I/O-pruning performance proof.
+
+Evidence: independent incarnation-set oracle, scalar truth tables, malformed and
+unaligned records, explicit TID reuse, checked sealing, logical merge conflicts,
+cancellation, private-image retirement replay, decoding counters and a golden
+wire image. Executable results are recorded by exact commit in PR #13 and its
+G6 CI artifacts. Self-reviewed only. Physical extent publication, WAL/VACUUM
+integration and default-off SQL activation were open in the logical-only slice.
+The subsequent physical implementation and adapter are described in `G9PG01` below;
+PostgreSQL crash qualification and independent review remain open.
+
+
+## G9PG01: grouped PostgreSQL adapter (2026-09-23)
+
+Scope: `pin-pg/src/grouped.rs`, `cshim/pin_grouped.[ch]`, grouped AM hooks,
+`mutable/grouped/`, `mutable/page_grouped.rs`, G9 SQL/qualification drivers and
+workflow gates. The base for this adapter work is PR #13 head
+`f04ed8047ad331b084b340fbe99de5a98b056ae5`, not the earlier logical-foundation ZIP.
+The pinned dependency graph and `Cargo.lock` are unchanged.
+
+### Primary contracts reviewed
+
+PostgreSQL source is pinned to
+[`724edf9bde9d356724ad384a2e196edc3c9f80f7`](https://github.com/postgres/postgres/tree/724edf9bde9d356724ad384a2e196edc3c9f80f7),
+PostgreSQL 18.6. pgrx/pgrx-pg-sys 0.19.2 source is pinned to
+[`70383e884582d1bcc7cd681d10886b995a2830cb`](https://github.com/pgcentralfoundation/pgrx/tree/70383e884582d1bcc7cd681d10886b995a2830cb).
+
+| Authority | Local requirement |
+| --- | --- |
+| [PG tuplesort.h](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/utils/tuplesort.h) | Exact datum-sort API signatures, KiB budget, `TUPLESORT_NONE`, forward-only access and sort-space instrumentation |
+| [PG tuplesortvariants.c](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/utils/sort/tuplesortvariants.c) | Input copying before the stack datum is reused; `copy=false` output is borrowed only until the next sort operation |
+| [PG configure.ac](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/configure.ac) | Compile the C adapters with the pinned aliasing, signed-overflow and floating-point precision semantics: `-fno-strict-aliasing`, `-fwrapv`, `-fexcess-precision=standard` |
+| [PG varatt.h](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/varatt.h) | Include the header explicitly; use official varlena macros, validate uncompressed four-byte framing and exact payload width |
+| [PG pg_operator.dat](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/catalog/pg_operator.dat) | Bytea ordering via generated `ByteaLessOperator`, not a handwritten or locale-dependent comparator |
+| [PG miscadmin.h](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/miscadmin.h), [autovacuum.h](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/postmaster/autovacuum.h) | Maintenance-memory globals, worker-kind check, cancellation and autovacuum override |
+| [PG resource budgets](https://www.postgresql.org/docs/18/runtime-config-resource.html) | Reserve core buffers separately; do not charge the whole server budget to a concurrent sort as well |
+| [PG index functions](https://www.postgresql.org/docs/18/index-functions.html) | AM build/bulk-delete/cleanup boundaries, maintenance-memory capability, bitmap accumulation and required rechecks |
+| [PG index scanning](https://www.postgresql.org/docs/18/index-scanning.html), [index locking](https://www.postgresql.org/docs/18/index-locking.html) | Bitmap consumers are MVCC-only; all applicable index copies must retire before heap reuse; multiple scan keys preserve complete predicate checks |
+| [PG generic WAL](https://www.postgresql.org/docs/18/generic-wal.html), [generic_xlog.c](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/transam/generic_xlog.c) | Registered private images, exclusive locks through finish, standard `pd_lower`/`pd_upper` boundaries and bounded registration in lock order |
+| [PG heapam_handler.c](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c) | Heap build supplies canonical HOT roots and handles recently dead HOT-chain versions; Pin must not reimplement that visibility logic |
+| [PG VACUUM](https://www.postgresql.org/docs/18/sql-vacuum.html) | Run outside a transaction block; explicit cleanup/parallel settings in the disposable suite |
+| [PG administration functions](https://www.postgresql.org/docs/18/functions-admin.html) | Observe advisory-lock waits, cancel the selected backend and inspect ordinary default-tablespace temporary files with `pg_ls_tmpdir` |
+| [pgrx ffi.rs](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx-pg-sys/src/submodules/ffi.rs) | Each guarded closure is one C call with trivial captures, no panic and no destructor-bearing locals; backend main-thread restriction |
+| [pgrx 0.19.2 GucRegistry](https://docs.rs/pgrx/0.19.2/pgrx/guc/struct.GucRegistry.html) | `define_bool_guc`, static settings, `Suset` privilege and default-off values |
+| Rust 1.98.1 [slices](https://doc.rust-lang.org/core/primitive.slice.html), [NonNull](https://doc.rust-lang.org/core/ptr/struct.NonNull.html), [Vec](https://doc.rust-lang.org/std/vec/struct.Vec.html) | Checked chunks, exact record extents, non-null opaque handle, fallible scratch reservation and no allocation-free claim for host orchestration |
+
+### FFI obligations
+
+The five native operations are begin, batched put, finish, batched read and end.
+`SortRecord` is `repr(transparent)` over `[u8; 32]`; compile-time Rust assertions
+check size, alignment and the 256-record batch bound. The C datum has a separate
+four-byte varlena header. Every output record is copied before another sort call.
+The opaque handle is unique to one maintenance invocation and never enters the
+pure core or PostgreSQL shared memory. All exceptional C calls use the existing
+pgrx FFI guard, and no Rust destructor calls PostgreSQL.
+
+An ordinary core `Result::Err` closes the sort before propagating. A PostgreSQL
+ERROR is not such a return: context/ResourceOwner cleanup must reclaim sort and
+tape resources as it unwinds through the guarded boundary. The native cancellation
+suite is required to validate this assumption. The isolated C test doubles do not
+model PG error cleanup, ABI compatibility, live spilling, WAL or buffer locking.
+
+### Storage and performance obligations
+
+The builder captures complete canonical owners, verifies duplicate live-coordinate
+and coverage constraints, and never combines term fragments across generation
+identities. The physical relation scopes numeric segment IDs. Its logical relation
+namespace value `1` must not be interpreted as a global incarnation or used to mix
+relations. Immutable metadata publication owns either the previous complete snapshot
+or the complete replacement; unpublished/replaced fragments remain journal-owned.
+
+Retirement is independent of the GUCs. It clears every published liveness copy
+before canonical owner deletion and preserves the existing direct-posting cleanup.
+No per-bit WAL flush, heap visibility shortcut, or unpinned shared-buffer borrow is
+introduced. Plain scans and count paths are not switched to grouped storage.
+
+The new scan's post-cutoff delta remains a conservative cover of all newer live
+owners with predicate rechecks. The builder holds both barriers for a full snapshot
+rebuild. Legacy postings are retained. These are known write-latency, read-delta and
+space costs, not completed optimizations or measured gains. See
+[g9-integration.md](g9-integration.md) for activation, rollback and benchmark gates.
+
+### Evidence status
+
+Self-reviewed for signatures, ownership, framing, memory-preflight, event numbering,
+cutoff validity, fallback-before-output, retirement ordering and recovery schedules.
+The existing PR-head CI supplied an exact rustfmt patch and identified Clippy issues;
+those original-head issues were corrected before adding the adapter. Its earlier
+successful Rust tests do not validate any later local commit.
+
+The local suite passed 80 Python methods, including the production C bridge compiled
+against test doubles in debug and optimized UBSan/bounds configurations. Source
+contracts, shell/Python syntax and workflow YAML parsing also passed. Four new Rust
+storage tests and the normal/test-hook PostgreSQL driver are present but have not
+run natively for this adapter. G0/G9 now schedule native compilation, Rust debug and
+release tests, scalar/no_std checks, SQL identity oracles, observed spill, cancellation,
+recovery and concurrency. No run result is invented for these local commits.
+
+Independent FFI/storage review, current-head rustfmt/Clippy/rustdoc, native SQL and
+hard-crash qualification, grouped parallel-worker qualification, Miri/sanitizers for
+Rust where applicable and matched performance measurements remain acceptance gates.
+Both settings must remain default-off while those gates are open.

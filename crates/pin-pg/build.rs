@@ -54,6 +54,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "cshim/pin_count.h",
         "cshim/pin_parallel.c",
         "cshim/pin_parallel.h",
+        "cshim/pin_grouped.c",
+        "cshim/pin_grouped.h",
     ] {
         println!("cargo:rerun-if-changed={name}");
     }
@@ -99,16 +101,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     let archive = out.join("libpin_abi.a");
     let cc = env::var_os("CC").unwrap_or_else(|| "cc".into());
     let ar = env::var_os("AR").unwrap_or_else(|| "ar".into());
-    for source in ["pin_abi", "pin_storage", "pin_count", "pin_parallel"] {
+    for source in [
+        "pin_abi",
+        "pin_storage",
+        "pin_count",
+        "pin_parallel",
+        "pin_grouped",
+    ] {
         let object = out.join(format!("{source}.o"));
         let mut compile = Command::new(&cc);
         if env::var_os("CARGO_FEATURE_TEST_HOOKS").is_some() {
             compile.arg("-DPIN_TEST_HOOKS");
         }
+        // postgres headers require its aliasing, overflow and precision semantics.
         compile
             .arg("-D_GNU_SOURCE")
             .args([
-                "-std=c11", "-O2", "-fPIC", "-Wall", "-Wextra", "-Werror", "-isystem",
+                "-std=c11",
+                "-O2",
+                "-fPIC",
+                "-fno-strict-aliasing",
+                "-fwrapv",
+                "-fexcess-precision=standard",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                "-isystem",
             ])
             .arg(&server_include)
             .arg("-isystem")

@@ -99,3 +99,31 @@ is promoted.
 The pure `WorkState` and retained-prefix implementations contain no unsafe Rust.
 They do not turn PostgreSQL shared memory or shared buffers into Rust references.
 Process synchronization remains in the C/PostgreSQL boundary.
+
+
+## G9 grouped boundary additions
+
+Review state: self-review only. Native PostgreSQL ABI/SQL/recovery validation and
+independent FFI/storage review are not recorded for the new adapter. Earlier G0,
+G6 and G7 approvals or CI results do not cover these new operations. Both grouped
+settings remain off by default. Exact upstream contracts are listed in `G9PG01`
+in [api-evidence.md](api-evidence.md).
+
+| ID | Operations | Safety argument | Required validation |
+| --- | --- | --- | --- |
+| G9PG01 | `pin_group_sort_begin` and opaque `NonNull<c_void>` | Main-thread guarded call with one scalar budget; PostgreSQL owns state and tapes; null means preflight skip without publication | Pinned C/Rust compile, low-memory and autovacuum budget tests |
+| G9PG01 | Batched input raw byte pointer | Rust asserts 32-byte alignment-one records and bounds count to 256; C copies input synchronously into tuplesort | Debug/optimized marshalling, batch limits, upstream copying contract |
+| G9PG01 | Batched output raw byte pointer | Exclusive initialized Rust extent; C copies each borrowed datum before another sort operation; returned count checked | Unaligned output, canaries, borrowed-buffer invalidation, native spilled-sort tests |
+| G9PG01 | `pin_group_sort_finish` | Unique invocation-local handle, single checked state transition, trivial guarded call | Invalid transition tests, cancellation during real sort |
+| G9PG01 | Consuming `pin_group_sort_end` | Explicit normal/core-error cleanup, no retained raw datum and no PostgreSQL call in Rust Drop | Normal cleanup and native ERROR/cancellation/ResourceOwner tests |
+| G9PG01 | Grouped AM integration | Existing shared/exclusive structural barriers, writer interlock and copied page-store boundary; no new raw shared-buffer slice | Row-identity oracles, snapshot/concurrent schedules, WAL durability and heap reuse |
+
+The C adapters also adopt the pinned PostgreSQL aliasing, overflow and precision
+flags. Their previous handwritten flags omitted these compiler-contract settings;
+this change requires native regression coverage for all C adapters, not just G9.
+The local C harness compiles the actual bridge but substitutes PostgreSQL APIs.
+Its debug and optimized UBSan/bounds runs pass; they are not a native ABI proof.
+The added PostgreSQL driver is required to observe spill and cleanup, prove actual
+selection of the grouped executor, and check crash/recovery boundaries. Those
+native runs and an independent reviewer are still missing. The pure grouped core
+continues to forbid unsafe code.

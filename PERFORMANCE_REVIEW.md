@@ -4,6 +4,10 @@
 **Status:** research and local development evidence; Pin is not production certified  
 **Current measured code:** `eaad9c22a5ab47d1fc64a7fa718792183bdd08d8`
 
+The measurements below are historical for the named code head, not measurements
+of the September 23 grouped-storage adapter. Its unmeasured implementation and
+remaining gates are recorded in the final section of this document.
+
 ## What the benchmark actually says
 
 The latest comparison uses one 20,000-row synthetic `pin_g6_bench` table,
@@ -133,3 +137,46 @@ The immediate engineering priority is item 1. Cursor micro-optimizations have
 helped specific queries, but the remaining GIN gap follows from decoding
 owner streams and validating pages before Pin can discard irrelevant groups.
 No current result supports a claim that Pin is the world's fastest extension.
+
+
+## G9 integration checkpoint: 23 September 2026
+
+The current development adds a default-off PostgreSQL adapter to PR #13 head
+`f04ed8047ad331b084b340fbe99de5a98b056ae5`. The physical grouped core in that head is
+connected to bounded PostgreSQL tuplesort, CREATE INDEX completion, VACUUM cleanup
+and Boolean bitmap output. See [g9-integration.md](docs/g9-integration.md) for the
+protocol, exact activation/rollback examples and evidence limits.
+
+The intended reductions in work are 256-page-mask pruning before offset decoding,
+independent catalog seeks, one shared liveness record per heap group, 256-record
+native sort batches, borrowed output-datum copying without per-record output
+allocation, and skipping snapshot rebuilds when the validated owner cutoff has not
+changed. The scalar kernel remains allocation-free and `no_std` capable; the host
+uses PostgreSQL-managed allocations, files, buffers and WAL. These are implementation
+choices, not measured speedups.
+
+The new work does not remove canonical owners or legacy postings. Newly appended
+owners are currently emitted conservatively with heap predicate rechecks. A large
+write delta can therefore erase a selective-read advantage. Snapshot reconstruction
+holds both maintenance barriers and rebuilds all captured owners. It is not a
+concurrent incremental merge; it can stall writers and structural readers. The
+maximum group scratch reservation and sort budget also need measured RSS validation.
+
+Qualification added: normal and test-hook SQL lifecycle, full row-identity oracles,
+observed spill and cancellation cleanup, mixed-format reads, actual TID reuse,
+lossy bitmaps, HOT-related updates, repeatable-read/concurrent schedules, and six
+ERROR/hard-crash boundaries. Each hard-crash case commits a heap-only synchronous
+witness before immediate shutdown so preceding index WAL must be durable. These
+PostgreSQL schedules are written but have not run for the new adapter. Locally,
+80 Python methods pass, including debug and UBSan-optimized execution of the actual
+C bridge against isolated test doubles. No Rust or PostgreSQL native success is
+claimed. Both settings remain off; independent review remains required.
+
+The next performance comparison must verify identical row IDs with gates off/on,
+then report selective/common AND, nested OR/NOT, write-delta size, warm and cold
+runs, per-query index buffers, bytes decoded, build/VACUUM time, concurrent write
+latency, RSS, index size, WAL volume and p95/p99. Compare the same query semantics
+against GIN and separate build cost from steady-state reads. Preserve machine,
+PostgreSQL configuration, corpus, plans and commit identifiers in artifacts. No
+existing result in this document establishes grouped storage as faster than GIN
+or equivalent to TIN. SIMD, exact counts and ranked top-k remain later gates.

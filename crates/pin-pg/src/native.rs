@@ -1,5 +1,5 @@
 //! narrow C declarations; all throwing calls pass through the pgrx FFI boundary.
-//! signatures match cshim/pin_storage.h and the pinned PostgreSQL 18.6 headers.
+//! signatures match the cshim headers and the pinned PostgreSQL 18.6 headers.
 //! no closure passed to call may allocate, panic, or own a destructor-bearing value.
 
 use pgrx::pg_sys;
@@ -7,6 +7,11 @@ use std::ffi::c_void;
 
 // safety: fixed-width scalars and generated PostgreSQL types match the C header.
 unsafe extern "C-unwind" {
+    pub(crate) fn pin_group_sort_begin(reserved_bytes: u64) -> *mut c_void;
+    pub(crate) fn pin_group_sort_put(sort: *mut c_void, records: *const u8, count: u32);
+    pub(crate) fn pin_group_sort_finish(sort: *mut c_void);
+    pub(crate) fn pin_group_sort_read(sort: *mut c_void, records: *mut u8, capacity: u32) -> u32;
+    pub(crate) fn pin_group_sort_end(sort: *mut c_void) -> bool;
     pub(crate) fn pin_parallel_init();
     pub(crate) fn pin_parallel_vacuum_options() -> u8;
     pub(crate) fn pin_parallel_build(

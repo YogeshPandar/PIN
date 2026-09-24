@@ -74,7 +74,9 @@ fn g2_inject(stage: i32, occurrence: i32, pause: bool) {
             "Pin test injection requires a superuser"
         );
     }
-    if !(1..=16).contains(&stage) || !(1..=4096).contains(&occurrence) {
+    if (!(1..=16).contains(&stage) && !(32..=38).contains(&stage))
+        || !(1..=4096).contains(&occurrence)
+    {
         pgrx::ereport!(
             ERROR,
             PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
