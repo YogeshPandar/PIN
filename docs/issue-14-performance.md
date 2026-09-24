@@ -164,3 +164,54 @@ prefix qualification, full-rebuild writer stalls, sustained-write tails, large
 corpora, true cold cache, ranking and MVCC-certified aggregate acceleration remain
 separate evidence requirements. Do not enable a new path by default or close the
 issue merely because structural work counts improve.
+
+## Bounded phrase recheck checkpoint
+
+Standalone phrases of 1..64 terms now have a bounded streaming predicate through
+`PhraseMatcher`. It keeps at most 64 borrowed token references instead of
+materializing a document-wide token vector. ASCII input remains borrowed; Unicode
+continues through the existing budgeted normalization profile. Compound expressions
+and longer phrases keep the existing document oracle.
+
+The matcher still validates the complete document after an early hit or exhausted
+search budget, so an invalid tail is not hidden. Search-work accounting follows the
+existing phrase oracle, including incomplete final windows. The PostgreSQL wrapper
+does not retain a datum, text reference, or matcher across calls.
+
+This is a recheck/predicate optimization only. It does not add indexed positions,
+change phrase candidate selection, cache query decoding, or change MVCC visibility.
+Phrase SQL tests, exhaustive small-document oracle comparisons, Unicode/profile
+checks, invalid-tail checks and a release-mode component ablation are included.
+
+Run the component ablation with the repository-pinned Rust toolchain:
+
+```sh
+cargo run --locked --release -p pin-core --example issue14_phrase -- \
+  --iterations 1000 --samples 7 > phrase.csv
+```
+
+The result is component timing, not full SQL latency or evidence of a TIN/GIN win.
+
+## Additional paired measurement harness
+
+`tools/issue14_perf.py` is retained alongside the newer `tools/g9_profile.py`.
+It is a warm, read-only paired harness for the established G6 fixture. It brackets
+each PIN measurement with GIN controls, alternates legacy/grouped ordering, checks
+row-identity symmetric differences, preserves raw pgbench latency logs and EXPLAIN
+JSON, and can sample Linux backend CPU ticks when the client shares PostgreSQL's PID
+namespace.
+
+Example:
+
+```sh
+python3 tools/issue14_perf.py \
+  --bindir /path/to/postgresql-18/bin \
+  --output /absolute/path/to/new-run-directory \
+  --samples 7 --seconds 30 --clients 1 \
+  --local-proc --cpu-executions 10000
+```
+
+The harness intentionally reports `performance_target_qualified=false`. It does
+not provide cold-cache, sustained-write, hardware-counter, allocation-profile,
+ranking, or direct TIN evidence. Use the newer snapshot-paired profiler for the main
+PR qualification; keep this harness as an independent accounting/control path.
