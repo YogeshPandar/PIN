@@ -88,9 +88,10 @@ jobs:
         run: bash tools/pg_smoke.sh
       - name: Test normal grouped storage lifecycle
         run: bash tools/g9_qualification.sh
-      - name: Test normal anchored storage lifecycle
+      - name: Test normal anchored and owner frontier lifecycle
         env:
           PIN_G9_ANCHORS: '1'
+          PIN_G9_OWNER_FRONTIER: '1'
         run: bash tools/g9_qualification.sh
       - name: Qualify and package the normal G8 candidate
         env:
@@ -111,10 +112,11 @@ jobs:
         env:
           PIN_G9_TEST_HOOKS: '1'
         run: bash tools/g9_qualification.sh
-      - name: Test anchored WAL recovery and concurrency
+      - name: Test anchored and owner frontier WAL recovery and concurrency
         env:
           PIN_G9_TEST_HOOKS: '1'
           PIN_G9_ANCHORS: '1'
+          PIN_G9_OWNER_FRONTIER: '1'
         run: bash tools/g9_qualification.sh
       - name: Test G2 transactional and recovery qualification
         run: bash tools/g2_qualification.sh

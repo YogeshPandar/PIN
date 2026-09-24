@@ -6,8 +6,8 @@ use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::Node;
 use crate::identity::RootTid;
-use crate::mutable::grouped::anchors;
 use crate::mutable::document;
+use crate::mutable::grouped::anchors;
 use crate::mutable::page::{
     GroupSnapshot, NO_BLOCK, OwnedPostings, Owner, OwnerRef, Page, PageKind, Term, TermRef,
 };
@@ -412,13 +412,7 @@ fn fragment_membership<S: PageStore>(
     if offset != total {
         return Err(Error::InvalidState);
     }
-    document::term_membership(
-        scratch,
-        owner.tokens,
-        owner.terms,
-        names,
-    )
-    .map(Some)
+    document::term_membership(scratch, owner.tokens, owner.terms, names).map(Some)
 }
 
 fn scan_owner_frontier<S: PageStore>(
@@ -491,7 +485,8 @@ fn scan_owner_frontier<S: PageStore>(
                         &mut scratch,
                         scratch_limit,
                         max_blocks,
-                    )? else {
+                    )?
+                    else {
                         return Ok(None);
                     };
                     membership

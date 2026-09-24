@@ -291,3 +291,13 @@ See [snapshot frontier anchors](issue-14-anchors.md) for the persistence protoco
 measured-versus-hypothesized cost, explicit small-history regressions, native
 qualification matrix, isolated-build runner and unresolved gates. Enabling a
 scan setting without publishing anchors does not exercise the new storage.
+
+## Follow-up: one-pass dense owner frontier
+
+PR #21 adds a separate default-off read experiment for large multi-term deltas.
+It evaluates each post-snapshot canonical owner payload once and falls back to
+the term-addressed frontier before emission when the operation budget is
+insufficient. It introduces no new write representation or WAL format. See
+[one-pass dense owner frontier](issue-14-owner-frontier.md) for activation,
+correctness boundaries, native qualification, matched commands, and unmeasured
+remaining gates.

@@ -24,6 +24,7 @@ import time
 from g9_profile import CASES, INDEX, MODES, SETTINGS, literal
 from g6_latency import summarize
 import frontier_options
+import owner_frontier_options
 
 TABLE = 'public.pin_g6_bench'
 WRITE_TABLES = {'pin': 'public.pin_frontier_write_pin', 'gin': 'public.pin_frontier_write_gin'}
@@ -60,18 +61,24 @@ def predicate(case: str, mode: str) -> str:
     return f'body OPERATOR(pin.@@@) pin.parse_query({literal(pin)})'
 
 
-def connection(mode: str = 'pin_grouped_enabled', *, anchors: bool = False):
+def connection(mode: str = 'pin_grouped_enabled', *, anchors: bool = False,
+               owner_frontier: bool = False):
     import psycopg2
     conn = psycopg2.connect(application_name='pin_frontier_qualification', connect_timeout=10)
     conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            for name, value in frontier_options.options(SETTINGS, anchors).items():
+            options = frontier_options.options(SETTINGS, anchors)
+            options = owner_frontier_options.options(options, owner_frontier)
+            for name, value in options.items():
                 cur.execute(f'SET {name} = {literal(value)}')
             cur.execute('SET pin.enable_grouped_scan = ' + ('off' if mode in ('pin_legacy', 'gin') else 'on'))
             cur.execute(frontier_options.SETTING_SQL)
             row = cur.fetchone()
             frontier_options.require_setting(row[0] if row else None, anchors)
+            cur.execute(owner_frontier_options.SETTING_SQL)
+            row = cur.fetchone()
+            owner_frontier_options.require_setting(row[0] if row else None, owner_frontier)
         return conn
     except BaseException:
         conn.close()
@@ -170,19 +177,24 @@ def retrieve(conn, case: str, mode: str) -> dict:
 
 
 def child(output: Path, name: str, command: list[str], timeout: float = 3600,
-          *, anchors: bool = False) -> None:
-    command = [*command, *(['--frontier-anchors'] if anchors else [])]
+          *, anchors: bool = False, owner_frontier: bool = False) -> None:
+    command = [*command, *(['--frontier-anchors'] if anchors else []),
+               *(['--owner-frontier'] if owner_frontier else [])]
     save(output / (name + '-command.json'), command)
     with (output / (name + '-runner.log')).open('x') as log:
         settings = frontier_options.options(SETTINGS, anchors)
-        env = dict(os.environ, PGOPTIONS=' '.join(f'-c {key}={value}' for key, value in settings.items()))
+        settings = owner_frontier_options.options(settings, owner_frontier)
+        pgoptions = ' '.join(f'-c {key}={value}' for key, value in settings.items())
+        env = dict(os.environ, PGOPTIONS=pgoptions)
         subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=timeout, env=env)
 
 
 def read_stage(args, name: str) -> None:
     output = args.output / name
     output.mkdir()
-    with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
+    with closing(
+        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+    ) as conn, conn.cursor() as cur:
         verify(cur, args.cases)
         cur.execute('SELECT count(*), sum(octet_length(body)) FROM ' + TABLE)
         save(output / 'identity.json', {'symmetric_difference': 0, 'fixture': cur.fetchone(),
@@ -198,14 +210,14 @@ def read_stage(args, name: str) -> None:
                             '--bindir', str(args.bindir), '--output', str(output / 'paired'),
                             '--samples', '6', '--queries', str(args.queries),
                             '--cases', *args.cases, '--backend-proc', '/proc'],
-          anchors=args.frontier_anchors)
+          anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
     cpu_cases = args.cases
     if cpu_cases:
         child(output, 'cpu', [sys.executable, str(tools / 'g9_cpu_profile.py'),
                              '--output', str(output / 'cpu'), '--samples', str(args.samples),
                              '--seconds', str(args.seconds), '--cases', *cpu_cases,
                              '--profile-seconds', str(args.profile_seconds), '--profile-cases', *cpu_cases],
-              anchors=args.frontier_anchors)
+              anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
     throughput(args, output)
 
 
@@ -216,6 +228,7 @@ def throughput(args, output: Path) -> None:
     for sample in range(args.samples):
         for mode in MODES if sample % 2 == 0 else reversed(MODES):
             options = frontier_options.options(SETTINGS, args.frontier_anchors)
+            options = owner_frontier_options.options(options, args.owner_frontier)
             options['pin.enable_grouped_scan'] = 'on' if mode == MODES[0] else 'off'
             env = dict(os.environ, PGOPTIONS=' '.join(f'-c {key}={value}' for key, value in options.items()))
             for case in args.cases:
@@ -284,7 +297,9 @@ def concurrent(args) -> None:
 
     def writer() -> None:
         try:
-            with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
+            with closing(
+        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+    ) as conn, conn.cursor() as cur:
                 index = 0
                 while not stop.is_set():
                     body = ('alpha beta rareplanet' if args.concurrent_related
@@ -302,7 +317,9 @@ def concurrent(args) -> None:
 
     thread = threading.Thread(target=writer, daemon=True)
     results = []
-    with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
+    with closing(
+        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+    ) as conn, conn.cursor() as cur:
         cur.execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY')
         verify(cur, args.cases)
         thread.start()
@@ -339,6 +356,7 @@ def main() -> None:
     parser.add_argument('--revision', required=True)
     parser.add_argument('--disposable', action='store_true', required=True)
     parser.add_argument('--frontier-anchors', action='store_true')
+    parser.add_argument('--owner-frontier', action='store_true')
     parser.add_argument('--rows', type=int, default=20000)
     parser.add_argument('--deltas', type=int, nargs='+', default=[0, 1, 1000, 10000])
     parser.add_argument('--related-rows', type=int, default=2048)
@@ -370,10 +388,13 @@ def main() -> None:
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=False)
     try:
-        with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
+        with closing(
+        connection(anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
+    ) as conn, conn.cursor() as cur:
             cur.execute("SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
                         "('server_version_num','block_size','fsync','full_page_writes','synchronous_commit',"
-                        "'shared_buffers','work_mem','maintenance_work_mem','autovacuum','pin.enable_frontier_anchors')")
+                        "'shared_buffers','work_mem','maintenance_work_mem','autovacuum',"
+                        "'pin.enable_frontier_anchors','pin.enable_owner_frontier')")
             settings = cur.fetchone()[0]
             cur.execute('SELECT pin.build_revision(), current_setting(\'data_directory\'), pg_backend_pid()')
             revision, data, pid = cur.fetchone()

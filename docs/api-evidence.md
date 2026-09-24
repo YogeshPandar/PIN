@@ -984,3 +984,99 @@ standby and migration/downgrade testing, baseline-versus-head isolated builds,
 backend profile attribution, update/sustained-write/maintenance costs, and
 latency distributions. No new-head backend performance measurement, 10x result,
 or TIN comparison has been observed.
+
+## G9FRONTIER03: one-pass dense owner payload frontier
+
+Review date: 24 September 2026. Implementation:
+`mutable/grouped/frontier.rs`, `mutable/document.rs`, `mutable/page_grouped.rs`,
+`mutable/grouped/scan.rs`, the PostgreSQL grouped GUC/adapter, stage 41 test
+hooks, qualification drivers, and [one-pass dense owner frontier](issue-14-owner-frontier.md).
+This is a default-off read-path experiment. It changes no persistent page,
+manifest, migration, or WAL format.
+
+PostgreSQL authority is version 18:
+[index scan candidate and recheck behavior](https://www.postgresql.org/docs/18/index-scanning.html),
+[index AM bitmap callbacks](https://www.postgresql.org/docs/18/index-functions.html),
+[index locking and heap-slot reuse](https://www.postgresql.org/docs/18/index-locking.html),
+[bitmap heap execution](https://www.postgresql.org/docs/18/indexes-bitmap-scans.html),
+[VACUUM](https://www.postgresql.org/docs/18/sql-vacuum.html), and the pinned
+PostgreSQL 18.6 source commit `724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+[buffer access rules](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/README),
+[GIN bitmap scan reference](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/gin/ginget.c), and
+[bitmap heap executor](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeBitmapHeapscan.c).
+The AM returns candidate TIDs, not snapshot-visible rows. Exact index predicate
+membership can clear that predicate's recheck bit, but it cannot certify heap
+visibility, HOT identity, other keys, executor quals, RLS, or an index-only
+count. This implementation preserves the existing PostgreSQL bitmap heap path.
+
+pgrx authority is 0.19.2 at commit
+`70383e884582d1bcc7cd681d10886b995a2830cb`:
+[GUC implementation](https://docs.rs/pgrx/0.19.2/src/pgrx/guc.rs.html) and
+[GUC source](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx/src/guc.rs).
+A static `GucSetting<bool>` is registered as SUSET with boot value false. The
+value is sampled through the operation's `PageStore`; no PostgreSQL pointer or
+setting reference enters `pin-core`.
+
+Rust authority is the official Rust 1.98.1 documentation for
+[`Vec::try_reserve_exact`](https://doc.rust-lang.org/1.98.1/std/vec/struct.Vec.html#method.try_reserve_exact),
+[`Vec::capacity`](https://doc.rust-lang.org/1.98.1/std/vec/struct.Vec.html#method.capacity),
+[`usize::checked_mul`](https://doc.rust-lang.org/1.98.1/std/primitive.usize.html#method.checked_mul),
+and [slice indexing](https://doc.rust-lang.org/1.98.1/std/primitive.slice.html).
+`try_reserve_exact` is fallible and may receive more allocator capacity than
+requested. The implementation checks actual capacity against the operation
+budget. Checked conversion, addition, multiplication, subtraction, and slice
+bounds protect the output and fragmented-payload buffers. No unsafe Rust or
+layout-dependent serialization is added. `pin-kernels` remains allocation-free
+`no_std`; this bounded path is in `pin-core`.
+
+Local proof obligations:
+
+1. The complete grouped snapshot's owner fence precedes every eligible frontier
+   owner. The scan starts at the next owner slot and requires strictly increasing
+   owner coordinates and incarnations.
+2. Eligibility is default off, requires at least 512 reserved incarnations, and
+   requires either an owner-universe query or two changed query terms. Captured
+   posting tails are validated before this decision.
+3. Only published and live owners contribute membership. The full owner
+   incarnation and original root TID remain the identity. TID alone never joins
+   terms from different heap-slot incarnations.
+4. Prepared-document membership checks profile ID, owner token/term metadata,
+   envelope lengths, UTF-8, strict term ordering, positive position counts,
+   total token counts, and complete payload consumption. Boolean membership
+   deliberately does not decode positional deltas. Position-dependent query
+   shapes retain the established fallback.
+5. Fragment chains must retain one owner reference, contiguous offsets, exact
+   total bytes, bounded block traversal, and complete termination. Scratch is
+   reused and cannot exceed the remaining memory budget.
+6. All matching root TIDs are buffered before the first emit. Insufficient
+   capacity returns `None` and selects the canonical term-addressed frontier.
+   No fallback follows partial owner-frontier output.
+7. The existing shared structural barrier and host buffer-copy contract protect
+   every page read. The implementation adds no borrowed PostgreSQL page lifetime,
+   WAL transition, maintenance publication, or reclamation rule.
+8. Cancellation and corruption fail through the existing host guard. Stage 41
+   exists only under the privileged test-hook contract and normal stores ignore
+   it. PostgreSQL discards partial bitmap state on the error path.
+
+Qualification: pure-engine tests cover exact identities across a 1,024-owner
+related delta, two-tail activation, unrelated-delta avoidance, and fail-before-
+emit memory fallback. The native qualification constructs another 1,024-owner
+related delta, checks a sequential heap oracle for AND/OR/NOT, performs HOT-
+eligible and indexed updates, DELETE and VACUUM, pauses stage 41 while a writer
+commits, verifies statement-snapshot identities, performs immediate restart,
+and reruns the oracle. Existing grouped suites retain exact heap-slot reuse,
+maintenance error boundaries, WAL replay, cancellation, and concurrent VACUUM.
+
+Local development evidence for the documentation/tooling follow-up is 123
+Python tests, Python compilation, shell parsing, source contracts, and diff
+whitespace checks. The local container has no Rust/PostgreSQL 18 qualification
+toolchain. These checks do not establish Rust compilation, native SQL success,
+recovery success, or performance. Final-head CI and live benchmark artifacts
+must be evaluated separately. No owner-frontier speedup, GIN multiple, write/WAL
+result, production-readiness result, or TIN comparison has been observed.
+
+Reviewer: implementation self-review only. Remaining gates are independent
+identity/visibility review, exact-head Rust and PostgreSQL matrices, paired
+activation-off/on profiles, all query-class regressions, sustained writes,
+fragment-heavy documents, allocation/RSS evidence, write CPU, maintenance CPU,
+WAL bytes, cold I/O, and direct TIN measurements before any parity statement.

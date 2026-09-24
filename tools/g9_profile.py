@@ -38,9 +38,10 @@ TABLE = 'ONLY public.pin_g6_bench'
 INDEX = {'pin_grouped_enabled': 'pin_g6_bench_body',
          'pin_legacy': 'pin_g6_bench_body', 'gin': 'pin_g6_bench_body_gin'}
 if __package__:
-    from . import frontier_options
+    from . import frontier_options, owner_frontier_options
 else:
     import frontier_options
+    import owner_frontier_options
 
 SETTINGS = {
     'enable_seqscan': 'off', 'enable_bitmapscan': 'on',
@@ -63,11 +64,12 @@ class Session:
     """One bounded, fail-closed psql pipe; no connection startup in samples."""
 
     def __init__(self, psql: Path, log: Path, mode: str, timeout: float = 125,
-                 *, frontier_anchors: bool = False):
+                 *, frontier_anchors: bool = False, owner_frontier: bool = False):
         self.timeout = timeout
         self.pending = bytearray()
         self.log = log.open('xb')
         options = frontier_options.options(SETTINGS, frontier_anchors)
+        options = owner_frontier_options.options(options, owner_frontier)
         options['pin.enable_grouped_scan'] = 'on' if mode == MODES[0] else 'off'
         if mode == 'oracle':
             options.update(enable_seqscan='on', enable_bitmapscan='off')
@@ -283,7 +285,9 @@ def measure(args: argparse.Namespace) -> None:
     results = []
     with ExitStack() as stack:
         sessions = {mode: stack.enter_context(Session(
-                        psql, args.output / f'{mode}.stderr', mode, frontier_anchors=args.frontier_anchors))
+                        psql, args.output / f'{mode}.stderr', mode,
+                        frontier_anchors=args.frontier_anchors,
+                        owner_frontier=args.owner_frontier))
                     for mode in ('oracle', *MODES)}
         oracle = sessions['oracle']
         oracle.execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;')
@@ -297,6 +301,9 @@ def measure(args: argparse.Namespace) -> None:
         anchors = {mode: frontier_options.require_setting(
                        session.execute(frontier_options.PSQL_SETTING_SQL), args.frontier_anchors)
                    for mode, session in sessions.items()}
+        owners = {mode: owner_frontier_options.require_setting(
+                      session.execute(owner_frontier_options.PSQL_SETTING_SQL), args.owner_frontier)
+                  for mode, session in sessions.items()}
         environment = json.loads(oracle.execute(
             "SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
             "('server_version','server_version_num','shared_buffers','work_mem',"
@@ -311,6 +318,7 @@ def measure(args: argparse.Namespace) -> None:
         save(args.output / 'environment.json', {
             'server_settings': environment, 'session_options': settings, 'backend_pids': pids,
             'registered_frontier_anchors': anchors,
+            'registered_owner_frontier': owners,
             'server_build_revision': oracle.execute('SELECT pin.build_revision();'),
             'client_platform': platform.platform(), 'client_cpu_count': os.cpu_count(),
             'same_host_proc_asserted': str(args.backend_proc) if args.backend_proc else None,
@@ -381,6 +389,7 @@ def main() -> None:
     parser.add_argument('--bindir', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--frontier-anchors', action='store_true')
+    parser.add_argument('--owner-frontier', action='store_true')
     parser.add_argument('--samples', type=int, default=6)
     parser.add_argument('--queries', type=int, default=100)
     parser.add_argument('--warmup', type=int, default=5)

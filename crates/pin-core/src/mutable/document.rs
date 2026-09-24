@@ -246,9 +246,7 @@ pub(crate) fn term_membership(
         if count == 0 || count > tokens || count as usize > encoded.remaining() {
             return Err(Error::InvalidDocument);
         }
-        positions = positions
-            .checked_add(count)
-            .ok_or(Error::InvalidDocument)?;
+        positions = positions.checked_add(count).ok_or(Error::InvalidDocument)?;
 
         while query < ordered {
             let index = usize::from(order[query]);
