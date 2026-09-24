@@ -379,9 +379,10 @@ fn fragment_membership<S: PageStore>(
     }
     scratch.clear();
     if scratch.capacity() < total {
-        scratch
-            .try_reserve_exact(total)
-            .map_err(|_| Error::Allocation)?;
+        if scratch.try_reserve_exact(total).is_err() {
+            scratch.clear();
+            return Ok(None);
+        }
         if scratch.capacity() > scratch_limit {
             scratch.clear();
             return Ok(None);
@@ -440,9 +441,9 @@ fn scan_owner_frontier<S: PageStore>(
         return Ok(None);
     }
     let mut output = Vec::new();
-    output
-        .try_reserve_exact(roots)
-        .map_err(|_| Error::Allocation)?;
+    if output.try_reserve_exact(roots).is_err() {
+        return Ok(None);
+    }
     let retained = output
         .capacity()
         .checked_mul(core::mem::size_of::<RootTid>())
