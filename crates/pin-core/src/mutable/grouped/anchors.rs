@@ -30,11 +30,7 @@ fn valid_term(key: u64) -> bool {
 
 impl Anchor {
     pub fn new(head: u32, tail: u32, last: u64) -> Result<Self> {
-        if last == 0
-            || head == 0
-            || tail == 0
-            || (head == NO_BLOCK) != (tail == NO_BLOCK)
-        {
+        if last == 0 || head == 0 || tail == 0 || (head == NO_BLOCK) != (tail == NO_BLOCK) {
             return Err(Error::InvalidState);
         }
         Ok(Self { head, tail, last })
@@ -66,7 +62,11 @@ impl Anchor {
         let chain = u64::from_be_bytes(words[2]);
         Ok(Some((
             term,
-            Self::new((chain >> 32) as u32, chain as u32, u64::from_be_bytes(words[3]))?,
+            Self::new(
+                (chain >> 32) as u32,
+                chain as u32,
+                u64::from_be_bytes(words[3]),
+            )?,
         )))
     }
 
@@ -124,7 +124,7 @@ pub(super) fn lookup<S: PageStore>(
 }
 
 // the host holds the exclusive structural barrier, then the writer interlock.
-// WAL must publish this bit before any source page can be replaced or recycled.
+// wal must publish this bit before any source page can be replaced or recycled.
 pub(crate) fn invalidate<S: PageStore>(store: &mut S, meta: &mut Page) -> Result<()> {
     let mut state = meta.grouped_state()?;
     if let Some(mut active) = state.active
@@ -146,8 +146,14 @@ mod tests {
     #[test]
     fn anchor_records_round_trip_and_reject_corruption() {
         let term = (1 << 16) | 16;
-        for anchor in [Anchor::new(7, 3, 99).unwrap(), Anchor::new(NO_BLOCK, NO_BLOCK, 1).unwrap()] {
-            assert_eq!(Anchor::from_sort(anchor.sort_record(term)).unwrap(), Some((term, anchor)));
+        for anchor in [
+            Anchor::new(7, 3, 99).unwrap(),
+            Anchor::new(NO_BLOCK, NO_BLOCK, 1).unwrap(),
+        ] {
+            assert_eq!(
+                Anchor::from_sort(anchor.sort_record(term)).unwrap(),
+                Some((term, anchor))
+            );
             assert_eq!(Anchor::read(anchor.entry(term)).unwrap(), anchor);
             for index in [0, 20, 63] {
                 let mut bad = anchor.entry(term);

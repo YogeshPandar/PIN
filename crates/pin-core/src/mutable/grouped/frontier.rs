@@ -2,15 +2,15 @@
 //! exact boolean membership never substitutes for host snapshot visibility.
 
 use super::{NODES, Program};
-use crate::mutable::grouped::anchors;
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::Node;
 use crate::identity::RootTid;
+use crate::mutable::grouped::anchors;
 use crate::mutable::page::{
     GroupSnapshot, NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef,
 };
-use crate::mutable::{PageStore, following, load, load_posting, posting_next, reader::resolve};
+use crate::mutable::{PageStore, Stage, following, load, load_posting, posting_next, reader::resolve};
 
 #[derive(Clone, Copy)]
 pub(super) struct CapturedTerm {
@@ -120,6 +120,7 @@ impl Cursor {
                 return Err(Error::InvalidState);
             }
             self.block = term.head;
+            store.event(Stage::FrontierSeek)?;
             return self.advance(store);
         }
         if anchor.head != term.head || anchor.last <= term.first.incarnation.get() {
@@ -140,6 +141,7 @@ impl Cursor {
         }
         self.block = anchor.tail;
         self.page = Some(page);
+        store.event(Stage::FrontierSeek)?;
         self.advance(store)
     }
 

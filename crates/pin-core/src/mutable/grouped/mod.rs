@@ -8,7 +8,8 @@ mod storage;
 mod vacuum;
 
 pub use build::{
-    BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, build_memory_with_anchors, needs_rebuild, rebuild,
+    BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, build_memory_with_anchors,
+    needs_rebuild, rebuild,
 };
 pub use scan::scan_query;
 

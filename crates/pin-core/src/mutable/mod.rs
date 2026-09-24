@@ -56,6 +56,7 @@ pub enum Stage {
     GroupScan = 37,
     GroupSortReady = 38,
     FrontierInvalidated = 39,
+    FrontierSeek = 40,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.

@@ -382,7 +382,11 @@ pub fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
     let Some(journal) = meta.rewrite_journal()? else {
         return Ok(0);
     };
-    if meta.grouped_state()?.active.is_some_and(|active| active.frontier_valid) {
+    if meta
+        .grouped_state()?
+        .active
+        .is_some_and(|active| active.frontier_valid)
+    {
         return Err(Error::InvalidState);
     }
     let first = super::load_any(store, journal.head)?;
