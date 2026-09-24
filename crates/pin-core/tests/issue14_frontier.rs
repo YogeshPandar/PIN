@@ -44,6 +44,7 @@ struct Store {
     postings: usize,
     polls: usize,
     cancel_at: Option<usize>,
+    append_on_owner_frontier: Option<(u32, &'static str)>,
 }
 
 impl PageStore for Store {
@@ -84,8 +85,21 @@ impl PageStore for Store {
         }
     }
     fn event(&mut self, stage: Stage) -> Result<()> {
+        if stage == Stage::OwnerFrontierScan
+            && let Some((index, text)) = self.append_on_owner_frontier.take()
+        {
+            insert(&mut self.inner, index, text);
+        }
         self.inner.event(stage)
     }
+}
+
+fn last_owner_block(store: &mut MemoryStore) -> u32 {
+    let blocks = store.blocks().unwrap();
+    (1..blocks)
+        .rev()
+        .find(|&block| store.read(block).unwrap().kind() == PageKind::Owners)
+        .unwrap()
 }
 
 fn tid(index: u32) -> RootTid {
@@ -171,6 +185,37 @@ fn dense_multi_term_delta_uses_one_owner_frontier_pass() {
     assert!(store.inner.events.contains(&Stage::OwnerFrontierScan));
     assert!(store.owners > 0);
     assert_eq!(store.postings, 2);
+}
+
+#[test]
+fn owner_frontier_stops_at_the_captured_allocation_fence() {
+    let mut store = Store {
+        owner_frontier: true,
+        ..Store::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    let mut documents = Vec::new();
+    for index in 0..128 {
+        insert(&mut store, index, "a b");
+        documents.push((index, "a b"));
+    }
+    snapshot(&mut store);
+    for index in 128..640 {
+        insert(&mut store, index, "a b");
+        documents.push((index, "a b"));
+    }
+
+    let tail = last_owner_block(&mut store.inner);
+    let mut probe = store.inner.clone();
+    insert(&mut probe, 640, "a b");
+    assert_eq!(last_owner_block(&mut probe), tail);
+
+    store.append_on_owner_frontier = Some((640, "a b"));
+    exact(&mut store, "a AND b", &documents);
+    assert!(store.append_on_owner_frontier.is_none());
+
+    documents.push((640, "a b"));
+    exact(&mut store, "a AND b", &documents);
 }
 
 #[test]
