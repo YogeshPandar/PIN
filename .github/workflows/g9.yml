@@ -6,6 +6,7 @@ on:
       - 'crates/**'
       - '.github/workflows/g9.yml'
       - 'tests/sql/g9_*'
+      - 'tests/sql/issue14_recheck.sql'
       - 'tools/g9_*'
       - 'tests/test_g9_*'
       - 'tests/support/g9_*'
