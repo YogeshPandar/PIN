@@ -2,6 +2,7 @@
 //! exact boolean membership never substitutes for host snapshot visibility.
 
 use super::{NODES, Program};
+use crate::mutable::grouped::anchors;
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::Node;
@@ -32,6 +33,7 @@ impl CapturedTerm {
 
 struct Cursor {
     term: Option<CapturedTerm>,
+    snapshot: GroupSnapshot,
     opened: bool,
     current: Option<OwnerRef>,
     block: u32,
@@ -50,9 +52,10 @@ fn ordered(previous: OwnerRef, next: OwnerRef) -> Result<()> {
 }
 
 impl Cursor {
-    fn new(term: Option<CapturedTerm>) -> Self {
+    fn new(term: Option<CapturedTerm>, snapshot: GroupSnapshot) -> Self {
         Self {
             term,
+            snapshot,
             opened: false,
             current: None,
             block: NO_BLOCK,
@@ -99,8 +102,44 @@ impl Cursor {
                 return self.advance(store);
             }
         }
-        // a suffix spanning pages has no persisted seek anchor; retain the full walk.
+        if store.frontier_anchors()
+            && self.snapshot.frontier_valid
+            && term.first.incarnation.get() < self.snapshot.id.get()
+        {
+            return self.open_anchor(store, term);
+        }
+        // legacy and invalidated snapshots retain the complete canonical walk.
         self.block = term.head;
+        self.advance(store)
+    }
+
+    fn open_anchor<S: PageStore>(&mut self, store: &mut S, term: CapturedTerm) -> Result<()> {
+        let anchor = anchors::lookup(store, self.snapshot, term.reference)?;
+        if anchor.head == NO_BLOCK {
+            if anchor.last != term.first.incarnation.get() {
+                return Err(Error::InvalidState);
+            }
+            self.block = term.head;
+            return self.advance(store);
+        }
+        if anchor.head != term.head || anchor.last <= term.first.incarnation.get() {
+            return Err(Error::InvalidState);
+        }
+        let mut page = OwnedPostings::new(load_posting(store, anchor.tail, term.reference)?)?;
+        // decode at most the captured boundary page, never its historical prefix.
+        loop {
+            let owner = page.next().ok_or(Error::InvalidState)??;
+            ordered(self.previous.ok_or(Error::InvalidState)?, owner)?;
+            self.previous = Some(owner);
+            if owner.incarnation.get() > anchor.last {
+                return Err(Error::InvalidState);
+            }
+            if owner.incarnation.get() == anchor.last {
+                break;
+            }
+        }
+        self.block = anchor.tail;
+        self.page = Some(page);
         self.advance(store)
     }
 
@@ -282,7 +321,7 @@ pub(super) fn scan<S: PageStore>(
         .try_reserve_exact(captured.len())
         .map_err(|_| Error::Allocation)?;
     for &term in captured {
-        cursors.push(Cursor::new(term));
+        cursors.push(Cursor::new(term, snapshot));
     }
     let mut owners = Owners::new(meta, snapshot)?;
     let mut cache = None;

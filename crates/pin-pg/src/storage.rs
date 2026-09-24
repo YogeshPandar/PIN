@@ -123,6 +123,10 @@ pub(crate) unsafe fn with_maintenance<T>(
 }
 
 impl PageStore for PgStore<'_> {
+    fn frontier_anchors(&self) -> bool {
+        crate::grouped::frontier_anchors_enabled()
+    }
+
     fn layout(&self) -> HeapLayout {
         self.layout
     }

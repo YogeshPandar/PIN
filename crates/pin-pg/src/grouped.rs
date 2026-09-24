@@ -13,12 +13,21 @@ use std::ptr::NonNull;
 
 static ENABLE_STORAGE: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_SCAN: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_FRONTIER_ANCHORS: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 const _: () = assert!(core::mem::size_of::<SortRecord>() == 32);
 const _: () = assert!(core::mem::align_of::<SortRecord>() == 1);
 const _: () = assert!(SORT_BATCH == 256);
 
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_frontier_anchors",
+        c"Build and use experimental snapshot posting-chain seek anchors.",
+        c"Requires grouped storage/scan. Off uses the historical frontier; binary downgrade requires rebuilding anchored indexes.",
+        &ENABLE_FRONTIER_ANCHORS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_grouped_storage",
         c"Build experimental generation-safe page groups during CREATE INDEX and VACUUM.",
@@ -35,6 +44,10 @@ pub(crate) fn initialize() {
         GucContext::Suset,
         GucFlags::default(),
     );
+}
+
+pub(crate) fn frontier_anchors_enabled() -> bool {
+    ENABLE_FRONTIER_ANCHORS.get()
 }
 
 pub(crate) fn storage_enabled() -> bool {
@@ -103,7 +116,11 @@ pub(crate) fn rebuild<S: PageStore>(store: &mut S) -> Result<BuildStats> {
     if !storage_enabled() || !grouped::needs_rebuild(store)? {
         return Ok(BuildStats::default());
     }
-    let memory = grouped::build_memory(store.layout());
+    let memory = if store.frontier_anchors() {
+        grouped::build_memory_with_anchors(store.layout())
+    } else {
+        grouped::build_memory(store.layout())
+    };
     let Some(mut sort) = PgSort::begin(memory) else {
         pgrx::pg_sys::debug1!("Pin grouped snapshot skipped: maintenance memory is too small");
         return Ok(BuildStats::default());
@@ -113,12 +130,13 @@ pub(crate) fn rebuild<S: PageStore>(store: &mut S) -> Result<BuildStats> {
     let spilled = sort.close();
     let stats = result?;
     pgrx::pg_sys::debug1!(
-        "Pin grouped snapshot: documents={} groups={} written_pages={} reclaimed_pages={} sort_spilled={}",
+        "Pin grouped snapshot: documents={} groups={} written_pages={} reclaimed_pages={} sort_spilled={} frontier_terms={}",
         stats.documents,
         stats.groups,
         stats.written_pages,
         stats.reclaimed_pages,
         spilled,
+        stats.frontier_terms,
     );
     Ok(stats)
 }

@@ -23,6 +23,10 @@ pub struct GroupSnapshot {
     pub tail: u32,
     pub root: u32,
     pub after: Option<OwnerRef>,
+    /// a separate catalog in the same allocation journal; none is the v1 format.
+    pub frontier_root: Option<u32>,
+    /// cleared durably before any canonical posting-chain rewrite.
+    pub frontier_valid: bool,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -118,9 +122,15 @@ impl GroupState {
     fn validate(self) -> Result<()> {
         if let Some(active) = self.active
             && (!pair(active.head, active.tail)
-                || (active.head == NO_BLOCK) != (active.root == NO_BLOCK)
-                || active.root != active.tail
+                || (active.head == NO_BLOCK)
+                    != (active.root == NO_BLOCK
+                        && active.frontier_root.unwrap_or(NO_BLOCK) == NO_BLOCK)
+                || (active.frontier_root.is_none() && active.root != active.tail)
                 || (active.root != NO_BLOCK && !super::block_valid(active.root))
+                || active.frontier_root.is_some_and(|root| {
+                    root != NO_BLOCK && (!super::block_valid(root) || root == active.root)
+                })
+                || (active.frontier_valid && active.frontier_root.is_none())
                 || active
                     .after
                     .is_some_and(|owner| owner.incarnation.get() >= active.id.get()))
@@ -170,16 +180,23 @@ impl Page {
             return Err(Error::InvalidState);
         }
         let mut reader = Reader::new(&self.bytes[META_LEGACY_BYTES..self.len]);
-        if reader.take(4)? != b"PG09" || reader.u16()? != 1 || reader.u16()? != 0 {
+        if reader.take(4)? != b"PG09" {
+            return Err(Error::InvalidState);
+        }
+        let version = reader.u16()?;
+        let flags = reader.u16()?;
+        if !matches!((version, flags), (1, 0) | (2, 0..=1)) {
             return Err(Error::InvalidState);
         }
         let id = reader.u64()?;
         let head = reader.u32()?;
         let tail = reader.u32()?;
         let root = reader.u32()?;
-        if reader.u32()? != 0 {
+        let frontier = reader.u32()?;
+        if version == 1 && frontier != 0 {
             return Err(Error::InvalidState);
         }
+        let frontier_root = (version == 2).then_some(frontier);
         let owner = reader.take(16)?;
         let after = if owner == [0; 16] {
             None
@@ -187,7 +204,12 @@ impl Page {
             Some(OwnerRef::read(&mut Reader::new(owner))?)
         };
         let active = if id == 0 {
-            if head != NO_BLOCK || tail != NO_BLOCK || root != NO_BLOCK || after.is_some() {
+            if head != NO_BLOCK
+                || tail != NO_BLOCK
+                || root != NO_BLOCK
+                || after.is_some()
+                || version != 1
+            {
                 return Err(Error::InvalidState);
             }
             None
@@ -198,6 +220,8 @@ impl Page {
                 tail,
                 root,
                 after,
+                frontier_root,
+                frontier_valid: flags == 1,
             })
         };
         let id = reader.u64()?;
@@ -252,14 +276,15 @@ impl Page {
         }
         let mut bytes = [0u8; 72];
         let mut writer = Writer::new(&mut bytes);
+        let frontier = state.active.and_then(|active| active.frontier_root);
         writer.put(b"PG09")?;
-        writer.u16(1)?;
-        writer.u16(0)?;
+        writer.u16(if frontier.is_some() { 2 } else { 1 })?;
+        writer.u16(u16::from(state.active.is_some_and(|active| active.frontier_valid)))?;
         writer.u64(state.active.map_or(0, |active| active.id.get()))?;
         writer.u32(state.active.map_or(NO_BLOCK, |active| active.head))?;
         writer.u32(state.active.map_or(NO_BLOCK, |active| active.tail))?;
         writer.u32(state.active.map_or(NO_BLOCK, |active| active.root))?;
-        writer.u32(0)?;
+        writer.u32(frontier.unwrap_or(0))?;
         if let Some(owner) = state.active.and_then(|active| active.after) {
             owner.write(&mut writer)?;
         } else {

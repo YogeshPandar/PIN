@@ -3,7 +3,8 @@
 
 use super::super::page::{BUCKETS, GroupPageKind, NO_BLOCK, OwnerRef, PageKind, TermRef};
 use super::super::{PageStore, following, load, load_posting, posting_next};
-use super::storage::{self, BITMAP_BYTES, CatalogBuilder, MEMBER_BYTES, Value};
+use super::anchors::Anchor;
+use super::storage::{self, BITMAP_BYTES, CATALOG_MEMORY, CatalogBuilder, MEMBER_BYTES, Value};
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::{
@@ -63,6 +64,7 @@ pub trait GroupSort {
 pub struct BuildStats {
     pub documents: u64,
     pub postings: u64,
+    pub frontier_terms: u64,
     pub groups: u32,
     pub term_groups: u64,
     pub reclaimed_pages: u32,
@@ -160,12 +162,17 @@ fn capture<S: PageStore, T: GroupSort>(
                 }
                 let mut previous = entry.first;
                 if entry.head == NO_BLOCK {
+                    if store.frontier_anchors() {
+                        batch.push(sort, Anchor::new(entry.head, entry.tail, previous.incarnation.get())?.sort_record(key))?;
+                        stats.frontier_terms = stats.frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
+                    }
                     continue;
                 }
                 let mut block = entry.head;
                 let mut remaining = store.blocks()?;
                 loop {
                     let page = load_posting(store, block, entry.reference)?;
+                    let before = previous;
                     for owner in page.posting_refs()? {
                         let owner = owner?;
                         if (owner.page, owner.slot) <= (previous.page, previous.slot)
@@ -180,10 +187,17 @@ fn capture<S: PageStore, T: GroupSort>(
                             stats.postings += 1;
                         }
                     }
+                    if store.frontier_anchors() && block == entry.tail && previous == before {
+                        return Err(Error::InvalidState);
+                    }
                     match posting_next(&page, entry.tail, &mut remaining)? {
                         Some(next) => block = next,
                         None => break,
                     }
+                }
+                if store.frontier_anchors() {
+                    batch.push(sort, Anchor::new(entry.head, entry.tail, previous.incarnation.get())?.sort_record(key))?;
+                    stats.frontier_terms = stats.frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
                 }
             }
             match following(&dictionary, tail)? {
@@ -215,8 +229,13 @@ pub fn build_memory(layout: HeapLayout) -> usize {
     MEMBER_BYTES
         + limit * core::mem::size_of::<Member>()
         + 256 * core::mem::size_of::<PageOffsets>()
-        + 8 * 101 * 80
+        + CATALOG_MEMORY
         + 128 * 1024
+}
+
+/// reserves one additional bounded catalog for opt-in frontier anchors.
+pub fn build_memory_with_anchors(layout: HeapLayout) -> usize {
+    build_memory(layout) + CATALOG_MEMORY
 }
 
 /// tests the append-only owner cutoff while holding both maintenance barriers.
@@ -253,7 +272,7 @@ pub fn needs_rebuild<S: PageStore>(store: &mut S) -> Result<bool> {
     {
         return Err(Error::InvalidState);
     }
-    Ok(snapshot.after != after)
+    Ok(snapshot.after != after || (store.frontier_anchors() && !snapshot.frontier_valid))
 }
 
 /// builds a complete supplemental snapshot under exclusive reader and writer barriers.
@@ -270,7 +289,11 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
     memory_bytes: usize,
 ) -> Result<BuildStats> {
     let limit = 256 * usize::from(store.layout().max_offset());
-    let required = build_memory(store.layout());
+    let required = if store.frontier_anchors() {
+        build_memory_with_anchors(store.layout())
+    } else {
+        build_memory(store.layout())
+    };
     if memory_bytes < required {
         return Err(Error::Limit("group build scratch"));
     }
@@ -284,6 +307,11 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
     let before = store.blocks()?;
     let mut snapshot = storage::begin(store, after)?;
     let mut catalog = CatalogBuilder::new()?;
+    let mut anchors = if store.frontier_anchors() {
+        Some(CatalogBuilder::new()?)
+    } else {
+        None
+    };
     let mut bytes = buffer(MEMBER_BYTES, 0u8)?;
     let mut members = Vec::new();
     members
@@ -298,6 +326,8 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
     let mut previous = None;
     let mut previous_root = None;
     let mut seen = 0u64;
+    let mut frontier_terms = 0u64;
+    let mut frontier_term = None;
     loop {
         let count = sort.read(&mut rows)?;
         if count > rows.len() {
@@ -312,8 +342,19 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
                 return Err(Error::InvalidState);
             }
             previous = Some(row);
+            if let Some((term, anchor)) = Anchor::from_sort(row)? {
+                if anchor.last >= snapshot.id.get() {
+                    return Err(Error::InvalidState);
+                }
+                anchors.as_mut().ok_or(Error::InvalidState)?.push(store, &mut snapshot, anchor.entry(term))?;
+                frontier_term = Some(term);
+                frontier_terms = frontier_terms.checked_add(1).ok_or(Error::Limit("frontier terms"))?;
+                continue;
+            }
             let (term, member) = row.fields(store.layout())?;
-            if member.incarnation.get() >= snapshot.id.get() {
+            if (anchors.is_some() && term != 0 && frontier_term != Some(term))
+                || member.incarnation.get() >= snapshot.id.get()
+            {
                 return Err(Error::InvalidState);
             }
             let key = [term, u64::from(member.root.block() & !255)];
@@ -360,6 +401,9 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
                 .ok_or(Error::Limit("group sort records"))?;
         }
     }
+    if frontier_terms != stats.frontier_terms {
+        return Err(Error::InvalidState);
+    }
     if seen
         != stats
             .documents
@@ -381,6 +425,14 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
         )?;
     }
     catalog.finish(store, &mut snapshot)?;
+    if let Some(mut anchors) = anchors {
+        let root = snapshot.root;
+        snapshot.root = NO_BLOCK;
+        anchors.finish(store, &mut snapshot)?;
+        snapshot.frontier_root = Some(snapshot.root);
+        snapshot.frontier_valid = true;
+        snapshot.root = root;
+    }
     let (reclaimed, written) = storage::publish(store, snapshot)?;
     let extended = store
         .blocks()?
