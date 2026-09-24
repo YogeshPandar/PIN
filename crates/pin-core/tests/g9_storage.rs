@@ -163,7 +163,7 @@ fn new_writes_are_searchable_before_another_snapshot() {
     assert!(
         raw(&mut store, "newterm", 8 << 20)
             .unwrap()
-            .contains(&(root(1, 2), true))
+            .contains(&(root(1, 2), false))
     );
     build(&mut store).unwrap();
     assert_eq!(
@@ -474,7 +474,7 @@ fn grouped_scan_event_proves_selection_and_fallback_has_no_partial_output() {
     assert!(!store.events.contains(&Stage::GroupScan));
     build(&mut store).unwrap();
     for (query, budget, grouped) in [
-        ("a", 8 << 20, true),
+        ("a", 8 << 20, false),
         ("a AND NOT b", 8 << 20, true),
         ("a*", 8 << 20, false),
         ("\"a b\"", 8 << 20, false),
@@ -486,7 +486,7 @@ fn grouped_scan_event_proves_selection_and_fallback_has_no_partial_output() {
     }
     store.events.clear();
     store.fail_at = Some(0);
-    let query = Query::parse("a", QueryLimits::default()).unwrap();
+    let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
     let mut emitted = false;
     assert_eq!(
         grouped::scan_query(&mut store, &query, 8 << 20, |_, _| {
@@ -496,4 +496,227 @@ fn grouped_scan_event_proves_selection_and_fallback_has_no_partial_output() {
         Err(Error::InvalidState)
     );
     assert!(!emitted);
+}
+
+#[derive(Default)]
+struct Reads {
+    total: usize,
+    catalog: usize,
+    liveness: usize,
+    postings: usize,
+}
+
+struct Measured {
+    inner: MemoryStore,
+    reads: Reads,
+}
+
+impl PageStore for Measured {
+    fn layout(&self) -> HeapLayout {
+        self.inner.layout()
+    }
+    fn blocks(&mut self) -> Result<u32> {
+        self.inner.blocks()
+    }
+    fn read(&mut self, block: u32) -> Result<Page> {
+        let page = self.inner.read(block)?;
+        self.reads.total += 1;
+        if page.kind() == PageKind::Grouped {
+            match page.group_identity()?.1 {
+                GroupPageKind::Leaf | GroupPageKind::Branch => self.reads.catalog += 1,
+                GroupPageKind::Liveness => self.reads.liveness += 1,
+                GroupPageKind::Posting => self.reads.postings += 1,
+                _ => {}
+            }
+        }
+        Ok(page)
+    }
+    fn extend(&mut self) -> Result<u32> {
+        self.inner.extend()
+    }
+    fn commit(&mut self, pages: &[&Page]) -> Result<()> {
+        self.inner.commit(pages)
+    }
+    fn event(&mut self, stage: Stage) -> Result<()> {
+        self.inner.event(stage)
+    }
+}
+
+#[test]
+fn selective_and_seeks_past_common_groups_in_both_operand_orders() {
+    let mut inner = MemoryStore::default();
+    mutable::initialize(&mut inner).unwrap();
+    for group in 0..256 {
+        insert(
+            &mut inner,
+            root(group * 256, 1),
+            if group == 255 { "common rare" } else { "common" },
+        );
+    }
+    build(&mut inner).unwrap();
+    let mut store = Measured {
+        inner,
+        reads: Reads::default(),
+    };
+    for query in [
+        "common AND rare",
+        "rare AND common",
+        "(common OR absent) AND rare",
+        "rare AND (absent OR common)",
+        "common AND NOT absent AND rare",
+    ] {
+        store.reads = Reads::default();
+        assert_eq!(
+            raw(&mut store, query, 8 << 20).unwrap(),
+            vec![(root(255 * 256, 1), false)]
+        );
+        assert_eq!(store.reads.liveness, 1, "{query}");
+        assert_eq!(store.reads.postings, 2, "{query}");
+        assert!(
+            store.reads.catalog < 32,
+            "{query}: {} catalog reads",
+            store.reads.catalog
+        );
+    }
+}
+
+#[test]
+fn broad_scan_reuses_liveness_catalog_leaves() {
+    let mut inner = MemoryStore::default();
+    mutable::initialize(&mut inner).unwrap();
+    for group in 0..130 {
+        insert(&mut inner, root(group * 256, 1), "common");
+    }
+    build(&mut inner).unwrap();
+    let mut store = Measured {
+        inner,
+        reads: Reads::default(),
+    };
+    assert_eq!(
+        raw(&mut store, "common OR absent", 8 << 20).unwrap().len(),
+        130
+    );
+    assert_eq!(store.reads.liveness, 130);
+    assert_eq!(store.reads.postings, 130);
+    assert!(
+        store.reads.catalog < 32,
+        "{} catalog reads",
+        store.reads.catalog
+    );
+}
+
+#[test]
+fn sparse_path_uses_no_group_pages_or_extra_reads_and_covers_new_writes() {
+    let mut inner = MemoryStore::default();
+    mutable::initialize(&mut inner).unwrap();
+    for group in 0..20 {
+        insert(&mut inner, root(group * 256, 1), "rare");
+    }
+    build(&mut inner).unwrap();
+    insert(&mut inner, root(1, 1), "rare");
+    insert(&mut inner, root(2, 1), "unrelated");
+    let mut store = Measured {
+        inner,
+        reads: Reads::default(),
+    };
+    let grouped = raw(&mut store, "rare", 8 << 20).unwrap();
+    assert_eq!(grouped.len(), 21);
+    assert!(grouped.iter().all(|(_, recheck)| !recheck));
+    assert_eq!(
+        store.reads.catalog + store.reads.liveness + store.reads.postings,
+        0
+    );
+    let grouped_reads = store.reads.total;
+    store.reads = Reads::default();
+    let query = Query::parse("rare", QueryLimits::default()).unwrap();
+    let mut legacy = Vec::new();
+    mutable::scan_query_with_recheck(&mut store, &query, 8 << 20, |root, recheck| {
+        legacy.push((root, recheck));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(grouped, legacy);
+    assert_eq!(grouped_reads, store.reads.total);
+    assert!(raw(&mut store, "absent", 8 << 20).unwrap().is_empty());
+}
+
+#[test]
+fn sparse_policy_stops_at_its_explicit_posting_bound() {
+    let mut store = MemoryStore::default();
+    mutable::initialize(&mut store).unwrap();
+    for offset in 1..=65 {
+        insert(&mut store, root(0, offset), "term");
+    }
+    build(&mut store).unwrap();
+    store.events.clear();
+    assert_eq!(raw(&mut store, "term", 8 << 20).unwrap().len(), 65);
+    assert!(store.events.contains(&Stage::GroupScan));
+}
+
+#[test]
+fn boolean_group_bounds_preserve_holes_negation_and_last_heap_group() {
+    let mut store = MemoryStore::default();
+    mutable::initialize(&mut store).unwrap();
+    let mut docs = BTreeMap::new();
+    for group in 0..160 {
+        let text = match group % 4 {
+            0 => "a b",
+            1 => "b c",
+            2 => "a d",
+            _ => "c d",
+        };
+        let tid = root(group * 512, 1);
+        insert(&mut store, tid, text);
+        docs.insert(tid, text);
+    }
+    insert(&mut store, root(u32::MAX - 1, 1), "b d");
+    docs.insert(root(u32::MAX - 1, 1), "b d");
+    build(&mut store).unwrap();
+    for query in [
+        "(a OR b) AND (c OR d)",
+        "(c OR d) AND (a OR b)",
+        "(a AND c) OR (b AND d)",
+        "NOT (a OR d)",
+        "(a OR NOT b) AND (c OR NOT d)",
+        "NOT NOT b",
+        "NOT absent",
+        "a AND absent",
+        "absent OR NOT a",
+    ] {
+        check(&mut store, &docs, query);
+    }
+}
+
+#[test]
+fn sparse_policy_covers_mutable_sealed_direct_and_retired_postings() {
+    for (mode, kind) in [
+        (None, PageKind::Postings),
+        (Some(mutable::CompactMode::Copy), PageKind::SealedPostings),
+        (Some(mutable::CompactMode::DirectTid), PageKind::DirectPostings),
+    ] {
+        let mut inner = MemoryStore::default();
+        mutable::initialize(&mut inner).unwrap();
+        for offset in 1..=64 {
+            insert(&mut inner, root(0, offset), "term");
+        }
+        if let Some(mode) = mode {
+            mutable::compact_with_mode(&mut inner, mode).unwrap();
+        }
+        assert!((1..inner.blocks().unwrap()).any(|block| inner.read(block).unwrap().kind() == kind));
+        build(&mut inner).unwrap();
+        mutable::vacuum(&mut inner, |tid| Ok(tid == root(0, 2))).unwrap();
+        let mut store = Measured {
+            inner,
+            reads: Reads::default(),
+        };
+        let rows = raw(&mut store, "term", 8 << 20).unwrap();
+        assert_eq!(rows.len(), 63, "{kind:?}");
+        assert!(!rows.contains(&(root(0, 2), false)), "{kind:?}");
+        assert!(rows.iter().all(|(_, recheck)| !recheck), "{kind:?}");
+        assert_eq!(
+            store.reads.catalog + store.reads.liveness + store.reads.postings,
+            0,
+            "{kind:?}"
+        );
+    }
 }

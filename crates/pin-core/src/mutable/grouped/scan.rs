@@ -2,7 +2,7 @@
 //! bitmap output remains subject to PostgreSQL heap visibility and rechecks.
 
 use super::super::page::{CatalogEntry, GroupSnapshot, NO_BLOCK, PageKind};
-use super::super::{PageStore, find_term, following, load};
+use super::super::{PageStore, find_term, following, load, load_posting};
 use super::storage::{self, BITMAP_BYTES, Cursor, Value};
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
@@ -12,6 +12,8 @@ use crate::query::{Kind, Query};
 use pin_kernels::grouped::{OffsetMask, PageMask};
 
 const NODES: usize = 64;
+// at most one canonical posting page and 64 owner resolutions, including inline.
+const SPARSE_POSTINGS: usize = 64;
 
 struct Term {
     key: Option<u64>,
@@ -101,7 +103,8 @@ struct Program<'a> {
     names: [Option<&'a str>; NODES],
     terms: usize,
     len: usize,
-    cover: Option<u64>,
+    universe: bool,
+    seek_terms: u64,
 }
 
 fn compile(query: &Query) -> Option<Program<'_>> {
@@ -113,11 +116,12 @@ fn compile(query: &Query) -> Option<Program<'_>> {
         names: [None; NODES],
         terms: 0,
         len: query.node_count(),
-        cover: Some(0),
+        universe: false,
+        seek_terms: 0,
     };
-    let mut covers = [Some(0u64); NODES];
+    let mut universe = [false; NODES];
     for (index, node) in query.nodes.iter().enumerate() {
-        let (compiled, cover) = match &node.kind {
+        let (compiled, unbounded) = match &node.kind {
             Kind::None | Kind::Term(_) => {
                 let name = match &node.kind {
                     Kind::Term(term) => Some(term.as_str()),
@@ -135,34 +139,96 @@ fn compile(query: &Query) -> Option<Program<'_>> {
                         term
                     }
                 };
-                (Node::Term(term), Some(1 << term))
+                (Node::Term(term), false)
             }
-            Kind::And(left, right) => {
-                let cover = match (covers[*left], covers[*right]) {
-                    (None, right) => right,
-                    (left, None) => left,
-                    (Some(left), Some(right)) => Some(if left.count_ones() <= right.count_ones() {
-                        left
-                    } else {
-                        right
-                    }),
-                };
-                (Node::And(*left, *right), cover)
-            }
+            Kind::And(left, right) => (
+                Node::And(*left, *right),
+                universe[*left] && universe[*right],
+            ),
             Kind::Or(left, right) => (
                 Node::Or(*left, *right),
-                covers[*left]
-                    .zip(covers[*right])
-                    .map(|(left, right)| left | right),
+                universe[*left] || universe[*right],
             ),
-            Kind::Not(child) => (Node::Not(*child), None),
+            Kind::Not(child) => (Node::Not(*child), true),
             Kind::Prefix(_) | Kind::Phrase(_) => return None,
         };
         result.nodes[index] = compiled;
-        covers[index] = cover;
+        universe[index] = unbounded;
     }
-    result.cover = covers[query.root];
+    result.universe = universe[query.root];
+    let mut active = 1u64 << query.root;
+    for index in (0..result.len).rev() {
+        if active & (1 << index) == 0 {
+            continue;
+        }
+        match result.nodes[index] {
+            Node::Term(term) => result.seek_terms |= 1 << term,
+            Node::And(left, right) | Node::Or(left, right) => {
+                active |= (1 << left) | (1 << right);
+            }
+            // negated children filter offsets but cannot bound the next group.
+            Node::Not(_) => {}
+            _ => return None,
+        }
+    }
     Some(result)
+}
+
+// each bound is no later than the next possible matching group at or after target.
+// and takes the larger bound; or takes the smaller nonempty bound; not cannot skip.
+fn next_group<S: PageStore>(
+    store: &mut S,
+    snapshot: GroupSnapshot,
+    program: &Program<'_>,
+    terms: &mut [Term],
+    groups: &mut Cursor,
+    mut target: u32,
+) -> Result<Option<u32>> {
+    loop {
+        store.interrupt()?;
+        for (index, term) in terms.iter_mut().enumerate() {
+            if program.seek_terms & (1 << index) != 0 {
+                term.at(store, snapshot, target)?;
+            }
+        }
+        let mut bounds = [None; NODES];
+        for (index, node) in program.nodes[..program.len].iter().enumerate() {
+            bounds[index] = match *node {
+                Node::Term(term) => terms[term]
+                    .next
+                    .map(|entry| u32::try_from(entry.key[1]).map_err(|_| Error::InvalidState))
+                    .transpose()?,
+                Node::And(left, right) => bounds[left]
+                    .zip(bounds[right])
+                    .map(|(left, right)| left.max(right)),
+                Node::Or(left, right) => match (bounds[left], bounds[right]) {
+                    (Some(left), Some(right)) => Some(left.min(right)),
+                    (left, right) => left.or(right),
+                },
+                Node::Not(_) => Some(target),
+                _ => return Err(Error::InvalidState),
+            };
+        }
+        let Some(mut next) = bounds[program.len - 1] else {
+            return Ok(None);
+        };
+        if program.universe {
+            let Some(entry) = groups
+                .seek(store, snapshot, [0, u64::from(next)])?
+                .filter(|entry| entry.key[0] == 0)
+            else {
+                return Ok(None);
+            };
+            next = u32::try_from(entry.key[1]).map_err(|_| Error::InvalidState)?;
+        }
+        if next < target || !next.is_multiple_of(256) {
+            return Err(Error::InvalidState);
+        }
+        if next == target {
+            return Ok(Some(next));
+        }
+        target = next;
+    }
 }
 
 /// scans grouped Boolean matches, then a conservative cover of newer complete owners.
@@ -189,18 +255,49 @@ pub fn scan_query<S: PageStore>(
     let Some(snapshot) = meta.grouped_state()?.active else {
         return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
     };
-    store.event(super::super::Stage::GroupScan)?;
     let mut terms = Vec::new();
-    terms
-        .try_reserve_exact(program.terms)
-        .map_err(|_| Error::Allocation)?;
     for name in &program.names[..program.terms] {
         let key = match name {
-            Some(name) => find_term(store, &meta, name)?.map(|(_, reference)| {
-                (u64::from(reference.page) << 16) | u64::from(reference.offset)
-            }),
+            Some(name) => {
+                let found = find_term(store, &meta, name)?;
+                if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
+                    let Some((dictionary, reference)) = found else {
+                        return Ok(0);
+                    };
+                    let entry = dictionary.term(reference)?;
+                    if entry.head == entry.tail {
+                        let first_page = if entry.head == NO_BLOCK {
+                            None
+                        } else {
+                            Some(load_posting(store, entry.head, reference)?)
+                        };
+                        let postings = match &first_page {
+                            Some(page) => page.posting_records()? + 1,
+                            None => 1,
+                        };
+                        if postings <= SPARSE_POSTINGS {
+                            return super::super::query::scan_term_entry(
+                                store,
+                                entry,
+                                first_page,
+                                |root| emit(root, false),
+                            );
+                        }
+                    }
+                    Some((u64::from(reference.page) << 16) | u64::from(reference.offset))
+                } else {
+                    found.map(|(_, reference)| {
+                        (u64::from(reference.page) << 16) | u64::from(reference.offset)
+                    })
+                }
+            }
             None => None,
         };
+        if terms.is_empty() {
+            terms
+                .try_reserve_exact(program.terms)
+                .map_err(|_| Error::Allocation)?;
+        }
         terms.push(Term {
             key,
             cursor: Cursor::new(),
@@ -208,6 +305,7 @@ pub fn scan_query<S: PageStore>(
             initialized: false,
         });
     }
+    store.event(super::super::Stage::GroupScan)?;
     let mut bytes = Vec::new();
     bytes
         .try_reserve_exact(program.terms * BITMAP_BYTES)
@@ -216,46 +314,18 @@ pub fn scan_query<S: PageStore>(
     let mut live_bytes = [0; BITMAP_BYTES];
     let mut scratch = QueryScratch::default();
     let mut groups = Cursor::new();
-    let mut universe = if program.cover.is_none() {
-        groups.seek(store, snapshot, [0, 0])?
-    } else {
-        None
-    };
-    if let Some(cover) = program.cover {
-        for (index, term) in terms.iter_mut().enumerate() {
-            if cover & (1 << index) != 0 {
-                term.at(store, snapshot, 0)?;
-            }
-        }
-    }
     let mut count = 0u64;
-    let mut previous = None;
-    loop {
-        let next = match program.cover {
-            None => universe
-                .filter(|entry| entry.key[0] == 0)
-                .map(|entry| entry.key[1] as u32),
-            Some(cover) => terms
-                .iter()
-                .enumerate()
-                .filter(|(index, _)| cover & (1 << index) != 0)
-                .filter_map(|(_, term)| term.next.map(|entry| entry.key[1] as u32))
-                .min(),
-        };
-        let Some(base) = next else {
+    let mut target = Some(0);
+    while let Some(start) = target {
+        let Some(base) = next_group(store, snapshot, &program, &mut terms, &mut groups, start)?
+        else {
             break;
         };
-        if previous.is_some_and(|previous| previous >= base) {
-            return Err(Error::InvalidState);
-        }
-        previous = Some(base);
-        store.interrupt()?;
-        let live_entry = if program.cover.is_none() {
-            universe
-        } else {
-            storage::lookup(store, snapshot, [0, u64::from(base)])?
-        }
-        .ok_or(Error::InvalidState)?;
+        // the shared structural barrier keeps this private catalog leaf valid.
+        let live_entry = groups
+            .seek(store, snapshot, [0, u64::from(base)])?
+            .filter(|entry| entry.key == [0, u64::from(base)])
+            .ok_or(Error::InvalidState)?;
         let live_value = Value::read(live_entry)?;
         let mut masks = [[0; 4]; NODES];
         let mut entries = [None; NODES];
@@ -323,15 +393,12 @@ pub fn scan_query<S: PageStore>(
                 .checked_add(u64::from(stats.emitted_tids))
                 .ok_or(Error::Limit("group candidates"))?;
         }
-        if let Some(cover) = program.cover {
-            for (index, term) in terms.iter_mut().enumerate() {
-                if cover & (1 << index) != 0 {
-                    term.advance(store, snapshot, base)?;
-                }
+        for (index, term) in terms.iter_mut().enumerate() {
+            if program.seek_terms & (1 << index) != 0 {
+                term.advance(store, snapshot, base)?;
             }
-        } else {
-            universe = groups.advance(store, snapshot)?;
         }
+        target = base.checked_add(256);
     }
     delta(store, &meta, snapshot, count, emit)
 }

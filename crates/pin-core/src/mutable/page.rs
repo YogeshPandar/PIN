@@ -875,6 +875,11 @@ impl Page {
         })
     }
 
+    // reads the validated stream count without decoding owner references.
+    pub(super) fn posting_records(&self) -> Result<usize> {
+        Ok(usize::from(self.posting_refs()?.remaining))
+    }
+
     /// Returns the number of records in a checked direct page.
     pub fn posting_count(&self) -> Result<u16> {
         self.require(PageKind::DirectPostings)?;
