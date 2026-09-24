@@ -1,0 +1,157 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 384  of event 'cpu-clock'
+# Event count (approx.): 1929648000
+#
+# Overhead  Shared Object      Symbol                               IPC   [IPC Coverage]
+# ........  .................  ...................................  ....................
+#
+     5.47%  libc.so.6          [.] __memcmp_evex_movbe              -      -            
+     5.21%  postgres           [.] pg_qsort                         -      -            
+     4.95%  postgres           [.] 0x00000000005f5522               -      -            
+     3.12%  postgres           [.] 0x00000000005f56ea               -      -            
+     3.12%  postgres           [.] 0x00000000005f5f1b               -      -            
+     2.86%  postgres           [.] 0x00000000005e887b               -      -            
+     2.60%  postgres           [.] AllocSetAlloc                    -      -            
+     2.34%  postgres           [.] 0x00000000005f5525               -      -            
+     2.34%  postgres           [.] 0x00000000005f64a0               -      -            
+     2.08%  postgres           [.] AllocSetFree                     -      -            
+     2.08%  postgres           [.] pg_utf_mblen_private             -      -            
+     2.08%  postgres           [.] 0x00000000005f65e2               -      -            
+     1.82%  postgres           [.] 0x00000000005f5500               -      -            
+     1.82%  postgres           [.] 0x00000000005f6496               -      -            
+     1.56%  postgres           [.] parsetext                        -      -            
+     1.56%  postgres           [.] prsd_nexttoken                   -      -            
+     1.56%  postgres           [.] 0x00000000005f5f92               -      -            
+     1.56%  postgres           [.] 0x00000000005f64a8               -      -            
+     1.30%  postgres           [.] str_tolower                      -      -            
+     1.30%  postgres           [.] 0x00000000005f5efa               -      -            
+     1.04%  libc.so.6          [.] __strncmp_evex                   -      -            
+     1.04%  postgres           [.] FunctionCall3Coll                -      -            
+     1.04%  postgres           [.] memcmp@plt                       -      -            
+     1.04%  postgres           [.] 0x00000000005e8820               -      -            
+     1.04%  postgres           [.] 0x00000000005f5ece               -      -            
+     1.04%  postgres           [.] 0x00000000005f5f9f               -      -            
+     1.04%  postgres           [.] 0x00000000005f5fb0               -      -            
+     1.04%  postgres           [.] 0x00000000005f6580               -      -            
+     0.78%  postgres           [.] heap_fill_tuple                  -      -            
+     0.78%  postgres           [.] make_tsvector                    -      -            
+     0.78%  postgres           [.] 0x00000000005e8883               -      -            
+     0.78%  postgres           [.] 0x00000000005eb6c0               -      -            
+     0.78%  postgres           [.] 0x00000000005eb6d3               -      -            
+     0.78%  postgres           [.] 0x00000000005eb70c               -      -            
+     0.78%  postgres           [.] 0x00000000005f5f70               -      -            
+     0.78%  postgres           [.] 0x00000000005f5fe8               -      -            
+     0.78%  postgres           [.] 0x00000000005f642d               -      -            
+     0.78%  postgres           [.] 0x00000000005f64bb               -      -            
+     0.78%  postgres           [.] 0x00000000005f65b2               -      -            
+     0.52%  [kernel.kallsyms]  [k] shmem_add_to_page_cache          -      -            
+     0.52%  libc.so.6          [.] __strlen_evex                    -      -            
+     0.52%  postgres           [.] FunctionCall4Coll                -      -            
+     0.52%  postgres           [.] lookup_ts_dictionary_cache       -      -            
+     0.52%  postgres           [.] memcpy@plt                       -      -            
+     0.52%  postgres           [.] pnstrdup                         -      -            
+     0.52%  postgres           [.] 0x000000000023fe48               -      -            
+     0.52%  postgres           [.] 0x00000000005f568a               -      -            
+     0.52%  postgres           [.] 0x00000000005f56b1               -      -            
+     0.52%  postgres           [.] 0x00000000005f56ec               -      -            
+     0.52%  postgres           [.] 0x00000000005f5ee0               -      -            
+     0.52%  postgres           [.] 0x00000000005f5fa2               -      -            
+     0.52%  postgres           [.] 0x00000000005f5fa5               -      -            
+     0.52%  postgres           [.] 0x00000000005f5fca               -      -            
+     0.52%  postgres           [.] 0x00000000005f6436               -      -            
+     0.52%  postgres           [.] 0x00000000005f646e               -      -            
+     0.52%  postgres           [.] 0x00000000005f64aa               -      -            
+     0.52%  postgres           [.] 0x00000000005f64b1               -      -            
+     0.52%  postgres           [.] 0x00000000005f64c9               -      -            
+     0.52%  postgres           [.] 0x00000000005f65a2               -      -            
+     0.52%  postgres           [.] 0x00000000005f65b6               -      -            
+     0.52%  postgres           [.] 0x00000000007cc530               -      -            
+     0.26%  [kernel.kallsyms]  [k] _raw_spin_unlock_irqrestore      -      -            
+     0.26%  [kernel.kallsyms]  [k] copy_folio_from_iter_atomic      -      -            
+     0.26%  [kernel.kallsyms]  [k] do_user_addr_fault               -      -            
+     0.26%  [kernel.kallsyms]  [k] handle_softirqs                  -      -            
+     0.26%  [kernel.kallsyms]  [k] kmem_cache_alloc_lru_noprof      -      -            
+     0.26%  [kernel.kallsyms]  [k] rmqueue.isra.0                   -      -            
+     0.26%  [kernel.kallsyms]  [k] shmem_write_end                  -      -            
+     0.26%  [kernel.kallsyms]  [k] xas_load                         -      -            
+     0.26%  libc.so.6          [.] __ctype_b_loc                    -      -            
+     0.26%  libc.so.6          [.] __memmove_avx512_unaligned_erms  -      -            
+     0.26%  libc.so.6          [.] __memset_avx512_unaligned_erms   -      -            
+     0.26%  libc.so.6          [.] __strnlen_evex                   -      -            
+     0.26%  libc.so.6          [.] _int_malloc                      -      -            
+     0.26%  libc.so.6          [.] unlink_chunk.isra.0              -      -            
+     0.26%  postgres           [.] AllocSetReset                    -      -            
+     0.26%  postgres           [.] StartReadBuffer                  -      -            
+     0.26%  postgres           [.] XLogInsertRecord                 -      -            
+     0.26%  postgres           [.] __ctype_b_loc@plt                -      -            
+     0.26%  postgres           [.] _bt_compare                      -      -            
+     0.26%  postgres           [.] dsimple_lexize                   -      -            
+     0.26%  postgres           [.] ginHeapTupleFastInsert           -      -            
+     0.26%  postgres           [.] gin_cmp_tslexeme                 -      -            
+     0.26%  postgres           [.] gininsert                        -      -            
+     0.26%  postgres           [.] hash_bytes                       -      -            
+     0.26%  postgres           [.] heap_insert                      -      -            
+     0.26%  postgres           [.] index_form_tuple_context         -      -            
+     0.26%  postgres           [.] int4mod                          -      -            
+     0.26%  postgres           [.] prsd_start                       -      -            
+     0.26%  postgres           [.] searchstoplist                   -      -            
+     0.26%  postgres           [.] 0x000000000018f3dd               -      -            
+     0.26%  postgres           [.] 0x00000000001b14df               -      -            
+     0.26%  postgres           [.] 0x0000000000201ca8               -      -            
+     0.26%  postgres           [.] 0x000000000020982a               -      -            
+     0.26%  postgres           [.] 0x00000000003ce821               -      -            
+     0.26%  postgres           [.] 0x00000000005a2f67               -      -            
+     0.26%  postgres           [.] 0x00000000005c19d2               -      -            
+     0.26%  postgres           [.] 0x00000000005e8844               -      -            
+     0.26%  postgres           [.] 0x00000000005e8850               -      -            
+     0.26%  postgres           [.] 0x00000000005e8855               -      -            
+     0.26%  postgres           [.] 0x00000000005e88b2               -      -            
+     0.26%  postgres           [.] 0x00000000005e88c0               -      -            
+     0.26%  postgres           [.] 0x00000000005eb6f2               -      -            
+     0.26%  postgres           [.] 0x00000000005eb6fe               -      -            
+     0.26%  postgres           [.] 0x00000000005eb709               -      -            
+     0.26%  postgres           [.] 0x00000000005eb77d               -      -            
+     0.26%  postgres           [.] 0x00000000005eb7c0               -      -            
+     0.26%  postgres           [.] 0x00000000005eb7e8               -      -            
+     0.26%  postgres           [.] 0x00000000005eb855               -      -            
+     0.26%  postgres           [.] 0x00000000005eb878               -      -            
+     0.26%  postgres           [.] 0x00000000005eb8d7               -      -            
+     0.26%  postgres           [.] 0x00000000005eb9fb               -      -            
+     0.26%  postgres           [.] 0x00000000005ebaee               -      -            
+     0.26%  postgres           [.] 0x00000000005ebaf2               -      -            
+     0.26%  postgres           [.] 0x00000000005f54e0               -      -            
+     0.26%  postgres           [.] 0x00000000005f54fb               -      -            
+     0.26%  postgres           [.] 0x00000000005f5528               -      -            
+     0.26%  postgres           [.] 0x00000000005f552b               -      -            
+     0.26%  postgres           [.] 0x00000000005f5e4a               -      -            
+     0.26%  postgres           [.] 0x00000000005f5e6b               -      -            
+     0.26%  postgres           [.] 0x00000000005f5f06               -      -            
+     0.26%  postgres           [.] 0x00000000005f5f10               -      -            
+     0.26%  postgres           [.] 0x00000000005f5f27               -      -            
+     0.26%  postgres           [.] 0x00000000005f5fa0               -      -            
+     0.26%  postgres           [.] 0x00000000005f63f0               -      -            
+     0.26%  postgres           [.] 0x00000000005f6401               -      -            
+     0.26%  postgres           [.] 0x00000000005f6451               -      -            
+     0.26%  postgres           [.] 0x00000000005f6454               -      -            
+     0.26%  postgres           [.] 0x00000000005f645b               -      -            
+     0.26%  postgres           [.] 0x00000000005f64b5               -      -            
+     0.26%  postgres           [.] 0x00000000005f6530               -      -            
+     0.26%  postgres           [.] 0x00000000005f653c               -      -            
+     0.26%  postgres           [.] 0x00000000005f654f               -      -            
+     0.26%  postgres           [.] 0x00000000005f6593               -      -            
+     0.26%  postgres           [.] 0x00000000005f659c               -      -            
+     0.26%  postgres           [.] 0x00000000005f65aa               -      -            
+     0.26%  postgres           [.] 0x00000000005f65ea               -      -            
+     0.26%  postgres           [.] 0x00000000007cc33c               -      -            
+     0.26%  postgres           [.] 0x00000000007cc33f               -      -            
+     0.26%  postgres           [.] 0x00000000007cc34f               -      -            
+     0.26%  postgres           [.] 0x00000000007cd6f0               -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

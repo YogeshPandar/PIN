@@ -1,0 +1,84 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 167  of event 'cpu-clock'
+# Event count (approx.): 839195875
+#
+# Overhead  Shared Object     Symbol                           IPC   [IPC Coverage]
+# ........  ................  ...............................  ....................
+#
+     7.78%  postgres          [.] 0x00000000005f5522           -      -            
+     7.19%  postgres          [.] pg_qsort                     -      -            
+     5.99%  postgres          [.] 0x00000000005f6496           -      -            
+     4.79%  libc.so.6         [.] __memcmp_evex_movbe          -      -            
+     4.79%  postgres          [.] parsetext                    -      -            
+     4.19%  postgres          [.] AllocSetFree                 -      -            
+     2.99%  postgres          [.] AllocSetAlloc                -      -            
+     2.40%  postgres          [.] FunctionCall3Coll            -      -            
+     2.40%  postgres          [.] make_tsvector                -      -            
+     2.40%  postgres          [.] 0x00000000005e887b           -      -            
+     2.40%  postgres          [.] 0x00000000005f5500           -      -            
+     2.40%  postgres          [.] 0x00000000005f5525           -      -            
+     2.40%  postgres          [.] 0x00000000005f5f9f           -      -            
+     2.40%  postgres          [.] 0x00000000005f64a8           -      -            
+     1.80%  postgres          [.] 0x00000000005f5efa           -      -            
+     1.80%  postgres          [.] 0x00000000005f5f1b           -      -            
+     1.80%  postgres          [.] 0x00000000005f5f92           -      -            
+     1.20%  postgres          [.] memcmp@plt                   -      -            
+     1.20%  postgres          [.] pg_utf_mblen_private         -      -            
+     1.20%  postgres          [.] prsd_nexttoken               -      -            
+     1.20%  postgres          [.] str_tolower                  -      -            
+     1.20%  postgres          [.] 0x00000000005e8820           -      -            
+     1.20%  postgres          [.] 0x00000000005e8850           -      -            
+     1.20%  postgres          [.] 0x00000000005e8883           -      -            
+     1.20%  postgres          [.] 0x00000000005eb7df           -      -            
+     1.20%  postgres          [.] 0x00000000005eb8d7           -      -            
+     1.20%  postgres          [.] 0x00000000005ebaee           -      -            
+     1.20%  postgres          [.] 0x00000000005f56ea           -      -            
+     1.20%  postgres          [.] 0x00000000005f5fca           -      -            
+     1.20%  postgres          [.] 0x00000000005f5fe8           -      -            
+     1.20%  postgres          [.] 0x00000000005f6432           -      -            
+     1.20%  postgres          [.] 0x00000000005f64a0           -      -            
+     1.20%  postgres          [.] 0x00000000005f64b1           -      -            
+     0.60%  libc.so.6         [.] __strncmp_evex               -      -            
+     0.60%  libc.so.6         [.] __strnlen_evex               -      -            
+     0.60%  postgres          [.] __ctype_b_loc@plt            -      -            
+     0.60%  postgres          [.] dsimple_lexize               -      -            
+     0.60%  postgres          [.] hash_search_with_hash_value  -      -            
+     0.60%  postgres          [.] pnstrdup                     -      -            
+     0.60%  postgres          [.] 0x00000000005e883b           -      -            
+     0.60%  postgres          [.] 0x00000000005e889f           -      -            
+     0.60%  postgres          [.] 0x00000000005e88a2           -      -            
+     0.60%  postgres          [.] 0x00000000005e88b2           -      -            
+     0.60%  postgres          [.] 0x00000000005eb6c0           -      -            
+     0.60%  postgres          [.] 0x00000000005eb6d3           -      -            
+     0.60%  postgres          [.] 0x00000000005eb709           -      -            
+     0.60%  postgres          [.] 0x00000000005eb70c           -      -            
+     0.60%  postgres          [.] 0x00000000005eb79c           -      -            
+     0.60%  postgres          [.] 0x00000000005eb7e8           -      -            
+     0.60%  postgres          [.] 0x00000000005eb8dd           -      -            
+     0.60%  postgres          [.] 0x00000000005eba12           -      -            
+     0.60%  postgres          [.] 0x00000000005ebae7           -      -            
+     0.60%  postgres          [.] 0x00000000005f550e           -      -            
+     0.60%  postgres          [.] 0x00000000005f5640           -      -            
+     0.60%  postgres          [.] 0x00000000005f566b           -      -            
+     0.60%  postgres          [.] 0x00000000005f5e6b           -      -            
+     0.60%  postgres          [.] 0x00000000005f5ee0           -      -            
+     0.60%  postgres          [.] 0x00000000005f5f22           -      -            
+     0.60%  postgres          [.] 0x00000000005f6420           -      -            
+     0.60%  postgres          [.] 0x00000000005f6451           -      -            
+     0.60%  postgres          [.] 0x00000000005f6454           -      -            
+     0.60%  postgres          [.] 0x00000000005f646e           -      -            
+     0.60%  postgres          [.] 0x00000000005f6538           -      -            
+     0.60%  postgres          [.] 0x00000000005f6543           -      -            
+     0.60%  postgres          [.] 0x00000000005f654f           -      -            
+     0.60%  postgres          [.] 0x00000000005f65a2           -      -            
+     0.60%  postgres          [.] 0x00000000005f65ae           -      -            
+     0.60%  postgres          [.] 0x00000000005f65e2           -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

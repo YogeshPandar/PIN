@@ -1,0 +1,4143 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 389  of event 'cpu-clock'
+# Event count (approx.): 1954773625
+#
+# Overhead  Shared Object      Symbol                               IPC   [IPC Coverage]
+# ........  .................  ...................................  ....................
+#
+     7.71%  libc.so.6          [.] __memcmp_evex_movbe              -      -            
+            |
+            ---__memcmp_evex_movbe
+               |          
+               |--7.46%--0x55c8c87c9896
+               |          |          
+               |          |--7.20%--pg_qsort
+               |          |          |          
+               |          |          |--4.11%--make_tsvector
+               |          |          |          to_tsvector_byid
+               |          |          |          0x55c8c859cdb1
+               |          |          |          FormIndexDatum
+               |          |          |          ExecInsertIndexTuples
+               |          |          |          0x55c8c85d8f25
+               |          |          |          0x55c8c85dacb2
+               |          |          |          standard_ExecutorRun
+               |          |          |          0x55c8c87c3094
+               |          |          |          0x55c8c87c5140
+               |          |          |          PortalRun
+               |          |          |          0x55c8c87c5c02
+               |          |          |          PostgresMain
+               |          |          |          BackendMain
+               |          |          |          postmaster_child_launch
+               |          |          |          0x55c8c870fc5f
+               |          |          |          PostmasterMain
+               |          |          |          main
+               |          |          |          __libc_start_call_main
+               |          |          |          __libc_start_main_impl (inlined)
+               |          |          |          _start
+               |          |          |          
+               |          |           --3.08%--pg_qsort
+               |          |                     |          
+               |          |                     |--2.06%--make_tsvector
+               |          |                     |          to_tsvector_byid
+               |          |                     |          0x55c8c859cdb1
+               |          |                     |          FormIndexDatum
+               |          |                     |          ExecInsertIndexTuples
+               |          |                     |          0x55c8c85d8f25
+               |          |                     |          0x55c8c85dacb2
+               |          |                     |          standard_ExecutorRun
+               |          |                     |          0x55c8c87c3094
+               |          |                     |          0x55c8c87c5140
+               |          |                     |          PortalRun
+               |          |                     |          0x55c8c87c5c02
+               |          |                     |          PostgresMain
+               |          |                     |          BackendMain
+               |          |                     |          postmaster_child_launch
+               |          |                     |          0x55c8c870fc5f
+               |          |                     |          PostmasterMain
+               |          |                     |          main
+               |          |                     |          __libc_start_call_main
+               |          |                     |          __libc_start_main_impl (inlined)
+               |          |                     |          _start
+               |          |                     |          
+               |          |                      --1.03%--pg_qsort
+               |          |                                make_tsvector
+               |          |                                to_tsvector_byid
+               |          |                                0x55c8c859cdb1
+               |          |                                FormIndexDatum
+               |          |                                ExecInsertIndexTuples
+               |          |                                0x55c8c85d8f25
+               |          |                                0x55c8c85dacb2
+               |          |                                standard_ExecutorRun
+               |          |                                0x55c8c87c3094
+               |          |                                0x55c8c87c5140
+               |          |                                PortalRun
+               |          |                                0x55c8c87c5c02
+               |          |                                PostgresMain
+               |          |                                BackendMain
+               |          |                                postmaster_child_launch
+               |          |                                0x55c8c870fc5f
+               |          |                                PostmasterMain
+               |          |                                main
+               |          |                                __libc_start_call_main
+               |          |                                __libc_start_main_impl (inlined)
+               |          |                                _start
+               |          |          
+               |           --0.26%--0x55c8c89ae752
+               |                     pg_qsort
+               |                     make_tsvector
+               |                     to_tsvector_byid
+               |                     0x55c8c859cdb1
+               |                     FormIndexDatum
+               |                     ExecInsertIndexTuples
+               |                     0x55c8c85d8f25
+               |                     0x55c8c85dacb2
+               |                     standard_ExecutorRun
+               |                     0x55c8c87c3094
+               |                     0x55c8c87c5140
+               |                     PortalRun
+               |                     0x55c8c87c5c02
+               |                     PostgresMain
+               |                     BackendMain
+               |                     postmaster_child_launch
+               |                     0x55c8c870fc5f
+               |                     PostmasterMain
+               |                     main
+               |                     __libc_start_call_main
+               |                     __libc_start_main_impl (inlined)
+               |                     _start
+               |          
+                --0.26%--tsCompareString
+                          gin_cmp_tslexeme
+                          FunctionCall2Coll
+                          0x55c8c838f899
+                          qsort_arg
+                          0x55c8c8392659
+                          ginHeapTupleFastCollect
+                          gininsert
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     4.63%  postgres           [.] pg_qsort                         -      -            
+            |
+            ---pg_qsort
+               |          
+               |--3.60%--pg_qsort
+               |          |          
+               |          |--2.31%--make_tsvector
+               |          |          to_tsvector_byid
+               |          |          0x55c8c859cdb1
+               |          |          FormIndexDatum
+               |          |          ExecInsertIndexTuples
+               |          |          0x55c8c85d8f25
+               |          |          0x55c8c85dacb2
+               |          |          standard_ExecutorRun
+               |          |          0x55c8c87c3094
+               |          |          0x55c8c87c5140
+               |          |          PortalRun
+               |          |          0x55c8c87c5c02
+               |          |          PostgresMain
+               |          |          BackendMain
+               |          |          postmaster_child_launch
+               |          |          0x55c8c870fc5f
+               |          |          PostmasterMain
+               |          |          main
+               |          |          __libc_start_call_main
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |           --1.29%--pg_qsort
+               |                     make_tsvector
+               |                     to_tsvector_byid
+               |                     0x55c8c859cdb1
+               |                     FormIndexDatum
+               |                     ExecInsertIndexTuples
+               |                     0x55c8c85d8f25
+               |                     0x55c8c85dacb2
+               |                     standard_ExecutorRun
+               |                     0x55c8c87c3094
+               |                     0x55c8c87c5140
+               |                     PortalRun
+               |                     0x55c8c87c5c02
+               |                     PostgresMain
+               |                     BackendMain
+               |                     postmaster_child_launch
+               |                     0x55c8c870fc5f
+               |                     PostmasterMain
+               |                     main
+               |                     __libc_start_call_main
+               |                     __libc_start_main_impl (inlined)
+               |                     _start
+               |          
+                --1.03%--make_tsvector
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     4.11%  postgres           [.] 0x00000000005f5522               -      -            
+            |
+            ---0x55c8c87d6522
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     3.60%  postgres           [.] 0x00000000005f56ea               -      -            
+            |
+            ---0x55c8c87d66ea
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     3.08%  postgres           [.] AllocSetAlloc                    -      -            
+            |
+            ---AllocSetAlloc
+               |          
+               |--1.54%--parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.77%--dsimple_lexize
+               |          FunctionCall4Coll
+               |          0x55c8c87cc7d0
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.26%--AllocSetRealloc
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.26%--pnstrdup
+               |          str_tolower
+               |          dsimple_lexize
+               |          FunctionCall4Coll
+               |          0x55c8c87cc7d0
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--gin_extract_tsvector
+                          FunctionCall3Coll
+                          0x55c8c8392522
+                          ginHeapTupleFastCollect
+                          gininsert
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.83%  postgres           [.] AllocSetFree                     -      -            
+            |
+            ---AllocSetFree
+               |          
+               |--1.29%--0x55c8c87ccaf6
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--1.03%--parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.26%--prsd_end
+               |          FunctionCall1Coll
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--0x55c8c87cca16
+                          parsetext
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.83%  postgres           [.] parsetext                        -      -            
+            |
+            ---parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.83%  postgres           [.] 0x00000000005f5f1b               -      -            
+            |
+            ---0x55c8c87d6f1b
+               |          
+               |--2.06%--0x55c8c87d6f9c
+               |          0x55c8c87d74b6
+               |          prsd_nexttoken
+               |          FunctionCall3Coll
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.77%--0x55c8c87d74b6
+                          prsd_nexttoken
+                          FunctionCall3Coll
+                          parsetext
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.57%  postgres           [.] 0x00000000005f65e2               -      -            
+            |
+            ---0x55c8c87d75e2
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.31%  postgres           [.] pg_utf_mblen_private             -      -            
+            |
+            ---pg_utf_mblen_private
+               0x55c8c87d745e
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.31%  postgres           [.] prsd_nexttoken                   -      -            
+            |
+            ---prsd_nexttoken
+               FunctionCall3Coll
+               |          
+                --2.06%--parsetext
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.80%  postgres           [.] 0x00000000005f5f92               -      -            
+            |
+            ---0x55c8c87d6f92
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.80%  postgres           [.] 0x00000000005f5fe8               -      -            
+            |
+            ---0x55c8c87d6fe8
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.54%  postgres           [.] 0x00000000005f5525               -      -            
+            |
+            ---0x55c8c87d6525
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.54%  postgres           [.] 0x00000000005f5f9f               -      -            
+            |
+            ---0x55c8c87d6f9f
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.54%  postgres           [.] 0x00000000005f64a8               -      -            
+            |
+            ---0x55c8c87d74a8
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.29%  libc.so.6          [.] __strncmp_evex                   -      -            
+            |
+            ---__strncmp_evex
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.29%  postgres           [.] 0x00000000005e887b               -      -            
+            |
+            ---0x55c8c87c987b
+               pg_qsort
+               pg_qsort
+               |          
+               |--1.03%--make_tsvector
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--pg_qsort
+                          make_tsvector
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.29%  postgres           [.] 0x00000000005eb70c               -      -            
+            |
+            ---0x55c8c87cc70c
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.29%  postgres           [.] 0x00000000005f5500               -      -            
+            |
+            ---0x55c8c87d6500
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.29%  postgres           [.] 0x00000000005f64a0               -      -            
+            |
+            ---0x55c8c87d74a0
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  libc.so.6          [.] __memmove_avx512_unaligned_erms  -      -            
+            |
+            ---__memmove_avx512_unaligned_erms
+               |          
+               |--0.26%--AllocSetRealloc
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.26%--pnstrdup
+               |          str_tolower
+               |          dsimple_lexize
+               |          FunctionCall4Coll
+               |          0x55c8c87cc7d0
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+               |--0.26%--textin
+               |          0x55c8c859c2e5
+               |          ExecScan
+               |          0x55c8c85daabd
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--XLogInsertRecord
+                          XLogInsert
+                          heap_insert
+                          0x55c8c83c1e9a
+                          0x55c8c85d8efe
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.03%  postgres           [.] FunctionCall3Coll                -      -            
+            |
+            ---FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  postgres           [.] lookup_ts_dictionary_cache       -      -            
+            |
+            ---lookup_ts_dictionary_cache
+               0x55c8c87cc7a7
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  postgres           [.] make_tsvector                    -      -            
+            |
+            ---make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  postgres           [.] memcmp@plt                       -      -            
+            |
+            ---memcmp@plt
+               0x55c8c87c9896
+               pg_qsort
+               |          
+               |--0.77%--pg_qsort
+               |          make_tsvector
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--make_tsvector
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.03%  postgres           [.] 0x00000000005e8820               -      -            
+            |
+            ---0x55c8c87c9820
+               pg_qsort
+               |          
+               |--0.77%--pg_qsort
+               |          |          
+               |          |--0.51%--make_tsvector
+               |          |          to_tsvector_byid
+               |          |          0x55c8c859cdb1
+               |          |          FormIndexDatum
+               |          |          ExecInsertIndexTuples
+               |          |          0x55c8c85d8f25
+               |          |          0x55c8c85dacb2
+               |          |          standard_ExecutorRun
+               |          |          0x55c8c87c3094
+               |          |          0x55c8c87c5140
+               |          |          PortalRun
+               |          |          0x55c8c87c5c02
+               |          |          PostgresMain
+               |          |          BackendMain
+               |          |          postmaster_child_launch
+               |          |          0x55c8c870fc5f
+               |          |          PostmasterMain
+               |          |          main
+               |          |          __libc_start_call_main
+               |          |          __libc_start_main_impl (inlined)
+               |          |          _start
+               |          |          
+               |           --0.26%--pg_qsort
+               |                     make_tsvector
+               |                     to_tsvector_byid
+               |                     0x55c8c859cdb1
+               |                     FormIndexDatum
+               |                     ExecInsertIndexTuples
+               |                     0x55c8c85d8f25
+               |                     0x55c8c85dacb2
+               |                     standard_ExecutorRun
+               |                     0x55c8c87c3094
+               |                     0x55c8c87c5140
+               |                     PortalRun
+               |                     0x55c8c87c5c02
+               |                     PostgresMain
+               |                     BackendMain
+               |                     postmaster_child_launch
+               |                     0x55c8c870fc5f
+               |                     PostmasterMain
+               |                     main
+               |                     __libc_start_call_main
+               |                     __libc_start_main_impl (inlined)
+               |                     _start
+               |          
+                --0.26%--make_tsvector
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.03%  postgres           [.] 0x00000000005eb6c0               -      -            
+            |
+            ---0x55c8c87cc6c0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  postgres           [.] 0x00000000005f5f70               -      -            
+            |
+            ---0x55c8c87d6f70
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.03%  postgres           [.] 0x00000000005f65a2               -      -            
+            |
+            ---0x55c8c87d75a2
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  postgres           [.] __ctype_b_loc@plt                -      -            
+            |
+            ---__ctype_b_loc@plt
+               0x55c8c87d6f17
+               |          
+               |--0.51%--0x55c8c87d6f9c
+               |          0x55c8c87d74b6
+               |          prsd_nexttoken
+               |          FunctionCall3Coll
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--0x55c8c87d74b6
+                          prsd_nexttoken
+                          FunctionCall3Coll
+                          parsetext
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.77%  postgres           [.] 0x00000000005e883b               -      -            
+            |
+            ---0x55c8c87c983b
+               pg_qsort
+               |          
+               |--0.51%--pg_qsort
+               |          make_tsvector
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--make_tsvector
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.77%  postgres           [.] 0x00000000005eb6f2               -      -            
+            |
+            ---0x55c8c87cc6f2
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  postgres           [.] 0x00000000005f5ee0               -      -            
+            |
+            ---0x55c8c87d6ee0
+               |          
+               |--0.51%--0x55c8c87d74b6
+               |          prsd_nexttoken
+               |          FunctionCall3Coll
+               |          parsetext
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--0x55c8c87d6f9c
+                          0x55c8c87d74b6
+                          prsd_nexttoken
+                          FunctionCall3Coll
+                          parsetext
+                          to_tsvector_byid
+                          0x55c8c859cdb1
+                          FormIndexDatum
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.77%  postgres           [.] 0x00000000005f6447               -      -            
+            |
+            ---0x55c8c87d7447
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  postgres           [.] 0x00000000005f6451               -      -            
+            |
+            ---0x55c8c87d7451
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  postgres           [.] 0x00000000005f6496               -      -            
+            |
+            ---0x55c8c87d7496
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.77%  postgres           [.] 0x00000000005f65b6               -      -            
+            |
+            ---0x55c8c87d75b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  [kernel.kallsyms]  [k] _raw_spin_lock                   -      -            
+            |
+            ---_raw_spin_lock
+               |          
+               |--0.26%--__dquot_alloc_space
+               |          shmem_inode_acct_blocks
+               |          shmem_alloc_and_add_folio
+               |          shmem_get_folio_gfp
+               |          shmem_write_begin
+               |          generic_perform_write
+               |          shmem_file_write_iter
+               |          do_iter_readv_writev
+               |          vfs_writev
+               |          do_pwritev
+               |          __x64_sys_pwritev
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          __internal_syscall_cancel (inlined)
+               |          __syscall_cancel
+               |          pwritev64
+               |          pg_pwritev_with_retry
+               |          pg_pwrite_zeros
+               |          0x55c8c842cc38
+               |          XLogFileInit
+               |          0x55c8c8430bcd
+               |          0x55c8c8431504
+               |          0x55c8c8429642
+               |          XLogInsertRecord
+               |          XLogInsert
+               |          heap_insert
+               |          0x55c8c83c1e9a
+               |          0x55c8c85d8efe
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          
+                --0.26%--shmem_alloc_and_add_folio
+                          shmem_get_folio_gfp
+                          shmem_write_begin
+                          generic_perform_write
+                          shmem_file_write_iter
+                          do_iter_readv_writev
+                          vfs_writev
+                          do_pwritev
+                          __x64_sys_pwritev
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          __internal_syscall_cancel (inlined)
+                          __syscall_cancel
+                          pwritev64
+                          pg_pwritev_with_retry
+                          pg_pwrite_zeros
+                          0x55c8c842cc38
+                          XLogFileInit
+                          0x55c8c8430bcd
+                          XLogFlush
+                          0x55c8c8426300
+                          0x55c8c84292e8
+                          0x55c8c87c5eb4
+                          PostgresMain
+
+     0.51%  postgres           [.] FunctionCall4Coll                -      -            
+            |
+            ---FunctionCall4Coll
+               0x55c8c87cc7d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] XLogInsertRecord                 -      -            
+            |
+            ---XLogInsertRecord
+               XLogInsert
+               |          
+               |--0.26%--ginHeapTupleFastInsert
+               |          gininsert
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--0x55c8c8386031
+
+     0.51%  postgres           [.] dsimple_lexize                   -      -            
+            |
+            ---dsimple_lexize
+               FunctionCall4Coll
+               0x55c8c87cc7d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] ginHeapTupleFastInsert           -      -            
+            |
+            ---ginHeapTupleFastInsert
+               gininsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] gin_extract_tsvector             -      -            
+            |
+            ---gin_extract_tsvector
+               FunctionCall3Coll
+               0x55c8c8392522
+               ginHeapTupleFastCollect
+               gininsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] palloc0                          -      -            
+            |
+            ---palloc0
+               |          
+               |--0.26%--make_tsvector
+               |          to_tsvector_byid
+               |          0x55c8c859cdb1
+               |          FormIndexDatum
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--heap_form_tuple
+                          0x55c8c85b1768
+                          0x55c8c85db117
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.51%  postgres           [.] pg_comp_crc32c_avx512            -      -            
+            |
+            ---pg_comp_crc32c_avx512
+               XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] pgstat_count_io_op               -      -            
+            |
+            ---pgstat_count_io_op
+               StartReadBuffer
+               |          
+               |--0.26%--ReadBuffer
+               |          ginHeapTupleFastInsert
+               |          gininsert
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--_bt_getroot
+                          _bt_search
+                          _bt_doinsert
+                          btinsert
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.51%  postgres           [.] str_tolower                      -      -            
+            |
+            ---str_tolower
+               dsimple_lexize
+               FunctionCall4Coll
+               0x55c8c87cc7d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x000000000023fe48               -      -            
+            |
+            ---0x55c8c8420e48
+               XLogInsertRecord
+               XLogInsert
+               |          
+               |--0.26%--0x55c8c83e3667
+               |          _bt_doinsert
+               |          btinsert
+               |          ExecInsertIndexTuples
+               |          0x55c8c85d8f25
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--heap_insert
+                          0x55c8c83c1e9a
+                          0x55c8c85d8efe
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.51%  postgres           [.] 0x00000000005c7351               -      -            
+            |
+            ---0x55c8c87a8351
+               LWLockRelease
+               XLogInsertRecord
+               XLogInsert
+               |          
+               |--0.26%--heap_insert
+               |          0x55c8c83c1e9a
+               |          0x55c8c85d8efe
+               |          0x55c8c85dacb2
+               |          standard_ExecutorRun
+               |          0x55c8c87c3094
+               |          0x55c8c87c5140
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.26%--ginHeapTupleFastInsert
+                          gininsert
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.51%  postgres           [.] 0x00000000005eb6d3               -      -            
+            |
+            ---0x55c8c87cc6d3
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005eb752               -      -            
+            |
+            ---0x55c8c87cc752
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f54e0               -      -            
+            |
+            ---0x55c8c87d64e0
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f54fb               -      -            
+            |
+            ---0x55c8c87d64fb
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f566b               -      -            
+            |
+            ---0x55c8c87d666b
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f568a               -      -            
+            |
+            ---0x55c8c87d668a
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f5efa               -      -            
+            |
+            ---0x55c8c87d6efa
+               0x55c8c87d6f9c
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f5fca               -      -            
+            |
+            ---0x55c8c87d6fca
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f5fd6               -      -            
+            |
+            ---0x55c8c87d6fd6
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f6454               -      -            
+            |
+            ---0x55c8c87d7454
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f64ae               -      -            
+            |
+            ---0x55c8c87d74ae
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f64b1               -      -            
+            |
+            ---0x55c8c87d74b1
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f64bb               -      -            
+            |
+            ---0x55c8c87d74bb
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f64c9               -      -            
+            |
+            ---0x55c8c87d74c9
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f6543               -      -            
+            |
+            ---0x55c8c87d7543
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f659c               -      -            
+            |
+            ---0x55c8c87d759c
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000005f65aa               -      -            
+            |
+            ---0x55c8c87d75aa
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.51%  postgres           [.] 0x00000000007cc530               -      -            
+            |
+            ---0x55c8c89ad530
+               0x55c8c87d6682
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  [kernel.kallsyms]  [k] __rmqueue_pcplist                -      -            
+            |
+            ---__rmqueue_pcplist
+               rmqueue_pcplist
+               rmqueue.isra.0
+               get_page_from_freelist
+               __alloc_frozen_pages_noprof
+               alloc_pages_mpol
+               folio_alloc_mpol_noprof
+               shmem_alloc_folio
+               shmem_alloc_and_add_folio
+               shmem_get_folio_gfp
+               shmem_write_begin
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               pg_pwritev_with_retry
+               pg_pwrite_zeros
+               FileZero
+               mdzeroextend
+               smgrzeroextend
+               0x55c8c8784323
+               0x55c8c83cf61d
+               RelationGetBufferForTuple
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+
+     0.26%  [kernel.kallsyms]  [k] __x64_sys_openat                 -      -            
+            |
+            ---__x64_sys_openat
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_open64 (inlined)
+               BasicOpenFilePerm
+               PathNameOpenFilePerm
+               0x55c8c87ba02c
+               mdexists
+               0x55c8c8791bdd
+               0x55c8c8792a9a
+               GinNewBuffer
+               ginHeapTupleFastInsert
+               gininsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+
+     0.26%  [kernel.kallsyms]  [k] copy_folio_from_iter_atomic      -      -            
+            |
+            ---copy_folio_from_iter_atomic
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               0x55c8c8430e6f
+               0x55c8c8431504
+               0x55c8c8429642
+               XLogInsertRecord
+               XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  [kernel.kallsyms]  [k] filemap_get_entry                -      -            
+            |
+            ---filemap_get_entry
+               shmem_get_folio_gfp
+               shmem_fault
+               __do_fault
+               do_shared_fault
+               do_fault
+               handle_pte_fault
+               __handle_mm_fault
+               handle_mm_fault
+               do_user_addr_fault
+               exc_page_fault
+               asm_exc_page_fault
+               0x55c8c8783f5c
+               0x55c8c83cf61d
+               RelationGetBufferForTuple
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  [kernel.kallsyms]  [k] folio_unlock                     -      -            
+            |
+            ---folio_unlock
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               0x55c8c8430e6f
+               0x55c8c8431504
+               0x55c8c8429642
+               XLogInsertRecord
+               XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  [kernel.kallsyms]  [k] shmem_add_to_page_cache          -      -            
+            |
+            ---shmem_add_to_page_cache
+               shmem_alloc_and_add_folio
+               shmem_get_folio_gfp
+               shmem_write_begin
+               generic_perform_write
+               shmem_file_write_iter
+               do_iter_readv_writev
+               vfs_writev
+               do_pwritev
+               __x64_sys_pwritev
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               pwritev64
+               pg_pwritev_with_retry
+               pg_pwrite_zeros
+               0x55c8c842cc38
+               XLogFileInit
+               0x55c8c8430bcd
+               0x55c8c8431504
+               0x55c8c8429642
+               XLogInsertRecord
+               XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+
+     0.26%  libc.so.6          [.] __strlen_evex                    -      -            
+            |
+            ---__strlen_evex
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  libc.so.6          [.] __strnlen_evex                   -      -            
+            |
+            ---__strnlen_evex
+               pnstrdup
+               str_tolower
+               dsimple_lexize
+               FunctionCall4Coll
+               0x55c8c87cc7d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  libc.so.6          [.] _int_free_chunk                  -      -            
+            |
+            ---_int_free_chunk
+               AllocSetReset
+               MemoryContextReset
+               0x55c8c85daa1b
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] LWLockAcquire                    -      -            
+            |
+            ---LWLockAcquire
+               0x55c8c8421088
+               XLogInsertRecord
+               XLogInsert
+               ginHeapTupleFastInsert
+               gininsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] MemoryContextAllocZero           -      -            
+            |
+            ---MemoryContextAllocZero
+               index_form_tuple_context
+               btinsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] MemoryContextReset               -      -            
+            |
+            ---MemoryContextReset
+               ExecScan
+               0x55c8c85daabd
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] XLogInsert                       -      -            
+            |
+            ---XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] hash_search_with_hash_value      -      -            
+            |
+            ---hash_search_with_hash_value
+               0x55c8c87841fa
+               0x55c8c83cf61d
+               RelationGetBufferForTuple
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] pnstrdup                         -      -            
+            |
+            ---pnstrdup
+               str_tolower
+               dsimple_lexize
+               FunctionCall4Coll
+               0x55c8c87cc7d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] strlen@plt                       -      -            
+            |
+            ---strlen@plt
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000003bbdc6               -      -            
+            |
+            ---0x55c8c859cdc6
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005c737a               -      -            
+            |
+            ---0x55c8c87a837a
+               LWLockRelease
+               _bt_search
+               _bt_doinsert
+               btinsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005e8844               -      -            
+            |
+            ---0x55c8c87c9844
+               pg_qsort
+               pg_qsort
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005e8850               -      -            
+            |
+            ---0x55c8c87c9850
+               pg_qsort
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005e8883               -      -            
+            |
+            ---0x55c8c87c9883
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005e88a2               -      -            
+            |
+            ---0x55c8c87c98a2
+               pg_qsort
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005e88b2               -      -            
+            |
+            ---0x55c8c87c98b2
+               pg_qsort
+
+     0.26%  postgres           [.] 0x00000000005e88c0               -      -            
+            |
+            ---0x55c8c87c98c0
+               pg_qsort
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb6fe               -      -            
+            |
+            ---0x55c8c87cc6fe
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb713               -      -            
+            |
+            ---0x55c8c87cc713
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb756               -      -            
+            |
+            ---0x55c8c87cc756
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb79c               -      -            
+            |
+            ---0x55c8c87cc79c
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb7bb               -      -            
+            |
+            ---0x55c8c87cc7bb
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb89a               -      -            
+            |
+            ---0x55c8c87cc89a
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb8d0               -      -            
+            |
+            ---0x55c8c87cc8d0
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005eb8dd               -      -            
+            |
+            ---0x55c8c87cc8dd
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005ebaf2               -      -            
+            |
+            ---0x55c8c87ccaf2
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f550e               -      -            
+            |
+            ---0x55c8c87d650e
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5528               -      -            
+            |
+            ---0x55c8c87d6528
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5640               -      -            
+            |
+            ---0x55c8c87d6640
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5691               -      -            
+            |
+            ---0x55c8c87d6691
+               0x55c8c87d74b6
+
+     0.26%  postgres           [.] 0x00000000005f56c5               -      -            
+            |
+            ---0x55c8c87d66c5
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5e72               -      -            
+            |
+            ---0x55c8c87d6e72
+               0x55c8c87d6ecc
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5f27               -      -            
+            |
+            ---0x55c8c87d6f27
+               0x55c8c87d6f9c
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5fb0               -      -            
+            |
+            ---0x55c8c87d6fb0
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f5fc6               -      -            
+            |
+            ---0x55c8c87d6fc6
+               0x55c8c87d74b6
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6443               -      -            
+            |
+            ---0x55c8c87d7443
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6457               -      -            
+            |
+            ---0x55c8c87d7457
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f64a4               -      -            
+            |
+            ---0x55c8c87d74a4
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f64aa               -      -            
+            |
+            ---0x55c8c87d74aa
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f64b5               -      -            
+            |
+            ---0x55c8c87d74b5
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f64bf               -      -            
+            |
+            ---0x55c8c87d74bf
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6530               -      -            
+            |
+            ---0x55c8c87d7530
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f653c               -      -            
+            |
+            ---0x55c8c87d753c
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6572               -      -            
+            |
+            ---0x55c8c87d7572
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6574               -      -            
+            |
+            ---0x55c8c87d7574
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6580               -      -            
+            |
+            ---0x55c8c87d7580
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f6593               -      -            
+            |
+            ---0x55c8c87d7593
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f65b2               -      -            
+            |
+            ---0x55c8c87d75b2
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000005f65ea               -      -            
+            |
+            ---0x55c8c87d75ea
+               prsd_nexttoken
+               FunctionCall3Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000006c0577               -      -            
+            |
+            ---0x55c8c88a1577
+               int4out
+               0x55c8c859ccba
+               ExecScan
+               0x55c8c85daabd
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000006c057b               -      -            
+            |
+            ---0x55c8c88a157b
+               int4out
+               0x55c8c859ccba
+               ExecScan
+               0x55c8c85daabd
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000007cc338               -      -            
+            |
+            ---0x55c8c89ad338
+               prsd_start
+               FunctionCall2Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000007cc344               -      -            
+            |
+            ---0x55c8c89ad344
+               prsd_start
+               FunctionCall2Coll
+               parsetext
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.26%  postgres           [.] 0x00000000007cd6f0               -      -            
+            |
+            ---0x55c8c89ae6f0
+               pg_qsort
+               pg_qsort
+               make_tsvector
+               to_tsvector_byid
+               0x55c8c859cdb1
+               FormIndexDatum
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

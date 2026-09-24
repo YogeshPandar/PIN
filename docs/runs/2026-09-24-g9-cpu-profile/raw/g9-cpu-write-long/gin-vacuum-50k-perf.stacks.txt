@@ -1,0 +1,321 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 17  of event 'cpu-clock'
+# Event count (approx.): 85427125
+#
+# Overhead  Shared Object      Symbol                           IPC   [IPC Coverage]
+# ........  .................  ...............................  ....................
+#
+     5.88%  [kernel.kallsyms]  [k] __handle_mm_fault            -      -            
+            |
+            ---__handle_mm_fault
+               handle_mm_fault
+               do_user_addr_fault
+               exc_page_fault
+               asm_exc_page_fault
+               _copy_to_iter
+               copy_page_to_iter
+               shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  [kernel.kallsyms]  [k] _find_first_bit              -      -            
+            |
+            ---_find_first_bit
+               alloc_pages_mpol
+               folio_alloc_mpol_noprof
+               shmem_alloc_folio
+               shmem_alloc_and_add_folio
+               shmem_get_folio_gfp
+               shmem_write_begin
+               generic_perform_write
+               shmem_file_write_iter
+               do_iter_readv_writev
+               vfs_writev
+               do_pwritev
+               __x64_sys_pwritev
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               pwritev64
+               pg_pwritev_with_retry
+               pg_pwrite_zeros
+               0x55c8c842cc38
+               XLogFileInit
+               0x55c8c8430bcd
+               XLogFlush
+               0x55c8c87801bb
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+
+     5.88%  [kernel.kallsyms]  [k] copy_folio_from_iter_atomic  -      -            
+            |
+            ---copy_folio_from_iter_atomic
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               FileWriteV
+               mdwritev
+               0x55c8c8780103
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     5.88%  [kernel.kallsyms]  [k] folio_mark_dirty             -      -            
+            |
+            ---folio_mark_dirty
+               shmem_write_end
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               FileWriteV
+               mdwritev
+               0x55c8c8780103
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     5.88%  [kernel.kallsyms]  [k] folio_unlock                 -      -            
+            |
+            ---folio_unlock
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               FileWriteV
+               mdwritev
+               0x55c8c8780103
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     5.88%  postgres           [.] LockBufHdr                   -      -            
+            |
+            ---LockBufHdr
+               StartBufferIO
+               0x55c8c877e84c
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     5.88%  postgres           [.] StartReadBuffers             -      -            
+            |
+            ---StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+
+     5.88%  postgres           [.] ginInsertBAEntries           -      -            
+            |
+            ---ginInsertBAEntries
+               0x55c8c83852f0
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] ginTraverseLock              -      -            
+            |
+            ---ginTraverseLock
+               ginFindLeafPage
+               ginEntryInsert
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] gin_cmp_tslexeme             -      -            
+            |
+            ---gin_cmp_tslexeme
+               FunctionCall2Coll
+               0x55c8c8381c18
+               rbt_insert
+               ginInsertBAEntries
+               0x55c8c83852f0
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] gintuple_get_key             -      -            
+            |
+            ---gintuple_get_key
+               0x55c8c838531b
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] 0x00000000001a0b27           -      -            
+            |
+            ---0x55c8c8381b27
+               rbt_insert
+               ginInsertBAEntries
+               0x55c8c83852f0
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] 0x00000000001a0b97           -      -            
+            |
+            ---0x55c8c8381b97
+               rbt_insert
+               ginInsertBAEntries
+               0x55c8c83852f0
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] 0x00000000001a0be2           -      -            
+            |
+            ---0x55c8c8381be2
+               rbt_insert
+               ginInsertBAEntries
+               0x55c8c83852f0
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] 0x00000000001a4276           -      -            
+            |
+            ---0x55c8c8385276
+               ginInsertCleanup
+               ginvacuumcleanup
+
+     5.88%  postgres           [.] 0x00000000001efd03           -      -            
+            |
+            ---0x55c8c83d0d03
+               heap_page_prune_and_freeze
+
+     5.88%  postgres           [.] 0x000000000059f010           -      -            
+            |
+            ---0x55c8c8780010
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

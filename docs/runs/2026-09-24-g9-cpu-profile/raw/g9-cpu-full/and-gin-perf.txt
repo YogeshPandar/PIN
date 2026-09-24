@@ -1,0 +1,1275 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 959  of event 'cpu-clock'
+# Event count (approx.): 4819094875
+#
+# Overhead  Shared Object      Symbol                                   IPC   [IPC Coverage]
+# ........  .................  .......................................  ....................
+#
+    16.06%  postgres           [.] gingetbitmap                         -      -            
+            |
+            ---gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     7.40%  postgres           [.] heap_hot_search_buffer               -      -            
+            |
+            ---heap_hot_search_buffer
+               0x55c8c83c492e
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     4.38%  postgres           [.] pg_qsort                             -      -            
+            |
+            ---pg_qsort
+               |          
+               |--3.44%--pg_qsort
+               |          |          
+               |          |--1.88%--pg_qsort
+               |          |          |          
+               |          |          |--1.04%--pg_qsort
+               |          |          |          |          
+               |          |          |           --0.73%--tbm_begin_private_iterate
+               |          |          |                     0x55c8c85c156c
+               |          |          |                     ExecScan
+               |          |          |                     0x55c8c85b7350
+               |          |          |                     0x55c8c85b8da9
+               |          |          |                     standard_ExecutorRun
+               |          |          |                     0x55c8c87c3b44
+               |          |          |                     PortalRun
+               |          |          |                     ExecuteQuery
+               |          |          |                     standard_ProcessUtility
+               |          |          |                     0x55c8c87c4f2b
+               |          |          |                     0x55c8c87c5384
+               |          |          |                     PortalRun
+               |          |          |                     0x55c8c87c5c02
+               |          |          |                     PostgresMain
+               |          |          |                     BackendMain
+               |          |          |                     postmaster_child_launch
+               |          |          |                     0x55c8c870fc5f
+               |          |          |                     PostmasterMain
+               |          |          |                     main
+               |          |          |                     __libc_start_call_main
+               |          |          |                     __libc_start_main_impl (inlined)
+               |          |          |                     _start
+               |          |          |          
+               |          |           --0.83%--tbm_begin_private_iterate
+               |          |                     0x55c8c85c156c
+               |          |                     ExecScan
+               |          |                     0x55c8c85b7350
+               |          |                     0x55c8c85b8da9
+               |          |                     standard_ExecutorRun
+               |          |                     0x55c8c87c3b44
+               |          |                     PortalRun
+               |          |                     ExecuteQuery
+               |          |                     standard_ProcessUtility
+               |          |                     0x55c8c87c4f2b
+               |          |                     0x55c8c87c5384
+               |          |                     PortalRun
+               |          |                     0x55c8c87c5c02
+               |          |                     PostgresMain
+               |          |                     BackendMain
+               |          |                     postmaster_child_launch
+               |          |                     0x55c8c870fc5f
+               |          |                     PostmasterMain
+               |          |                     main
+               |          |                     __libc_start_call_main
+               |          |                     __libc_start_main_impl (inlined)
+               |          |                     _start
+               |          |          
+               |           --1.56%--tbm_begin_private_iterate
+               |                     0x55c8c85c156c
+               |                     ExecScan
+               |                     0x55c8c85b7350
+               |                     0x55c8c85b8da9
+               |                     standard_ExecutorRun
+               |                     0x55c8c87c3b44
+               |                     PortalRun
+               |                     ExecuteQuery
+               |                     standard_ProcessUtility
+               |                     0x55c8c87c4f2b
+               |                     0x55c8c87c5384
+               |                     PortalRun
+               |                     0x55c8c87c5c02
+               |                     PostgresMain
+               |                     BackendMain
+               |                     postmaster_child_launch
+               |                     0x55c8c870fc5f
+               |                     PostmasterMain
+               |                     main
+               |                     __libc_start_call_main
+               |                     __libc_start_main_impl (inlined)
+               |                     _start
+               |          
+                --0.94%--tbm_begin_private_iterate
+                          0x55c8c85c156c
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8da9
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     3.86%  postgres           [.] hash_search_with_hash_value          -      -            
+            |
+            ---hash_search_with_hash_value
+               |          
+                --3.65%--StartReadBuffers
+                          0x55c8c878241c
+                          0x55c8c8782738
+                          read_stream_next_buffer
+                          0x55c8c83c45fc
+                          0x55c8c83c4af0
+                          0x55c8c85c12ec
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8e62
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     2.82%  postgres           [.] ExecScan                             -      -            
+            |
+            ---ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.71%  postgres           [.] 0x00000000001a7928                   -      -            
+            |
+            ---0x55c8c8388928
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.61%  postgres           [.] tbm_add_tuples                       -      -            
+            |
+            ---tbm_add_tuples
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     2.09%  postgres           [.] ginPostingListDecodeAllSegments      -      -            
+            |
+            ---ginPostingListDecodeAllSegments
+               |          
+               |--1.15%--0x55c8c8388c0f
+               |          gingetbitmap
+               |          index_getbitmap
+               |          MultiExecBitmapIndexScan
+               |          0x55c8c85c1548
+               |          ExecScan
+               |          0x55c8c85b7350
+               |          0x55c8c85b8da9
+               |          standard_ExecutorRun
+               |          0x55c8c87c3b44
+               |          PortalRun
+               |          ExecuteQuery
+               |          standard_ProcessUtility
+               |          0x55c8c87c4f2b
+               |          0x55c8c87c5384
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.94%--gingetbitmap
+                          index_getbitmap
+                          MultiExecBitmapIndexScan
+                          0x55c8c85c1548
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8da9
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.67%  postgres           [.] MemoryContextReset                   -      -            
+            |
+            ---MemoryContextReset
+               |          
+               |--0.63%--0x55c8c85b8e5a
+               |          standard_ExecutorRun
+               |          0x55c8c87c3b44
+               |          PortalRun
+               |          ExecuteQuery
+               |          standard_ProcessUtility
+               |          0x55c8c87c4f2b
+               |          0x55c8c87c5384
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.63%--ExecScan
+
+     1.25%  postgres           [.] HeapTupleSatisfiesVisibility         -      -            
+            |
+            ---HeapTupleSatisfiesVisibility
+               heap_hot_search_buffer
+               0x55c8c83c492e
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.15%  [kernel.kallsyms]  [k] do_user_addr_fault                   -      -            
+            |
+            ---do_user_addr_fault
+               exc_page_fault
+               asm_exc_page_fault
+               __memset_avx512_unaligned_erms
+               MemoryContextAllocExtended
+               0x55c8c8678ed2
+               0x55c8c8679148
+               tbm_add_tuples
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.15%  postgres           [.] gin_tsquery_triconsistent            -      -            
+            |
+            ---gin_tsquery_triconsistent
+               0x55c8c838dd23
+               |          
+                --0.94%--gingetbitmap
+                          index_getbitmap
+                          MultiExecBitmapIndexScan
+                          0x55c8c85c1548
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8da9
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.15%  postgres           [.] hash_bytes                           -      -            
+            |
+            ---hash_bytes
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               0x55c8c83c45fc
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     1.15%  postgres           [.] 0x00000000005c737a                   -      -            
+            |
+            ---0x55c8c87a837a
+               LWLockRelease
+               |          
+               |--0.63%--0x55c8c83c4992
+               |          0x55c8c83c4af0
+               |          0x55c8c85c12ec
+               |          ExecScan
+               |          0x55c8c85b7350
+               |          0x55c8c85b8e62
+               |          standard_ExecutorRun
+               |          0x55c8c87c3b44
+               |          PortalRun
+               |          ExecuteQuery
+               |          standard_ProcessUtility
+               |          0x55c8c87c4f2b
+               |          0x55c8c87c5384
+               |          PortalRun
+               |          0x55c8c87c5c02
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          __libc_start_call_main
+               |          __libc_start_main_impl (inlined)
+               |          _start
+               |          
+                --0.52%--StartReadBuffers
+                          0x55c8c878241c
+                          0x55c8c8782738
+                          read_stream_next_buffer
+                          0x55c8c83c45fc
+                          0x55c8c83c4af0
+                          0x55c8c85c12ec
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8e62
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.94%  postgres           [.] 0x00000000003cc3a0                   -      -            
+            |
+            ---0x55c8c85ad3a0
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.94%  postgres           [.] 0x000000000059c947                   -      -            
+            |
+            ---0x55c8c877d947
+               ExecStoreBufferHeapTuple
+               0x55c8c83c4ba4
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.83%  postgres           [.] PredicateLockTID                     -      -            
+            |
+            ---PredicateLockTID
+               heap_hot_search_buffer
+               0x55c8c83c492e
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               |          
+                --0.73%--0x55c8c85b8e62
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.83%  postgres           [.] int8inc                              -      -            
+            |
+            ---int8inc
+               0x55c8c859bac9
+               0x55c8c85b8e49
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.83%  postgres           [.] 0x00000000003baa3f                   -      -            
+            |
+            ---0x55c8c859ba3f
+               0x55c8c85b8e49
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.73%  postgres           [.] ExecStoreBufferHeapTuple             -      -            
+            |
+            ---ExecStoreBufferHeapTuple
+               0x55c8c83c4ba4
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.73%  postgres           [.] tbm_private_iterate                  -      -            
+            |
+            ---tbm_private_iterate
+               0x55c8c83b83e4
+               0x55c8c878266e
+               read_stream_next_buffer
+               0x55c8c83c45fc
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.73%  postgres           [.] 0x00000000003baa5d                   -      -            
+            |
+            ---0x55c8c859ba5d
+               0x55c8c85b8e49
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.73%  postgres           [.] 0x000000000059bb1d                   -      -            
+            |
+            ---0x55c8c877cb1d
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               0x55c8c83c45fc
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  postgres           [.] 0x00000000001a74d2                   -      -            
+            |
+            ---0x55c8c83884d2
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  postgres           [.] 0x00000000001a779e                   -      -            
+            |
+            ---0x55c8c838879e
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  postgres           [.] 0x00000000003e02e0                   -      -            
+            |
+            ---0x55c8c85c12e0
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.63%  postgres           [.] 0x000000000048e389                   -      -            
+            |
+            ---0x55c8c866f389
+               pg_qsort
+               |          
+                --0.52%--pg_qsort
+
+     0.63%  postgres           [.] 0x00000000005c19a7                   -      -            
+            |
+            ---0x55c8c87a29a7
+               LWLockAcquire
+               0x55c8c83c468d
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] LWLockRelease                        -      -            
+            |
+            ---LWLockRelease
+
+     0.52%  postgres           [.] 0x00000000001a7667                   -      -            
+            |
+            ---0x55c8c8388667
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] 0x00000000001a792b                   -      -            
+            |
+            ---0x55c8c838892b
+               gingetbitmap
+               index_getbitmap
+               MultiExecBitmapIndexScan
+               0x55c8c85c1548
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] 0x00000000003ba460                   -      -            
+            |
+            ---0x55c8c859b460
+               0x55c8c85b8e49
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] 0x00000000003ba49f                   -      -            
+            |
+            ---0x55c8c859b49f
+
+     0.52%  postgres           [.] 0x00000000003bb8c7                   -      -            
+            |
+            ---0x55c8c859c8c7
+               0x55c8c85b8e49
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] 0x00000000003d6334                   -      -            
+            |
+            ---0x55c8c85b7334
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.52%  postgres           [.] 0x000000000048e38e                   -      -            
+            |
+            ---0x55c8c866f38e
+               pg_qsort
+               pg_qsort
+
+     0.52%  postgres           [.] 0x000000000072a033                   -      -            
+            |
+            ---0x55c8c890b033
+
+     0.42%  [kernel.kallsyms]  [k] _raw_spin_unlock_irqrestore          -      -            
+     0.42%  postgres           [.] StartReadBuffers                     -      -            
+     0.42%  postgres           [.] heap_page_prune_opt                  -      -            
+     0.42%  postgres           [.] tbm_begin_private_iterate            -      -            
+     0.42%  postgres           [.] tbm_extract_page_tuple               -      -            
+     0.42%  postgres           [.] 0x00000000001a78eb                   -      -            
+     0.42%  postgres           [.] 0x00000000001a7936                   -      -            
+     0.42%  postgres           [.] 0x00000000001e35a0                   -      -            
+     0.42%  postgres           [.] 0x00000000003ba471                   -      -            
+     0.42%  postgres           [.] 0x00000000003baa56                   -      -            
+     0.42%  postgres           [.] 0x00000000003d7e42                   -      -            
+     0.42%  postgres           [.] 0x000000000048e38c                   -      -            
+     0.42%  postgres           [.] 0x00000000004979dc                   -      -            
+     0.42%  postgres           [.] 0x0000000000497cb0                   -      -            
+     0.42%  postgres           [.] 0x0000000000498144                   -      -            
+     0.31%  libc.so.6          [.] __memset_avx512_unaligned_erms       -      -            
+     0.31%  postgres           [.] HeapCheckForSerializableConflictOut  -      -            
+     0.31%  postgres           [.] LWLockAcquire                        -      -            
+     0.31%  postgres           [.] ResourceOwnerForget                  -      -            
+     0.31%  postgres           [.] XidInMVCCSnapshot                    -      -            
+     0.31%  postgres           [.] read_stream_next_buffer              -      -            
+     0.31%  postgres           [.] 0x00000000001a74ee                   -      -            
+     0.31%  postgres           [.] 0x00000000001a790e                   -      -            
+     0.31%  postgres           [.] 0x00000000001a793f                   -      -            
+     0.31%  postgres           [.] 0x00000000001a7a28                   -      -            
+     0.31%  postgres           [.] 0x00000000003ba4bd                   -      -            
+     0.31%  postgres           [.] 0x00000000003baab6                   -      -            
+     0.31%  postgres           [.] 0x00000000003bb8a8                   -      -            
+     0.31%  postgres           [.] 0x000000000048e380                   -      -            
+     0.31%  postgres           [.] 0x000000000048e395                   -      -            
+     0.31%  postgres           [.] 0x0000000000497983                   -      -            
+     0.31%  postgres           [.] 0x00000000004979df                   -      -            
+     0.31%  postgres           [.] 0x00000000004979ec                   -      -            
+     0.31%  postgres           [.] 0x0000000000497cb7                   -      -            
+     0.31%  postgres           [.] 0x0000000000497d49                   -      -            
+     0.31%  postgres           [.] 0x00000000005c1973                   -      -            
+     0.31%  postgres           [.] 0x0000000000717aff                   -      -            
+     0.31%  postgres           [.] 0x000000000072a065                   -      -            
+     0.21%  [kernel.kallsyms]  [k] _raw_spin_lock                       -      -            
+     0.21%  [kernel.kallsyms]  [k] handle_softirqs                      -      -            
+     0.21%  [kernel.kallsyms]  [k] kernel_init_pages                    -      -            
+     0.21%  [kernel.kallsyms]  [k] zap_present_ptes.constprop.0         -      -            
+     0.21%  postgres           [.] 0x00000000001a74c0                   -      -            
+     0.21%  postgres           [.] 0x00000000001a74f3                   -      -            
+     0.21%  postgres           [.] 0x00000000001a7893                   -      -            
+     0.21%  postgres           [.] 0x00000000001a792e                   -      -            
+     0.21%  postgres           [.] 0x00000000001a7939                   -      -            
+     0.21%  postgres           [.] 0x00000000001a7955                   -      -            
+     0.21%  postgres           [.] 0x00000000001a7a25                   -      -            
+     0.21%  postgres           [.] 0x00000000001acc60                   -      -            
+     0.21%  postgres           [.] 0x00000000001acc81                   -      -            
+     0.21%  postgres           [.] 0x00000000001accac                   -      -            
+     0.21%  postgres           [.] 0x00000000001acd45                   -      -            
+     0.21%  postgres           [.] 0x00000000001e392f                   -      -            
+     0.21%  postgres           [.] 0x00000000001e3b00                   -      -            
+     0.21%  postgres           [.] 0x00000000001e3b12                   -      -            
+     0.21%  postgres           [.] 0x00000000001e3b6c                   -      -            
+     0.21%  postgres           [.] 0x00000000001e3bad                   -      -            
+     0.21%  postgres           [.] 0x00000000003baa8c                   -      -            
+     0.21%  postgres           [.] 0x00000000003baab2                   -      -            
+     0.21%  postgres           [.] 0x00000000003baaee                   -      -            
+     0.21%  postgres           [.] 0x00000000003bb8c9                   -      -            
+     0.21%  postgres           [.] 0x00000000003cc3ba                   -      -            
+     0.21%  postgres           [.] 0x00000000003d62fc                   -      -            
+     0.21%  postgres           [.] 0x00000000003e0270                   -      -            
+     0.21%  postgres           [.] 0x00000000003e0380                   -      -            
+     0.21%  postgres           [.] 0x000000000048e387                   -      -            
+     0.21%  postgres           [.] 0x000000000048e392                   -      -            
+     0.21%  postgres           [.] 0x0000000000497950                   -      -            
+     0.21%  postgres           [.] 0x0000000000497997                   -      -            
+     0.21%  postgres           [.] 0x00000000004979d3                   -      -            
+     0.21%  postgres           [.] 0x0000000000497a03                   -      -            
+     0.21%  postgres           [.] 0x0000000000497a09                   -      -            
+     0.21%  postgres           [.] 0x0000000000497cbe                   -      -            
+     0.21%  postgres           [.] 0x0000000000497d18                   -      -            
+     0.21%  postgres           [.] 0x0000000000497d20                   -      -            
+     0.21%  postgres           [.] 0x0000000000497dd7                   -      -            
+     0.21%  postgres           [.] 0x00000000004980f3                   -      -            
+     0.21%  postgres           [.] 0x00000000005a1530                   -      -            
+     0.21%  postgres           [.] 0x0000000000717ada                   -      -            
+     0.21%  postgres           [.] 0x0000000000717b18                   -      -            
+     0.21%  postgres           [.] 0x000000000072a015                   -      -            
+     0.10%  [kernel.kallsyms]  [k] finish_task_switch.isra.0            -      -            
+     0.10%  [kernel.kallsyms]  [k] folio_add_new_anon_rmap              -      -            
+     0.10%  [kernel.kallsyms]  [k] free_unref_folios                    -      -            
+     0.10%  [kernel.kallsyms]  [k] get_mem_cgroup_from_mm               -      -            
+     0.10%  [kernel.kallsyms]  [k] mas_preallocate                      -      -            
+     0.10%  [kernel.kallsyms]  [k] mas_wr_node_store                    -      -            
+     0.10%  [kernel.kallsyms]  [k] p4d_offset.part.0.isra.0             -      -            
+     0.10%  [kernel.kallsyms]  [k] pud_val                              -      -            
+     0.10%  [kernel.kallsyms]  [k] security_socket_recvmsg              -      -            
+     0.10%  [kernel.kallsyms]  [k] skb_set_owner_w                      -      -            
+     0.10%  libc.so.6          [.] __memcmp_evex_movbe                  -      -            
+     0.10%  libc.so.6          [.] __memmove_avx512_unaligned_erms      -      -            
+     0.10%  libc.so.6          [.] __syscall_cancel                     -      -            
+     0.10%  libc.so.6          [.] _int_free_merge_chunk                -      -            
+     0.10%  libc.so.6          [.] _int_malloc                          -      -            
+     0.10%  postgres           [.] IncrBufferRefCount                   -      -            
+     0.10%  postgres           [.] ReleaseBuffer                        -      -            
+     0.10%  postgres           [.] ResourceOwnerEnlarge                 -      -            
+     0.10%  postgres           [.] pgstat_count_io_op                   -      -            
+     0.10%  postgres           [.] 0x000000000018f230                   -      -            
+     0.10%  postgres           [.] 0x00000000001a371e                   -      -            
+     0.10%  postgres           [.] 0x00000000001a77a6                   -      -            
+     0.10%  postgres           [.] 0x00000000001a78c0                   -      -            
+     0.10%  postgres           [.] 0x00000000001a78d2                   -      -            
+     0.10%  postgres           [.] 0x00000000001a7919                   -      -            
+     0.10%  postgres           [.] 0x00000000001a7922                   -      -            
+     0.10%  postgres           [.] 0x00000000001a7943                   -      -            
+     0.10%  postgres           [.] 0x00000000001a7946                   -      -            
+     0.10%  postgres           [.] 0x00000000001a7a22                   -      -            
+     0.10%  postgres           [.] 0x00000000001acce0                   -      -            
+     0.10%  postgres           [.] 0x00000000001acd0a                   -      -            
+     0.10%  postgres           [.] 0x00000000001e35e2                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3906                   -      -            
+     0.10%  postgres           [.] 0x00000000001e394f                   -      -            
+     0.10%  postgres           [.] 0x00000000001e39d7                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3ab0                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3ae0                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b3f                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b45                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b48                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b4c                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b5b                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b63                   -      -            
+     0.10%  postgres           [.] 0x00000000001e3b9d                   -      -            
+     0.10%  postgres           [.] 0x0000000000245488                   -      -            
+     0.10%  postgres           [.] 0x00000000003ba4b5                   -      -            
+     0.10%  postgres           [.] 0x00000000003baa63                   -      -            
+     0.10%  postgres           [.] 0x00000000003baaca                   -      -            
+     0.10%  postgres           [.] 0x00000000003baadb                   -      -            
+     0.10%  postgres           [.] 0x00000000003baae3                   -      -            
+     0.10%  postgres           [.] 0x00000000003bb8a5                   -      -            
+     0.10%  postgres           [.] 0x00000000003cc3d3                   -      -            
+     0.10%  postgres           [.] 0x00000000003d62b0                   -      -            
+     0.10%  postgres           [.] 0x00000000003d62b5                   -      -            
+     0.10%  postgres           [.] 0x00000000003d62f7                   -      -            
+     0.10%  postgres           [.] 0x00000000003d6302                   -      -            
+     0.10%  postgres           [.] 0x00000000003d6339                   -      -            
+     0.10%  postgres           [.] 0x00000000003d7e47                   -      -            
+     0.10%  postgres           [.] 0x00000000003e0281                   -      -            
+     0.10%  postgres           [.] 0x00000000003e02b0                   -      -            
+     0.10%  postgres           [.] 0x00000000003e02c5                   -      -            
+     0.10%  postgres           [.] 0x000000000048e39a                   -      -            
+     0.10%  postgres           [.] 0x0000000000497965                   -      -            
+     0.10%  postgres           [.] 0x00000000004979aa                   -      -            
+     0.10%  postgres           [.] 0x00000000004979b2                   -      -            
+     0.10%  postgres           [.] 0x00000000004979b5                   -      -            
+     0.10%  postgres           [.] 0x00000000004979b9                   -      -            
+     0.10%  postgres           [.] 0x00000000004979d0                   -      -            
+     0.10%  postgres           [.] 0x00000000004979d6                   -      -            
+     0.10%  postgres           [.] 0x00000000004979f6                   -      -            
+     0.10%  postgres           [.] 0x0000000000497c67                   -      -            
+     0.10%  postgres           [.] 0x0000000000497c73                   -      -            
+     0.10%  postgres           [.] 0x0000000000497c83                   -      -            
+     0.10%  postgres           [.] 0x0000000000497cac                   -      -            
+     0.10%  postgres           [.] 0x0000000000497cb9                   -      -            
+     0.10%  postgres           [.] 0x0000000000497cd8                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d00                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d04                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d0a                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d0d                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d10                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d1b                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d2a                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d38                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d46                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d50                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d9a                   -      -            
+     0.10%  postgres           [.] 0x0000000000497d9d                   -      -            
+     0.10%  postgres           [.] 0x0000000000497dc6                   -      -            
+     0.10%  postgres           [.] 0x0000000000497dc8                   -      -            
+     0.10%  postgres           [.] 0x0000000000497dcc                   -      -            
+     0.10%  postgres           [.] 0x0000000000498090                   -      -            
+     0.10%  postgres           [.] 0x00000000004980aa                   -      -            
+     0.10%  postgres           [.] 0x0000000000498125                   -      -            
+     0.10%  postgres           [.] 0x0000000000498154                   -      -            
+     0.10%  postgres           [.] 0x000000000059b920                   -      -            
+     0.10%  postgres           [.] 0x000000000059b950                   -      -            
+     0.10%  postgres           [.] 0x000000000059b959                   -      -            
+     0.10%  postgres           [.] 0x000000000059b9b6                   -      -            
+     0.10%  postgres           [.] 0x000000000059b9c2                   -      -            
+     0.10%  postgres           [.] 0x000000000059ba50                   -      -            
+     0.10%  postgres           [.] 0x000000000059ba62                   -      -            
+     0.10%  postgres           [.] 0x000000000059ba9a                   -      -            
+     0.10%  postgres           [.] 0x000000000059babd                   -      -            
+     0.10%  postgres           [.] 0x000000000059c8f8                   -      -            
+     0.10%  postgres           [.] 0x000000000059c8fa                   -      -            
+     0.10%  postgres           [.] 0x000000000059c9b3                   -      -            
+     0.10%  postgres           [.] 0x000000000059c9e8                   -      -            
+     0.10%  postgres           [.] 0x00000000005a14f2                   -      -            
+     0.10%  postgres           [.] 0x00000000005a15d2                   -      -            
+     0.10%  postgres           [.] 0x00000000005a15f4                   -      -            
+     0.10%  postgres           [.] 0x00000000005a1707                   -      -            
+     0.10%  postgres           [.] 0x00000000005c1970                   -      -            
+     0.10%  postgres           [.] 0x00000000005c19aa                   -      -            
+     0.10%  postgres           [.] 0x00000000005c19d9                   -      -            
+     0.10%  postgres           [.] 0x0000000000717af7                   -      -            
+     0.10%  postgres           [.] 0x0000000000717b03                   -      -            
+     0.10%  postgres           [.] 0x000000000072a000                   -      -            
+     0.10%  postgres           [.] 0x000000000072a09f                   -      -            
+     0.10%  postgres           [.] 0x000000000072a0a9                   -      -            
+     0.10%  postgres           [.] 0x00000000007cd6f0                   -      -            
+     0.10%  postgres           [.] 0x00000000007cd6fb                   -      -            
+     0.10%  postgres           [.] 0x00000000007cd71e                   -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

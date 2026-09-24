@@ -1,0 +1,22 @@
+[
+  {
+    "file": "environment.json",
+    "bytes": 809,
+    "sha256": "d0d4484747a5977f380e1414bf0b6632b1f601fa413cde17c6e05dc06f5594b8"
+  },
+  {
+    "file": "plans.json",
+    "bytes": 3196,
+    "sha256": "f7b05407a77456fb2e0ca05dec0b0f877e69b486340a5f739288103f4da0649c"
+  },
+  {
+    "file": "results.json",
+    "bytes": 17667,
+    "sha256": "2dc2fdc350e647b5838a7b0ec59a40ead5b9957e5ba66edcbd260db1b2c5cea0"
+  },
+  {
+    "file": "runner.log",
+    "bytes": 666,
+    "sha256": "d71074d5386892d95e1aef58287641ab54c79b151a7f76cb4ac09ba3b5d3e179"
+  }
+]

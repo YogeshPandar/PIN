@@ -1,0 +1,237 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu-clock'
+# Event count (approx.): 5090451625
+#
+# Overhead  Shared Object         Symbol                                                                                                                                                                                                                              IPC   [IPC Coverage]
+# ........  ....................  ..................................................................................................................................................................................................................................  ....................
+#
+    61.20%  pin.so                [.] unicode_segmentation::tables::word::word_category                                                                                                                                                                               -      -            
+            |          
+            |--25.17%--binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          
+            |--15.40%--select_unpredictable<usize> (inlined)
+            |          binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          
+            |--6.32%--{closure#0} (inlined)
+            |          binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          
+            |--3.65%--get_unchecked<(char, char, unicode_segmentation::tables::word::WordCat)> (inlined)
+            |          get_unchecked<(char, char, unicode_segmentation::tables::word::WordCat), usize> (inlined)
+            |          binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          
+            |--3.26%--get<u16> (inlined)
+            |          get<u16, core::ops::range::Range<usize>> (inlined)
+            |          word_category (inlined)
+            |          
+            |--3.16%--word_category (inlined)
+            |          
+            |--2.17%--map_or<&[u16], core::ops::range::Range<usize>, unicode_segmentation::tables::word::word_category::{closure_env#0}> (inlined)
+            |          word_category (inlined)
+            |          
+             --2.07%--bsearch_range_value_table (inlined)
+                       word_category (inlined)
+
+    23.59%  pin.so                [.] <pin_core::analysis::Analyzed>::analyze                                                                                                                                                                                         -      -            
+            |          
+            |--13.92%--next (inlined)
+            |          |          
+            |           --13.72%--next (inlined)
+            |                     try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |                     find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |                     next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |                     next (inlined)
+            |                     analyze (inlined)
+            |          
+            |--2.96%--next_code_point<core::slice::iter::Iter<u8>> (inlined)
+            |          next (inlined)
+            |          |          
+            |           --2.76%--next (inlined)
+            |                     next (inlined)
+            |                     next (inlined)
+            |                     try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |                     find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |                     next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |                     next (inlined)
+            |                     analyze (inlined)
+            |          
+            |--1.58%--eq<u8> (inlined)
+            |          next<u8> (inlined)
+            |          next_code_point<core::slice::iter::Iter<u8>> (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |          find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |          next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |          next (inlined)
+            |          analyze (inlined)
+            |          
+            |--1.48%--add<u8> (inlined)
+            |          new<u8> (inlined)
+            |          iter<u8> (inlined)
+            |          chars (inlined)
+            |          char_indices (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |          find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |          next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |          next (inlined)
+            |          analyze (inlined)
+            |          
+            |--0.89%--next<u8> (inlined)
+            |          next_code_point<core::slice::iter::Iter<u8>> (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |          find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |          next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |          next (inlined)
+            |          analyze (inlined)
+            |          
+            |--0.69%--analyze (inlined)
+            |          
+            |--0.59%--push_mut<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+            |          push<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+            |          analyze (inlined)
+            |          
+             --0.59%--eq (inlined)
+
+     1.48%  pin.so                [.] <pin_core::mutable::query::Cursor>::seek::<pin::storage_impl::PgStore>                                                                                                                                                          -      -            
+            |          
+             --1.28%--next (inlined)
+                       |          
+                        --1.18%--next (inlined)
+                                  advance<pin::storage_impl::PgStore> (inlined)
+                                  seek<pin::storage_impl::PgStore> (inlined)
+
+     1.09%  libc.so.6             [.] __memmove_avx512_unaligned_erms                                                                                                                                                                                                 -      -            
+            |
+            ---__memmove_avx512_unaligned_erms
+
+     1.09%  pin.so                [.] pin_core::memory::reserve::<pin_core::analysis::TokenRange>                                                                                                                                                                     -      -            
+            |          
+             --0.59%--len<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+                       reserve<pin_core::analysis::TokenRange> (inlined)
+
+     0.89%  postgres              [.] heap_hot_search_buffer                                                                                                                                                                                                          -      -            
+            |
+            ---heap_hot_search_buffer
+               0x55c8c83c492e
+               0x55c8c83c4af0
+               0x55c8c85c12ec
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8e62
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.79%  libc.so.6             [.] _int_malloc                                                                                                                                                                                                                     -      -            
+            |
+            ---_int_malloc
+               _int_realloc
+               __libc_realloc (inlined)
+               realloc_nonnull (inlined)
+               grow_impl_runtime (inlined)
+               grow_impl (inlined)
+               grow (inlined)
+               finish_grow<alloc::alloc::Global> (inlined)
+
+     0.69%  libc.so.6             [.] _int_realloc                                                                                                                                                                                                                    -      -            
+            |
+            ---_int_realloc
+               __libc_realloc (inlined)
+               realloc_nonnull (inlined)
+               grow_impl_runtime (inlined)
+               grow_impl (inlined)
+               grow (inlined)
+               finish_grow<alloc::alloc::Global> (inlined)
+
+     0.59%  pin.so                [.] pin_core::normalize::profile_text                                                                                                                                                                                               -      -            
+     0.49%  pin.so                [.] pin_core::memory::copy_text                                                                                                                                                                                                     -      -            
+     0.39%  libc.so.6             [.] cfree@GLIBC_2.2.5                                                                                                                                                                                                               -      -            
+     0.39%  libc.so.6             [.] unlink_chunk.isra.0                                                                                                                                                                                                             -      -            
+     0.39%  pin.so                [.] core::str::converts::from_utf8                                                                                                                                                                                                  -      -            
+     0.39%  pin.so                [.] pin_core::memory::reserve::<u8>                                                                                                                                                                                                 -      -            
+     0.30%  libc.so.6             [.] realloc                                                                                                                                                                                                                         -      -            
+     0.30%  pin.so                [.] <pin_core::query::Builder>::add_node                                                                                                                                                                                            -      -            
+     0.30%  pin.so                [.] <pin_core::query::Query>::parse                                                                                                                                                                                                 -      -            
+     0.30%  pin.so                [.] pin_core::mutable::query::scan_query_with_recheck::<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>                                                                                        -      -            
+     0.30%  pin.so                [.] pin_core::oracle::matches                                                                                                                                                                                                       -      -            
+     0.30%  postgres              [.] hash_search_with_hash_value                                                                                                                                                                                                     -      -            
+     0.20%  [kernel.kallsyms]     [k] handle_softirqs                                                                                                                                                                                                                 -      -            
+     0.20%  libc.so.6             [.] _int_free_merge_chunk                                                                                                                                                                                                           -      -            
+     0.20%  libc.so.6             [.] malloc                                                                                                                                                                                                                          -      -            
+     0.20%  pin.so                [.] <alloc::raw_vec::RawVecInner>::finish_grow                                                                                                                                                                                      -      -            
+     0.20%  pin.so                [.] <pin_core::query::Builder>::literal                                                                                                                                                                                             -      -            
+     0.20%  pin.so                [.] cee_scape::asm_based::call_with_sigsetjmp::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<(), <pin::parallel::VacuumStore as pin_core::mutable::PageStore>::interrupt::{closure#0}>::{closure#0}>                    -      -            
+     0.20%  pin.so                [.] pgrx_pg_sys::submodules::thread_check::check_active_thread                                                                                                                                                                      -      -            
+     0.20%  postgres              [.] ExecScan                                                                                                                                                                                                                        -      -            
+     0.10%  [kernel.kallsyms]     [k] _raw_spin_unlock_irqrestore                                                                                                                                                                                                     -      -            
+     0.10%  [kernel.kallsyms]     [k] perf_event_mmap_output                                                                                                                                                                                                          -      -            
+     0.10%  [kernel.kallsyms]     [k] pfn_pte                                                                                                                                                                                                                         -      -            
+     0.10%  ld-linux-x86-64.so.2  [.] __tls_get_addr                                                                                                                                                                                                                  -      -            
+     0.10%  libc.so.6             [.] __libc_malloc2                                                                                                                                                                                                                  -      -            
+     0.10%  libc.so.6             [.] __memcmp_evex_movbe                                                                                                                                                                                                             -      -            
+     0.10%  libc.so.6             [.] __memset_avx512_unaligned_erms                                                                                                                                                                                                  -      -            
+     0.10%  libc.so.6             [.] _int_free_chunk                                                                                                                                                                                                                 -      -            
+     0.10%  libc.so.6             [.] _int_free_maybe_trim                                                                                                                                                                                                            -      -            
+     0.10%  pin.so                [.] <pgrx::memcxt::PgMemoryContexts>::exec_in_context::<bool, pin::matching::matches_wrapper::_internal_wrapper::{closure#0}>                                                                                                       -      -            
+     0.10%  pin.so                [.] <pin_core::mutable::page::OwnerRef>::read                                                                                                                                                                                       -      -            
+     0.10%  pin.so                [.] <pin_core::mutable::page::Page>::validate                                                                                                                                                                                       -      -            
+     0.10%  pin.so                [.] __rustc::__rust_no_alloc_shim_is_unstable_v2                                                                                                                                                                                    -      -            
+     0.10%  pin.so                [.] cee_scape::asm_based::call_with_sigsetjmp::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<*mut pgrx_pg_sys::include::pg18::varlena, pgrx_pg_sys::include::pg18::pg_detoast_datum_packed::{closure#0}>::{closure#0}>  -      -            
+     0.10%  pin.so                [.] cee_scape::asm_based::call_with_sigsetjmp::call_from_c_to_rust::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<(), pin::storage_impl::interrupt::{closure#0}>::{closure#0}>                                          -      -            
+     0.10%  pin.so                [.] core::ptr::drop_glue::<pin_core::query::Query>                                                                                                                                                                                  -      -            
+     0.10%  pin.so                [.] pin::matching::matches                                                                                                                                                                                                          -      -            
+     0.10%  pin.so                [.] pin_core::memory::reserve::<pin_core::query::Node>                                                                                                                                                                              -      -            
+     0.10%  pin.so                [.] pin_core::memory::reserve::<usize>                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] HeapTupleSatisfiesVisibility                                                                                                                                                                                                    -      -            
+     0.10%  postgres              [.] MemoryContextReset                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] mdnblocks                                                                                                                                                                                                                       -      -            
+     0.10%  postgres              [.] pgaio_submit_staged                                                                                                                                                                                                             -      -            
+     0.10%  postgres              [.] slot_getsomeattrs_int                                                                                                                                                                                                           -      -            
+     0.10%  postgres              [.] tbm_private_iterate                                                                                                                                                                                                             -      -            
+     0.10%  postgres              [.] 0x00000000001e392f                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x00000000001e3b23                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x00000000003ba4c9                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x00000000003cdd06                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x00000000003ce0ab                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x00000000003e0270                                                                                                                                                                                                              -      -            
+     0.10%  postgres              [.] 0x000000000059c947                                                                                                                                                                                                              -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

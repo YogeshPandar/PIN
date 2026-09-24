@@ -1,0 +1,63 @@
+[
+  {
+    "file": "environment.json",
+    "bytes": 289,
+    "sha256": "7a0bbfae00e86e8c01b7d72cd7f672ca858d1ddd97056da7a2aec431a0d2ed89"
+  },
+  {
+    "file": "pin_cpu_write_system_gin_0-perf.data.gz",
+    "raw_file": "pin_cpu_write_system_gin_0-perf.data",
+    "raw_bytes": 3839120,
+    "raw_sha256": "959ca13171137093190840434624e4670fcad6e54edf66c0c332ca2a403ed7c4",
+    "gzip_bytes": 110428,
+    "gzip_sha256": "ca875b43f5cef25f29af936a286f245821d63303d9cb937252e505ed12748b63"
+  },
+  {
+    "file": "pin_cpu_write_system_gin_0-perf.dso.txt",
+    "bytes": 398,
+    "sha256": "c46c76e5e96f967d24494bcd8ec0a52f596a532e08f61762a2c7c5f576fbc16f"
+  },
+  {
+    "file": "pin_cpu_write_system_gin_0-perf.flat.txt",
+    "bytes": 14399,
+    "sha256": "52eed2e14cc03fc3f5a42d3fedac17fe58602cc7486948957f420ba79ce9e6a6"
+  },
+  {
+    "file": "pin_cpu_write_system_gin_0-perf.stacks.txt",
+    "bytes": 160905,
+    "sha256": "208d17e1244b99ee04dc354c3975b5d636f8ce8b00bed69117084e833a67a5f6"
+  },
+  {
+    "file": "pin_cpu_write_system_pin_0-perf.data.gz",
+    "raw_file": "pin_cpu_write_system_pin_0-perf.data",
+    "raw_bytes": 11364160,
+    "raw_sha256": "b88579977d60fbee618de1c15b07545ba44599139a80dc8cfadc8e87ef8cfcc0",
+    "gzip_bytes": 1282488,
+    "gzip_sha256": "d60433e209c19e5010ccb632d83e822cebec8b8dac0878b4c5a8d2c9c21ac3d6"
+  },
+  {
+    "file": "pin_cpu_write_system_pin_0-perf.dso.txt",
+    "bytes": 426,
+    "sha256": "2f8259f3d8215752c374548645e03165b5168e92b818aeb738ea66766ab77ebb"
+  },
+  {
+    "file": "pin_cpu_write_system_pin_0-perf.flat.txt",
+    "bytes": 93911,
+    "sha256": "b16e331b9e76f56fc2ccad1068de66572bed7cea92b22950ba51f3d1b0ae04f3"
+  },
+  {
+    "file": "pin_cpu_write_system_pin_0-perf.stacks.txt",
+    "bytes": 228505,
+    "sha256": "8ab78a0f7147717f2a83563d01968ba7455448f3bdecafe496ef8d44860c454d"
+  },
+  {
+    "file": "results.json",
+    "bytes": 11645,
+    "sha256": "afa8f1d4701b956eba7953f63b46afd29f8aa7eba1c07496a941e16c8bbaa81e"
+  },
+  {
+    "file": "runner.log",
+    "bytes": 63,
+    "sha256": "8a855e6d8ca07eb37debbb09a753ea2abb323bb613e283bca32f0799a0ef2a1c"
+  }
+]

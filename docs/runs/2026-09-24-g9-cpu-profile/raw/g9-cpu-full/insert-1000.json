@@ -1,0 +1,23 @@
+{
+  "rows_inserted": 1000,
+  "body": "unrelated filler",
+  "backend_cpu_ns": 72608708,
+  "runqueue_ns": 6310,
+  "wall_ns": 72759970,
+  "wal_bytes_all_indexes_and_heap": 4415736,
+  "proc": {
+    "on_cpu_ns": 72608708,
+    "runqueue_ns": 6310,
+    "timeslices": 3,
+    "user_ticks": 6,
+    "system_ticks": 0,
+    "minor_faults": 1228,
+    "major_faults": 0,
+    "voluntary_ctxt_switches": 2,
+    "nonvoluntary_ctxt_switches": 1,
+    "syscr": 9,
+    "syscw": 56,
+    "read_bytes": 0,
+    "write_bytes": 0
+  }
+}

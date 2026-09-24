@@ -1,0 +1,173 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 232  of event 'cpu-clock'
+# Event count (approx.): 1165829000
+#
+# Overhead  Shared Object      Symbol                                   IPC   [IPC Coverage]
+# ........  .................  .......................................  ....................
+#
+     6.03%  [kernel.kallsyms]  [k] finish_task_switch.isra.0            -      -            
+     4.31%  postgres           [.] hash_search_with_hash_value          -      -            
+     3.88%  [kernel.kallsyms]  [k] _raw_spin_unlock_irqrestore          -      -            
+     3.88%  postgres           [.] AllocSetAlloc                        -      -            
+     2.16%  libc.so.6          [.] __syscall_cancel                     -      -            
+     1.72%  postgres           [.] gingetbitmap                         -      -            
+     1.29%  [kernel.kallsyms]  [k] do_syscall_64                        -      -            
+     1.29%  libc.so.6          [.] __strlen_evex                        -      -            
+     1.29%  libc.so.6          [.] llseek@GLIBC_2.2.5                   -      -            
+     1.29%  postgres           [.] ExecScan                             -      -            
+     1.29%  postgres           [.] core_yylex                           -      -            
+     1.29%  postgres           [.] palloc0                              -      -            
+     1.29%  postgres           [.] tbm_begin_private_iterate            -      -            
+     0.86%  [kernel.kallsyms]  [k] _raw_spin_unlock_irq                 -      -            
+     0.86%  [kernel.kallsyms]  [k] ep_poll                              -      -            
+     0.86%  [kernel.kallsyms]  [k] unix_stream_sendmsg                  -      -            
+     0.86%  libc.so.6          [.] __memset_avx512_unaligned_erms       -      -            
+     0.86%  libc.so.6          [.] __strncmp_evex                       -      -            
+     0.86%  libc.so.6          [.] _int_free_chunk                      -      -            
+     0.86%  libc.so.6          [.] _int_free_merge_chunk                -      -            
+     0.86%  libc.so.6          [.] _int_malloc                          -      -            
+     0.86%  postgres           [.] CreatePortal                         -      -            
+     0.86%  postgres           [.] HeapTupleSatisfiesVisibility         -      -            
+     0.86%  postgres           [.] base_yyparse                         -      -            
+     0.86%  postgres           [.] expression_tree_walker_impl          -      -            
+     0.86%  postgres           [.] ginNewScanKey                        -      -            
+     0.86%  postgres           [.] tbm_add_tuples                       -      -            
+     0.86%  postgres           [.] tsCompareString                      -      -            
+     0.86%  postgres           [.] 0x000000000059c947                   -      -            
+     0.43%  [kernel.kallsyms]  [k] __memcg_slab_free_hook               -      -            
+     0.43%  [kernel.kallsyms]  [k] __memcg_slab_post_alloc_hook         -      -            
+     0.43%  [kernel.kallsyms]  [k] __sys_recvfrom                       -      -            
+     0.43%  [kernel.kallsyms]  [k] _copy_from_iter                      -      -            
+     0.43%  [kernel.kallsyms]  [k] _raw_spin_lock                       -      -            
+     0.43%  [kernel.kallsyms]  [k] _raw_spin_unlock                     -      -            
+     0.43%  [kernel.kallsyms]  [k] check_heap_object                    -      -            
+     0.43%  [kernel.kallsyms]  [k] ep_item_poll.isra.0                  -      -            
+     0.43%  [kernel.kallsyms]  [k] ep_send_events                       -      -            
+     0.43%  [kernel.kallsyms]  [k] fdget                                -      -            
+     0.43%  [kernel.kallsyms]  [k] mutex_lock                           -      -            
+     0.43%  [kernel.kallsyms]  [k] mutex_unlock                         -      -            
+     0.43%  [kernel.kallsyms]  [k] schedule_hrtimeout_range             -      -            
+     0.43%  [kernel.kallsyms]  [k] security_socket_sendmsg              -      -            
+     0.43%  [kernel.kallsyms]  [k] sock_alloc_send_pskb                 -      -            
+     0.43%  [kernel.kallsyms]  [k] sock_poll                            -      -            
+     0.43%  [kernel.kallsyms]  [k] unix_poll                            -      -            
+     0.43%  [kernel.kallsyms]  [k] unix_stream_read_generic             -      -            
+     0.43%  [vdso]             [.] 0x0000000000000f4c                   -      -            
+     0.43%  libc.so.6          [.] __GI___strlcpy                       -      -            
+     0.43%  libc.so.6          [.] __memcmp_evex_movbe                  -      -            
+     0.43%  libc.so.6          [.] __memmove_avx512_unaligned_erms      -      -            
+     0.43%  libc.so.6          [.] __memset_avx512_unaligned            -      -            
+     0.43%  libc.so.6          [.] cfree@GLIBC_2.2.5                    -      -            
+     0.43%  libc.so.6          [.] malloc                               -      -            
+     0.43%  libc.so.6          [.] send                                 -      -            
+     0.43%  postgres           [.] AllocSetFree                         -      -            
+     0.43%  postgres           [.] BuildQueryCompletionString           -      -            
+     0.43%  postgres           [.] CheckExprStillValid                  -      -            
+     0.43%  postgres           [.] CreateDestReceiver                   -      -            
+     0.43%  postgres           [.] ExecBuildProjectionInfo              -      -            
+     0.43%  postgres           [.] ExecGetResultSlotOps                 -      -            
+     0.43%  postgres           [.] ExecInitNode                         -      -            
+     0.43%  postgres           [.] ExecuteQuery                         -      -            
+     0.43%  postgres           [.] ExprEvalPushStep                     -      -            
+     0.43%  postgres           [.] FreeExecutorState                    -      -            
+     0.43%  postgres           [.] GetCachedPlan                        -      -            
+     0.43%  postgres           [.] LWLockRelease                        -      -            
+     0.43%  postgres           [.] LockRelationOid                      -      -            
+     0.43%  postgres           [.] LockReleaseAll                       -      -            
+     0.43%  postgres           [.] MemoryContextDelete                  -      -            
+     0.43%  postgres           [.] PortalStart                          -      -            
+     0.43%  postgres           [.] ReadyForQuery                        -      -            
+     0.43%  postgres           [.] RegisterSnapshotOnOwner              -      -            
+     0.43%  postgres           [.] RelationIdGetRelation                -      -            
+     0.43%  postgres           [.] ReleaseBuffer                        -      -            
+     0.43%  postgres           [.] ReleaseCatCache                      -      -            
+     0.43%  postgres           [.] SearchPathMatchesCurrentEnvironment  -      -            
+     0.43%  postgres           [.] SendRowDescriptionMessage            -      -            
+     0.43%  postgres           [.] StartReadBuffer                      -      -            
+     0.43%  postgres           [.] StartReadBuffers                     -      -            
+     0.43%  postgres           [.] XidInMVCCSnapshot                    -      -            
+     0.43%  postgres           [.] build_attrmap_by_position            -      -            
+     0.43%  postgres           [.] copyObjectImpl                       -      -            
+     0.43%  postgres           [.] downcase_identifier                  -      -            
+     0.43%  postgres           [.] exprCollation                        -      -            
+     0.43%  postgres           [.] exprTypmod                           -      -            
+     0.43%  postgres           [.] ginPostingListDecodeAllSegments      -      -            
+     0.43%  postgres           [.] gin_extract_tsquery                  -      -            
+     0.43%  postgres           [.] gin_tsquery_triconsistent            -      -            
+     0.43%  postgres           [.] gintuple_get_key                     -      -            
+     0.43%  postgres           [.] heap_endscan                         -      -            
+     0.43%  postgres           [.] heap_fill_tuple                      -      -            
+     0.43%  postgres           [.] heap_form_tuple                      -      -            
+     0.43%  postgres           [.] heap_hot_search_buffer               -      -            
+     0.43%  postgres           [.] heap_page_prune_opt                  -      -            
+     0.43%  postgres           [.] initGinState                         -      -            
+     0.43%  postgres           [.] mdnblocks                            -      -            
+     0.43%  postgres           [.] pg_any_to_server                     -      -            
+     0.43%  postgres           [.] pgstat_get_transactional_drops       -      -            
+     0.43%  postgres           [.] read_stream_next_buffer              -      -            
+     0.43%  postgres           [.] relation_open                        -      -            
+     0.43%  postgres           [.] standard_ExecutorEnd                 -      -            
+     0.43%  postgres           [.] standard_ProcessUtility              -      -            
+     0.43%  postgres           [.] string_hash                          -      -            
+     0.43%  postgres           [.] strlen@plt                           -      -            
+     0.43%  postgres           [.] tsquery_requires_match               -      -            
+     0.43%  postgres           [.] uint32_hash                          -      -            
+     0.43%  postgres           [.] 0x000000000018d400                   -      -            
+     0.43%  postgres           [.] 0x0000000000198e53                   -      -            
+     0.43%  postgres           [.] 0x00000000001a78b9                   -      -            
+     0.43%  postgres           [.] 0x00000000001acc60                   -      -            
+     0.43%  postgres           [.] 0x00000000001ae31e                   -      -            
+     0.43%  postgres           [.] 0x00000000001ae967                   -      -            
+     0.43%  postgres           [.] 0x00000000001d73af                   -      -            
+     0.43%  postgres           [.] 0x00000000001d73bd                   -      -            
+     0.43%  postgres           [.] 0x00000000001e392f                   -      -            
+     0.43%  postgres           [.] 0x00000000001e3978                   -      -            
+     0.43%  postgres           [.] 0x00000000002773c0                   -      -            
+     0.43%  postgres           [.] 0x00000000003b0993                   -      -            
+     0.43%  postgres           [.] 0x00000000003bb89f                   -      -            
+     0.43%  postgres           [.] 0x00000000003bb8c7                   -      -            
+     0.43%  postgres           [.] 0x00000000003d1da8                   -      -            
+     0.43%  postgres           [.] 0x00000000003d80e0                   -      -            
+     0.43%  postgres           [.] 0x00000000003e02b0                   -      -            
+     0.43%  postgres           [.] 0x00000000003e0630                   -      -            
+     0.43%  postgres           [.] 0x0000000000409490                   -      -            
+     0.43%  postgres           [.] 0x0000000000427304                   -      -            
+     0.43%  postgres           [.] 0x000000000043ad9a                   -      -            
+     0.43%  postgres           [.] 0x000000000043b0b9                   -      -            
+     0.43%  postgres           [.] 0x000000000048e38c                   -      -            
+     0.43%  postgres           [.] 0x0000000000497983                   -      -            
+     0.43%  postgres           [.] 0x0000000000498090                   -      -            
+     0.43%  postgres           [.] 0x0000000000498095                   -      -            
+     0.43%  postgres           [.] 0x00000000005a13e0                   -      -            
+     0.43%  postgres           [.] 0x00000000005a1711                   -      -            
+     0.43%  postgres           [.] 0x00000000005c19a7                   -      -            
+     0.43%  postgres           [.] 0x00000000005c19d2                   -      -            
+     0.43%  postgres           [.] 0x00000000005c7351                   -      -            
+     0.43%  postgres           [.] 0x00000000005e294d                   -      -            
+     0.43%  postgres           [.] 0x00000000005e4c03                   -      -            
+     0.43%  postgres           [.] 0x0000000000717af7                   -      -            
+     0.43%  postgres           [.] 0x0000000000717aff                   -      -            
+     0.43%  postgres           [.] 0x0000000000755aac                   -      -            
+     0.43%  postgres           [.] 0x0000000000759596                   -      -            
+     0.43%  postgres           [.] 0x00000000007595e9                   -      -            
+     0.43%  postgres           [.] 0x0000000000759618                   -      -            
+     0.43%  postgres           [.] 0x0000000000759650                   -      -            
+     0.43%  postgres           [.] 0x00000000007596f9                   -      -            
+     0.43%  postgres           [.] 0x00000000007664d0                   -      -            
+     0.43%  postgres           [.] 0x000000000078db1e                   -      -            
+     0.43%  postgres           [.] 0x00000000007b1987                   -      -            
+     0.43%  postgres           [.] 0x00000000007b19f8                   -      -            
+     0.43%  postgres           [.] 0x00000000007b54ef                   -      -            
+     0.43%  postgres           [.] 0x00000000007c510a                   -      -            
+     0.43%  postgres           [.] 0x00000000007cbaa0                   -      -            
+     0.43%  postgres           [.] 0x00000000007cbb0b                   -      -            
+     0.43%  postgres           [.] 0x00000000007ceb8d                   -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

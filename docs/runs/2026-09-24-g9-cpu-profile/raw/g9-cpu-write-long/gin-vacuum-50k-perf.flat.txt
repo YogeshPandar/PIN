@@ -1,0 +1,33 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 17  of event 'cpu-clock'
+# Event count (approx.): 85427125
+#
+# Overhead  Shared Object      Symbol                           IPC   [IPC Coverage]
+# ........  .................  ...............................  ....................
+#
+     5.88%  [kernel.kallsyms]  [k] __handle_mm_fault            -      -            
+     5.88%  [kernel.kallsyms]  [k] _find_first_bit              -      -            
+     5.88%  [kernel.kallsyms]  [k] copy_folio_from_iter_atomic  -      -            
+     5.88%  [kernel.kallsyms]  [k] folio_mark_dirty             -      -            
+     5.88%  [kernel.kallsyms]  [k] folio_unlock                 -      -            
+     5.88%  postgres           [.] LockBufHdr                   -      -            
+     5.88%  postgres           [.] StartReadBuffers             -      -            
+     5.88%  postgres           [.] ginInsertBAEntries           -      -            
+     5.88%  postgres           [.] ginTraverseLock              -      -            
+     5.88%  postgres           [.] gin_cmp_tslexeme             -      -            
+     5.88%  postgres           [.] gintuple_get_key             -      -            
+     5.88%  postgres           [.] 0x00000000001a0b27           -      -            
+     5.88%  postgres           [.] 0x00000000001a0b97           -      -            
+     5.88%  postgres           [.] 0x00000000001a0be2           -      -            
+     5.88%  postgres           [.] 0x00000000001a4276           -      -            
+     5.88%  postgres           [.] 0x00000000001efd03           -      -            
+     5.88%  postgres           [.] 0x000000000059f010           -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

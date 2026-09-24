@@ -1,0 +1,69 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 100  of event 'cpu-clock'
+# Event count (approx.): 502512500
+#
+# Overhead  Shared Object      Symbol                       IPC   [IPC Coverage]
+# ........  .................  ...........................  ....................
+#
+    13.00%  postgres           [.] pg_qsort                 -      -            
+     9.00%  libc.so.6          [.] __memcmp_evex_movbe      -      -            
+     5.00%  postgres           [.] 0x00000000005f56ea       -      -            
+     4.00%  postgres           [.] AllocSetAlloc            -      -            
+     4.00%  postgres           [.] AllocSetFree             -      -            
+     4.00%  postgres           [.] 0x00000000005f65e2       -      -            
+     3.00%  postgres           [.] prsd_nexttoken           -      -            
+     3.00%  postgres           [.] 0x00000000005c7351       -      -            
+     3.00%  postgres           [.] 0x00000000005f5522       -      -            
+     3.00%  postgres           [.] 0x00000000005f5f1b       -      -            
+     2.00%  postgres           [.] FunctionCall3Coll        -      -            
+     2.00%  postgres           [.] 0x00000000005e883b       -      -            
+     2.00%  postgres           [.] 0x00000000005eb8eb       -      -            
+     2.00%  postgres           [.] 0x00000000005f54e0       -      -            
+     2.00%  postgres           [.] 0x00000000005f568a       -      -            
+     2.00%  postgres           [.] 0x00000000005f5efa       -      -            
+     1.00%  [kernel.kallsyms]  [k] do_syscall_64            -      -            
+     1.00%  [kernel.kallsyms]  [k] handle_softirqs          -      -            
+     1.00%  [kernel.kallsyms]  [k] shmem_add_to_page_cache  -      -            
+     1.00%  libc.so.6          [.] _int_malloc              -      -            
+     1.00%  postgres           [.] XLogInsertRecord         -      -            
+     1.00%  postgres           [.] XLogRegisterBuffer       -      -            
+     1.00%  postgres           [.] __ctype_b_loc@plt        -      -            
+     1.00%  postgres           [.] memcmp@plt               -      -            
+     1.00%  postgres           [.] memcpy@plt               -      -            
+     1.00%  postgres           [.] parsetext                -      -            
+     1.00%  postgres           [.] pg_utf_mblen_private     -      -            
+     1.00%  postgres           [.] pnstrdup                 -      -            
+     1.00%  postgres           [.] strnlen@plt              -      -            
+     1.00%  postgres           [.] 0x00000000003ce589       -      -            
+     1.00%  postgres           [.] 0x00000000005e886d       -      -            
+     1.00%  postgres           [.] 0x00000000005e8883       -      -            
+     1.00%  postgres           [.] 0x00000000005eb6c0       -      -            
+     1.00%  postgres           [.] 0x00000000005eb6f2       -      -            
+     1.00%  postgres           [.] 0x00000000005eb70c       -      -            
+     1.00%  postgres           [.] 0x00000000005eb756       -      -            
+     1.00%  postgres           [.] 0x00000000005eb7be       -      -            
+     1.00%  postgres           [.] 0x00000000005eb8bb       -      -            
+     1.00%  postgres           [.] 0x00000000005f54fb       -      -            
+     1.00%  postgres           [.] 0x00000000005f5500       -      -            
+     1.00%  postgres           [.] 0x00000000005f5528       -      -            
+     1.00%  postgres           [.] 0x00000000005f5650       -      -            
+     1.00%  postgres           [.] 0x00000000005f567f       -      -            
+     1.00%  postgres           [.] 0x00000000005f56b1       -      -            
+     1.00%  postgres           [.] 0x00000000005f5ee0       -      -            
+     1.00%  postgres           [.] 0x00000000005f5f9f       -      -            
+     1.00%  postgres           [.] 0x00000000005f646e       -      -            
+     1.00%  postgres           [.] 0x00000000005f6475       -      -            
+     1.00%  postgres           [.] 0x00000000005f6496       -      -            
+     1.00%  postgres           [.] 0x00000000005f64ae       -      -            
+     1.00%  postgres           [.] 0x00000000005f64b5       -      -            
+     1.00%  postgres           [.] 0x00000000005f6598       -      -            
+     1.00%  postgres           [.] 0x00000000005f65ea       -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

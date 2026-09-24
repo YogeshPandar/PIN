@@ -1,0 +1,9 @@
+{
+  "data_directory": "/tmp/pin-g9-bench/data",
+  "fsync": "on",
+  "synchronous_commit": "on",
+  "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+  "postmaster_pid": 94946,
+  "gin_fastupdate": "default on",
+  "note": "each table has a primary key and one text index"
+}

@@ -1,0 +1,68 @@
+[
+  {
+    "case": "rare",
+    "engine": "legacy",
+    "pid": 95811,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 0.156,
+      "index_rows": 20.0,
+      "index_hits": 11,
+      "index_reads": 0,
+      "heap_ms": 0.185,
+      "heap_hits": 15,
+      "heap_reads": 0,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.192
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [],
+    "profile": null
+  },
+  {
+    "case": "rare",
+    "engine": "grouped",
+    "pid": 95812,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 0.188,
+      "index_rows": 20.0,
+      "index_hits": 16,
+      "index_reads": 0,
+      "heap_ms": 0.198,
+      "heap_hits": 20,
+      "heap_reads": 0,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.202
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [],
+    "profile": null
+  },
+  {
+    "case": "rare",
+    "engine": "gin",
+    "pid": 95813,
+    "plan": {
+      "index_name": "pin_g6_bench_body_gin",
+      "index_ms": 0.016,
+      "index_rows": 20.0,
+      "index_hits": 2,
+      "index_reads": 0,
+      "heap_ms": 0.029,
+      "heap_hits": 6,
+      "heap_reads": 0,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.033
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [],
+    "profile": null
+  }
+]

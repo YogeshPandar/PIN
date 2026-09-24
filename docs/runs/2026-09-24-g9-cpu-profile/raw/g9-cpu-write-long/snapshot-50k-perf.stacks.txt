@@ -1,0 +1,913 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 217  of event 'cpu-clock'
+# Event count (approx.): 1090452125
+#
+# Overhead  Shared Object         Symbol                                                                                                                                                                                                                     IPC   [IPC Coverage]
+# ........  ....................  .........................................................................................................................................................................................................................  ....................
+#
+    25.81%  libc.so.6             [.] __memmove_avx512_unaligned_erms                                                                                                                                                                                        -      -            
+            |
+            ---__memmove_avx512_unaligned_erms
+               |          
+               |--7.37%--load_any<pin::parallel::VacuumStore> (inlined)
+               |          
+               |--5.07%--branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+               |          |          
+               |          |--2.30%--resolve<pin::parallel::VacuumStore> (inlined)
+               |          |          
+               |          |--1.38%--load<pin::parallel::VacuumStore> (inlined)
+               |          |          resolve<pin::parallel::VacuumStore> (inlined)
+               |          |          
+               |          |--0.92%--load_any<pin::parallel::VacuumStore> (inlined)
+               |          |          
+               |           --0.46%--append<pin::parallel::VacuumStore, pin_core::mutable::grouped::storage::write_record::{closure_env#1}<pin::parallel::VacuumStore>> (inlined)
+               |                     write_record<pin::parallel::VacuumStore> (inlined)
+               |          
+               |--4.61%--load<pin::parallel::VacuumStore> (inlined)
+               |          |          
+               |           --3.69%--resolve<pin::parallel::VacuumStore> (inlined)
+               |          
+               |--3.69%--resolve<pin::parallel::VacuumStore> (inlined)
+               |          
+               |--2.76%--pin_storage_read
+               |          |          
+               |          |--0.46%--0x6000009e8
+               |          |          
+               |          |--0.46%--0x20000073b
+               |          |          
+               |          |--0.46%--0x200000735
+               |          |          
+               |          |--0.46%--0xc333
+               |          |          
+               |           --0.46%--0xc2f8
+               |          
+               |--1.84%--read_with<pin::parallel::{impl#0}::read::{closure_env#0}> (inlined)
+               |          
+                --0.46%--vacuum<pin::parallel::VacuumStore, pin::am::vacuum_pass::{closure#1}::{closure_env#0}> (inlined)
+
+     8.76%  [kernel.kallsyms]     [k] _copy_to_iter                                                                                                                                                                                                          -      -            
+            |
+            ---_copy_to_iter
+               copy_page_to_iter
+               shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               |          
+               |--1.84%--0x20000073a
+               |          
+               |--0.92%--0x20000073b
+               |          
+               |--0.46%--0x200000739
+               |          
+               |--0.46%--0xc341
+               |          
+               |--0.46%--0xc32a
+               |          
+               |--0.46%--0xc328
+               |          
+               |--0.46%--0xc311
+               |          
+               |--0.46%--0xc308
+               |          
+               |--0.46%--0xc2ff
+               |          
+                --0.46%--0xc2f3
+
+     8.76%  pin.so                [.] <pin_core::mutable::page::Page>::owner                                                                                                                                                                                 -      -            
+            |          
+            |--5.99%--owner (inlined)
+            |          0xffffffff02030302
+            |          
+            |--1.38%--bytes (inlined)
+            |          u16 (inlined)
+            |          owner_count (inlined)
+            |          owner (inlined)
+            |          |          
+            |          |--0.46%--0xc
+            |          |          
+            |           --0.46%--0x4
+            |          
+            |--0.92%--require (inlined)
+            |          owner_count (inlined)
+            |          owner (inlined)
+            |          |          
+            |          |--0.46%--0x353
+            |          |          
+            |           --0.46%--0x1c3
+            |          
+             --0.46%--owner_count (inlined)
+                       owner (inlined)
+                       0x173
+
+     4.61%  postgres              [.] pg_checksum_page                                                                                                                                                                                                       -      -            
+            |
+            ---pg_checksum_page
+               PageIsVerified
+               0x55c8c877f7e8
+               pgaio_io_call_complete_shared
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               |          
+               |--0.46%--0x20000073b
+               |          
+               |--0.46%--0x200000739
+               |          
+               |--0.46%--0x200000735
+               |          
+               |--0.46%--0xc33e
+               |          
+               |--0.46%--0xc332
+               |          
+               |--0.46%--0xc32d
+               |          
+               |--0.46%--0xc315
+               |          
+                --0.46%--0xc302
+
+     4.15%  pin.so                [.] <pin_core::mutable::page::Page>::validate                                                                                                                                                                              -      -            
+            |          
+            |--2.30%--next (inlined)
+            |          validate (inlined)
+            |          |          
+            |          |--1.38%--0xf
+            |          |          
+            |          |--0.46%--0x10100020000000f
+            |          |          
+            |           --0.46%--0x1001c0000000f
+            |          
+             --1.84%--validate (inlined)
+                       |          
+                       |--1.38%--0xf
+                       |          
+                        --0.46%--0x303000500000632
+
+     3.23%  [kernel.kallsyms]     [k] shmem_file_read_iter                                                                                                                                                                                                   -      -            
+            |
+            ---shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               |          
+               |--0.46%--0xc33f
+               |          
+                --0.46%--0xc31f
+
+     2.76%  postgres              [.] hash_search_with_hash_value                                                                                                                                                                                            -      -            
+            |
+            ---hash_search_with_hash_value
+               |          
+               |--1.84%--StartReadBuffer
+               |          ReadBufferExtended
+               |          pin_storage_read
+               |          |          
+               |           --0.46%--0x20000073a
+               |          
+                --0.92%--0x55c8c877ced5
+                          0x55c8c8781889
+                          StartReadBuffer
+                          ReadBufferExtended
+                          pin_storage_read
+                          |          
+                          |--0.46%--0x20000073b
+                          |          
+                           --0.46%--0xc343
+
+     2.30%  pin.so                [.] pin_core::mutable::load_any::<pin::parallel::VacuumStore>                                                                                                                                                              -      -            
+            |
+            ---load_any<pin::parallel::VacuumStore> (inlined)
+
+     1.84%  [kernel.kallsyms]     [k] do_syscall_64                                                                                                                                                                                                          -      -            
+            |
+            ---do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               |          
+               |--1.38%--__lseek64 (inlined)
+               |          mdnblocks
+               |          smgrnblocks
+               |          |          
+               |          |--0.92%--{closure#0} (inlined)
+               |          |          {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               |          |          call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               |          |          blocks (inlined)
+               |          |          load_any<pin::parallel::VacuumStore> (inlined)
+               |          |          
+               |           --0.46%--pin_storage_read
+               |                     0xc2ec
+               |          
+                --0.46%--__internal_syscall_cancel (inlined)
+                          __syscall_cancel
+                          __libc_pread64 (inlined)
+                          pgaio_io_perform_synchronously
+                          pgaio_io_stage
+                          0x55c8c877e9f1
+                          StartReadBuffer
+                          ReadBufferExtended
+                          pin_storage_read
+
+     1.84%  libc.so.6             [.] __memcmp_evex_movbe                                                                                                                                                                                                    -      -            
+            |
+            ---__memcmp_evex_movbe
+               0x55c8c891a588
+               0x55c8c899bc38
+               0x55c8c898bc8c
+               |          
+               |--1.38%--0x55c8c898c09d
+               |          |          
+               |          |--0.92%--0x55c8c898c09d
+               |          |          0x55c8c898c09d
+               |          |          0x55c8c898c09d
+               |          |          |          
+               |          |          |--0.46%--0x55c8c898c0c8
+               |          |          |          0x55c8c898c09d
+               |          |          |          0x55c8c898c0c8
+               |          |          |          0x55c8c898c09d
+               |          |          |          tuplesort_performsort
+               |          |          |          pin_group_sort_finish
+               |          |          |          
+               |          |           --0.46%--0x55c8c898c09d
+               |          |                     0x55c8c898c0c8
+               |          |                     0x55c8c898c0c8
+               |          |                     0x55c8c898c09d
+               |          |                     tuplesort_performsort
+               |          |                     pin_group_sort_finish
+               |          |          
+               |           --0.46%--0x55c8c898c0c8
+               |                     tuplesort_performsort
+               |                     pin_group_sort_finish
+               |          
+                --0.46%--tuplesort_performsort
+                          pin_group_sort_finish
+
+     1.84%  libc.so.6             [.] __memset_avx512_unaligned_erms                                                                                                                                                                                         -      -            
+            |
+            ---__memset_avx512_unaligned_erms
+               read_with<pin::parallel::{impl#0}::read::{closure_env#0}> (inlined)
+               |          
+               |--0.92%--0x303030303030302
+               |          
+               |--0.46%--0xbd00
+               |          
+                --0.46%--0xbcfa
+
+     1.84%  postgres              [.] pgstat_count_io_op                                                                                                                                                                                                     -      -            
+            |
+            ---pgstat_count_io_op
+               |          
+               |--0.92%--0x55c8c8781873
+               |          StartReadBuffer
+               |          ReadBufferExtended
+               |          pin_storage_read
+               |          |          
+               |          |--0.46%--0x200000739
+               |          |          
+               |           --0.46%--0xc344
+               |          
+                --0.92%--0x55c8c877ea26
+                          StartReadBuffer
+                          ReadBufferExtended
+                          pin_storage_read
+                          |          
+                           --0.46%--0xc30d
+
+     1.38%  [kernel.kallsyms]     [k] do_user_addr_fault                                                                                                                                                                                                     -      -            
+            |
+            ---do_user_addr_fault
+               exc_page_fault
+               asm_exc_page_fault
+               |          
+               |--0.46%--__memset_avx512_unaligned_erms
+               |          write<u8> (inlined)
+               |          extend_with<u8, alloc::alloc::Global> (inlined)
+               |          resize<u8, alloc::alloc::Global> (inlined)
+               |          buffer<u8> (inlined)
+               |          
+               |--0.46%--tuplesort_puttuple_common
+               |          tuplesort_putdatum
+               |          pin_group_sort_put
+               |          {closure#0} (inlined)
+               |          {closure#0}<(), pin::grouped::{impl#1}::put::{closure_env#0}> (inlined)
+               |          call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<(), pin::grouped::{impl#1}::put::{closure_env#0}>> (inlined)
+               |          flush<pin::grouped::PgSort> (inlined)
+               |          push<pin::grouped::PgSort> (inlined)
+               |          capture<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+               |          rebuild<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+               |          
+                --0.46%--0x55c8c8783f5c
+                          ReadBuffer
+                          pin_storage_extend
+                          0x980000073b
+                          0x8
+
+     1.38%  [kernel.kallsyms]     [k] filemap_get_entry                                                                                                                                                                                                      -      -            
+            |
+            ---filemap_get_entry
+               shmem_get_folio_gfp
+               shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               |          
+                --0.46%--0x200000739
+
+     1.38%  pin.so                [.] <pin_core::mutable::page::Page>::read_with::<<pin::parallel::VacuumStore as pin_core::mutable::PageStore>::read::{closure#0}>                                                                                          -      -            
+            |          
+            |--0.92%--pg_guard_ffi_boundary_impl<u32, pin::parallel::{impl#0}::read::{closure#0}::{closure_env#0}> (inlined)
+            |          pg_guard_ffi_boundary<u32, pin::parallel::{impl#0}::read::{closure#0}::{closure_env#0}> (inlined)
+            |          call<u32, pin::parallel::{impl#0}::read::{closure#0}::{closure_env#0}> (inlined)
+            |          {closure#0} (inlined)
+            |          read_with<pin::parallel::{impl#0}::read::{closure_env#0}> (inlined)
+            |          
+             --0.46%--read_with<pin::parallel::{impl#0}::read::{closure_env#0}> (inlined)
+                       0x20002324e494f
+
+     1.38%  pin.so                [.] pin_core::mutable::grouped::build::rebuild::<pin::parallel::VacuumStore, pin::grouped::PgSort>                                                                                                                         -      -            
+            |          
+            |--0.92%--next (inlined)
+            |          capture<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+            |          rebuild<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+            |          
+             --0.46%--push<pin::grouped::PgSort> (inlined)
+                       capture<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+                       rebuild<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+
+     1.38%  postgres              [.] LockBufHdr                                                                                                                                                                                                             -      -            
+            |
+            ---LockBufHdr
+               |          
+               |--0.46%--StrategyGetBuffer
+               |          0x55c8c87818c3
+               |          0x55c8c8783f2e
+               |          ReadBuffer
+               |          pin_storage_extend
+               |          0xc350
+               |          0xfffffffffffffffe
+               |          
+               |--0.46%--TerminateBufferIO
+               |          0x55c8c877f78e
+               |          pgaio_io_call_complete_shared
+               |          pgaio_io_perform_synchronously
+               |          pgaio_io_stage
+               |          0x55c8c877e9f1
+               |          StartReadBuffer
+               |          ReadBufferExtended
+               |          pin_storage_read
+               |          0xc303
+               |          
+                --0.46%--0x55c8c877ce56
+                          0x55c8c8781889
+                          StartReadBuffer
+                          ReadBufferExtended
+                          pin_storage_read
+
+     0.92%  [kernel.kallsyms]     [k] __fsnotify_parent                                                                                                                                                                                                      -      -            
+            |
+            ---__fsnotify_parent
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               |          
+               |--0.46%--0x20000073b
+               |          
+                --0.46%--0x200000739
+
+     0.92%  [kernel.kallsyms]     [k] fdget_pos                                                                                                                                                                                                              -      -            
+            |
+            ---fdget_pos
+               ksys_lseek
+               __x64_sys_lseek
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               {closure#0} (inlined)
+               {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               blocks (inlined)
+               load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.92%  [kernel.kallsyms]     [k] handle_softirqs                                                                                                                                                                                                        -      -            
+            |
+            ---handle_softirqs
+               __irq_exit_rcu
+               irq_exit_rcu
+               sysvec_apic_timer_interrupt
+               asm_sysvec_apic_timer_interrupt
+               |          
+               |--0.46%--branch<(), pin_core::error::Error> (inlined)
+               |          validate (inlined)
+               |          
+                --0.46%--__memmove_avx512_unaligned_erms
+                          load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.92%  libc.so.6             [.] __syscall_cancel                                                                                                                                                                                                       -      -            
+            |
+            ---__internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.92%  pin.so                [.] <pin_core::mutable::page::Page>::bucket                                                                                                                                                                                -      -            
+            |          
+            |--0.46%--eq (inlined)
+            |          ne<pin_core::mutable::page::PageKind, pin_core::mutable::page::PageKind> (inlined)
+            |          require (inlined)
+            |          bucket (inlined)
+            |          
+             --0.46%--checked_sub (inlined)
+                       get<u8> (inlined)
+                       get<u8> (inlined)
+                       get<u8, core::ops::range::RangeFrom<usize>> (inlined)
+                       u32 (inlined)
+                       bucket (inlined)
+                       0x1f000006b5
+
+     0.92%  pin.so                [.] pin_core::mutable::compact::inspect::<pin::parallel::VacuumStore>                                                                                                                                                      -      -            
+            |          
+            |--0.46%--is_some_and<pin_core::mutable::page::OwnerRef, pin_core::mutable::compact::inspect::{closure_env#0}<pin::parallel::VacuumStore>> (inlined)
+            |          inspect<pin::parallel::VacuumStore> (inlined)
+            |          
+             --0.46%--inspect<pin::parallel::VacuumStore> (inlined)
+
+     0.92%  pin.so                [.] pin_core::mutable::page::read_delta                                                                                                                                                                                    -      -            
+            |
+            ---read_delta (inlined)
+               |          
+                --0.46%--0xaf0b
+                          0x2
+                          0x1010001010000
+
+     0.92%  pin.so                [.] pin_core::mutable::reader::resolve::<pin::parallel::VacuumStore>                                                                                                                                                       -      -            
+            |
+            ---branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+               load<pin::parallel::VacuumStore> (inlined)
+               resolve<pin::parallel::VacuumStore> (inlined)
+
+     0.92%  postgres              [.] 0x0000000000228020                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c8409020
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.46%  [kernel.kallsyms]     [k] folio_unlock                                                                                                                                                                                                           -      -            
+            |
+            ---folio_unlock
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               FileWriteV
+               mdwritev
+               0x55c8c8780103
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     0.46%  [kernel.kallsyms]     [k] make_vfsuid                                                                                                                                                                                                            -      -            
+            |
+            ---make_vfsuid
+               touch_atime
+               shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.46%  [kernel.kallsyms]     [k] shmem_add_to_page_cache                                                                                                                                                                                                -      -            
+            |
+            ---shmem_add_to_page_cache
+               shmem_alloc_and_add_folio
+               shmem_get_folio_gfp
+               shmem_write_begin
+               generic_perform_write
+               shmem_file_write_iter
+               do_iter_readv_writev
+               vfs_writev
+               do_pwritev
+               __x64_sys_pwritev
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               pwritev64
+               pg_pwritev_with_retry
+               pg_pwrite_zeros
+               0x55c8c842cc38
+               XLogFileInit
+               0x55c8c8430bcd
+               XLogFlush
+               0x55c8c87801bb
+               0x55c8c87819bc
+               0x55c8c8783f2e
+               ReadBuffer
+               pin_storage_extend
+
+     0.46%  [kernel.kallsyms]     [k] x64_sys_call                                                                                                                                                                                                           -      -            
+            |
+            ---x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               {closure#0} (inlined)
+               {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               blocks (inlined)
+               load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.46%  [kernel.kallsyms]     [k] xas_load                                                                                                                                                                                                               -      -            
+            |
+            ---xas_load
+               filemap_get_entry
+               shmem_get_folio_gfp
+               shmem_file_read_iter
+               vfs_read
+               __x64_sys_pread64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pread64 (inlined)
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0x200000739
+
+     0.46%  ld-linux-x86-64.so.2  [.] __tls_get_addr                                                                                                                                                                                                         -      -            
+            |
+            ---__tls_get_addr
+               {closure#1} (inlined)
+               call_once<pgrx_pg_sys::submodules::thread_check::nonzero_thread_id::BYTE::{constant#0}::{closure_env#1}, (core::option::Option<&mut core::option::Option<u8>>)> (inlined)
+               try_with<u8, pgrx_pg_sys::submodules::thread_check::nonzero_thread_id::{closure_env#0}, core::num::nonzero::NonZero<usize>> (inlined)
+               with<u8, pgrx_pg_sys::submodules::thread_check::nonzero_thread_id::{closure_env#0}, core::num::nonzero::NonZero<usize>> (inlined)
+               nonzero_thread_id (inlined)
+               check_active_thread (inlined)
+
+     0.46%  libc.so.6             [.] __sigsetjmp                                                                                                                                                                                                            -      -            
+            |
+            ---__sigsetjmp
+               call_with_sigsetjmp<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::parallel::{impl#0}::read::{closure#0}::{closure_env#0}>> (inlined)
+
+     0.46%  pin.so                [.] <pin::parallel::VacuumStore as pin_core::mutable::PageStore>::interrupt                                                                                                                                                -      -            
+            |
+            ---interrupt (inlined)
+
+     0.46%  pin.so                [.] <pin::storage_impl::PgStore as pin_core::mutable::PageStore>::blocks                                                                                                                                                   -      -            
+            |
+            ---pg_guard_ffi_boundary_impl<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               pg_guard_ffi_boundary<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               blocks (inlined)
+               blocks (inlined)
+               load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.46%  pin.so                [.] <pin::storage_impl::PgStore as pin_core::mutable::PageStore>::commit                                                                                                                                                   -      -            
+            |
+            ---commit (inlined)
+
+     0.46%  pin.so                [.] <pin_core::mutable::page::OwnerRef>::read                                                                                                                                                                              -      -            
+            |
+            ---take (inlined)
+               array<2> (inlined)
+               u16 (inlined)
+               read (inlined)
+               0x1f0100001effff
+
+     0.46%  pin.so                [.] <pin_core::mutable::page::Page>::owner_count                                                                                                                                                                           -      -            
+            |
+            ---owner_count (inlined)
+               0xb0
+
+     0.46%  pin.so                [.] cee_scape::asm_based::call_with_sigsetjmp::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<u32, <pin::parallel::VacuumStore as pin_core::mutable::PageStore>::read::{closure#0}::{closure#0}>::{closure#0}>  -      -            
+            |
+            ---call_with_sigsetjmp<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::parallel::{impl#0}::read::{closure#0}::{closure_env#0}>> (inlined)
+
+     0.46%  pin.so                [.] pin_core::mutable::compact::compact_with_mode::<pin::parallel::VacuumStore>                                                                                                                                            -      -            
+            |
+            ---next (inlined)
+               rewrite<pin::parallel::VacuumStore> (inlined)
+               compact_with_mode<pin::parallel::VacuumStore> (inlined)
+
+     0.46%  pin.so                [.] pin_storage_blocks                                                                                                                                                                                                     -      -            
+            |
+            ---pin_storage_blocks
+               0x585
+
+     0.46%  pin.so                [.] pin_storage_read                                                                                                                                                                                                       -      -            
+            |
+            ---pin_storage_read
+               0xc347
+
+     0.46%  postgres              [.] ConditionVariableBroadcast                                                                                                                                                                                             -      -            
+            |
+            ---ConditionVariableBroadcast
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0x20000073a
+
+     0.46%  postgres              [.] FileSize                                                                                                                                                                                                               -      -            
+            |
+            ---FileSize
+               mdnblocks
+               smgrnblocks
+               {closure#0} (inlined)
+               {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               blocks (inlined)
+               load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.46%  postgres              [.] GenericXLogRegisterBuffer                                                                                                                                                                                              -      -            
+            |
+            ---GenericXLogRegisterBuffer
+               pin_storage_commit
+
+     0.46%  postgres              [.] LWLockAcquire                                                                                                                                                                                                          -      -            
+            |
+            ---LWLockAcquire
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0x20000073b
+
+     0.46%  postgres              [.] LWLockRelease                                                                                                                                                                                                          -      -            
+            |
+            ---LWLockRelease
+               UnlockReleaseBuffer
+               pin_storage_read
+
+     0.46%  postgres              [.] PageSetChecksumCopy                                                                                                                                                                                                    -      -            
+            |
+            ---PageSetChecksumCopy
+               0x55c8c87800b1
+               0x55c8c87819bc
+               StartReadBuffers
+               0x55c8c878241c
+               0x55c8c8782738
+               read_stream_next_buffer
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+
+     0.46%  postgres              [.] ResourceOwnerEnlarge                                                                                                                                                                                                   -      -            
+            |
+            ---ResourceOwnerEnlarge
+               StartBufferIO
+               0x55c8c877e794
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0xc329
+
+     0.46%  postgres              [.] StartReadBuffer                                                                                                                                                                                                        -      -            
+            |
+            ---StartReadBuffer
+               0x55c8c8791b31
+               0x55c8c879289a
+               heap_vacuum_rel
+               0x55c8c8588059
+               vacuum
+               ExecVacuum
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c502b
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+
+     0.46%  postgres              [.] mdnblocks                                                                                                                                                                                                              -      -            
+            |
+            ---mdnblocks
+               smgrnblocks
+               {closure#0} (inlined)
+               {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               blocks (inlined)
+               load_any<pin::parallel::VacuumStore> (inlined)
+
+     0.46%  postgres              [.] mdstartreadv                                                                                                                                                                                                           -      -            
+            |
+            ---mdstartreadv
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0x20000073a
+
+     0.46%  postgres              [.] pgaio_io_register_callbacks                                                                                                                                                                                            -      -            
+            |
+            ---pgaio_io_register_callbacks
+               mdstartreadv
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.46%  postgres              [.] pgstat_get_entry_ref                                                                                                                                                                                                   -      -            
+            |
+            ---pgstat_get_entry_ref
+               0x55c8c877e72d
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+               0xc322
+
+     0.46%  postgres              [.] tuplesort_puttuple_common                                                                                                                                                                                              -      -            
+            |
+            ---tuplesort_puttuple_common
+               tuplesort_putdatum
+               pin_group_sort_put
+               {closure#0} (inlined)
+               {closure#0}<(), pin::grouped::{impl#1}::put::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<(), pin::grouped::{impl#1}::put::{closure_env#0}>> (inlined)
+               flush<pin::grouped::PgSort> (inlined)
+               push<pin::grouped::PgSort> (inlined)
+               capture<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+               rebuild<pin::parallel::VacuumStore, pin::grouped::PgSort> (inlined)
+
+     0.46%  postgres              [.] 0x00000000005a95ba                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c878a5ba
+               mdstartreadv
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.46%  postgres              [.] 0x00000000005c19a7                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c87a29a7
+               LWLockAcquire
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.46%  postgres              [.] 0x00000000005c737a                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c87a837a
+               LWLockRelease
+               UnlockReleaseBuffer
+               pin_storage_read
+               0x20000073a
+
+     0.46%  postgres              [.] 0x00000000005db5d0                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c87bc5d0
+               pgaio_io_call_complete_shared
+               pgaio_io_perform_synchronously
+               pgaio_io_stage
+               0x55c8c877e9f1
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.46%  postgres              [.] 0x00000000007aac95                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c898bc95
+               0x55c8c898c09d
+               0x55c8c898c09d
+               0x55c8c898c09d
+               0x55c8c898c09d
+               0x55c8c898c09d
+               0x55c8c898c0c8
+               tuplesort_performsort
+               pin_group_sort_finish
+
+     0.46%  postgres              [.] 0x00000000007babe0                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c899bbe0
+               0x55c8c898bc8c
+               0x55c8c898c0c8
+               tuplesort_performsort
+               pin_group_sort_finish
+
+     0.46%  postgres              [.] 0x00000000007bac45                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c899bc45
+               0x55c8c898bc8c
+               tuplesort_performsort
+               pin_group_sort_finish
+
+     0.46%  postgres              [.] 0x00000000007bac79                                                                                                                                                                                                     -      -            
+            |
+            ---0x55c8c899bc79
+               0x55c8c898bcb1
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

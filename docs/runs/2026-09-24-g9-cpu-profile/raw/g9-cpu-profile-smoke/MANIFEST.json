@@ -1,0 +1,86 @@
+[
+  {
+    "file": "environment.json",
+    "bytes": 407,
+    "sha256": "6c47f7b63dbda52265fcc9449fdeb235fa74f402a861d364b8d3e907cf73eeeb"
+  },
+  {
+    "file": "plans.json",
+    "bytes": 1587,
+    "sha256": "c9e69c4abd7cf475259cd1ec3065480425ee203d6af93170f4e9e872893d7467"
+  },
+  {
+    "file": "rare-gin-perf.data.gz",
+    "raw_file": "rare-gin-perf.data",
+    "raw_bytes": 2005472,
+    "raw_sha256": "a0bf62b4a8caef1c79f98b43d0ed67ac2853bdc70bf34e8c64e470f34d47173f",
+    "gzip_bytes": 91309,
+    "gzip_sha256": "d51879a0155bf1bf4bd3873a985164614159b42d02cae524ac614b893a220fc2"
+  },
+  {
+    "file": "rare-gin-perf.dso.txt",
+    "bytes": 428,
+    "sha256": "b025d855f0b2c4f044199a00b8f39f51c1cb8950aaf345295e9dffa6aa7fcb66"
+  },
+  {
+    "file": "rare-gin-perf.flat.txt",
+    "bytes": 15035,
+    "sha256": "a29047b2e37f1652bbbdf484c6200ac4c5f1eba69ab84e6450a6df2eacd43900"
+  },
+  {
+    "file": "rare-gin-perf.txt",
+    "bytes": 29272,
+    "sha256": "91dec28412d0a6260f27e8371a518e278d007887b6aca46df0cdc7534cf3b10d"
+  },
+  {
+    "file": "rare-grouped-perf.data.gz",
+    "raw_file": "rare-grouped-perf.data",
+    "raw_bytes": 2534728,
+    "raw_sha256": "c3cfca09686fe66ad73006d65e83266e19b7f749c21e5fcbe78d106ba1d63558",
+    "gzip_bytes": 187574,
+    "gzip_sha256": "0e3e02a329856cd53c8470b93e25563e388215585ee692a4c90fca41e7668fbb"
+  },
+  {
+    "file": "rare-grouped-perf.dso.txt",
+    "bytes": 458,
+    "sha256": "7b90c96504e5690865fba285c7f61f7e15b17ef4e29caba88b2a92cfc9235ca3"
+  },
+  {
+    "file": "rare-grouped-perf.flat.txt",
+    "bytes": 42458,
+    "sha256": "df86e434133f505f278f3d7f81fff2bfccd49a34d2aa31e768e883cfc6972928"
+  },
+  {
+    "file": "rare-grouped-perf.txt",
+    "bytes": 54725,
+    "sha256": "4cb20ad8b9b13a686aff576444fc571a27fb3421b8803209cf47ebe765e833aa"
+  },
+  {
+    "file": "rare-legacy-perf.data.gz",
+    "raw_file": "rare-legacy-perf.data",
+    "raw_bytes": 2358912,
+    "raw_sha256": "080c5865343b0b9e2e3b29fff020f319c038528c22e52c2c5dd48cfac8553aaa",
+    "gzip_bytes": 142227,
+    "gzip_sha256": "b3f3874928078fe54850953e3d7c29ec8af194249fd5e365bcf52d3cb780c4e9"
+  },
+  {
+    "file": "rare-legacy-perf.dso.txt",
+    "bytes": 479,
+    "sha256": "590c4bb33c8860679e7fb51dde6da1f251dbd71216cec1fff5f55d33592e31f9"
+  },
+  {
+    "file": "rare-legacy-perf.flat.txt",
+    "bytes": 49192,
+    "sha256": "af80dbcc515e69b87ea511ae18b1edaf1b58bd357f9019ce8b638d05b23d0fbc"
+  },
+  {
+    "file": "rare-legacy-perf.txt",
+    "bytes": 65410,
+    "sha256": "d85488989e377a5af7d680cc4b24cc6759e5b0cc3a2186b1eec2998e97f09723"
+  },
+  {
+    "file": "results.json",
+    "bytes": 6784,
+    "sha256": "445c2464dcfa796820a15dbef30727ba625f937427025f21765803bb140529be"
+  }
+]

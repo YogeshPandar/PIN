@@ -11,6 +11,9 @@ remaining gates are recorded in the final section of this document.
 **Update, 24 September:** The merged G9 grouped-storage adapter was qualified
 locally and measured on the 20,000-row fixture. See the
 [G9 review](docs/runs/2026-09-24-g9-review/README.md) for results and limits.
+The [G9 CPU profile](docs/runs/2026-09-24-g9-cpu-profile/README.md) adds
+backend on-CPU measurements, write-delta and insert costs, sampled call stacks,
+and the complete raw profiler archive.
 The historical measurements below remain tied to their stated code head.
 
 ## What the benchmark actually says

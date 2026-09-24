@@ -1,0 +1,290 @@
+[
+  {
+    "case": "rare",
+    "engine": "legacy",
+    "pid": 95695,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 0.178,
+      "index_rows": 20.0,
+      "index_hits": 6,
+      "index_reads": 5,
+      "heap_ms": 0.441,
+      "heap_hits": 6,
+      "heap_reads": 9,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.452
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 7677,
+        "matching_rows": 20,
+        "elapsed_ns": 500056045,
+        "backend": {
+          "on_cpu_ns": 374578860,
+          "runqueue_ns": 477040,
+          "timeslices": 7681,
+          "user_ticks": 34,
+          "system_ticks": 4,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 7661,
+          "nonvoluntary_ctxt_switches": 20,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 48.792348573661585,
+        "runqueue_us_per_query": 0.062138856324084925,
+        "wall_us_per_query": 65.13690829751205,
+        "qps_single_client": 15352.279163028616,
+        "backend_cpu_fraction_of_wall": 0.7490737563226538
+      }
+    ],
+    "profile": null
+  },
+  {
+    "case": "rare",
+    "engine": "grouped",
+    "pid": 95696,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 0.237,
+      "index_rows": 20.0,
+      "index_hits": 11,
+      "index_reads": 5,
+      "heap_ms": 0.249,
+      "heap_hits": 15,
+      "heap_reads": 5,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.253
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 6407,
+        "matching_rows": 20,
+        "elapsed_ns": 500014349,
+        "backend": {
+          "on_cpu_ns": 402381028,
+          "runqueue_ns": 5051631,
+          "timeslices": 6407,
+          "user_ticks": 37,
+          "system_ticks": 4,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 5822,
+          "nonvoluntary_ctxt_switches": 585,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 62.80334446698923,
+        "runqueue_us_per_query": 0.7884549711253317,
+        "wall_us_per_query": 78.04188372093023,
+        "qps_single_client": 12813.63227438099,
+        "backend_cpu_fraction_of_wall": 0.80473896160128
+      }
+    ],
+    "profile": null
+  },
+  {
+    "case": "rare",
+    "engine": "gin",
+    "pid": 95697,
+    "plan": {
+      "index_name": "pin_g6_bench_body_gin",
+      "index_ms": 0.03,
+      "index_rows": 20.0,
+      "index_hits": 1,
+      "index_reads": 1,
+      "heap_ms": 0.047,
+      "heap_hits": 5,
+      "heap_reads": 1,
+      "heap_exact_blocks": 4,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 0.051
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 14029,
+        "matching_rows": 20,
+        "elapsed_ns": 500068090,
+        "backend": {
+          "on_cpu_ns": 318754545,
+          "runqueue_ns": 749359,
+          "timeslices": 14030,
+          "user_ticks": 26,
+          "system_ticks": 5,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 14012,
+          "nonvoluntary_ctxt_switches": 18,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 22.72111661558201,
+        "runqueue_us_per_query": 0.053414997505167865,
+        "wall_us_per_query": 35.64531256682586,
+        "qps_single_client": 28054.17958182455,
+        "backend_cpu_fraction_of_wall": 0.6374222858331152
+      }
+    ],
+    "profile": null
+  },
+  {
+    "case": "and",
+    "engine": "legacy",
+    "pid": 95698,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 11.882,
+      "index_rows": 15000.0,
+      "index_hits": 9,
+      "index_reads": 611,
+      "heap_ms": 18.64,
+      "heap_hits": 13,
+      "heap_reads": 3108,
+      "heap_exact_blocks": 2501,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 19.753
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 57,
+        "matching_rows": 15000,
+        "elapsed_ns": 503882086,
+        "backend": {
+          "on_cpu_ns": 498771809,
+          "runqueue_ns": 76991,
+          "timeslices": 62,
+          "user_ticks": 48,
+          "system_ticks": 1,
+          "minor_faults": 3306,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 57,
+          "nonvoluntary_ctxt_switches": 5,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 8750.382614035088,
+        "runqueue_us_per_query": 1.350719298245614,
+        "wall_us_per_query": 8840.036596491229,
+        "qps_single_client": 113.12170363603678,
+        "backend_cpu_fraction_of_wall": 0.9898581887668061
+      }
+    ],
+    "profile": null
+  },
+  {
+    "case": "and",
+    "engine": "grouped",
+    "pid": 95699,
+    "plan": {
+      "index_name": "pin_g6_bench_body",
+      "index_ms": 1.623,
+      "index_rows": 15000.0,
+      "index_hits": 24,
+      "index_reads": 28,
+      "heap_ms": 4.75,
+      "heap_hits": 2525,
+      "heap_reads": 28,
+      "heap_exact_blocks": 2501,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 5.579
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 179,
+        "matching_rows": 15000,
+        "elapsed_ns": 502426402,
+        "backend": {
+          "on_cpu_ns": 489519061,
+          "runqueue_ns": 79367,
+          "timeslices": 186,
+          "user_ticks": 48,
+          "system_ticks": 2,
+          "minor_faults": 11993,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 179,
+          "nonvoluntary_ctxt_switches": 7,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 2734.7433575418995,
+        "runqueue_us_per_query": 0.44339106145251395,
+        "wall_us_per_query": 2806.8514078212293,
+        "qps_single_client": 356.2710862475734,
+        "backend_cpu_fraction_of_wall": 0.9743099865997886
+      }
+    ],
+    "profile": null
+  },
+  {
+    "case": "and",
+    "engine": "gin",
+    "pid": 95700,
+    "plan": {
+      "index_name": "pin_g6_bench_body_gin",
+      "index_ms": 1.902,
+      "index_rows": 15000.0,
+      "index_hits": 5,
+      "index_reads": 8,
+      "heap_ms": 4.767,
+      "heap_hits": 2506,
+      "heap_reads": 8,
+      "heap_exact_blocks": 2501,
+      "heap_lossy_blocks": 0,
+      "heap_recheck_rows": 0,
+      "total_ms": 5.601
+    },
+    "server_build_revision": "86d49b984df277c14f453698a118a68920b6604b",
+    "samples": [
+      {
+        "queries": 138,
+        "matching_rows": 15000,
+        "elapsed_ns": 501518442,
+        "backend": {
+          "on_cpu_ns": 492269600,
+          "runqueue_ns": 38011,
+          "timeslices": 143,
+          "user_ticks": 48,
+          "system_ticks": 2,
+          "minor_faults": 11730,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 138,
+          "nonvoluntary_ctxt_switches": 5,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        },
+        "backend_cpu_us_per_query": 3567.1710144927533,
+        "runqueue_us_per_query": 0.27544202898550724,
+        "wall_us_per_query": 3634.191608695652,
+        "qps_single_client": 275.1643577645346,
+        "backend_cpu_fraction_of_wall": 0.981558321239162
+      }
+    ],
+    "profile": null
+  }
+]

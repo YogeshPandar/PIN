@@ -1,0 +1,851 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 304  of event 'cpu-clock'
+# Event count (approx.): 1527638000
+#
+# Overhead  Shared Object      Symbol                                                                                                                                                                                                                          IPC   [IPC Coverage]
+# ........  .................  ..............................................................................................................................................................................................................................  ....................
+#
+    27.63%  pin.so             [.] <pin_core::mutable::page::Page>::validate                                                                                                                                                                                   -      -            
+            |          
+            |--15.46%--next (inlined)
+            |          validate (inlined)
+            |          |          
+            |           --15.13%--0xf
+            |          
+            |--10.20%--validate (inlined)
+            |          |          
+            |           --9.87%--0xf
+            |          
+            |--1.32%--branch<(u32, u32), pin_core::error::Error> (inlined)
+            |          validate (inlined)
+            |          
+             --0.66%--is_some_and<pin_core::mutable::page::OwnerRef, pin_core::mutable::page::{impl#1}::validate::{closure_env#0}> (inlined)
+                       validate (inlined)
+                       0xf
+
+    20.72%  libc.so.6          [.] __memmove_avx512_unaligned_erms                                                                                                                                                                                             -      -            
+            |
+            ---__memmove_avx512_unaligned_erms
+               |          
+               |--4.61%--find_term<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |          |--2.63%--0x1ffffffffffff
+               |          |          
+               |           --0.33%--0x400000002
+               |          
+               |--3.29%--load_any<pin::storage_impl::PgStore> (inlined)
+               |          
+               |--3.29%--load<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |          |--1.97%--find_term<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |          |--0.99%--reserve_owner<pin::storage_impl::PgStore> (inlined)
+               |          |          insert<pin::storage_impl::PgStore> (inlined)
+               |          |          |          
+               |          |          |--0.33%--0x30303000000001f
+               |          |          |          
+               |          |          |--0.33%--0x3e6ffffffff
+               |          |          |          
+               |          |           --0.33%--0x171ffffffff
+               |          |          
+               |           --0.33%--insert<pin::storage_impl::PgStore> (inlined)
+               |          
+               |--3.29%--branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+               |          |          
+               |          |--1.64%--load<pin::storage_impl::PgStore> (inlined)
+               |          |          |          
+               |          |          |--0.99%--find_term<pin::storage_impl::PgStore> (inlined)
+               |          |          |          
+               |          |          |--0.33%--reserve_owner<pin::storage_impl::PgStore> (inlined)
+               |          |          |          insert<pin::storage_impl::PgStore> (inlined)
+               |          |          |          0x1d5ffffffff
+               |          |          |          
+               |          |           --0.33%--insert<pin::storage_impl::PgStore> (inlined)
+               |          |                     0x5ffffffff
+               |          |          
+               |          |--0.66%--load_any<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |          |--0.66%--find_term<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |           --0.33%--insert<pin::storage_impl::PgStore> (inlined)
+               |          
+               |--1.32%--pin_storage_commit
+               |          
+               |--1.32%--load_posting<pin::storage_impl::PgStore> (inlined)
+               |          link_term<pin::storage_impl::PgStore> (inlined)
+               |          
+               |--1.32%--insert<pin::storage_impl::PgStore> (inlined)
+               |          |          
+               |          |--0.33%--0xfffffffffffffffe
+               |          |          
+               |           --0.33%--0xb106a9000000b0
+               |          
+               |--0.66%--read_with<pin::storage_impl::{impl#1}::read::{closure_env#0}> (inlined)
+               |          
+               |--0.66%--pin_storage_read
+               |          
+               |--0.66%--link_term<pin::storage_impl::PgStore> (inlined)
+               |          
+                --0.33%--0x55c8c840849a
+                          0x55c8c840906b
+                          GenericXLogFinish
+                          pin_storage_commit
+
+     6.25%  postgres           [.] 0x0000000000228020                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c8409020
+               GenericXLogFinish
+               pin_storage_commit
+
+     5.92%  pin.so             [.] unicode_segmentation::tables::word::word_category                                                                                                                                                                           -      -            
+            |          
+            |--2.96%--binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          |          
+            |          |--0.33%--0x1dd
+            |          |          
+            |          |--0.33%--0x1d1
+            |          |          
+            |          |--0.33%--0x1a4
+            |          |          
+            |          |--0.33%--0x16d
+            |          |          
+            |          |--0.33%--0x16c
+            |          |          
+            |          |--0.33%--0x155
+            |          |          
+            |          |--0.33%--0x106
+            |          |          
+            |          |--0.33%--0xcd
+            |          |          
+            |           --0.33%--0x1d
+            |          
+            |--1.64%--select_unpredictable<usize> (inlined)
+            |          binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          |          
+            |          |--0.33%--0x1b0
+            |          |          
+            |          |--0.33%--0xa5
+            |          |          
+            |          |--0.33%--0x79
+            |          |          
+            |          |--0.33%--0x34
+            |          |          
+            |           --0.33%--0x1
+            |          
+            |--0.33%--word_category (inlined)
+            |          
+            |--0.33%--get_unchecked<(char, char, unicode_segmentation::tables::word::WordCat)> (inlined)
+            |          get_unchecked<(char, char, unicode_segmentation::tables::word::WordCat), usize> (inlined)
+            |          binary_search_by<(char, char, unicode_segmentation::tables::word::WordCat), unicode_segmentation::tables::word::bsearch_range_value_table::{closure_env#0}> (inlined)
+            |          bsearch_range_value_table (inlined)
+            |          word_category (inlined)
+            |          0xde
+            |          
+            |--0.33%--get<u16> (inlined)
+            |          get<u16, core::ops::range::Range<usize>> (inlined)
+            |          word_category (inlined)
+            |          
+             --0.33%--bsearch_range_value_table (inlined)
+                       word_category (inlined)
+                       0x128
+
+     2.96%  pin.so             [.] <pin_core::mutable::page::OwnerRef>::read                                                                                                                                                                                   -      -            
+            |          
+            |--1.32%--read (inlined)
+            |          
+            |--1.32%--checked_add (inlined)
+            |          take (inlined)
+            |          array<2> (inlined)
+            |          u16 (inlined)
+            |          read (inlined)
+            |          
+             --0.33%--new (inlined)
+                       read (inlined)
+
+     2.96%  pin.so             [.] <pin_core::mutable::page::Page>::bucket                                                                                                                                                                                     -      -            
+            |          
+            |--0.99%--eq (inlined)
+            |          ne<pin_core::mutable::page::PageKind, pin_core::mutable::page::PageKind> (inlined)
+            |          require (inlined)
+            |          bucket (inlined)
+            |          |          
+            |           --0.33%--0x20616d6d6166ff
+            |          
+            |--0.66%--pair_valid (inlined)
+            |          bucket (inlined)
+            |          validate (inlined)
+            |          
+            |--0.66%--checked_sub (inlined)
+            |          get<u8> (inlined)
+            |          get<u8> (inlined)
+            |          get<u8, core::ops::range::RangeFrom<usize>> (inlined)
+            |          u32 (inlined)
+            |          bucket (inlined)
+            |          |          
+            |           --0.33%--0x6d616700000023ff
+            |          
+             --0.66%--bucket (inlined)
+                       validate (inlined)
+
+     2.63%  pin.so             [.] <pin_core::analysis::Analyzed>::analyze                                                                                                                                                                                     -      -            
+            |          
+            |--1.64%--next (inlined)
+            |          next (inlined)
+            |          try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |          find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |          next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |          next (inlined)
+            |          analyze (inlined)
+            |          
+            |--0.33%--push_mut<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+            |          push<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+            |          analyze (inlined)
+            |          
+            |--0.33%--next_code_point<core::slice::iter::Iter<u8>> (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          next (inlined)
+            |          try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+            |          find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+            |          next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+            |          next (inlined)
+            |          analyze (inlined)
+            |          
+             --0.33%--next<u8> (inlined)
+                       next_code_point<core::slice::iter::Iter<u8>> (inlined)
+                       next (inlined)
+                       next (inlined)
+                       next (inlined)
+                       next (inlined)
+                       try_fold<unicode_segmentation::word::UWordBoundIndices, (), core::iter::traits::iterator::Iterator::find::check::{closure_env#0}<(usize, &str), &mut fn(&(usize, &str)) -> bool>, core::ops::control_flow::ControlFlow<(usize, &str), ()>> (inlined)
+                       find<unicode_segmentation::word::UWordBoundIndices, &mut fn(&(usize, &str)) -> bool> (inlined)
+                       next<unicode_segmentation::word::UWordBoundIndices, fn(&(usize, &str)) -> bool> (inlined)
+                       next (inlined)
+                       analyze (inlined)
+
+     1.64%  [kernel.kallsyms]  [k] do_syscall_64                                                                                                                                                                                                               -      -            
+            |
+            ---do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               |          
+               |--0.99%--pin_storage_commit
+               |          
+                --0.66%--{closure#0} (inlined)
+                          {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+                          call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+                          load_any<pin::storage_impl::PgStore> (inlined)
+
+     1.64%  pin.so             [.] pin_core::mutable::writer::link_term::<pin::storage_impl::PgStore>                                                                                                                                                          -      -            
+            |          
+            |--0.99%--link_term<pin::storage_impl::PgStore> (inlined)
+            |          
+             --0.66%--branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+                       load_posting<pin::storage_impl::PgStore> (inlined)
+                       link_term<pin::storage_impl::PgStore> (inlined)
+
+     1.32%  pin.so             [.] <pin_core::codec::bytes::Writer>::var_u32                                                                                                                                                                                   -      -            
+            |          
+            |--0.66%--var_u32 (inlined)
+            |          |          
+            |           --0.33%--0x72fe00000003
+            |          
+             --0.66%--copy_nonoverlapping<u8> (inlined)
+                       copy_from_slice_impl<u8> (inlined)
+                       copy_from_slice<u8> (inlined)
+                       put (inlined)
+                       var_u32 (inlined)
+
+     1.32%  pin.so             [.] pin_core::mutable::load_any::<pin::storage_impl::PgStore>                                                                                                                                                                   -      -            
+            |          
+            |--0.99%--branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+            |          load_any<pin::storage_impl::PgStore> (inlined)
+            |          
+             --0.33%--load_any<pin::storage_impl::PgStore> (inlined)
+
+     0.99%  libc.so.6          [.] llseek@GLIBC_2.2.5                                                                                                                                                                                                          -      -            
+            |
+            ---__lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               |          
+               |--0.66%--pin_storage_commit
+               |          
+                --0.33%--pin_storage_read
+
+     0.99%  pin.so             [.] core::slice::sort::unstable::quicksort::quicksort::<pin_core::analysis::Token, <[pin_core::analysis::Token]>::sort_unstable_by<<pin_core::mutable::document::PreparedDocument>::prepare::{closure#0}>::{closure#0}>         -      -            
+            |          
+            |--0.33%--partition_lomuto_branchless_cyclic<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          partition<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          sort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          sort_unstable_by<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+            |          prepare (inlined)
+            |          
+            |--0.33%--copy_nonoverlapping<pin_core::analysis::Token> (inlined)
+            |          {closure#0}<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          partition_lomuto_branchless_cyclic<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          partition<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          sort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          sort_unstable_by<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+            |          prepare (inlined)
+            |          
+             --0.33%--copy<pin_core::analysis::Token> (inlined)
+                       {closure#0}<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                       partition_lomuto_branchless_cyclic<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                       partition<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                       quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                       sort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                       sort_unstable_by<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+                       prepare (inlined)
+
+     0.99%  postgres           [.] GenericXLogRegisterBuffer                                                                                                                                                                                                   -      -            
+            |
+            ---GenericXLogRegisterBuffer
+               pin_storage_commit
+
+     0.99%  postgres           [.] 0x0000000000228027                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c8409027
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.66%  [kernel.kallsyms]  [k] fdget_pos                                                                                                                                                                                                                   -      -            
+            |
+            ---fdget_pos
+               ksys_lseek
+               __x64_sys_lseek
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               |          
+               |--0.33%--{closure#0} (inlined)
+               |          {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               |          call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               |          load_any<pin::storage_impl::PgStore> (inlined)
+               |          
+                --0.33%--pin_storage_read
+
+     0.66%  libc.so.6          [.] __memcmp_evex_movbe                                                                                                                                                                                                         -      -            
+            |
+            ---__memcmp_evex_movbe
+               compare<u8> (inlined)
+               cmp<u8> (inlined)
+               cmp (inlined)
+               {closure#0} (inlined)
+               {closure#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+               |          
+               |--0.33%--{closure#0}<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          partition_lomuto_branchless_cyclic<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          partition<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          quicksort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          sort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               |          sort_unstable_by<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+               |          prepare (inlined)
+               |          
+                --0.33%--find_existing_run<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                          ipnsort<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+                          0xf39
+
+     0.66%  libc.so.6          [.] __memset_avx512_unaligned_erms                                                                                                                                                                                              -      -            
+            |
+            ---__memset_avx512_unaligned_erms
+               |          
+               |--0.33%--read_with<pin::storage_impl::{impl#1}::read::{closure_env#0}> (inlined)
+               |          
+                --0.33%--GenericXLogFinish
+                          pin_storage_commit
+
+     0.66%  pin.so             [.] <pin_core::mutable::document::PreparedDocument>::prepare                                                                                                                                                                    -      -            
+            |          
+            |--0.33%--prepare (inlined)
+            |          0x3ff
+            |          
+             --0.33%--div_ceil (inlined)
+                       var_u32_len (inlined)
+                       prepare (inlined)
+
+     0.66%  pin.so             [.] <pin_core::mutable::page::Page>::owner                                                                                                                                                                                      -      -            
+            |
+            ---owner (inlined)
+               |          
+               |--0.33%--0xffffffff00ffffff
+               |          
+                --0.33%--0xfffffffeffffffff
+
+     0.66%  pin.so             [.] <pin_core::mutable::page::Page>::term                                                                                                                                                                                       -      -            
+            |
+            ---eq (inlined)
+               ne<pin_core::mutable::page::PageKind, pin_core::mutable::page::PageKind> (inlined)
+               require (inlined)
+               terms (inlined)
+               term (inlined)
+               0x3
+
+     0.66%  pin.so             [.] <pin_core::mutable::page::Page>::terms                                                                                                                                                                                      -      -            
+            |
+            ---bytes (inlined)
+               terms (inlined)
+               find_term<pin::storage_impl::PgStore> (inlined)
+
+     0.66%  pin.so             [.] <pin_core::mutable::page::Terms as core::iter::traits::iterator::Iterator>::next                                                                                                                                            -      -            
+            |          
+            |--0.33%--remaining (inlined)
+            |          next (inlined)
+            |          
+             --0.33%--next (inlined)
+
+     0.66%  pin.so             [.] core::slice::sort::shared::smallsort::sort4_stable::<pin_core::analysis::Token, <[pin_core::analysis::Token]>::sort_unstable_by<<pin_core::mutable::document::PreparedDocument>::prepare::{closure#0}>::{closure#0}>        -      -            
+            |          
+            |--0.33%--{closure#0} (inlined)
+            |          {closure#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}> (inlined)
+            |          sort4_stable<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+            |          
+             --0.33%--copy_nonoverlapping<pin_core::analysis::Token> (inlined)
+                       sort4_stable<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+
+     0.66%  pin.so             [.] pin_core::mutable::writer::insert::<pin::storage_impl::PgStore>                                                                                                                                                             -      -            
+            |          
+            |--0.33%--reserve_owner<pin::storage_impl::PgStore> (inlined)
+            |          insert<pin::storage_impl::PgStore> (inlined)
+            |          0xb00568000000af
+            |          
+             --0.33%--insert<pin::storage_impl::PgStore> (inlined)
+
+     0.66%  pin.so             [.] pin_storage_commit                                                                                                                                                                                                          -      -            
+            |
+            ---pin_storage_commit
+
+     0.66%  postgres           [.] StartReadBuffer                                                                                                                                                                                                             -      -            
+            |
+            ---StartReadBuffer
+               |          
+               |--0.33%--ReadBuffer
+               |          pin_storage_commit
+               |          
+                --0.33%--_bt_getroot
+                          _bt_search
+                          _bt_doinsert
+                          btinsert
+                          ExecInsertIndexTuples
+                          0x55c8c85d8f25
+                          0x55c8c85dacb2
+                          standard_ExecutorRun
+                          0x55c8c87c3094
+                          0x55c8c87c5140
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     0.66%  postgres           [.] hash_bytes                                                                                                                                                                                                                  -      -            
+            |
+            ---hash_bytes
+               |          
+               |--0.33%--LockAcquireExtended
+               |          LockPage
+               |          {closure#0}<pin_core::mutable::page::OwnerRef, pin::am::insert_value::{closure_env#1}> (inlined)
+               |          {closure#0}<(), pin::storage_impl::with_writer::{closure_env#0}<pin_core::mutable::page::OwnerRef, pin::am::insert_value::{closure_env#1}>> (inlined)
+               |          call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<(), pin::storage_impl::with_writer::{closure_env#0}<pin_core::mutable::page::OwnerRef, pin::am::insert_value::{closure_env#1}>>> (inlined)
+               |          
+                --0.33%--StartReadBuffer
+                          ReadBufferExtended
+                          pin_storage_read
+
+     0.66%  postgres           [.] hash_search_with_hash_value                                                                                                                                                                                                 -      -            
+            |
+            ---hash_search_with_hash_value
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.66%  postgres           [.] pg_comp_crc32c_avx512                                                                                                                                                                                                       -      -            
+            |
+            ---pg_comp_crc32c_avx512
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  [kernel.kallsyms]  [k] __fsnotify_parent                                                                                                                                                                                                           -      -            
+            |
+            ---__fsnotify_parent
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               0x55c8c8430e6f
+               0x55c8c8431504
+               0x55c8c8429642
+               XLogInsertRecord
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  [kernel.kallsyms]  [k] __raw_callee_save___pv_queued_spin_unlock                                                                                                                                                                                   -      -            
+            |
+            ---__raw_callee_save___pv_queued_spin_unlock
+               _raw_spin_unlock
+               dquot_add_space
+               __dquot_alloc_space
+               shmem_inode_acct_blocks
+               shmem_alloc_and_add_folio
+               shmem_get_folio_gfp
+               shmem_write_begin
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               pg_pwritev_with_retry
+               pg_pwrite_zeros
+               FileZero
+               mdzeroextend
+               smgrzeroextend
+               0x55c8c8784323
+               0x55c8c83cf61d
+               RelationGetBufferForTuple
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+
+     0.33%  [kernel.kallsyms]  [k] copy_folio_from_iter_atomic                                                                                                                                                                                                 -      -            
+            |
+            ---copy_folio_from_iter_atomic
+               generic_perform_write
+               shmem_file_write_iter
+               vfs_write
+               __x64_sys_pwrite64
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __internal_syscall_cancel (inlined)
+               __syscall_cancel
+               __libc_pwrite64 (inlined)
+               0x55c8c8430e6f
+               0x55c8c8431504
+               0x55c8c8429642
+               XLogInsertRecord
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  [kernel.kallsyms]  [k] handle_mm_fault                                                                                                                                                                                                             -      -            
+            |
+            ---handle_mm_fault
+               do_user_addr_fault
+               exc_page_fault
+               asm_exc_page_fault
+               0x55c8c8783f55
+               0x55c8c83cf61d
+               RelationGetBufferForTuple
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.33%  [kernel.kallsyms]  [k] shmem_file_llseek                                                                                                                                                                                                           -      -            
+            |
+            ---shmem_file_llseek
+               __x64_sys_lseek
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               __lseek64 (inlined)
+               mdnblocks
+               smgrnblocks
+               {closure#0} (inlined)
+               {closure#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}> (inlined)
+               call_from_c_to_rust<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::blocks::{closure_env#0}>> (inlined)
+               load_any<pin::storage_impl::PgStore> (inlined)
+
+     0.33%  libc.so.6          [.] __sigsetjmp                                                                                                                                                                                                                 -      -            
+            |
+            ---__sigsetjmp
+               call_with_sigsetjmp<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl::{closure_env#0}<u32, pin::storage_impl::{impl#1}::read::{closure#0}::{closure_env#0}>> (inlined)
+
+     0.33%  libc.so.6          [.] _int_free_chunk                                                                                                                                                                                                             -      -            
+            |
+            ---_int_free_chunk
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  libc.so.6          [.] malloc                                                                                                                                                                                                                      -      -            
+            |
+            ---tcache_get_n (inlined)
+               tcache_get (inlined)
+               __libc_malloc (inlined)
+               alloc (inlined)
+               alloc_impl_runtime (inlined)
+               alloc_impl (inlined)
+               allocate (inlined)
+               finish_grow<alloc::alloc::Global> (inlined)
+               0x5fc3d6d9cb476cfa
+
+     0.33%  pin.so             [.] <pin_core::codec::bytes::Reader>::u16                                                                                                                                                                                       -      -            
+            |
+            ---take (inlined)
+               array<2> (inlined)
+               u16 (inlined)
+
+     0.33%  pin.so             [.] <pin_core::mutable::document::DocumentTerms as core::iter::traits::iterator::Iterator>::next                                                                                                                                -      -            
+            |
+            ---{closure#0} (inlined)
+               next (inlined)
+
+     0.33%  pin.so             [.] <pin_core::mutable::page::Page>::owner_count                                                                                                                                                                                -      -            
+            |
+            ---eq (inlined)
+               ne<pin_core::mutable::page::PageKind, pin_core::mutable::page::PageKind> (inlined)
+               require (inlined)
+               owner_count (inlined)
+               0xaf
+
+     0.33%  pin.so             [.] <pin_core::mutable::page::Page>::posting_refs                                                                                                                                                                               -      -            
+            |
+            ---bytes (inlined)
+               u16 (inlined)
+               posting_term (inlined)
+               posting_refs (inlined)
+
+     0.33%  pin.so             [.] <pin_core::mutable::page::Page>::reserve_incarnation                                                                                                                                                                        -      -            
+            |
+            ---bytes (inlined)
+               u64 (inlined)
+               reserve_incarnation (inlined)
+               reserve_owner<pin::storage_impl::PgStore> (inlined)
+               insert<pin::storage_impl::PgStore> (inlined)
+               0xfffffffffffffffe
+
+     0.33%  pin.so             [.] GenericXLogRegisterBuffer@plt                                                                                                                                                                                               -      -            
+            |
+            ---_fini (inlined)
+               0x691068ffffffffff
+
+     0.33%  pin.so             [.] __rustc::__rust_dealloc                                                                                                                                                                                                     -      -            
+            |
+            ---__rustc::__rust_dealloc
+
+     0.33%  pin.so             [.] core::slice::sort::shared::smallsort::small_sort_general::<pin_core::analysis::Token, <[pin_core::analysis::Token]>::sort_unstable_by<<pin_core::mutable::document::PreparedDocument>::prepare::{closure#0}>::{closure#0}>  -      -            
+            |
+            ---copy_nonoverlapping<pin_core::analysis::Token> (inlined)
+               merge_up<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               bidirectional_merge<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               small_sort_general_with_scratch<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+               small_sort_general<pin_core::analysis::Token, core::slice::{impl#0}::sort_unstable_by::{closure_env#0}<pin_core::analysis::Token, pin_core::mutable::document::{impl#0}::prepare::{closure_env#0}>> (inlined)
+
+     0.33%  pin.so             [.] pin::am::insert                                                                                                                                                                                                             -      -            
+            |
+            ---insert (inlined)
+
+     0.33%  pin.so             [.] pin_core::memory::reserve::<pin_core::analysis::TokenRange>                                                                                                                                                                 -      -            
+            |
+            ---len<pin_core::analysis::TokenRange, alloc::alloc::Global> (inlined)
+               reserve<pin_core::analysis::TokenRange> (inlined)
+
+     0.33%  postgres           [.] FileSize                                                                                                                                                                                                                    -      -            
+            |
+            ---FileSize
+               mdnblocks
+               smgrnblocks
+               pin_storage_read
+
+     0.33%  postgres           [.] MarkBufferDirty                                                                                                                                                                                                             -      -            
+            |
+            ---MarkBufferDirty
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] ResourceOwnerEnlarge                                                                                                                                                                                                        -      -            
+            |
+            ---ResourceOwnerEnlarge
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.33%  postgres           [.] _bt_compare                                                                                                                                                                                                                 -      -            
+            |
+            ---_bt_compare
+               0x55c8c83eaa37
+               _bt_search
+               _bt_doinsert
+               btinsert
+               ExecInsertIndexTuples
+               0x55c8c85d8f25
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.33%  postgres           [.] mdnblocks                                                                                                                                                                                                                   -      -            
+            |
+            ---mdnblocks
+               smgrnblocks
+
+     0.33%  postgres           [.] 0x0000000000228023                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c8409023
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x0000000000228031                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c8409031
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x00000000002280af                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c84090af
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x00000000002280cd                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c84090cd
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x000000000023fe48                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c8420e48
+               XLogInsertRecord
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x00000000002485ea                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c84295ea
+               XLogInsertRecord
+               XLogInsert
+               heap_insert
+               0x55c8c83c1e9a
+               0x55c8c85d8efe
+               0x55c8c85dacb2
+               standard_ExecutorRun
+               0x55c8c87c3094
+               0x55c8c87c5140
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               __libc_start_call_main
+               __libc_start_main_impl (inlined)
+               _start
+
+     0.33%  postgres           [.] 0x000000000059bb03                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c877cb03
+               StartReadBuffer
+               ReadBuffer
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x00000000005c1973                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c87a2973
+               LWLockAcquire
+               StartReadBuffer
+               ReadBufferExtended
+               pin_storage_read
+
+     0.33%  postgres           [.] 0x00000000005c19a7                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c87a29a7
+               LWLockAcquire
+               pin_storage_read
+
+     0.33%  postgres           [.] 0x00000000005c19d2                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c87a29d2
+               LWLockAcquire
+               0x55c8c8421088
+               XLogInsertRecord
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+     0.33%  postgres           [.] 0x00000000005c7351                                                                                                                                                                                                          -      -            
+            |
+            ---0x55c8c87a8351
+               LWLockRelease
+               XLogInsertRecord
+               XLogInsert
+               GenericXLogFinish
+               pin_storage_commit
+
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

@@ -1,0 +1,24 @@
+{
+  "operation": "VACUUM (INDEX_CLEANUP ON, PARALLEL 0) public.pin_cpu_write_long_gin_0",
+  "documents": 50000,
+  "backend_cpu_ns": 88415472,
+  "runqueue_ns": 1802865,
+  "wall_ns": 90858650,
+  "wal_bytes_cluster": 30499736,
+  "index_bytes_after": 4399104,
+  "proc": {
+    "on_cpu_ns": 88415472,
+    "runqueue_ns": 1802865,
+    "timeslices": 31,
+    "user_ticks": 6,
+    "system_ticks": 2,
+    "minor_faults": 2653,
+    "major_faults": 0,
+    "voluntary_ctxt_switches": 7,
+    "nonvoluntary_ctxt_switches": 24,
+    "syscr": 505,
+    "syscw": 3326,
+    "read_bytes": 0,
+    "write_bytes": 0
+  }
+}

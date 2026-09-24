@@ -1,0 +1,501 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 295  of event 'cpu-clock'
+# Event count (approx.): 1482411875
+#
+# Overhead  Shared Object      Symbol                                                                                                                                                                                                                                                                 IPC   [IPC Coverage]
+# ........  .................  .....................................................................................................................................................................................................................................................................  ....................
+#
+    22.37%  libc.so.6          [.] 0x00000000001bc512                                                                                                                                                                                                                                                 -      -            
+            |
+            ---0x72fee61bc512
+               |          
+               |--1.02%--load_any<pin::storage_impl::PgStore> (inlined)
+               |          
+               |--1.02%--branch<pin_core::mutable::page::Page, pin_core::error::Error> (inlined)
+               |          
+               |--0.68%--load<pin::storage_impl::PgStore> (inlined)
+               |          read_record<pin::storage_impl::PgStore> (inlined)
+               |          read_bitmap<pin::storage_impl::PgStore> (inlined)
+               |          
+                --0.68%--delta<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure_env#0}> (inlined)
+
+     3.05%  pin.so             [.] <pin_core::mutable::page::Page>::bucket                                                                                                                                                                                                                            -      -            
+     2.37%  [kernel.kallsyms]  [k] do_syscall_64                                                                                                                                                                                                                                                      -      -            
+            |
+            ---do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               |          
+               |--1.69%--llseek
+               |          mdnblocks
+               |          smgrnblocks
+               |          |          
+               |           --0.68%--pin_storage_read
+               |          
+                --0.68%--0x72fee60a83d6
+
+     2.03%  libc.so.6          [.] 0x00000000001bcad8                                                                                                                                                                                                                                                 -      -            
+            |
+            ---0x72fee61bcad8
+
+     2.03%  pin.so             [.] <pin_core::mutable::page::Page>::group_node_info                                                                                                                                                                                                                   -      -            
+     2.03%  pin.so             [.] pin_core::mutable::load_any::<pin::storage_impl::PgStore>                                                                                                                                                                                                          -      -            
+     1.69%  [kernel.kallsyms]  [k] finish_task_switch.isra.0                                                                                                                                                                                                                                          -      -            
+            |
+            ---finish_task_switch.isra.0
+               __schedule
+               schedule
+               schedule_hrtimeout_range_clock
+               schedule_hrtimeout_range
+               ep_poll
+               do_epoll_wait
+               __x64_sys_epoll_wait
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               0x72fee60a83d6
+               epoll_wait
+               WaitEventSetWait
+               secure_read
+               0x55c8c8607740
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     1.69%  libc.so.6          [.] llseek                                                                                                                                                                                                                                                             -      -            
+            |
+            ---llseek
+               mdnblocks
+               smgrnblocks
+               |          
+                --0.68%--pin_storage_read
+
+     1.69%  pin.so             [.] <pin_core::grouped::bitmap::Bitmap>::open                                                                                                                                                                                                                          -      -            
+            |          
+             --0.68%--open (inlined)
+
+     1.69%  postgres           [.] base_yyparse                                                                                                                                                                                                                                                       -      -            
+            |
+            ---base_yyparse
+               raw_parser
+               pg_parse_query
+               0x55c8c87c58ce
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     1.69%  postgres           [.] tbm_begin_private_iterate                                                                                                                                                                                                                                          -      -            
+            |
+            ---tbm_begin_private_iterate
+               0x55c8c85c156c
+               ExecScan
+               0x55c8c85b7350
+               0x55c8c85b8da9
+               standard_ExecutorRun
+               0x55c8c87c3b44
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     1.36%  [kernel.kallsyms]  [k] _raw_spin_unlock_irqrestore                                                                                                                                                                                                                                        -      -            
+            |
+            ---_raw_spin_unlock_irqrestore
+               __wake_up_sync_key
+               |          
+               |--0.68%--unix_write_space
+               |          sock_wfree
+               |          unix_wfree
+               |          skb_release_head_state
+               |          consume_skb
+               |          unix_stream_read_generic
+               |          unix_stream_recvmsg
+               |          sock_recvmsg
+               |          __sys_recvfrom
+               |          __x64_sys_recvfrom
+               |          x64_sys_call
+               |          do_syscall_64
+               |          entry_SYSCALL_64_after_hwframe
+               |          0x72fee60a83d6
+               |          recv
+               |          secure_read
+               |          0x55c8c8607740
+               |          PostgresMain
+               |          BackendMain
+               |          postmaster_child_launch
+               |          0x55c8c870fc5f
+               |          PostmasterMain
+               |          main
+               |          0x72fee602a8c0
+               |          __libc_start_main
+               |          _start
+               |          
+                --0.68%--sock_def_readable
+                          unix_stream_sendmsg
+                          __sys_sendto
+                          __x64_sys_sendto
+                          x64_sys_call
+                          do_syscall_64
+                          entry_SYSCALL_64_after_hwframe
+                          0x72fee60a83d6
+                          send
+                          secure_write
+                          0x55c8c860810a
+                          0x55c8c8608295
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          0x72fee602a8c0
+                          __libc_start_main
+                          _start
+
+     1.36%  libc.so.6          [.] cfree                                                                                                                                                                                                                                                              -      -            
+            |
+            ---cfree
+
+     1.36%  pin.so             [.] <pin_core::mutable::page::Page>::validate                                                                                                                                                                                                                          -      -            
+     1.36%  postgres           [.] AllocSetAlloc                                                                                                                                                                                                                                                      -      -            
+            |
+            ---AllocSetAlloc
+
+     1.36%  postgres           [.] hash_search_with_hash_value                                                                                                                                                                                                                                        -      -            
+            |
+            ---hash_search_with_hash_value
+               |          
+                --0.68%--StartReadBuffers
+                          0x55c8c878241c
+                          0x55c8c8782738
+                          read_stream_next_buffer
+                          0x55c8c83c45fc
+                          0x55c8c83c4af0
+                          0x55c8c85c12ec
+                          ExecScan
+                          0x55c8c85b7350
+                          0x55c8c85b8e62
+                          standard_ExecutorRun
+                          0x55c8c87c3b44
+                          PortalRun
+                          ExecuteQuery
+                          standard_ProcessUtility
+                          0x55c8c87c4f2b
+                          0x55c8c87c5384
+                          PortalRun
+                          0x55c8c87c5c02
+                          PostgresMain
+                          BackendMain
+                          postmaster_child_launch
+                          0x55c8c870fc5f
+                          PostmasterMain
+                          main
+                          0x72fee602a8c0
+                          __libc_start_main
+                          _start
+
+     1.02%  libc.so.6          [.] 0x00000000001bc193                                                                                                                                                                                                                                                 -      -            
+            |
+            ---0x72fee61bc193
+
+     1.02%  pin.so             [.] <pin_core::analysis::Analyzed>::analyze                                                                                                                                                                                                                            -      -            
+     1.02%  pin.so             [.] <pin_core::mutable::grouped::storage::Value>::read                                                                                                                                                                                                                 -      -            
+     1.02%  pin.so             [.] <pin_core::mutable::page::Page>::validate_group_node                                                                                                                                                                                                               -      -            
+     1.02%  pin.so             [.] pin_core::mutable::grouped::scan::scan_query::<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>                                                                                                                                -      -            
+     0.68%  [kernel.kallsyms]  [k] _raw_spin_lock                                                                                                                                                                                                                                                     -      -            
+            |
+            ---_raw_spin_lock
+               __sys_sendto
+               __x64_sys_sendto
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               0x72fee60a83d6
+               send
+               secure_write
+               0x55c8c860810a
+               0x55c8c8608295
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.68%  [kernel.kallsyms]  [k] ep_poll                                                                                                                                                                                                                                                            -      -            
+            |
+            ---ep_poll
+               do_epoll_wait
+               __x64_sys_epoll_wait
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               0x72fee60a83d6
+               epoll_wait
+               WaitEventSetWait
+               secure_read
+               0x55c8c8607740
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.68%  [kernel.kallsyms]  [k] skb_release_data                                                                                                                                                                                                                                                   -      -            
+            |
+            ---skb_release_data
+               consume_skb
+               unix_stream_read_generic
+               unix_stream_recvmsg
+               sock_recvmsg
+               __sys_recvfrom
+               __x64_sys_recvfrom
+               x64_sys_call
+               do_syscall_64
+               entry_SYSCALL_64_after_hwframe
+               0x72fee60a83d6
+               recv
+               secure_read
+               0x55c8c8607740
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.68%  libc.so.6          [.] __sigsetjmp                                                                                                                                                                                                                                                        -      -            
+            |
+            ---__sigsetjmp
+
+     0.68%  pin.so             [.] <pin_core::grouped::bitmap::Bitmap>::span                                                                                                                                                                                                                          -      -            
+     0.68%  pin.so             [.] <pin_core::mutable::page::Page>::terms                                                                                                                                                                                                                             -      -            
+     0.68%  pin.so             [.] pin_core::normalize::profile_text                                                                                                                                                                                                                                  -      -            
+     0.68%  pin.so             [.] pin_storage_read                                                                                                                                                                                                                                                   -      -            
+     0.68%  postgres           [.] AllocSetFree                                                                                                                                                                                                                                                       -      -            
+            |
+            ---AllocSetFree
+
+     0.68%  postgres           [.] ExecScan                                                                                                                                                                                                                                                           -      -            
+            |
+            ---ExecScan
+               0x55c8c85b7350
+
+     0.68%  postgres           [.] LockAcquireExtended                                                                                                                                                                                                                                                -      -            
+            |
+            ---LockAcquireExtended
+               LockRelationOid
+
+     0.68%  postgres           [.] exprType                                                                                                                                                                                                                                                           -      -            
+            |
+            ---exprType
+
+     0.68%  postgres           [.] mdnblocks                                                                                                                                                                                                                                                          -      -            
+            |
+            ---mdnblocks
+               smgrnblocks
+
+     0.68%  postgres           [.] smgrnblocks                                                                                                                                                                                                                                                        -      -            
+            |
+            ---smgrnblocks
+
+     0.68%  postgres           [.] standard_ProcessUtility                                                                                                                                                                                                                                            -      -            
+            |
+            ---standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.68%  postgres           [.] tuplestore_begin_heap                                                                                                                                                                                                                                              -      -            
+            |
+            ---tuplestore_begin_heap
+               PortalCreateHoldStore
+               0x55c8c87c5282
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.68%  postgres           [.] 0x00000000005c19a7                                                                                                                                                                                                                                                 -      -            
+            |
+            ---0x55c8c87a29a7
+               LWLockAcquire
+
+     0.68%  postgres           [.] 0x00000000005e28d0                                                                                                                                                                                                                                                 -      -            
+            |
+            ---0x55c8c87c38d0
+               PortalRun
+               ExecuteQuery
+               standard_ProcessUtility
+               0x55c8c87c4f2b
+               0x55c8c87c5384
+               PortalRun
+               0x55c8c87c5c02
+               PostgresMain
+               BackendMain
+               postmaster_child_launch
+               0x55c8c870fc5f
+               PostmasterMain
+               main
+               0x72fee602a8c0
+               __libc_start_main
+               _start
+
+     0.34%  [kernel.kallsyms]  [k] __check_object_size                                                                                                                                                                                                                                                -      -            
+     0.34%  [kernel.kallsyms]  [k] __pi_memset                                                                                                                                                                                                                                                        -      -            
+     0.34%  [kernel.kallsyms]  [k] __raw_callee_save___pv_queued_spin_unlock                                                                                                                                                                                                                          -      -            
+     0.34%  [kernel.kallsyms]  [k] _raw_spin_unlock_irq                                                                                                                                                                                                                                               -      -            
+     0.34%  [kernel.kallsyms]  [k] fdget_pos                                                                                                                                                                                                                                                          -      -            
+     0.34%  [kernel.kallsyms]  [k] kmem_cache_alloc_node_noprof                                                                                                                                                                                                                                       -      -            
+     0.34%  [kernel.kallsyms]  [k] mutex_lock                                                                                                                                                                                                                                                         -      -            
+     0.34%  [kernel.kallsyms]  [k] shmem_file_llseek                                                                                                                                                                                                                                                  -      -            
+     0.34%  [kernel.kallsyms]  [k] skb_set_owner_w                                                                                                                                                                                                                                                    -      -            
+     0.34%  [kernel.kallsyms]  [k] sock_wfree                                                                                                                                                                                                                                                         -      -            
+     0.34%  [kernel.kallsyms]  [k] unix_stream_sendmsg                                                                                                                                                                                                                                                -      -            
+     0.34%  [kernel.kallsyms]  [k] x64_sys_call                                                                                                                                                                                                                                                       -      -            
+     0.34%  [vdso]             [.] 0x0000000000000f4c                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] malloc                                                                                                                                                                                                                                                             -      -            
+     0.34%  libc.so.6          [.] 0x00000000000a83d6                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000000b9309                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000000baa0c                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000000baa66                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000000bb549                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000000bb569                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000001b2b65                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000001b6180                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000001b61a2                                                                                                                                                                                                                                                 -      -            
+     0.34%  libc.so.6          [.] 0x00000000001bc514                                                                                                                                                                                                                                                 -      -            
+     0.34%  pin.so             [.] <alloc::raw_vec::RawVecInner>::finish_grow                                                                                                                                                                                                                         -      -            
+     0.34%  pin.so             [.] <pin::storage_impl::PgStore as pin_core::mutable::PageStore>::blocks                                                                                                                                                                                               -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::grouped::storage::Cursor>::current::<pin::storage_impl::PgStore>                                                                                                                                                                               -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::page::OwnerRef>::read                                                                                                                                                                                                                          -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::page::Page>::group_entry                                                                                                                                                                                                                       -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::page::Page>::owner                                                                                                                                                                                                                             -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::page::Page>::read_with::<<pin::storage_impl::PgStore as pin_core::mutable::PageStore>::read::{closure#0}>                                                                                                                                      -      -            
+     0.34%  pin.so             [.] <pin_core::mutable::page::Page>::u32                                                                                                                                                                                                                               -      -            
+     0.34%  pin.so             [.] <pin_core::query::Query>::decode                                                                                                                                                                                                                                   -      -            
+     0.34%  pin.so             [.] __rustc::__rdl_alloc                                                                                                                                                                                                                                               -      -            
+     0.34%  pin.so             [.] cee_scape::asm_based::call_with_sigsetjmp::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<*mut pgrx_pg_sys::include::pg18::IndexScanDescData, pin::am::begin_scan::begin_scan_inner::{closure#1}>::{closure#0}>                                         -      -            
+     0.34%  pin.so             [.] cee_scape::asm_based::call_with_sigsetjmp::call_from_c_to_rust::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<i32, pgrx_pg_sys::include::pg18::GetDatabaseEncoding::{closure#0}>::{closure#0}>                                                         -      -            
+     0.34%  pin.so             [.] cee_scape::asm_based::call_with_sigsetjmp::call_from_c_to_rust::<pgrx_pg_sys::submodules::ffi::pg_guard_ffi_boundary_impl<u32, <pin::storage_impl::PgStore as pin_core::mutable::PageStore>::blocks::{closure#0}>::{closure#0}>                                    -      -            
+     0.34%  pin.so             [.] core::ptr::drop_glue::<pin_core::query::Query>                                                                                                                                                                                                                     -      -            
+     0.34%  pin.so             [.] pgrx_pg_sys::submodules::panic::run_guarded::<core::panic::unwind_safe::AssertUnwindSafe<pin::am::bitmap::{closure#0}>, i64>                                                                                                                                       -      -            
+     0.34%  pin.so             [.] pin::am::bitmap                                                                                                                                                                                                                                                    -      -            
+     0.34%  pin.so             [.] pin_core::grouped::query::evaluate_source::<pin_core::mutable::grouped::scan::Loaded<pin::storage_impl::PgStore>, pin_core::mutable::grouped::scan::scan_query<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>::{closure#8}>  -      -            
+     0.34%  pin.so             [.] pin_core::grouped::query::validate_program                                                                                                                                                                                                                         -      -            
+     0.34%  pin.so             [.] pin_core::memory::reserve::<u8>                                                                                                                                                                                                                                    -      -            
+     0.34%  pin.so             [.] pin_core::mutable::find_term::<pin::storage_impl::PgStore>                                                                                                                                                                                                         -      -            
+     0.34%  pin.so             [.] pin_core::mutable::following                                                                                                                                                                                                                                       -      -            
+     0.34%  pin.so             [.] pin_core::mutable::grouped::scan::compile                                                                                                                                                                                                                          -      -            
+     0.34%  pin.so             [.] pin_core::mutable::grouped::storage::read_bitmap::<pin::storage_impl::PgStore>                                                                                                                                                                                     -      -            
+     0.34%  pin.so             [.] pin_storage_blocks                                                                                                                                                                                                                                                 -      -            
+     0.34%  pin.so             [.] pin_storage_check                                                                                                                                                                                                                                                  -      -            
+     0.34%  postgres           [.] AllocSetContextCreateInternal                                                                                                                                                                                                                                      -      -            
+     0.34%  postgres           [.] AllocSetGetChunkSpace                                                                                                                                                                                                                                              -      -            
+     0.34%  postgres           [.] AtEOXact_RelationCache                                                                                                                                                                                                                                             -      -            
+     0.34%  postgres           [.] BuildQueryCompletionString                                                                                                                                                                                                                                         -      -            
+     0.34%  postgres           [.] ExecInitAgg                                                                                                                                                                                                                                                        -      -            
+     0.34%  postgres           [.] ExecInterpExprStillValid                                                                                                                                                                                                                                           -      -            
+     0.34%  postgres           [.] ExprEvalPushStep                                                                                                                                                                                                                                                   -      -            
+     0.34%  postgres           [.] GetCachedPlan                                                                                                                                                                                                                                                      -      -            
+     0.34%  postgres           [.] HeapTupleSatisfiesVisibility                                                                                                                                                                                                                                       -      -            
+     0.34%  postgres           [.] LWLockAcquire                                                                                                                                                                                                                                                      -      -            
+     0.34%  postgres           [.] LockRelationOid                                                                                                                                                                                                                                                    -      -            
+     0.34%  postgres           [.] MakeTupleTableSlot                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] MemoryContextDelete                                                                                                                                                                                                                                                -      -            
+     0.34%  postgres           [.] MultiExecBitmapIndexScan                                                                                                                                                                                                                                           -      -            
+     0.34%  postgres           [.] MultiExecProcNode                                                                                                                                                                                                                                                  -      -            
+     0.34%  postgres           [.] RecoveryInProgress                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] RelationGetNumberOfBlocksInFork                                                                                                                                                                                                                                    -      -            
+     0.34%  postgres           [.] ReleasePredicateLocks                                                                                                                                                                                                                                              -      -            
+     0.34%  postgres           [.] copyObjectImpl                                                                                                                                                                                                                                                     -      -            
+     0.34%  postgres           [.] core_yylex                                                                                                                                                                                                                                                         -      -            
+     0.34%  postgres           [.] hash_bytes                                                                                                                                                                                                                                                         -      -            
+     0.34%  postgres           [.] hash_seq_search                                                                                                                                                                                                                                                    -      -            
+     0.34%  postgres           [.] index_getbitmap                                                                                                                                                                                                                                                    -      -            
+     0.34%  postgres           [.] list_delete_nth_cell                                                                                                                                                                                                                                               -      -            
+     0.34%  postgres           [.] makeString                                                                                                                                                                                                                                                         -      -            
+     0.34%  postgres           [.] malloc@plt                                                                                                                                                                                                                                                         -      -            
+     0.34%  postgres           [.] palloc0                                                                                                                                                                                                                                                            -      -            
+     0.34%  postgres           [.] pg_plan_queries                                                                                                                                                                                                                                                    -      -            
+     0.34%  postgres           [.] pq_getmessage                                                                                                                                                                                                                                                      -      -            
+     0.34%  postgres           [.] standard_ExecutorRun                                                                                                                                                                                                                                               -      -            
+     0.34%  postgres           [.] tag_hash                                                                                                                                                                                                                                                           -      -            
+     0.34%  postgres           [.] tbm_add_tuples                                                                                                                                                                                                                                                     -      -            
+     0.34%  postgres           [.] tbm_extract_page_tuple                                                                                                                                                                                                                                             -      -            
+     0.34%  postgres           [.] 0x00000000001e35e2                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000001e3ab0                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000001fbc07                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x0000000000244f48                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000003ac928                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000003ac9cc                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000003cbee0                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000003daf61                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x0000000000409490                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x0000000000427304                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x000000000059c9e8                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000005c1970                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000005c7351                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000005e280e                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000005e4c88                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000007bc397                                                                                                                                                                                                                                                 -      -            
+     0.34%  postgres           [.] 0x00000000007cbaa4                                                                                                                                                                                                                                                 -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

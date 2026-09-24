@@ -1,0 +1,394 @@
+[
+  {
+    "engine": "pin",
+    "sample": 0,
+    "table": "pin_cpu_write_system_pin_0",
+    "rows": 50000,
+    "text_repeats": 32,
+    "sql": "INSERT INTO public.pin_cpu_write_system_pin_0(id, body) SELECT i, repeat('alpha beta gamma ', 32) || (i % 100)::text FROM generate_series(1, 50000) AS i",
+    "backend_cpu_ns": 7440309096,
+    "backend_cpu_us_per_row": 148.80618192,
+    "wall_ns": 7635996807,
+    "runqueue_ns": 179020289,
+    "wal_bytes_heap_and_index": 199923944,
+    "table_bytes": 31514624,
+    "index_bytes": 15179776,
+    "proc": {
+      "on_cpu_ns": 7440309096,
+      "runqueue_ns": 179020289,
+      "timeslices": 1476,
+      "user_ticks": 717,
+      "system_ticks": 27,
+      "minor_faults": 13279,
+      "major_faults": 1,
+      "voluntary_ctxt_switches": 47,
+      "nonvoluntary_ctxt_switches": 1429,
+      "syscr": 11,
+      "syscw": 20772,
+      "read_bytes": 69632,
+      "write_bytes": 0
+    },
+    "cluster_process_counters_including_0_5s_settle": {
+      "94946": {
+        "command": "/usr/lib/postgresql/18/bin/postgres -D /tmp/pin-g9-bench/data",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94947": {
+        "command": "postgres: io worker 0                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94948": {
+        "command": "postgres: io worker 1                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94949": {
+        "command": "postgres: io worker 2                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94950": {
+        "command": "postgres: checkpointer                                       ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94951": {
+        "command": "postgres: background writer                                  ",
+        "counters": {
+          "on_cpu_ns": 952261,
+          "runqueue_ns": 4525359,
+          "timeslices": 40,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 40,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94953": {
+        "command": "postgres: walwriter                                          ",
+        "counters": {
+          "on_cpu_ns": 28936853,
+          "runqueue_ns": 57742925,
+          "timeslices": 51,
+          "user_ticks": 1,
+          "system_ticks": 2,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 40,
+          "nonvoluntary_ctxt_switches": 11,
+          "syscr": 0,
+          "syscw": 38,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94954": {
+        "command": "postgres: logical replication launcher                       ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "153827": {
+        "command": "postgres: reing postgres [local] idle                        ",
+        "counters": {
+          "on_cpu_ns": 7440323563,
+          "runqueue_ns": 179415868,
+          "timeslices": 1477,
+          "user_ticks": 717,
+          "system_ticks": 27,
+          "minor_faults": 13279,
+          "major_faults": 1,
+          "voluntary_ctxt_switches": 48,
+          "nonvoluntary_ctxt_switches": 1429,
+          "syscr": 11,
+          "syscw": 20772,
+          "read_bytes": 69632,
+          "write_bytes": 0
+        }
+      }
+    },
+    "perf_data": ".artifacts/g9-cpu-write-system/pin_cpu_write_system_pin_0-perf.data",
+    "perf_stderr": ""
+  },
+  {
+    "engine": "gin",
+    "sample": 0,
+    "table": "pin_cpu_write_system_gin_0",
+    "rows": 50000,
+    "text_repeats": 32,
+    "sql": "INSERT INTO public.pin_cpu_write_system_gin_0(id, body) SELECT i, repeat('alpha beta gamma ', 32) || (i % 100)::text FROM generate_series(1, 50000) AS i",
+    "backend_cpu_ns": 2496380414,
+    "backend_cpu_us_per_row": 49.92760828,
+    "wall_ns": 2593914482,
+    "runqueue_ns": 88967448,
+    "wal_bytes_heap_and_index": 44670240,
+    "table_bytes": 31514624,
+    "index_bytes": 4038656,
+    "proc": {
+      "on_cpu_ns": 2496380414,
+      "runqueue_ns": 88967448,
+      "timeslices": 352,
+      "user_ticks": 243,
+      "system_ticks": 6,
+      "minor_faults": 9528,
+      "major_faults": 0,
+      "voluntary_ctxt_switches": 17,
+      "nonvoluntary_ctxt_switches": 335,
+      "syscr": 1,
+      "syscw": 6017,
+      "read_bytes": 0,
+      "write_bytes": 0
+    },
+    "cluster_process_counters_including_0_5s_settle": {
+      "94946": {
+        "command": "/usr/lib/postgresql/18/bin/postgres -D /tmp/pin-g9-bench/data",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94947": {
+        "command": "postgres: io worker 0                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94948": {
+        "command": "postgres: io worker 1                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94949": {
+        "command": "postgres: io worker 2                                        ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94950": {
+        "command": "postgres: checkpointer                                       ",
+        "counters": {
+          "on_cpu_ns": 3740042,
+          "runqueue_ns": 4165185,
+          "timeslices": 31,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 45,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 31,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 578,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94951": {
+        "command": "postgres: background writer                                  ",
+        "counters": {
+          "on_cpu_ns": 420318,
+          "runqueue_ns": 310954,
+          "timeslices": 15,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 15,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94953": {
+        "command": "postgres: walwriter                                          ",
+        "counters": {
+          "on_cpu_ns": 11412043,
+          "runqueue_ns": 3451942,
+          "timeslices": 20,
+          "user_ticks": 1,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 16,
+          "nonvoluntary_ctxt_switches": 4,
+          "syscr": 0,
+          "syscw": 12,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "94954": {
+        "command": "postgres: logical replication launcher                       ",
+        "counters": {
+          "on_cpu_ns": 0,
+          "runqueue_ns": 0,
+          "timeslices": 0,
+          "user_ticks": 0,
+          "system_ticks": 0,
+          "minor_faults": 0,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 0,
+          "nonvoluntary_ctxt_switches": 0,
+          "syscr": 0,
+          "syscw": 0,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      },
+      "153827": {
+        "command": "postgres: reing postgres [local] idle                        ",
+        "counters": {
+          "on_cpu_ns": 2496380414,
+          "runqueue_ns": 88967448,
+          "timeslices": 352,
+          "user_ticks": 243,
+          "system_ticks": 6,
+          "minor_faults": 9528,
+          "major_faults": 0,
+          "voluntary_ctxt_switches": 17,
+          "nonvoluntary_ctxt_switches": 335,
+          "syscr": 1,
+          "syscw": 6017,
+          "read_bytes": 0,
+          "write_bytes": 0
+        }
+      }
+    },
+    "perf_data": ".artifacts/g9-cpu-write-system/pin_cpu_write_system_gin_0-perf.data",
+    "perf_stderr": ""
+  }
+]

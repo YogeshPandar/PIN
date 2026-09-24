@@ -1,0 +1,24 @@
+rare legacy 0 45.79 CPU us/query
+rare grouped 0 1213.93 CPU us/query
+rare gin 0 86.95 CPU us/query
+selective_and legacy 0 667.14 CPU us/query
+selective_and grouped 0 1840.6 CPU us/query
+selective_and gin 0 150.87 CPU us/query
+selective_and gin 1 149.0 CPU us/query
+selective_and grouped 1 1849.16 CPU us/query
+selective_and legacy 1 669.01 CPU us/query
+rare gin 1 84.89 CPU us/query
+rare grouped 1 1191.77 CPU us/query
+rare legacy 1 44.61 CPU us/query
+rare legacy 2 46.13 CPU us/query
+rare grouped 2 1198.75 CPU us/query
+rare gin 2 85.21 CPU us/query
+selective_and legacy 2 667.0 CPU us/query
+selective_and grouped 2 1811.83 CPU us/query
+selective_and gin 2 150.34 CPU us/query
+profile rare legacy
+profile rare grouped
+profile rare gin
+profile selective_and legacy
+profile selective_and grouped
+profile selective_and gin

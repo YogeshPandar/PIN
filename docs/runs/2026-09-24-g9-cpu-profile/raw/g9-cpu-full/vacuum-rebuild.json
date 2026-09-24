@@ -1,0 +1,24 @@
+{
+  "operation": "VACUUM (ANALYZE, INDEX_CLEANUP ON, PARALLEL 0) public.pin_g6_bench",
+  "grouped_storage": "on",
+  "maintenance_work_mem": "64MB",
+  "backend_cpu_ns": 961579482,
+  "runqueue_ns": 93411,
+  "wall_ns": 961962051,
+  "wal_bytes_cluster": 1809752,
+  "proc": {
+    "on_cpu_ns": 961579482,
+    "runqueue_ns": 93411,
+    "timeslices": 11,
+    "user_ticks": 94,
+    "system_ticks": 1,
+    "minor_faults": 9889,
+    "major_faults": 0,
+    "voluntary_ctxt_switches": 3,
+    "nonvoluntary_ctxt_switches": 8,
+    "syscr": 110,
+    "syscw": 19,
+    "read_bytes": 0,
+    "write_bytes": 0
+  }
+}

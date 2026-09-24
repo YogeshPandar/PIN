@@ -1,0 +1,66 @@
+common legacy 0 4865.01 CPU us/query
+common grouped 0 2535.47 CPU us/query
+common gin 0 2857.84 CPU us/query
+rare legacy 0 47.0 CPU us/query
+rare grouped 0 64.25 CPU us/query
+rare gin 0 22.97 CPU us/query
+and legacy 0 8840.01 CPU us/query
+and grouped 0 2703.42 CPU us/query
+and gin 0 3379.09 CPU us/query
+selective_and legacy 0 674.95 CPU us/query
+selective_and grouped 0 113.38 CPU us/query
+selective_and gin 0 57.71 CPU us/query
+or legacy 0 7056.56 CPU us/query
+or grouped 0 2627.3 CPU us/query
+or gin 0 2924.12 CPU us/query
+phrase legacy 0 214508.88 CPU us/query
+phrase grouped 0 213804.79 CPU us/query
+phrase gin 0 727362.27 CPU us/query
+phrase gin 1 732891.96 CPU us/query
+phrase grouped 1 216377.74 CPU us/query
+phrase legacy 1 217160.39 CPU us/query
+or gin 1 2928.94 CPU us/query
+or grouped 1 2618.47 CPU us/query
+or legacy 1 7150.38 CPU us/query
+selective_and gin 1 57.34 CPU us/query
+selective_and grouped 1 110.86 CPU us/query
+selective_and legacy 1 664.69 CPU us/query
+and gin 1 3392.2 CPU us/query
+and grouped 1 2759.03 CPU us/query
+and legacy 1 8769.17 CPU us/query
+rare gin 1 26.25 CPU us/query
+rare grouped 1 63.18 CPU us/query
+rare legacy 1 44.57 CPU us/query
+common gin 1 2797.3 CPU us/query
+common grouped 1 2588.75 CPU us/query
+common legacy 1 4915.62 CPU us/query
+common legacy 2 4968.7 CPU us/query
+common grouped 2 2508.29 CPU us/query
+common gin 2 2791.54 CPU us/query
+rare legacy 2 45.6 CPU us/query
+rare grouped 2 65.53 CPU us/query
+rare gin 2 23.63 CPU us/query
+and legacy 2 8762.84 CPU us/query
+and grouped 2 2802.45 CPU us/query
+and gin 2 3437.77 CPU us/query
+selective_and legacy 2 667.5 CPU us/query
+selective_and grouped 2 114.03 CPU us/query
+selective_and gin 2 59.78 CPU us/query
+or legacy 2 7157.66 CPU us/query
+or grouped 2 2645.55 CPU us/query
+or gin 2 2947.21 CPU us/query
+phrase legacy 2 218359.78 CPU us/query
+phrase grouped 2 220569.72 CPU us/query
+phrase gin 2 770250.25 CPU us/query
+profile rare legacy
+profile rare grouped
+profile rare gin
+profile and legacy
+profile and grouped
+profile and gin
+profile selective_and legacy
+profile selective_and grouped
+profile selective_and gin
+profile phrase legacy
+profile phrase grouped
+profile phrase gin

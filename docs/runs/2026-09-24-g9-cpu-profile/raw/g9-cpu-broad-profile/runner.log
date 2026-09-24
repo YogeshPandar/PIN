@@ -1,0 +1,12 @@
+common legacy 0 7164.44 CPU us/query
+common grouped 0 4188.26 CPU us/query
+common gin 0 4823.37 CPU us/query
+or legacy 0 9452.16 CPU us/query
+or grouped 0 4299.01 CPU us/query
+or gin 0 5064.46 CPU us/query
+profile common legacy
+profile common grouped
+profile common gin
+profile or legacy
+profile or grouped
+profile or gin

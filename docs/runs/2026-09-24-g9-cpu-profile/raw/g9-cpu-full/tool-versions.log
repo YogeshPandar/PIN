@@ -1,0 +1,4 @@
+perf version 7.0.14
+Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43
+psycopg2 2.9.12 (dt dec pq3 ext lo64)
+libc6-dbg 2.43-2ubuntu2.4
