@@ -17,7 +17,9 @@ fn reference(text: &str, query: &Query, limits: AnalysisLimits, steps: usize) ->
 
 fn compare(text: &str, query: &Query, limits: AnalysisLimits, steps: usize) {
     assert_eq!(
-        PhraseMatcher::new(query).unwrap().matches(text, limits, steps),
+        PhraseMatcher::new(query)
+            .unwrap()
+            .matches(text, limits, steps),
         reference(text, query, limits, steps),
         "text={text:?}, query={query:?}, limits={limits:?}, steps={steps}"
     );
@@ -52,7 +54,13 @@ fn punctuation_and_unicode_keep_the_existing_analysis_profile() {
         ("σ ß", ["Σ ẞ", "ς ß", "σ SS", "σ x ß", "σ ß tail"]),
         (
             "can't 32.3",
-            ["CAN'T 32.3", "can’t 32.3", "can't 32 3", "can't", "can't 32.3 x"],
+            [
+                "CAN'T 32.3",
+                "can’t 32.3",
+                "can't 32 3",
+                "can't",
+                "can't 32.3 x",
+            ],
         ),
     ] {
         let query = query(phrase);
