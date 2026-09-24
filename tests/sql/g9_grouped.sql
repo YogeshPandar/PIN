@@ -184,3 +184,5 @@ SELECT pg_temp.g2_expect('g9_small', 'alpha AND beta', ARRAY[2]::bigint[]);
 SET pin.enable_grouped_storage = on;
 VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_small;
 SELECT pg_temp.g2_expect('g9_small', 'beta', ARRAY[2, 3]::bigint[]);
+
+\ir issue14_recheck.sql
