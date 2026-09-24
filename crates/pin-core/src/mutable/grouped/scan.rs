@@ -409,6 +409,7 @@ pub fn scan_query<S: PageStore>(
         &captured[..program.terms],
         &meta,
         snapshot,
+        memory_bytes,
         emit,
     )?;
     count

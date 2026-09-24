@@ -152,8 +152,9 @@ class AnchorQualificationTests(unittest.TestCase):
         hooks = (ROOT / 'crates/pin-pg/src/test_hooks.rs').read_text()
         self.assertIn('FrontierInvalidated = 39', core)
         self.assertIn('FrontierSeek = 40', core)
+        self.assertIn('OwnerFrontierScan = 41', core)
         self.assertEqual(frontier.count('store.event(Stage::FrontierSeek)?'), 2)
-        self.assertIn('!(32..=40).contains(&stage)', hooks)
+        self.assertIn('!(32..=41).contains(&stage)', hooks)
         self.assertIn('if !unsafe { pg_sys::superuser() }', hooks)
 
     def test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append(self):

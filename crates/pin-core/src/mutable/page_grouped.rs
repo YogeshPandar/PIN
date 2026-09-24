@@ -162,12 +162,17 @@ impl GroupState {
 impl Page {
     /// tests a captured allocation fence, not transaction visibility.
     pub(crate) fn grouped_has_delta(&self, snapshot: GroupSnapshot) -> Result<bool> {
+        Ok(self.grouped_delta_span(snapshot)? != 0)
+    }
+
+    /// returns reserved incarnations after one captured grouped allocation fence.
+    pub(crate) fn grouped_delta_span(&self, snapshot: GroupSnapshot) -> Result<u64> {
         self.require(PageKind::Meta)?;
         let next = self.u64(32)?;
         if next <= snapshot.id.get() {
             return Err(Error::InvalidState);
         }
-        Ok(next - 1 > snapshot.id.get())
+        Ok(next - snapshot.id.get() - 1)
     }
 
     /// reads either legacy metadata or the versioned grouped state tail.

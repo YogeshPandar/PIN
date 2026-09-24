@@ -38,13 +38,18 @@ impl GroupSort for Sort {
 #[derive(Default)]
 struct Store {
     inner: MemoryStore,
+    owner_frontier: bool,
     reads: usize,
     owners: usize,
+    postings: usize,
     polls: usize,
     cancel_at: Option<usize>,
 }
 
 impl PageStore for Store {
+    fn owner_frontier(&self) -> bool {
+        self.owner_frontier
+    }
     fn layout(&self) -> HeapLayout {
         self.inner.layout()
     }
@@ -55,6 +60,10 @@ impl PageStore for Store {
         self.reads += 1;
         let page = self.inner.read(block)?;
         self.owners += usize::from(page.kind() == PageKind::Owners);
+        self.postings += usize::from(matches!(
+            page.kind(),
+            PageKind::Postings | PageKind::SealedPostings | PageKind::DirectPostings
+        ));
         Ok(page)
     }
     fn extend(&mut self) -> Result<u32> {
@@ -134,6 +143,82 @@ fn exact(store: &mut impl PageStore, source: &str, documents: &[(u32, &str)]) {
             .collect::<BTreeSet<_>>(),
         expected,
         "{source}"
+    );
+}
+
+#[test]
+fn dense_multi_term_delta_uses_one_owner_frontier_pass() {
+    let mut store = Store {
+        owner_frontier: true,
+        ..Store::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    let mut documents = Vec::new();
+    for index in 0..128 {
+        insert(&mut store, index, "a b");
+        documents.push((index, "a b"));
+    }
+    snapshot(&mut store);
+    for index in 128..1152 {
+        let text = if index % 3 == 0 { "a b c" } else { "a c" };
+        insert(&mut store, index, text);
+        documents.push((index, text));
+    }
+    store.inner.events.clear();
+    store.owners = 0;
+    store.postings = 0;
+    exact(&mut store, "a AND b", &documents);
+    assert!(store.inner.events.contains(&Stage::OwnerFrontierScan));
+    assert!(store.owners > 0);
+    assert_eq!(store.postings, 2);
+}
+
+#[test]
+fn unrelated_long_delta_keeps_term_addressed_frontier() {
+    let mut store = Store {
+        owner_frontier: true,
+        ..Store::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    for index in 0..128 {
+        insert(&mut store, index, "a b");
+    }
+    snapshot(&mut store);
+    for index in 128..1152 {
+        insert(&mut store, index, "unrelated filler");
+    }
+    store.inner.events.clear();
+    let result = scan(&mut store, "a AND b", 8 << 20).unwrap();
+    assert_eq!(result.len(), 128);
+    assert!(!store.inner.events.contains(&Stage::OwnerFrontierScan));
+}
+
+#[test]
+fn owner_frontier_budget_falls_back_before_emission() {
+    let mut store = Store {
+        owner_frontier: true,
+        ..Store::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    insert(&mut store, 0, "a b");
+    snapshot(&mut store);
+    let large = format!("{}b", "a ".repeat(70_000));
+    insert(&mut store, 1, &large);
+    for index in 2..514 {
+        insert(&mut store, index, "a b");
+    }
+    store.inner.events.clear();
+    let result = scan(&mut store, "a AND b", 192 << 10).unwrap();
+    assert_eq!(result.len(), 514);
+    assert!(result.iter().all(|(_, recheck)| !recheck));
+    assert_eq!(
+        store
+            .inner
+            .events
+            .iter()
+            .filter(|&&stage| stage == Stage::OwnerFrontierScan)
+            .count(),
+        1
     );
 }
 
