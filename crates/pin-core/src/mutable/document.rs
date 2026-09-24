@@ -179,7 +179,7 @@ impl<'a> Iterator for DocumentTerms<'a> {
 
 impl std::iter::FusedIterator for DocumentTerms<'_> {}
 
-/// Query-constant ordering for exact Boolean term membership.
+/// query-constant ordering for exact boolean term membership.
 pub(crate) struct TermMembership<'a, 'b> {
     names: &'a [Option<&'b str>],
     order: [u8; 64],
@@ -217,7 +217,7 @@ impl<'a, 'b> TermMembership<'a, 'b> {
         })
     }
 
-    /// Reads exact term membership without decoding unused positional deltas.
+    /// reads exact term membership without decoding unused positional deltas.
     pub(crate) fn read(
         &self,
         bytes: &[u8],
