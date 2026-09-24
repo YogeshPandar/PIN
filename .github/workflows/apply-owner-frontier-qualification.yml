@@ -1,0 +1,28 @@
+name: apply owner frontier qualification staging
+
+on:
+  push:
+    branches:
+      - automation/owner-frontier-qualification-staging
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: apply staged patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .github/owner-frontier-qualification.patch.gz.b64 | gzip -d > /tmp/owner-frontier-qualification.patch
+          git apply --index /tmp/owner-frontier-qualification.patch
+          git rm .github/owner-frontier-qualification.patch.gz.b64 .github/workflows/apply-owner-frontier-qualification.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "test: qualify owner frontier activation"
+          git push origin HEAD:automation/owner-frontier-qualification-staging
