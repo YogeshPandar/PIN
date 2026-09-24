@@ -15,18 +15,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: apply staged patch
+      - name: verify staged payload parts
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/owner-frontier-parts/part* | tr -d '\r\n' > /tmp/owner-frontier-qualification.patch.gz.b64
-          echo "00d6b1fac035b4fc6ec0de896eb9370e84cc8b89307b1a3851d6c115628b735f  /tmp/owner-frontier-qualification.patch.gz.b64" | sha256sum -c -
-          base64 -d /tmp/owner-frontier-qualification.patch.gz.b64 > /tmp/owner-frontier-qualification.patch.gz
-          gzip -d -c /tmp/owner-frontier-qualification.patch.gz > /tmp/owner-frontier-qualification.patch
-          echo "12ed47b387d683e57031c7683b5a7b4fba4c7f5f3fecc81fba64430518c09160  /tmp/owner-frontier-qualification.patch" | sha256sum -c -
-          git apply --index /tmp/owner-frontier-qualification.patch
-          git rm -r .github/owner-frontier-parts .github/workflows/apply-owner-frontier-qualification-2.yml
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git commit -m "test: qualify owner frontier activation"
-          git push origin HEAD:automation/owner-frontier-qualification-2
+          for part in .github/owner-frontier-parts/part*; do
+            printf '%s bytes=' "$part"
+            tr -d '\r\n' < "$part" | wc -c
+            tr -d '\r\n' < "$part" | sha256sum
+          done
+          exit 1
