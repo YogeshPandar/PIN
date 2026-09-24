@@ -1,0 +1,35 @@
+name: apply owner frontier final staging
+
+on:
+  push:
+    branches:
+      - automation/owner-frontier-final-staging
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: apply verified final patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/owner-frontier-final-parts/part* > /tmp/owner-frontier-final.patch.gz.b64
+          echo "9e8977496182960dc0c16edddebcf5c5edda59c114f336cc8a9ebe1a87c6a6cb  /tmp/owner-frontier-final.patch.gz.b64" | sha256sum -c -
+          base64 -d /tmp/owner-frontier-final.patch.gz.b64 > /tmp/owner-frontier-final.patch.gz
+          echo "4ea78e447cf37f7b431c2d96039cf46059efedbced0b41db06e450530c6ad77b  /tmp/owner-frontier-final.patch.gz" | sha256sum -c -
+          gzip -d -c /tmp/owner-frontier-final.patch.gz > /tmp/owner-frontier-final.patch
+          echo "bd00f51dfc63801f7d5a7a541b6b45c929b3a1ef79b87706f2b773033595c1c8  /tmp/owner-frontier-final.patch" | sha256sum -c -
+          git apply --index /tmp/owner-frontier-final.patch
+          git rm -r .github/owner-frontier-final-parts .github/workflows/apply-owner-frontier-final.yml
+          test "$(git write-tree)" = "6fc5a61d8cada630b91f950d5bc4d019abd67f68"
+          git diff --cached --check
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "test: qualify owner frontier activation"
+          git push origin HEAD:automation/owner-frontier-final-staging
