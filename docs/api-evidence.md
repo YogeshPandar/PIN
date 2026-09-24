@@ -1032,8 +1032,10 @@ layout-dependent serialization is added. `pin-kernels` remains allocation-free
 Local proof obligations:
 
 1. The complete grouped snapshot's owner fence precedes every eligible frontier
-   owner. The scan starts at the next owner slot and requires strictly increasing
-   owner coordinates and incarnations.
+   owner. The scan starts at the next owner slot, requires strictly increasing
+   owner coordinates and incarnations, and stops above the allocation ceiling
+   captured from the same metapage. A later writer may append to the same owner
+   page, but that post-capture incarnation cannot expand this scan's work set.
 2. Eligibility is default off, requires at least 512 reserved incarnations, and
    requires either an owner-universe query or two changed query terms. Captured
    posting tails are validated before this decision.
@@ -1049,8 +1051,9 @@ Local proof obligations:
    total bytes, bounded block traversal, and complete termination. Scratch is
    reused and cannot exceed the remaining memory budget.
 6. All matching root TIDs are buffered before the first emit. Insufficient
-   capacity returns `None` and selects the canonical term-addressed frontier.
-   No fallback follows partial owner-frontier output.
+   budget or an optional vector reservation failure returns `None` and selects
+   the canonical term-addressed frontier. No fallback follows partial
+   owner-frontier output.
 7. The existing shared structural barrier and host buffer-copy contract protect
    every page read. The implementation adds no borrowed PostgreSQL page lifetime,
    WAL transition, maintenance publication, or reclamation rule.
@@ -1059,8 +1062,9 @@ Local proof obligations:
    it. PostgreSQL discards partial bitmap state on the error path.
 
 Qualification: pure-engine tests cover exact identities across a 1,024-owner
-related delta, two-tail activation, unrelated-delta avoidance, and fail-before-
-emit memory fallback. The native qualification constructs another 1,024-owner
+related delta, two-tail activation, unrelated-delta avoidance, fail-before-emit
+memory fallback, and a writer appending a post-capture incarnation into the same
+physical owner tail before owner evaluation begins. The native qualification constructs another 1,024-owner
 related delta, checks a sequential heap oracle for AND/OR/NOT, performs HOT-
 eligible and indexed updates, DELETE and VACUUM, pauses stage 41 while a writer
 commits, verifies statement-snapshot identities, performs immediate restart,
