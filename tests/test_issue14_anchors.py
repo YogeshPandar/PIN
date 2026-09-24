@@ -177,6 +177,7 @@ class AnchorQualificationTests(unittest.TestCase):
                       'g9-anchor-cancel', 'anchor-permissions'):
             self.assertIn(probe, driver)
         seek = driver.split('def anchor_seek_qualification(', 1)[1].split('def permissions(', 1)[0]
+        self.assertIn('SET pin.enable_owner_frontier = off;', seek)
         self.assertLess(seek.index("wait_lock('g9-anchor-reader', False)"),
                         seek.index('related-writer-during-anchor-read'))
         self.assertLess(seek.index('related-writer-during-anchor-read'),
