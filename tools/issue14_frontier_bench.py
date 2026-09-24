@@ -23,6 +23,7 @@ import time
 
 from g9_profile import CASES, INDEX, MODES, SETTINGS, literal
 from g6_latency import summarize
+import frontier_options
 
 TABLE = 'public.pin_g6_bench'
 WRITE_TABLES = {'pin': 'public.pin_frontier_write_pin', 'gin': 'public.pin_frontier_write_gin'}
@@ -59,15 +60,18 @@ def predicate(case: str, mode: str) -> str:
     return f'body OPERATOR(pin.@@@) pin.parse_query({literal(pin)})'
 
 
-def connection(mode: str = 'pin_grouped_enabled'):
+def connection(mode: str = 'pin_grouped_enabled', *, anchors: bool = False):
     import psycopg2
     conn = psycopg2.connect(application_name='pin_frontier_qualification', connect_timeout=10)
     conn.autocommit = True
     try:
         with conn.cursor() as cur:
-            for name, value in SETTINGS.items():
+            for name, value in frontier_options.options(SETTINGS, anchors).items():
                 cur.execute(f'SET {name} = {literal(value)}')
             cur.execute('SET pin.enable_grouped_scan = ' + ('off' if mode in ('pin_legacy', 'gin') else 'on'))
+            cur.execute(frontier_options.SETTING_SQL)
+            row = cur.fetchone()
+            frontier_options.require_setting(row[0] if row else None, anchors)
         return conn
     except BaseException:
         conn.close()
@@ -165,17 +169,20 @@ def retrieve(conn, case: str, mode: str) -> dict:
             'measurement': 'one cursor drain after explain; excludes cursor declaration and commit'}
 
 
-def child(output: Path, name: str, command: list[str], timeout: float = 3600) -> None:
+def child(output: Path, name: str, command: list[str], timeout: float = 3600,
+          *, anchors: bool = False) -> None:
+    command = [*command, *(['--frontier-anchors'] if anchors else [])]
     save(output / (name + '-command.json'), command)
     with (output / (name + '-runner.log')).open('x') as log:
-        env = dict(os.environ, PGOPTIONS=' '.join(f'-c {key}={value}' for key, value in SETTINGS.items()))
+        settings = frontier_options.options(SETTINGS, anchors)
+        env = dict(os.environ, PGOPTIONS=' '.join(f'-c {key}={value}' for key, value in settings.items()))
         subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=timeout, env=env)
 
 
 def read_stage(args, name: str) -> None:
     output = args.output / name
     output.mkdir()
-    with closing(connection()) as conn, conn.cursor() as cur:
+    with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
         verify(cur, args.cases)
         cur.execute('SELECT count(*), sum(octet_length(body)) FROM ' + TABLE)
         save(output / 'identity.json', {'symmetric_difference': 0, 'fixture': cur.fetchone(),
@@ -190,13 +197,15 @@ def read_stage(args, name: str) -> None:
     child(output, 'paired', [sys.executable, str(tools / 'g9_profile.py'),
                             '--bindir', str(args.bindir), '--output', str(output / 'paired'),
                             '--samples', '6', '--queries', str(args.queries),
-                            '--cases', *args.cases, '--backend-proc', '/proc'])
-    cpu_cases = [case for case in args.cases if case in ('common', 'rare', 'and', 'selective_and', 'or', 'phrase')]
+                            '--cases', *args.cases, '--backend-proc', '/proc'],
+          anchors=args.frontier_anchors)
+    cpu_cases = args.cases
     if cpu_cases:
         child(output, 'cpu', [sys.executable, str(tools / 'g9_cpu_profile.py'),
                              '--output', str(output / 'cpu'), '--samples', str(args.samples),
                              '--seconds', str(args.seconds), '--cases', *cpu_cases,
-                             '--profile-seconds', str(args.profile_seconds)])
+                             '--profile-seconds', str(args.profile_seconds), '--profile-cases', *cpu_cases],
+              anchors=args.frontier_anchors)
     throughput(args, output)
 
 
@@ -206,7 +215,7 @@ def throughput(args, output: Path) -> None:
     results = []
     for sample in range(args.samples):
         for mode in MODES if sample % 2 == 0 else reversed(MODES):
-            options = dict(SETTINGS)
+            options = frontier_options.options(SETTINGS, args.frontier_anchors)
             options['pin.enable_grouped_scan'] = 'on' if mode == MODES[0] else 'off'
             env = dict(os.environ, PGOPTIONS=' '.join(f'-c {key}={value}' for key, value in options.items()))
             for case in args.cases:
@@ -242,16 +251,22 @@ def writes(args, cur) -> None:
             last = first + args.write_rows - 1
             insert = measured(cur, f"INSERT INTO {table} SELECT i, repeat('alpha beta gamma ', 32) "
                               f"FROM generate_series({first}, {last}) AS i")
+            update = None
+            if args.write_update_rows:
+                update = measured(cur, f"UPDATE {table} SET body = 'alpha delta rareplanet' "
+                                  f"WHERE id BETWEEN {first} AND {first + args.write_update_rows - 1}")
             # pay deferred gin maintenance and the enabled pin snapshot rebuild each round.
             cur.execute('SET pin.enable_grouped_storage = on')
             vacuum = measured(cur, f'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) {table}')
             cur.execute('SET pin.enable_grouped_storage = off')
             cur.execute('SELECT pg_relation_size(%s::regclass), pg_indexes_size(%s::regclass)', (table, table))
             sizes = cur.fetchone()
+            phases = [insert, vacuum, *([update] if update is not None else [])]
             events.append({'engine': engine, 'batch': batch, 'inserted_rows': args.write_rows,
+                           'updated_rows': args.write_update_rows, 'update': update,
                            'insert': insert, 'maintenance': vacuum, 'heap_and_all_indexes_bytes': sizes,
-                           'lifecycle_backend_cpu_ns': insert['backend']['on_cpu_ns'] + vacuum['backend']['on_cpu_ns'],
-                           'lifecycle_cluster_wal_bytes': insert['cluster_wal_bytes'] + vacuum['cluster_wal_bytes']})
+                           'lifecycle_backend_cpu_ns': sum(phase['backend']['on_cpu_ns'] for phase in phases),
+                           'lifecycle_cluster_wal_bytes': sum(phase['cluster_wal_bytes'] for phase in phases)})
             save(args.output / 'write-maintenance.json', events)
     cur.execute(f'SELECT count(*) FROM ((SELECT * FROM {WRITE_TABLES["pin"]} EXCEPT ALL '
                 f'SELECT * FROM {WRITE_TABLES["gin"]}) UNION ALL (SELECT * FROM {WRITE_TABLES["gin"]} '
@@ -269,11 +284,13 @@ def concurrent(args) -> None:
 
     def writer() -> None:
         try:
-            with closing(connection()) as conn, conn.cursor() as cur:
+            with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
                 index = 0
                 while not stop.is_set():
+                    body = ('alpha beta rareplanet' if args.concurrent_related
+                            else 'unrelated concurrent filler')
                     events.append(measured(cur, f"INSERT INTO {TABLE} VALUES "
-                                           f"({10_000_000 + index}, 'unrelated concurrent filler')"))
+                                           f"({10_000_000 + index}, {literal(body)})"))
                     index += 1
                     completed.set()
                     if not resume.wait(120):
@@ -285,7 +302,7 @@ def concurrent(args) -> None:
 
     thread = threading.Thread(target=writer, daemon=True)
     results = []
-    with closing(connection()) as conn, conn.cursor() as cur:
+    with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
         cur.execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY')
         verify(cur, args.cases)
         thread.start()
@@ -309,17 +326,19 @@ def concurrent(args) -> None:
             thread.join(130)
             cur.execute('ROLLBACK')
             save(args.output / 'concurrent.json', {'reads': results, 'writes': events, 'errors': errors,
-                 'measurement': 'one long repeatable-read reader, acknowledged concurrent unrelated inserts'})
+                 'measurement': 'one long repeatable-read reader, acknowledged concurrent inserts',
+                 'related_writes': args.concurrent_related})
         if thread.is_alive() or errors:
             raise RuntimeError(f'concurrent qualification incomplete: {errors}')
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--bindir', type=Path, required=True)
     parser.add_argument('--revision', required=True)
     parser.add_argument('--disposable', action='store_true', required=True)
+    parser.add_argument('--frontier-anchors', action='store_true')
     parser.add_argument('--rows', type=int, default=20000)
     parser.add_argument('--deltas', type=int, nargs='+', default=[0, 1, 1000, 10000])
     parser.add_argument('--related-rows', type=int, default=2048)
@@ -330,6 +349,8 @@ def main() -> None:
     parser.add_argument('--throughput-seconds', type=int, default=0)
     parser.add_argument('--write-batches', type=int, default=3)
     parser.add_argument('--write-rows', type=int, default=1000)
+    parser.add_argument('--write-update-rows', type=int, default=0)
+    parser.add_argument('--concurrent-related', action='store_true')
     parser.add_argument('--concurrent-seconds', type=float, default=0)
     parser.add_argument('--cases', nargs='+', choices=CASES, default=list(CASES))
     args = parser.parse_args()
@@ -341,6 +362,7 @@ def main() -> None:
                 and 1 <= args.queries <= 1000 and 1 <= args.samples <= 20
                 and 0.5 <= args.seconds <= 120 and 0 <= args.profile_seconds <= 120
                 and 1 <= args.write_batches <= 20 and 1 <= args.write_rows <= 100000
+                and 0 <= args.write_update_rows <= args.write_rows
                 and 0 <= args.concurrent_seconds <= 120 and 0 <= args.throughput_seconds <= 120):
             raise ValueError('argument outside bounded qualification range')
     except ValueError as error:
@@ -348,10 +370,10 @@ def main() -> None:
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=False)
     try:
-        with closing(connection()) as conn, conn.cursor() as cur:
+        with closing(connection(anchors=args.frontier_anchors)) as conn, conn.cursor() as cur:
             cur.execute("SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
                         "('server_version_num','block_size','fsync','full_page_writes','synchronous_commit',"
-                        "'shared_buffers','work_mem','maintenance_work_mem','autovacuum')")
+                        "'shared_buffers','work_mem','maintenance_work_mem','autovacuum','pin.enable_frontier_anchors')")
             settings = cur.fetchone()[0]
             cur.execute('SELECT pin.build_revision(), current_setting(\'data_directory\'), pg_backend_pid()')
             revision, data, pid = cur.fetchone()

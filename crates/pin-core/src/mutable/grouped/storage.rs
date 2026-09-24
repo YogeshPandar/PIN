@@ -14,6 +14,8 @@ use pin_kernels::grouped::PageMask;
 pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
 pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
 const LEVELS: usize = MAX_CATALOG_LEVEL as usize + 1;
+pub(super) const CATALOG_MEMORY: usize =
+    LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
 
 #[derive(Clone, Copy, Debug)]
 pub(super) struct Value {
@@ -120,6 +122,8 @@ pub(super) fn begin<S: PageStore>(store: &mut S, after: Option<OwnerRef>) -> Res
         tail: NO_BLOCK,
         root: NO_BLOCK,
         after,
+        frontier_root: None,
+        frontier_valid: false,
     })
 }
 
@@ -294,12 +298,21 @@ pub(super) fn read_bitmap_view<'a, S: PageStore>(
 }
 
 pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
-    if snapshot.root != snapshot.tail {
+    if snapshot.frontier_root.is_none() && snapshot.root != snapshot.tail {
         return Err(Error::InvalidState);
     }
     let written = inspect(store, snapshot.id, snapshot.head, snapshot.tail)?;
-    if snapshot.root != NO_BLOCK {
-        load(store, snapshot.root, PageKind::Grouped)?.group_node_info()?;
+    for root in [Some(snapshot.root), snapshot.frontier_root]
+        .into_iter()
+        .flatten()
+    {
+        if root != NO_BLOCK {
+            let page = load(store, root, PageKind::Grouped)?;
+            if page.group_identity()?.0 != snapshot.id {
+                return Err(Error::InvalidState);
+            }
+            page.group_node_info()?;
+        }
     }
     let mut meta = load(store, 0, PageKind::Meta)?;
     let state = meta.grouped_state()?;

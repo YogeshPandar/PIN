@@ -83,6 +83,7 @@ pub(super) fn references(page: &Page, target: u32) -> Result<bool> {
         let state = page.grouped_state()?;
         return Ok(state.active.is_some_and(|active| {
             [active.head, active.tail, active.root].contains(&target)
+                || active.frontier_root == Some(target)
                 || active.after.is_some_and(|owner| owner.page == target)
         }) || state
             .journal
@@ -108,6 +109,9 @@ pub(super) fn references(page: &Page, target: u32) -> Result<bool> {
                     {
                         return Ok(true);
                     }
+                } else if super::anchors::Anchor::is_entry(entry) {
+                    // compaction invalidates these advisory pointers before reuse.
+                    super::anchors::Anchor::read(entry)?;
                 } else {
                     let value = Value::read(entry)?;
                     if value.blocks.contains(&target) || value.members == target {

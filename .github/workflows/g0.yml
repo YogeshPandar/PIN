@@ -29,7 +29,7 @@ jobs:
           python3 tools/check_contracts.py
           bash -n tools/pg_smoke.sh
           bash -n tools/g2_qualification.sh
-          bash -n tools/g9_qualification.sh
+          bash -n tools/g9_qualification.sh tools/issue14_isolated_run.sh
           bash -n tools/g8_qualification.sh tools/g8_release.sh
       - name: Check formatting
         run: cargo fmt --all --check
@@ -88,6 +88,10 @@ jobs:
         run: bash tools/pg_smoke.sh
       - name: Test normal grouped storage lifecycle
         run: bash tools/g9_qualification.sh
+      - name: Test normal anchored storage lifecycle
+        env:
+          PIN_G9_ANCHORS: '1'
+        run: bash tools/g9_qualification.sh
       - name: Qualify and package the normal G8 candidate
         env:
           PIN_PG_SOURCE: ${{ runner.temp }}/postgres-src
@@ -106,6 +110,11 @@ jobs:
       - name: Test grouped WAL recovery and concurrency
         env:
           PIN_G9_TEST_HOOKS: '1'
+        run: bash tools/g9_qualification.sh
+      - name: Test anchored WAL recovery and concurrency
+        env:
+          PIN_G9_TEST_HOOKS: '1'
+          PIN_G9_ANCHORS: '1'
         run: bash tools/g9_qualification.sh
       - name: Test G2 transactional and recovery qualification
         run: bash tools/g2_qualification.sh

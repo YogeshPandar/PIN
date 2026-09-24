@@ -31,6 +31,10 @@ pub(crate) struct VacuumStore<'store, 'rel> {
 }
 
 impl PageStore for VacuumStore<'_, '_> {
+    fn frontier_anchors(&self) -> bool {
+        self.inner.frontier_anchors()
+    }
+
     fn layout(&self) -> HeapLayout {
         self.inner.layout()
     }

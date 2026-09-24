@@ -55,6 +55,8 @@ pub enum Stage {
     GroupRetired = 36,
     GroupScan = 37,
     GroupSortReady = 38,
+    FrontierInvalidated = 39,
+    FrontierSeek = 40,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
@@ -69,6 +71,12 @@ pub enum Stage {
 /// unreachable journal pages. Resource cleanup belongs to the host.
 pub trait PageStore {
     fn layout(&self) -> HeapLayout;
+
+    /// opts into persisted snapshot frontier anchors and their read-side use.
+    /// the host keeps this policy stable for the duration of one operation.
+    fn frontier_anchors(&self) -> bool {
+        false
+    }
     fn blocks(&mut self) -> Result<u32>;
     fn read(&mut self, block: u32) -> Result<Page>;
     fn extend(&mut self) -> Result<u32>;

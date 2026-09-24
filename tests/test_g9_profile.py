@@ -116,7 +116,8 @@ class ProfileTests(unittest.TestCase):
                         os.write(1, marker[9:])
             '''))
             fake.chmod(0o700)
-            with profile.Session(fake, root / 'ok.log', 'gin', timeout=2) as session:
+            # allow interpreter startup without relaxing the explicit timeout case.
+            with profile.Session(fake, root / 'ok.log', 'gin', timeout=5) as session:
                 self.assertEqual(session.execute('SELECT 1;'), '1')
                 self.assertEqual(session.execute('SELECT 2;'), '2')
                 with self.assertRaises(RuntimeError):

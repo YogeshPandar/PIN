@@ -896,3 +896,91 @@ Reviewer: implementation self-review only; independently assigned reviewer
 still required. Remaining gates: final-head native SQL, recovery/standby
 qualification, sustained-write measurements and related-suffix cost. No
 20x/10x target or TIN-equivalence claim is authorized by this entry.
+
+## G9FRONTIER02: opt-in persistent suffix anchors and executable activation
+
+Review date: 24 September 2026. Supersedes G9FRONTIER01's no-new-format statement
+only for the default-off anchor experiment. Implementation: `mutable/grouped/anchors.rs`,
+`build.rs`, `frontier.rs`, `storage.rs`, `page_grouped.rs`, `compact.rs` and the
+existing PostgreSQL grouped settings/adapter. Detailed protocol, cost model,
+commands and qualification status: [snapshot frontier anchors](issue-14-anchors.md).
+
+Official authorities retain the pinned PostgreSQL 18.6 source
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+[AM bitmap and recheck contract](https://www.postgresql.org/docs/18/index-functions.html),
+[index locking and heap reuse](https://www.postgresql.org/docs/18/index-locking.html),
+[generic WAL protocol](https://www.postgresql.org/docs/18/generic-wal.html),
+[generic WAL implementation](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/transam/generic_xlog.c),
+[buffer ownership](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/README),
+[custom option placeholders](https://www.postgresql.org/docs/18/runtime-config-custom.html),
+and [registered settings](https://www.postgresql.org/docs/18/view-pg-settings.html).
+The existing C copy/commit boundary retains its pin, content-lock, temporary WAL
+image and finish/abort obligations. No borrowed PostgreSQL page or new unsafe
+operation is introduced by anchor encoding, lookup or its test event.
+
+Version-two metadata owns both catalog roots through one publication/recovery
+journal. An anchor's term key, head, tail and terminal incarnation are checked
+against the canonical dictionary and snapshot identity. Byte readers and explicit
+little-/big-endian conversions define the format. Safe Rust
+[slice operations](https://doc.rust-lang.org/core/primitive.slice.html) and
+[Vec allocation](https://doc.rust-lang.org/alloc/vec/struct.Vec.html), reporting
+Rust 1.98.1 (`48a229cea`), govern bounded borrows, chunking and fallible storage;
+`size_of` remains a memory-budget calculation, never a serialization contract.
+
+The anchor is valid only while canonical source pointers remain stable. The
+existing exclusive structural barrier precedes the writer interlock. Compaction
+must durably clear the validity bit before it can rewrite/recycle any source
+page, even with every experiment disabled. Recovery must not accept a valid
+anchor with a canonical rewrite journal. Readers retain the shared structural
+barrier but not a writer barrier across cursor execution. Captured term tails
+bound appends; full owner incarnations prevent cross-generation conjunctions;
+heap visibility and HOT remain PostgreSQL's responsibility. Candidate counts do
+not certify visible `COUNT(*)`. Old binaries must not read persisted v2 pages;
+turning a GUC off is not migration.
+
+pgrx authority is 0.19.2, commit
+`70383e884582d1bcc7cd681d10886b995a2830cb`:
+[GUC source](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx/src/guc.rs),
+[versioned GUC implementation](https://docs.rs/pgrx/0.19.2/src/pgrx/guc.rs.html), and
+[install command](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/cargo-pgrx/src/command/install.rs)
+(the install source blob fetched during review is
+`540ccd1f2a389e5600d99e9e8cdd8c71ac464c0e`). Static GucSetting/strings and Suset
+registration preserve the existing lifetime and privilege contract. Stage 39 is
+post-invalidation; stage 40 is a validated seek probe. Both reuse the existing
+privileged test-hooks feature and ordinary host error/cancellation cleanup.
+Normal PgStore event handling is a no-op.
+
+Benchmark contract: `PGOPTIONS` and explicit SET must propagate the requested
+flag to parent, child, row-retrieval, CPU and paired-snapshot connections. The
+`pg_settings` registration check occurs after snapshot import, because a query
+before import would violate the transaction protocol. An absent setting is
+accepted only for a disabled old-binary control. Unknown custom settings alone
+cannot prove the candidate implementation is loaded.
+
+Cargo authorities: [build cache](https://doc.rust-lang.org/cargo/reference/build-cache.html),
+[environment overrides](https://doc.rust-lang.org/cargo/reference/environment-variables.html),
+and [locked build](https://doc.rust-lang.org/cargo/commands/cargo-build.html).
+Both `CARGO_TARGET_DIR` and `CARGO_BUILD_BUILD_DIR` must be fresh for each candidate;
+empty `RUSTC_WRAPPER` and `RUSTC_WORKSPACE_WRAPPER` override configured wrappers.
+The pinned cargo-pgrx install Args has no `--locked` option. The runner therefore
+uses an explicit locked release prebuild, followed by install and a byte-for-byte
+lockfile comparison before any measurements. Source tree/archive and copied
+installed-library hashes supplement, not merely repeat, the revision stamp.
+Failed runs and completed logs are checksummed after logging finishes.
+
+Observed validation: the initial PR head `2ab08406e7bb8670aa2faf4375ef4f93a668bb53`
+passed its nine core anchor tests, core Clippy and documentation in G0 run
+`36008246679`; formatting failed and the exact CI formatter patch was retained
+and applied. Its native tests left anchors off. Follow-up code commit
+`0bf376fd766b7c9312941f26edcbb18ec04d6d28` passes 117 local Python tests, source
+contracts, Python compilation and shell parsing. Python source/mocked-backend
+checks do not establish Rust compilation or SQL/replay correctness. Two added
+Rust tests and the new normal/test-hook anchored native matrices remain unrun
+in this environment. See the retained [follow-up evidence](runs/2026-09-24-pr19-follow-up/README.md).
+
+Reviewer: implementation self-review only. Required gates: exact-head native
+compilation/formatting/tests, independent persistence and lock review, replay on
+standby and migration/downgrade testing, baseline-versus-head isolated builds,
+backend profile attribution, update/sustained-write/maintenance costs, and
+latency distributions. No new-head backend performance measurement, 10x result,
+or TIN comparison has been observed.

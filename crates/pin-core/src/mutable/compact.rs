@@ -111,6 +111,7 @@ pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Resu
                     CompactMode::Copy | CompactMode::DirectTid => None,
                     CompactMode::RetainSealedPrefix => summary.prefix,
                 };
+                super::grouped::invalidate_frontier(store, &mut meta)?;
                 let (written, reused) = rewrite(
                     store,
                     &mut meta,
@@ -381,6 +382,13 @@ pub fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
     let Some(journal) = meta.rewrite_journal()? else {
         return Ok(0);
     };
+    if meta
+        .grouped_state()?
+        .active
+        .is_some_and(|active| active.frontier_valid)
+    {
+        return Err(Error::InvalidState);
+    }
     let first = super::load_any(store, journal.head)?;
     let term = first.posting_term()?;
     let dictionary = load(store, term.page, PageKind::Dictionary)?;

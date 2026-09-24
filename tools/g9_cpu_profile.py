@@ -15,9 +15,12 @@ import platform
 import subprocess
 import time
 
-import psycopg2
-
-from fts_compare import CASES
+if __package__:
+    from . import frontier_options
+    from .g9_profile import CASES
+else:
+    import frontier_options
+    from g9_profile import CASES
 
 BASE_SETTINGS = (
     'SET enable_seqscan = off',
@@ -56,6 +59,7 @@ def proc_snapshot(pid: int) -> dict[str, int]:
         if key in ('read_bytes', 'write_bytes', 'syscr', 'syscw'):
             io[key] = int(value.strip())
     return {
+        'start_ticks': int(stat[19]),
         'on_cpu_ns': runtime,
         'runqueue_ns': runqueue,
         'timeslices': slices,
@@ -69,17 +73,31 @@ def proc_snapshot(pid: int) -> dict[str, int]:
 
 
 def delta(before: dict[str, int], after: dict[str, int]) -> dict[str, int]:
-    return {key: after[key] - value for key, value in before.items()}
+    if before['start_ticks'] != after['start_ticks']:
+        raise RuntimeError('backend pid was reused')
+    result = {key: after[key] - value for key, value in before.items() if key != 'start_ticks'}
+    if any(value < 0 for value in result.values()):
+        raise RuntimeError('backend counters moved backwards')
+    return result
 
 
-def connect(engine: str):
-    conn = psycopg2.connect(application_name='pin_g9_cpu_profile')
+def connect(engine: str, *, anchors: bool = False):
+    import psycopg2
+    conn = psycopg2.connect(application_name='pin_g9_cpu_profile', connect_timeout=10)
     conn.autocommit = True
-    cur = conn.cursor()
-    for setting in BASE_SETTINGS:
-        cur.execute(setting)
-    cur.execute(f'SET pin.enable_grouped_scan = {"on" if engine == "grouped" else "off"}')
-    return conn, cur
+    try:
+        cur = conn.cursor()
+        for setting in BASE_SETTINGS:
+            cur.execute(setting)
+        cur.execute(f'SET pin.enable_grouped_scan = {"on" if engine == "grouped" else "off"}')
+        cur.execute(f'SET {frontier_options.NAME} = {"on" if anchors else "off"}')
+        cur.execute(frontier_options.SETTING_SQL)
+        row = cur.fetchone()
+        frontier_options.require_setting(row[0] if row else None, anchors)
+        return conn, cur
+    except BaseException:
+        conn.close()
+        raise
 
 
 def prepare(cur, case: str, engine: str) -> dict:
@@ -103,6 +121,8 @@ def prepare(cur, case: str, engine: str) -> dict:
     if bitmap is None or bitmap.get('Index Name') != expected or heap is None:
         raise RuntimeError(f'{case}/{engine}: unexpected plan: {plan}')
     return {
+        'explain': plan,
+        'sql': f'SELECT count(*) FROM ONLY public.pin_g6_bench WHERE {predicate(case, engine)}',
         'index_name': bitmap['Index Name'],
         'index_ms': bitmap['Actual Total Time'],
         'index_rows': bitmap['Actual Rows'],
@@ -183,6 +203,7 @@ def profile(cur, pid: int, seconds: float, output: Path) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--frontier-anchors', action='store_true')
     parser.add_argument('--seconds', type=float, default=3)
     parser.add_argument('--samples', type=int, default=3)
     parser.add_argument('--cases', nargs='+', choices=CASES, default=list(CASES))
@@ -201,8 +222,11 @@ def main() -> None:
         'sudo', '-n', 'perf', 'stat', '-e',
         'cycles,instructions,cache-misses,branches,branch-misses', '--', 'true',
     ]
-    pmu_probe = subprocess.run(pmu_command, capture_output=True, text=True,
-                               timeout=15, check=False)
+    try:
+        pmu_probe = subprocess.run(pmu_command, capture_output=True, text=True,
+                                   timeout=15, check=False)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        pmu_probe = subprocess.CompletedProcess(pmu_command, 127, '', repr(error))
     environment = {
         'platform': platform.platform(),
         'cpu_model': next((line.split(':', 1)[1].strip()
@@ -221,11 +245,11 @@ def main() -> None:
         'hardware_pmu_counters_collected': False,
         'metric': '/proc/PID/schedstat backend on-CPU nanoseconds',
     }
-    conn, cur = connect('legacy')
+    conn, cur = connect('legacy', anchors=args.frontier_anchors)
     try:
         cur.execute("SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
                     "('server_version', 'shared_buffers', 'work_mem', 'fsync', "
-                    "'full_page_writes', 'synchronous_commit', 'block_size')")
+                    "'full_page_writes', 'synchronous_commit', 'block_size', 'pin.enable_frontier_anchors')")
         environment['postgres_settings'] = cur.fetchone()[0]
         cur.execute("SELECT relname, pg_relation_size(oid) FROM pg_class WHERE oid IN "
                     "('public.pin_g6_bench'::regclass, "
@@ -238,7 +262,7 @@ def main() -> None:
         conn.close()
     (args.output / 'environment.json').write_text(json.dumps(environment, indent=2) + '\n')
     for case in args.cases:
-        conn, cur = connect('legacy')
+        conn, cur = connect('legacy', anchors=args.frontier_anchors)
         try:
             pin_rows = 'SELECT id FROM ONLY public.pin_g6_bench WHERE ' + predicate(case, 'legacy')
             gin_rows = 'SELECT id FROM ONLY public.pin_g6_bench WHERE ' + predicate(case, 'gin')
@@ -250,7 +274,7 @@ def main() -> None:
             conn.close()
         counts = {}
         for engine in engines:
-            conn, cur = connect(engine)
+            conn, cur = connect(engine, anchors=args.frontier_anchors)
             try:
                 cur.execute('SELECT pg_backend_pid()')
                 pid = cur.fetchone()[0]
@@ -270,7 +294,7 @@ def main() -> None:
     for sample_index in range(args.samples):
         order = rows if sample_index % 2 == 0 else list(reversed(rows))
         for row in order:
-            conn, cur = connect(row['engine'])
+            conn, cur = connect(row['engine'], anchors=args.frontier_anchors)
             try:
                 pid = conn.get_backend_pid()
                 prepare(cur, row['case'], row['engine'])
@@ -286,7 +310,7 @@ def main() -> None:
         for row in rows:
             if row['case'] not in args.profile_cases:
                 continue
-            conn, cur = connect(row['engine'])
+            conn, cur = connect(row['engine'], anchors=args.frontier_anchors)
             try:
                 pid = conn.get_backend_pid()
                 prepare(cur, row['case'], row['engine'])

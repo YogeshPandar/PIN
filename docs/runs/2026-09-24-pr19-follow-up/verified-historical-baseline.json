@@ -1,0 +1,531 @@
+{
+  "archives": {
+    "pr15-raw.tar.gz": {
+      "sha256": "0de6db42ee2ee9e9bac1dba8d34b6e39964207e84effc442adb85d181063dec9",
+      "verified_members": 552,
+      "environment": {
+        "revision": "5afca59199b8ed6ddc3ce6c652d1d4d680562b76",
+        "settings": {
+          "autovacuum": "off",
+          "block_size": "8192",
+          "fsync": "on",
+          "full_page_writes": "on",
+          "maintenance_work_mem": "65536",
+          "server_version_num": "180006",
+          "shared_buffers": "16384",
+          "synchronous_commit": "on",
+          "work_mem": "65536"
+        },
+        "platform": "Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43",
+        "cpu_count": 4,
+        "data_directory": "/home/reing/projects/fts0/pin-g9-pr15",
+        "arguments": {
+          "output": "/home/reing/projects/fts0/.benchmark_tmp/results-pr15",
+          "bindir": "/usr/lib/postgresql/18/bin",
+          "revision": "5afca59199b8ed6ddc3ce6c652d1d4d680562b76",
+          "disposable": true,
+          "rows": 20000,
+          "deltas": [
+            0,
+            1000
+          ],
+          "related_rows": 64,
+          "queries": 30,
+          "samples": 2,
+          "seconds": 1.0,
+          "profile_seconds": 0.0,
+          "throughput_seconds": 0,
+          "write_batches": 1,
+          "write_rows": 1000,
+          "concurrent_seconds": 0.0,
+          "cases": [
+            "rare",
+            "selective_and",
+            "and",
+            "or"
+          ]
+        },
+        "metric_caveats": [
+          "backend cpu is not whole-cluster cpu",
+          "wal differences are cluster-wide",
+          "warm serial reads are not production throughput",
+          "no ranked retrieval measurement",
+          "concurrent writes update a dual-index table and are not attributable to one engine",
+          "concurrent reads retain a pre-write snapshot; fresh visibility is checked after the stage"
+        ]
+      },
+      "status": {
+        "status": "completed",
+        "performance_targets_qualified": false
+      },
+      "accepted": true
+    },
+    "pr17-isolated-raw.tar.gz": {
+      "sha256": "73044067987c9c487589fcbe003ca45f1ce4e759af7cff58b3a606735ec8817c",
+      "verified_members": 552,
+      "environment": {
+        "revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f",
+        "settings": {
+          "autovacuum": "off",
+          "block_size": "8192",
+          "fsync": "on",
+          "full_page_writes": "on",
+          "maintenance_work_mem": "65536",
+          "server_version_num": "180006",
+          "shared_buffers": "16384",
+          "synchronous_commit": "on",
+          "work_mem": "65536"
+        },
+        "platform": "Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43",
+        "cpu_count": 4,
+        "data_directory": "/home/reing/projects/fts0/pin-g9-pr17-isolated",
+        "arguments": {
+          "output": "/home/reing/projects/fts0/.benchmark_tmp/results-pr17-isolated",
+          "bindir": "/usr/lib/postgresql/18/bin",
+          "revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f",
+          "disposable": true,
+          "rows": 20000,
+          "deltas": [
+            0,
+            1000
+          ],
+          "related_rows": 64,
+          "queries": 30,
+          "samples": 2,
+          "seconds": 1.0,
+          "profile_seconds": 0.0,
+          "throughput_seconds": 0,
+          "write_batches": 1,
+          "write_rows": 1000,
+          "concurrent_seconds": 0.0,
+          "cases": [
+            "rare",
+            "selective_and",
+            "and",
+            "or"
+          ]
+        },
+        "metric_caveats": [
+          "backend cpu is not whole-cluster cpu",
+          "wal differences are cluster-wide",
+          "warm serial reads are not production throughput",
+          "no ranked retrieval measurement",
+          "concurrent writes update a dual-index table and are not attributable to one engine",
+          "concurrent reads retain a pre-write snapshot; fresh visibility is checked after the stage"
+        ]
+      },
+      "status": {
+        "status": "completed",
+        "performance_targets_qualified": false
+      },
+      "accepted": true
+    },
+    "rejected-shared-target.tar.gz": {
+      "sha256": "ac30bb256046c7fafbb5cfe30ea35ebb763ab6f17e7e31d826f16c48b68ccc40",
+      "verified_members": 552,
+      "environment": {
+        "revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f",
+        "settings": {
+          "autovacuum": "off",
+          "block_size": "8192",
+          "fsync": "on",
+          "full_page_writes": "on",
+          "maintenance_work_mem": "65536",
+          "server_version_num": "180006",
+          "shared_buffers": "16384",
+          "synchronous_commit": "on",
+          "work_mem": "65536"
+        },
+        "platform": "Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43",
+        "cpu_count": 4,
+        "data_directory": "/home/reing/projects/fts0/pin-g9-pr17",
+        "arguments": {
+          "output": "/home/reing/projects/fts0/.benchmark_tmp/results-pr17",
+          "bindir": "/usr/lib/postgresql/18/bin",
+          "revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f",
+          "disposable": true,
+          "rows": 20000,
+          "deltas": [
+            0,
+            1000
+          ],
+          "related_rows": 64,
+          "queries": 30,
+          "samples": 2,
+          "seconds": 1.0,
+          "profile_seconds": 0.0,
+          "throughput_seconds": 0,
+          "write_batches": 1,
+          "write_rows": 1000,
+          "concurrent_seconds": 0.0,
+          "cases": [
+            "rare",
+            "selective_and",
+            "and",
+            "or"
+          ]
+        },
+        "metric_caveats": [
+          "backend cpu is not whole-cluster cpu",
+          "wal differences are cluster-wide",
+          "warm serial reads are not production throughput",
+          "no ranked retrieval measurement",
+          "concurrent writes update a dual-index table and are not attributable to one engine",
+          "concurrent reads retain a pre-write snapshot; fresh visibility is checked after the stage"
+        ]
+      },
+      "status": {
+        "status": "completed",
+        "performance_targets_qualified": false
+      },
+      "accepted": false
+    }
+  },
+  "qualification": "historical only; exact ZIP and new head require paired VM runs",
+  "rows": [
+    {
+      "stage": "unrelated-0",
+      "case": "rare",
+      "engine": "grouped",
+      "median_cpu_us": 44.088662976886795,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "rare",
+      "engine": "gin",
+      "median_cpu_us": 23.57087625565233,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "selective_and",
+      "engine": "grouped",
+      "median_cpu_us": 62.73436090226884,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "selective_and",
+      "engine": "gin",
+      "median_cpu_us": 36.938796472884476,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "and",
+      "engine": "grouped",
+      "median_cpu_us": 2408.385408015072,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "and",
+      "engine": "gin",
+      "median_cpu_us": 3616.885246235246,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "or",
+      "engine": "grouped",
+      "median_cpu_us": 2327.089671676944,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-0",
+      "case": "or",
+      "engine": "gin",
+      "median_cpu_us": 3018.146196135238,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "rare",
+      "engine": "grouped",
+      "median_cpu_us": 44.90059389087921,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "rare",
+      "engine": "gin",
+      "median_cpu_us": 88.38987499005876,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "selective_and",
+      "engine": "grouped",
+      "median_cpu_us": 106.4617963346279,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "selective_and",
+      "engine": "gin",
+      "median_cpu_us": 132.63270503220303,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "and",
+      "engine": "grouped",
+      "median_cpu_us": 2517.566244127338,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "and",
+      "engine": "gin",
+      "median_cpu_us": 3692.1974400819463,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "or",
+      "engine": "grouped",
+      "median_cpu_us": 2361.719429309532,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "unrelated-1000",
+      "case": "or",
+      "engine": "gin",
+      "median_cpu_us": 3105.5646517072482,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "rare",
+      "engine": "grouped",
+      "median_cpu_us": 96.67699796522783,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "rare",
+      "engine": "gin",
+      "median_cpu_us": 102.6692947262573,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "selective_and",
+      "engine": "grouped",
+      "median_cpu_us": 2254.9634422451018,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "selective_and",
+      "engine": "gin",
+      "median_cpu_us": 148.40048410001626,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "and",
+      "engine": "grouped",
+      "median_cpu_us": 6742.663395936754,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "and",
+      "engine": "gin",
+      "median_cpu_us": 3735.6206683877754,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "or",
+      "engine": "grouped",
+      "median_cpu_us": 4526.727452020202,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "related-multipage",
+      "case": "or",
+      "engine": "gin",
+      "median_cpu_us": 3172.2002286251172,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "rare",
+      "engine": "grouped",
+      "median_cpu_us": 64.76448918511207,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "rare",
+      "engine": "gin",
+      "median_cpu_us": 35.355455242490265,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "selective_and",
+      "engine": "grouped",
+      "median_cpu_us": 72.0362214392633,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "selective_and",
+      "engine": "gin",
+      "median_cpu_us": 55.94070865583099,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "and",
+      "engine": "grouped",
+      "median_cpu_us": 2420.428247790178,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "and",
+      "engine": "gin",
+      "median_cpu_us": 3646.4939666390273,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "or",
+      "engine": "grouped",
+      "median_cpu_us": 2343.996326506024,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    },
+    {
+      "stage": "rebuilt",
+      "case": "or",
+      "engine": "gin",
+      "median_cpu_us": 3087.9987537390175,
+      "samples": 2,
+      "server_revision": "bfcf19dee4e29ef31d6c3e2e9cc1cd4095389b6f"
+    }
+  ],
+  "write_maintenance": [
+    {
+      "engine": "pin",
+      "batch": 0,
+      "inserted_rows": 1000,
+      "insert": {
+        "sql": "INSERT INTO public.pin_frontier_write_pin SELECT i, repeat('alpha beta gamma ', 32) FROM generate_series(1, 1000) AS i",
+        "result": null,
+        "elapsed_ns": 123220206,
+        "backend": {
+          "on_cpu_ns": 106830232,
+          "runqueue_ns": 0,
+          "minor_faults": 240,
+          "major_faults": 0,
+          "read_bytes": 0,
+          "write_bytes": 22986752,
+          "syscr": 1,
+          "syscw": 134
+        },
+        "cluster_wal_bytes": 3808824
+      },
+      "maintenance": {
+        "sql": "VACUUM (INDEX_CLEANUP ON, PARALLEL 0) public.pin_frontier_write_pin",
+        "result": null,
+        "elapsed_ns": 4019542,
+        "backend": {
+          "on_cpu_ns": 3934004,
+          "runqueue_ns": 0,
+          "minor_faults": 12,
+          "major_faults": 0,
+          "read_bytes": 0,
+          "write_bytes": 40960,
+          "syscr": 1,
+          "syscw": 5
+        },
+        "cluster_wal_bytes": 60544
+      },
+      "heap_and_all_indexes_bytes": [
+        630784,
+        360448
+      ],
+      "lifecycle_backend_cpu_ns": 110764236,
+      "lifecycle_cluster_wal_bytes": 3869368
+    },
+    {
+      "engine": "gin",
+      "batch": 0,
+      "inserted_rows": 1000,
+      "insert": {
+        "sql": "INSERT INTO public.pin_frontier_write_gin SELECT i, repeat('alpha beta gamma ', 32) FROM generate_series(1, 1000) AS i",
+        "result": null,
+        "elapsed_ns": 55231102,
+        "backend": {
+          "on_cpu_ns": 53233646,
+          "runqueue_ns": 0,
+          "minor_faults": 188,
+          "major_faults": 0,
+          "read_bytes": 0,
+          "write_bytes": 1802240,
+          "syscr": 1,
+          "syscw": 91
+        },
+        "cluster_wal_bytes": 884992
+      },
+      "maintenance": {
+        "sql": "VACUUM (INDEX_CLEANUP ON, PARALLEL 0) public.pin_frontier_write_gin",
+        "result": null,
+        "elapsed_ns": 957194,
+        "backend": {
+          "on_cpu_ns": 909530,
+          "runqueue_ns": 0,
+          "minor_faults": 11,
+          "major_faults": 0,
+          "read_bytes": 0,
+          "write_bytes": 32768,
+          "syscr": 1,
+          "syscw": 2
+        },
+        "cluster_wal_bytes": 59400
+      },
+      "heap_and_all_indexes_bytes": [
+        630784,
+        147456
+      ],
+      "lifecycle_backend_cpu_ns": 54143176,
+      "lifecycle_cluster_wal_bytes": 944392
+    }
+  ]
+}
