@@ -188,3 +188,15 @@ against GIN and separate build cost from steady-state reads. Preserve machine,
 PostgreSQL configuration, corpus, plans and commit identifiers in artifacts. No
 existing result in this document establishes grouped storage as faster than GIN
 or equivalent to TIN. SIMD, exact counts and ranked top-k remain later gates.
+
+## 24 September 2026: PR #19 frontier anchor follow-up
+
+The [snapshot-anchor review](docs/issue-14-anchors.md) retains all 16 historical
+paired query cells, write/maintenance costs, and the extra catalog-read regression
+on short histories. The implementation persists a default-off suffix boundary
+and invalidates it before canonical rewrites. Follow-up code adds actual seek
+selection/error probes, anchored native lifecycle/recovery/concurrency tests,
+explicit activation on every profiling connection, and an isolated-build runner.
+117 Python tests pass locally; new-head native and backend performance results
+are pending. Earlier PostgreSQL CI passed with anchors disabled and does not
+qualify this format. No new-head 10x-GIN or TIN-equivalence target has passed.

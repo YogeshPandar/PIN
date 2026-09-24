@@ -281,3 +281,13 @@ regression limits, sustained writer/maintenance tails and RSS/allocation
 observations. No benchmark class may be averaged away to meet the stretch
 targets. This PR is a tested implementation candidate, not TIN parity or a
 qualified production release.
+
+## Follow-up: persisted seek anchors
+
+PR #19 adds a separate default-off, versioned anchor experiment to remove the
+historical canonical-chain walk described above. This document's no-new-format
+statements describe the original PR #17 frontier, not the anchor extension.
+See [snapshot frontier anchors](issue-14-anchors.md) for the persistence protocol,
+measured-versus-hypothesized cost, explicit small-history regressions, native
+qualification matrix, isolated-build runner and unresolved gates. Enabling a
+scan setting without publishing anchors does not exercise the new storage.
