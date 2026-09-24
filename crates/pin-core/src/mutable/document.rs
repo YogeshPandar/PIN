@@ -179,6 +179,98 @@ impl<'a> Iterator for DocumentTerms<'a> {
 
 impl std::iter::FusedIterator for DocumentTerms<'_> {}
 
+/// Reads exact term membership without decoding unused positional deltas.
+///
+/// The caller supplies owner metadata captured from the same published record.
+/// Every term envelope, ordering rule and position count is checked. Position
+/// deltas remain deferred because Boolean membership does not consume them.
+pub(crate) fn term_membership(
+    bytes: &[u8],
+    expected_tokens: u32,
+    expected_terms: u32,
+    names: &[Option<&str>],
+) -> Result<u64> {
+    if names.len() > 64 || bytes.len() > MAX_DOCUMENT_BYTES {
+        return Err(Error::Limit("document membership"));
+    }
+    let mut reader = Reader::new(bytes);
+    if reader.take(4)? != b"PD02" || reader.u32()? != PROFILE_ID {
+        return Err(Error::InvalidProfile);
+    }
+    let tokens = reader.u32()?;
+    let terms = reader.u32()?;
+    if tokens != expected_tokens
+        || terms != expected_terms
+        || tokens > MAX_DOCUMENT_TOKENS
+        || terms > tokens
+    {
+        return Err(Error::InvalidDocument);
+    }
+
+    let mut order = [0u8; 64];
+    let mut ordered = 0usize;
+    for (index, name) in names.iter().enumerate() {
+        if name.is_none() {
+            continue;
+        }
+        let mut position = ordered;
+        while position != 0 {
+            let previous = usize::from(order[position - 1]);
+            if names[previous] <= *name {
+                break;
+            }
+            order[position] = order[position - 1];
+            position -= 1;
+        }
+        order[position] = index as u8;
+        ordered += 1;
+    }
+
+    let mut membership = 0u64;
+    let mut query = 0usize;
+    let mut previous = None;
+    let mut positions = 0u32;
+    for _ in 0..terms {
+        let len = usize::from(reader.u16()?);
+        if len == 0 || len > MAX_TERM_BYTES || reader.u16()? != 0 {
+            return Err(Error::InvalidDocument);
+        }
+        let position_bytes = reader.u32()? as usize;
+        let term = std::str::from_utf8(reader.take(len)?).map_err(|_| Error::InvalidDocument)?;
+        if previous.is_some_and(|previous| previous >= term) {
+            return Err(Error::InvalidDocument);
+        }
+        previous = Some(term);
+        let mut encoded = Reader::new(reader.take(position_bytes)?);
+        let count = encoded.u32()?;
+        if count == 0 || count > tokens || count as usize > encoded.remaining() {
+            return Err(Error::InvalidDocument);
+        }
+        positions = positions
+            .checked_add(count)
+            .ok_or(Error::InvalidDocument)?;
+
+        while query < ordered {
+            let index = usize::from(order[query]);
+            let name = names[index].ok_or(Error::InvalidState)?;
+            if name < term {
+                query += 1;
+                continue;
+            }
+            if name != term {
+                break;
+            }
+            membership |= 1u64 << index;
+            query += 1;
+        }
+    }
+    reader.finish()?;
+    if positions != tokens {
+        return Err(Error::InvalidDocument);
+    }
+    Ok(membership)
+}
+
 /// Validates an untrusted payload without retaining a decoded document.
 ///
 /// # Errors

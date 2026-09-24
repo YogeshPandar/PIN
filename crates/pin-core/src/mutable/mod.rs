@@ -57,6 +57,7 @@ pub enum Stage {
     GroupSortReady = 38,
     FrontierInvalidated = 39,
     FrontierSeek = 40,
+    OwnerFrontierScan = 41,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.
@@ -75,6 +76,12 @@ pub trait PageStore {
     /// opts into persisted snapshot frontier anchors and their read-side use.
     /// the host keeps this policy stable for the duration of one operation.
     fn frontier_anchors(&self) -> bool {
+        false
+    }
+
+    /// opts into one-pass owner-payload evaluation for dense mutable frontiers.
+    /// the host keeps this policy stable for the duration of one operation.
+    fn owner_frontier(&self) -> bool {
         false
     }
     fn blocks(&mut self) -> Result<u32>;
