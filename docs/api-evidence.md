@@ -750,3 +750,37 @@ Independent FFI/storage review, current-head rustfmt/Clippy/rustdoc, native SQL 
 hard-crash qualification, grouped parallel-worker qualification, Miri/sanitizers for
 Rust where applicable and matched performance measurements remain acceptance gates.
 Both settings must remain default-off while those gates are open.
+
+## Issue 14: bounded scan work and phrase rechecks
+
+Base reviewed: `1d80b58e0eb17b003326283f8050ac3556f80776`. This candidate changes
+safe query execution and evidence tooling, not the page format, publication/WAL
+protocol, PostgreSQL ABI, SQL signature, dependency graph or Cargo lockfile.
+
+| Official contract/source | Local obligation and evidence |
+| --- | --- |
+| [PG18 index scanning](https://www.postgresql.org/docs/18/index-scanning.html) and [locking](https://www.postgresql.org/docs/18/index-locking.html) | Exact predicate flags never bypass heap visibility. Retain the structural barrier, generation-qualified owners, unconditional retirement and whole-operation error behavior. G9 identity/fault tests remain required. |
+| [PG `ginget.c`, immutable revision](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/gin/ginget.c) | `startScanKey` uses frequency-aware required/additional entries; `entryLoadMoreItems` distinguishes adjacent stepping from a new tree seek. These are research references, not copied locking assumptions. PIN uses its own immutable catalog and a proven conservative group bound. |
+| [PG `tidbitmap.c`, same revision](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/nodes/tidbitmap.c) | Preserve sorted batched TIDs, per-page recheck accumulation and PostgreSQL-owned lossification. No private bitmap structure is accessed. |
+| [Rust slice implementation at `48a229cea`](https://github.com/rust-lang/rust/blob/48a229cea/library/core/src/slice/mod.rs) | Eight-byte chunks are complete arrays and the tail is shorter than eight. Decode with `from_le_bytes`; the grouped tests cover offset widths and tails. |
+| [Rust Vec documentation](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact) | Reservation is fallible and capacity may exceed the request. Keep retained capacity charged by the existing memory-budget helpers. |
+| [pgrx 0.19.2 `pg_extern`](https://docs.rs/pgrx/0.19.2/pgrx/attr.pg_extern.html) and the existing [pgrx source pin](https://github.com/pgcentralfoundation/pgrx/tree/70383e884582d1bcc7cd681d10886b995a2830cb) | `matches(body: &str, bytes: &[u8]) -> bool`, immutable/strict/parallel-safe declarations and the existing error adapter remain unchanged. No PostgreSQL datum or text reference is retained. |
+| Existing `unicode-segmentation = 1.12.0` lock and G1 profile contracts | Reuse the exact existing `unicode_words` and budgeted Unicode normalizer. The ASCII path relies on ASCII folding preserving word boundaries and byte lengths. |
+| [Cargo test](https://doc.rust-lang.org/cargo/commands/cargo-test.html) | Keep `--locked`; run debug/release core/kernel tests, examples, formatting and Clippy in CI. Workflow definitions are not successful runs by themselves. |
+| [PG18 EXPLAIN](https://www.postgresql.org/docs/18/sql-explain.html), [pgbench](https://www.postgresql.org/docs/18/pgbench.html), [psql](https://www.postgresql.org/docs/18/app-psql.html), and Linux [/proc](https://docs.kernel.org/filesystems/proc.html) | Preserve raw evidence, distinguish inclusive buffer/elapsed counters from CPU, pair GIN controls, validate backend identity, and reject inadequate CPU-tick resolution. |
+
+### Review and qualification status
+
+The bounded phrase matcher handles only one phrase node with 1..64 terms and keeps
+at most 64 borrowed token references. Unsupported shapes keep the document oracle.
+The PostgreSQL wrapper still decodes each query datum and does not cache a borrowed
+datum or unsafe Rust object across calls.
+
+The issue-14 finite models check conservative Boolean pruning and phrase-window work
+accounting independently. SQL tests cover phrase truth values, Unicode cases, invalid
+tails and prepared-statement reuse. The dedicated workflow runs formatting, locked
+debug/release tests, Clippy and the phrase ablation.
+
+Local model/C-test evidence predates the current PR head. Current-head CI and live
+PostgreSQL measurements must be evaluated separately. No speedup, hardware-counter
+result, allocation profile or production-readiness claim follows from these files.
