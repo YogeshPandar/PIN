@@ -19,7 +19,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat .github/owner-frontier-parts/part* > /tmp/owner-frontier-qualification.patch.gz.b64
+          cat .github/owner-frontier-parts/part* | tr -d '\r\n' > /tmp/owner-frontier-qualification.patch.gz.b64
           echo "00d6b1fac035b4fc6ec0de896eb9370e84cc8b89307b1a3851d6c115628b735f  /tmp/owner-frontier-qualification.patch.gz.b64" | sha256sum -c -
           base64 -d /tmp/owner-frontier-qualification.patch.gz.b64 > /tmp/owner-frontier-qualification.patch.gz
           gzip -d -c /tmp/owner-frontier-qualification.patch.gz > /tmp/owner-frontier-qualification.patch
