@@ -368,7 +368,7 @@ fn owner_frontier_span<S: PageStore>(
 fn fragment_membership<S: PageStore>(
     store: &mut S,
     owner: Owner<'_>,
-    names: &[Option<&str>],
+    membership: &document::TermMembership<'_, '_>,
     scratch: &mut Vec<u8>,
     scratch_limit: usize,
     max_blocks: u32,
@@ -413,7 +413,9 @@ fn fragment_membership<S: PageStore>(
     if offset != total {
         return Err(Error::InvalidState);
     }
-    document::term_membership(scratch, owner.tokens, owner.terms, names).map(Some)
+    membership
+        .read(scratch, owner.tokens, owner.terms)
+        .map(Some)
 }
 
 fn scan_owner_frontier<S: PageStore>(
@@ -453,6 +455,7 @@ fn scan_owner_frontier<S: PageStore>(
     }
     let scratch_limit = available - retained;
     let mut scratch = Vec::new();
+    let membership = document::TermMembership::new(&program.names[..program.terms])?;
     let max_blocks = store.blocks()?;
     store.event(Stage::OwnerFrontierScan)?;
 
@@ -492,7 +495,7 @@ fn scan_owner_frontier<S: PageStore>(
                     let Some(membership) = fragment_membership(
                         store,
                         owner,
-                        &program.names[..program.terms],
+                        &membership,
                         &mut scratch,
                         scratch_limit,
                         max_blocks,
@@ -502,12 +505,7 @@ fn scan_owner_frontier<S: PageStore>(
                     };
                     membership
                 } else {
-                    document::term_membership(
-                        owner.inline,
-                        owner.tokens,
-                        owner.terms,
-                        &program.names[..program.terms],
-                    )?
+                    membership.read(owner.inline, owner.tokens, owner.terms)?
                 };
                 if matches(program, membership)? {
                     if output.len() == roots {
