@@ -784,3 +784,115 @@ debug/release tests, Clippy and the phrase ablation.
 Local model/C-test evidence predates the current PR head. Current-head CI and live
 PostgreSQL measurements must be evaluated separately. No speedup, hardware-counter
 result, allocation profile or production-readiness claim follows from these files.
+
+## G9-FRONTIER01: exact term-addressed suffix membership
+
+Review date: 24 September 2026. Modules:
+`mutable/grouped/frontier.rs`, `mutable/grouped/scan.rs`,
+`mutable/grouped/storage.rs`, and `mutable/page_grouped.rs` in `pin-core`.
+Baseline: PR #15, `5afca59199b8ed6ddc3ce6c652d1d4d680562b76`.
+
+Authority: PostgreSQL 18.6 [index scanning and rechecks](https://www.postgresql.org/docs/18/index-scanning.html),
+[index locking](https://www.postgresql.org/docs/18/index-locking.html),
+[VACUUM](https://www.postgresql.org/docs/18/sql-vacuum.html),
+[generic WAL](https://www.postgresql.org/docs/18/generic-wal.html),
+[visibility maps](https://www.postgresql.org/docs/18/storage-vm.html), and
+[CustomScan](https://www.postgresql.org/docs/18/custom-scan.html). Pinned upstream
+source remains `724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+[buffer access rules](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/README),
+[GIN scan](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/gin/ginget.c),
+[index-only scan ordering](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeIndexonlyscan.c),
+[bitmap heap execution](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeBitmapHeapscan.c),
+[visibility map implementation](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/visibilitymap.c), and
+[generic WAL implementation](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/transam/generic_xlog.c).
+
+The AM supplies all matching index identities, not snapshot-visible heap tuples.
+Clearing a recheck flag requires exact predicate membership. `amgetbitmap`
+cannot itself return index-only tuples. `nodeIndexonlyscan.c` explains why VM
+loads depend on ordering from index-buffer synchronization and snapshot
+acquisition. This change does not establish a new equivalent VM protocol and
+therefore does not bypass heap visibility or change the count/CustomScan gates.
+
+Local proof obligations:
+
+1. Complete grouped publication reserves an incarnation later than every
+   captured owner, under the existing structural/writer protocol. No posting at
+   or below that fence is a new frontier owner. Captured dictionary tails stop
+   a reader from following an unbounded sequence of appends.
+2. Owner references are ordered by stable owner page/slot and monotonically
+   increasing incarnation. A tail whose final reference precedes the target
+   proves exhaustion. A tail jump is safe only when its first reference is at
+   or before the target, or it is the only page; otherwise walk from the head.
+3. Boolean membership uses the full owner incarnation, never TID alone. AND
+   cannot join two versions occupying the same heap slot. Canonical publication
+   and liveness must be checked before emitting an owner. Unbounded NOT uses the
+   published owner universe after the fence, not an arbitrary complement.
+4. Every row visible to the captured PostgreSQL snapshot completed insertion
+   before the scan. Concurrent appends may add invisible candidates; PostgreSQL
+   filters them. VACUUM remains the authority for safe owner retirement, and
+   the structural barrier prevents source reclamation during a grouped scan.
+5. An exact Boolean result permits `recheck=false` only for that index
+   predicate. Heap/HOT visibility, multiple-key rechecks, lossy bitmap handling,
+   and SQL executor quals remain in the existing host adapter. A core candidate
+   count is neither a visible SQL count nor necessarily a deduplicated count.
+6. Interrupted/corrupt scans fail rather than return partial success. Existing
+   C/pgrx error guards own buffer cleanup and bitmap invalidation. No new FFI,
+   unsafe operation, page borrowing, WAL mutation or persistent format is added.
+
+The buffer README requires a pin before accessing a buffer and a content lock
+while examining page state. A pin alone is not a blanket immutable-byte lease.
+`GroupNode` and parsed `Bitmap` views here borrow only checked private page or
+scratch storage. The C shim still copies under its established pin/content-lock
+contract. Reusing these Rust views does not extend any PostgreSQL pointer's
+lifetime across a callback, unlock, cancellation or transaction boundary.
+
+Rust authority: the official [Vec](https://doc.rust-lang.org/std/vec/struct.Vec.html)
+and [slice](https://doc.rust-lang.org/std/primitive.slice.html) documentation
+reports Rust 1.98.1, build `48a229cea` (1 September 2026), matching the selected
+toolchain. `Vec::try_reserve_exact` is fallible and may receive more capacity
+from the allocator than requested; it is not an exact RSS guarantee. The
+program's 64-term limit bounds requested cursor storage. Existing grouped
+payloads are released before frontier allocation. No per-hit vector growth is
+used. `chunks_mut` establishes disjoint scratch regions; parsed immutable
+views remain within those regions until the scan step ends. Checked addition
+protects the incarnation target and candidate count. Safe slice/reader bounds
+protect key/value access; `size_of` is used only for memory accounting, never
+as an on-disk layout contract. The bare `pin-kernels` crate remains `no_std`;
+the frontier itself uses bounded allocations in `pin-core`.
+
+Evidence: `issue14_frontier.rs` covers 4,096 unrelated writes with owner-read
+bounds, Boolean truth against the independent oracle, multi-page changed
+suffixes, sealed/direct/mutable chains, TID reuse, every pre-publication insert
+failure boundary, cancellation and fallback. CI run `35982647506` on
+`62634401827211ea862156d6bef0bd19df01f8d3` passed all debug/release core/kernel
+tests, the no-default-features kernel check and Clippy; formatting failed and
+the exact CI formatter patch was subsequently applied. G9 run `35982647597`
+passed. Initial PostgreSQL job `107577954174` in run `35982647514` passed
+native lifecycle, grouped WAL recovery/concurrency and G2 transactional/recovery
+qualification. The formatter-corrected code head `4db741005203b2462778ec7fac681477069e8ed9`
+passed Issue14 run `35984784495`, G6 run `35984784501`, G9 run `35984784571` and
+the G0 pure job. Its expanded native SQL suite was still running at this entry's
+recording time. Evidence is not transferable to a changed head without rerunning
+checks. Native SQL coverage is extended by `tests/sql/issue14_frontier.sql` in
+the existing normal/test-hook qualification driver.
+
+Performance evidence for this implementation: no local backend CPU or
+throughput measurement. The previous CPU report predates PR #15. Read the
+[decision and benchmark procedure](issue-14-frontier.md) for separate fresh,
+unrelated-write, related-write, phrase, count, retrieval and maintenance gates.
+`tools/issue14_frontier_bench.py` verifies the loaded revision and full result
+identities before timing. Its guarded local-cluster setup and repeated
+write/VACUUM phases preserve deferred GIN maintenance. Its PostgreSQL cursor,
+repeatable-read and pgbench contracts follow the official
+[DECLARE](https://www.postgresql.org/docs/18/sql-declare.html),
+[isolation](https://www.postgresql.org/docs/18/transaction-iso.html),
+[pgbench](https://www.postgresql.org/docs/18/pgbench.html), and
+[Psycopg connection](https://www.psycopg.org/docs/connection.html) documentation.
+Autocommit permits VACUUM outside transactions; explicit read transactions are
+closed before maintenance; each worker owns its connection. Benchmark guards
+and Python tests are not proof that its unrun live measurements succeeded.
+
+Reviewer: implementation self-review only; independently assigned reviewer
+still required. Remaining gates: final-head native SQL, recovery/standby
+qualification, sustained-write measurements and related-suffix cost. No
+20x/10x target or TIN-equivalence claim is authorized by this entry.

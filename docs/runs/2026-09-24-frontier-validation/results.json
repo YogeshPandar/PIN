@@ -1,0 +1,145 @@
+{
+  "implementation_commit": "62634401827211ea862156d6bef0bd19df01f8d3",
+  "baseline_commit": "5afca59199b8ed6ddc3ce6c652d1d4d680562b76",
+  "issue14_ci_run": 35982647506,
+  "checks": [
+    {
+      "command": "python3 -m unittest discover -s tests -p test_issue14_*.py -v",
+      "status": "passed",
+      "rust_tests_passed": null,
+      "raw_sha256": "26897ea0b49100c53c841ee314ba54df4609241bc06fb9a30cf1e8c3fbc009b1"
+    },
+    {
+      "command": "cargo check --locked -p pin-kernels --no-default-features --lib",
+      "status": "passed",
+      "rust_tests_passed": null,
+      "raw_sha256": "b6be2b311ad574373b89a9004bfbed98032742e97702e061f9a96f467b0ca1db"
+    },
+    {
+      "command": "cargo test --locked -p pin-core -p pin-kernels",
+      "status": "passed",
+      "rust_tests_passed": 177,
+      "raw_sha256": "93f7b29288f898d49e210da5034326fcd151ff1733292eb163eefcedf912b765"
+    },
+    {
+      "command": "cargo test --locked --release -p pin-core -p pin-kernels",
+      "status": "passed",
+      "rust_tests_passed": 177,
+      "raw_sha256": "f91be071d7175c85ec2d5d383328fd3ac488421d0585dcf2ead325640a87172c"
+    },
+    {
+      "command": "cargo clippy --locked -p pin-core -p pin-kernels --all-targets -- -D warnings",
+      "status": "passed",
+      "rust_tests_passed": null,
+      "raw_sha256": "22cc0fb298194da480c49aa44ae3c12c9547b53a6d41729cff83dee4d6254f0e"
+    }
+  ],
+  "initial_format_gate": "failed; exact patch from 35982647569 applied in 4db741005203b2462778ec7fac681477069e8ed9",
+  "postgres_ci": {
+    "run": 35982647514,
+    "job": 107577954174,
+    "status": "passed",
+    "includes": [
+      "normal lifecycle",
+      "grouped lifecycle",
+      "host clippy",
+      "G8 qualification",
+      "error boundary",
+      "grouped WAL recovery/concurrency",
+      "G2 transactional/recovery"
+    ]
+  },
+  "local_python": {
+    "command": "python3 -m unittest discover -s tests -v",
+    "tests_passed": 103,
+    "status": "passed",
+    "log_sha256": "84402ebd3b524fbc46ba7d7ef101739db80bb8382374a36e1e5adf00e5707f39"
+  },
+  "local_environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.13.5",
+    "rustc": null,
+    "cargo": null,
+    "pg_config": "PostgreSQL 17.10 (Debian 17.10-0+deb13u1)"
+  },
+  "performance_targets_qualified": false,
+  "measurements": {
+    "rare_fresh": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "broad_fresh": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "selective_boolean_fresh": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "unrelated_delta": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "related_delta": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "phrase": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "count": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "retrieval": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "concurrent_reads_writes": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    },
+    "insert_and_maintenance": {
+      "status": "not_measured",
+      "backend_cpu_us_per_query": null,
+      "speedup": null
+    }
+  },
+  "formatted_code_checks": {
+    "commit": "4db741005203b2462778ec7fac681477069e8ed9",
+    "passed_workflows": {
+      "issue14": 35984784495,
+      "G6": 35984784501,
+      "G9": 35984784571,
+      "G0": 35984784546
+    },
+    "G0_pure": "passed",
+    "G0_postgres": "passed",
+    "G0_run": 35984784546,
+    "G0_postgres_job": 107584801088,
+    "passed_postgres_steps": [
+      "extension compilation",
+      "normal lifecycle",
+      "normal grouped lifecycle including issue14_frontier.sql",
+      "G8 qualification/package",
+      "host clippy",
+      "error boundary",
+      "grouped WAL recovery/concurrency",
+      "G2 transactional/recovery"
+    ],
+    "postgres_artifact": {
+      "id": 10802616347,
+      "sha256": "2ba49c9a79a6038bce713d32b5dbd90434c970ea6bbe5fdd291644753d6202a8"
+    }
+  }
+}
