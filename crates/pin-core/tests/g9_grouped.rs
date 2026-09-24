@@ -644,3 +644,33 @@ fn logical_bitmap_has_a_fixed_little_endian_golden_image() {
     assert_eq!(bytes.as_slice(), golden);
     assert_eq!(Bitmap::open(golden).unwrap().offsets(255).unwrap()[1], 1);
 }
+
+#[test]
+fn offset_word_decoder_matches_bit_oracle_at_every_width_and_tail() {
+    for domain in [1u16, 7, 8, 63, 64, 65, 291, 511, 512] {
+        let key = key(0, domain, 1);
+        for last in 1..=domain {
+            let mut expected = [0u64; 8];
+            for offset in 1..=last {
+                if offset == last || offset % 3 == 0 {
+                    let bit = usize::from(offset - 1);
+                    expected[bit / 64] |= 1 << (bit % 64);
+                }
+            }
+            let mut bytes = [0; 20_000];
+            let pages = [PageOffsets {
+                page: 255,
+                offsets: expected,
+            }];
+            let len = encode_bitmap(key, BitmapKind::Posting, &pages, &mut bytes).unwrap();
+            let view = Bitmap::open(&bytes[..len]).unwrap();
+            assert_eq!(
+                view.offsets(255).unwrap(),
+                expected,
+                "domain={domain}, last={last}"
+            );
+            assert_eq!(view.offsets(0).unwrap(), [0; 8]);
+            assert_eq!(view.payload_bytes(255), usize::from(last).div_ceil(8));
+        }
+    }
+}
