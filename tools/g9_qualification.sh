@@ -14,9 +14,12 @@ if [[ $version != 'PostgreSQL 18.6' && $version != 'PostgreSQL 18.6 '* ]]; then
   exit 2
 fi
 mode=${PIN_G9_TEST_HOOKS:-0}
+anchors=${PIN_G9_ANCHORS:-0}
 [[ $mode == 0 || $mode == 1 ]] || exit 2
+[[ $anchors == 0 || $anchors == 1 ]] || exit 2
 work=$(mktemp -d /tmp/pin-g9.XXXXXXXX)
 artifacts="$root/.artifacts/g9-$mode"
+if [[ $anchors == 1 ]]; then artifacts+="-anchors"; fi
 mkdir -p "$artifacts" "$work/socket"
 cleanup() {
   "$bin/pg_ctl" -D "$work/data" -m immediate -w stop >/dev/null 2>&1 || true
@@ -44,14 +47,9 @@ CONF
 export PGHOST="$work/socket" PGPORT=55489 PGDATABASE=postgres
 python3 "$root/tools/g9_qualification.py" \
   --psql "$bin/psql" --pg-ctl "$bin/pg_ctl" --data "$work/data" \
-  --server-log "$work/postgres.log" --artifacts "$artifacts" --hooks "$mode"
+  --server-log "$work/postgres.log" --artifacts "$artifacts" --hooks "$mode" --anchors "$anchors"
 
-"$bin/createdb" pin_anchor_qualification
-PGDATABASE=pin_anchor_qualification python3 "$root/tools/issue14_anchor_qualification.py" \
-  --psql "$bin/psql" --pg-ctl "$bin/pg_ctl" --data "$work/data" \
-  --server-log "$work/postgres.log" --artifacts "$artifacts/anchors" --hooks "$mode"
-
-if [[ $mode == 0 ]]; then
+if [[ $mode == 0 && $anchors == 0 ]]; then
   "$bin/psql" -X -w -v ON_ERROR_STOP=1 -f "$root/tests/sql/g9_profile.sql"
   python3 "$root/tools/g9_profile.py" --bindir "$bin" \
     --output "$artifacts/profile" --samples 6 --queries 2 --warmup 1 \

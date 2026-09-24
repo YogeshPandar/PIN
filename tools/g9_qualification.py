@@ -62,6 +62,7 @@ def require_bitmap(plan: list[dict[str, Any]]) -> None:
 class Cluster:
     def __init__(self, args: argparse.Namespace):
         self.args = args
+        self.anchors = getattr(args, 'anchors', '0') == '1'
         self.sequence = 0
         self.children: list[subprocess.Popen] = []
         self.args.artifacts.mkdir(parents=True, exist_ok=True)
@@ -74,7 +75,12 @@ class Cluster:
         name = f'{self.sequence:03d}-{label}'
         return self.args.artifacts / (name + '.sql'), self.args.artifacts / (name + '.log')
 
+    def settings(self, sql: str) -> str:
+        return ('SET pin.enable_frontier_anchors = '
+                + ('on' if self.anchors else 'off') + ';\n' + sql)
+
     def run(self, sql: str, *, error: str | None = None, label: str = 'query') -> str:
+        sql = self.settings(sql)
         source, log = self.paths(label)
         source.write_text(sql + '\n', encoding='utf-8')
         result = subprocess.run(
@@ -90,6 +96,7 @@ class Cluster:
         return result.stdout.strip()
 
     def start(self, sql: str, app: str) -> tuple[subprocess.Popen, Path]:
+        sql = self.settings(sql)
         source, log = self.paths(app)
         source.write_text(sql + '\n', encoding='utf-8')
         env = dict(os.environ, PGAPPNAME=app)
@@ -230,9 +237,9 @@ def prove_scan_selection(cluster: Cluster) -> None:
                 + select_rows('g9_small', '"alpha beta"'), label='prove-phrase-fallback')
 
 
-def crash_boundaries(cluster: Cluster, *, stages: tuple[int, ...] = STAGES) -> None:
+def crash_boundaries(cluster: Cluster) -> None:
     cluster.run('CREATE TABLE g9_wal_witness(stage integer PRIMARY KEY);')
-    for stage in stages:
+    for stage in (*STAGES, 39) if cluster.anchors else STAGES:
         cluster.fixture()
         cluster.run(cluster.vacuum(hook=stage), error='Pin injected storage error',
                     label=f'error-{stage}')
@@ -256,7 +263,8 @@ def crash_boundaries(cluster: Cluster, *, stages: tuple[int, ...] = STAGES) -> N
             raise AssertionError('post-crash witness was not durable')
         cluster.compare('g9_crash')
         # retirement and recovery cannot depend on the experiment remaining enabled.
-        cluster.run('SET pin.enable_grouped_storage = off; SET pin.enable_grouped_scan = off;\n'
+        cluster.run('SET pin.enable_frontier_anchors = off;\n'
+                    'SET pin.enable_grouped_storage = off; SET pin.enable_grouped_scan = off;\n'
                     'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_crash;', label='disabled-recovery')
         cluster.run(cluster.vacuum(), label=f'crash-recovery-{stage}')
         cluster.compare('g9_crash')
@@ -323,11 +331,68 @@ def concurrent_reader_writer_maintenance(cluster: Cluster) -> None:
     cluster.compare('g9_crash')
 
 
+def anchor_seek_qualification(cluster: Cluster) -> None:
+    query = 'alpha AND rareplanet'
+    statement = select_rows('g9_anchor', query)
+    prefix = SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
+    expected = json.loads(cluster.run(prefix + statement, label='anchor-before-pause'))
+    cluster.run(prefix + 'SELECT pin.g2_inject(40, 1, false);\n' + statement,
+                error='Pin injected storage error', label='prove-frontier-seek')
+    for override, source in (
+        ('SET pin.enable_frontier_anchors = off;\n', statement),
+        ('SET pin.enable_grouped_scan = off;\n', statement),
+        ('', select_rows('g9_anchor', '"alpha beta"')),
+    ):
+        cluster.run(prefix + override + 'SELECT pin.g2_inject(40, 1, false);\n' + source,
+                    label='prove-anchor-fallback')
+
+    blocker = cluster.blocker('g9-anchor-blocker')
+    reader = cluster.start(prefix + 'SELECT pin.g2_inject(40, 1, true);\n' + statement,
+                           'g9-anchor-reader')
+    cluster.wait_lock('g9-anchor-reader', False)
+    cluster.run("SET statement_timeout = '10s'; INSERT INTO g9_anchor "
+                "SELECT i, 'alpha rareplanet', 0 FROM generate_series(40000, 41023) AS i;",
+                label='related-writer-during-anchor-read')
+    maintenance = cluster.start(SETTINGS + 'SET pin.enable_grouped_storage = on;\n'
+                                'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_anchor;',
+                                'g9-anchor-maintenance')
+    cluster.wait_structure_lock('g9-anchor-maintenance')
+    cluster.release('g9-anchor-blocker', blocker)
+    if json.loads(cluster.finish(reader)) != expected:
+        raise AssertionError('anchored reader changed its heap-visible snapshot')
+    cluster.finish(maintenance)
+    cluster.compare('g9_anchor')
+    # read-side hook errors and cancellation must not leave locks or broken cursors.
+    cluster.run("INSERT INTO g9_anchor SELECT i, 'unrelated', 0 "
+                'FROM generate_series(42000, 42999) AS i;')
+    cluster.run("INSERT INTO g9_anchor SELECT i, 'alpha rareplanet', 0 "
+                'FROM generate_series(43000, 44023) AS i;')
+    blocker = cluster.blocker('g9-anchor-cancel-blocker')
+    reader = cluster.start(prefix + 'SELECT pin.g2_inject(40, 1, true);\n' + statement,
+                           'g9-anchor-cancel')
+    cluster.wait_lock('g9-anchor-cancel', False)
+    cluster.signal('g9-anchor-cancel', 'pg_cancel_backend')
+    cluster.finish(reader, error='canceling statement due to user request')
+    cluster.release('g9-anchor-cancel-blocker', blocker)
+    cluster.compare('g9_anchor', (query,))
+    cluster.run('SET pin.enable_frontier_anchors = off;\n'
+                'SET pin.enable_grouped_storage = off;\n'
+                'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_anchor;', label='anchor-invalidation')
+    cluster.run(prefix + 'SELECT pin.g2_inject(40, 1, false);\n' + statement,
+                label='prove-invalidated-fallback')
+    cluster.restart(immediate=True)
+    cluster.compare('g9_anchor')
+
+
 def permissions(cluster: Cluster) -> None:
     cluster.run('CREATE ROLE pin_g9_reader;')
     for gate in ('storage', 'scan'):
         cluster.run(f'SET ROLE pin_g9_reader; SET pin.enable_grouped_{gate} = on;',
                     error='permission denied to set parameter', label='gate-permissions')
+    cluster.run('SET ROLE pin_g9_reader; SET pin.enable_frontier_anchors = on;',
+                error='permission denied to set parameter', label='anchor-permissions')
+    if cluster.run("SELECT boot_val FROM pg_settings WHERE name = 'pin.enable_frontier_anchors'") != 'off':
+        raise AssertionError('frontier anchors must default off')
     cluster.run('DROP ROLE pin_g9_reader;')
 
 
@@ -339,9 +404,11 @@ def main() -> None:
     parser.add_argument('--server-log', required=True, type=Path)
     parser.add_argument('--artifacts', required=True, type=Path)
     parser.add_argument('--hooks', choices=('0', '1'), required=True)
+    parser.add_argument('--anchors', choices=('0', '1'), default='0')
     args = parser.parse_args()
     cluster = Cluster(args)
-    results: dict[str, Any] = {'postgres': '18.6', 'hooks': args.hooks == '1', 'passed': False}
+    results: dict[str, Any] = {'postgres': '18.6', 'hooks': args.hooks == '1',
+                               'anchors': cluster.anchors, 'passed': False}
     try:
         cluster.run('CREATE EXTENSION pin;')
         if cluster.run('SHOW server_version_num') != '180006':
@@ -359,14 +426,18 @@ def main() -> None:
         if 'Pin grouped snapshot skipped: maintenance memory is too small' not in log:
             raise AssertionError('low-memory publication fallback was not observed')
         permissions(cluster)
+        if cluster.anchors:
+            cluster.run('\\i ' + str(ROOT / 'tests/sql/issue14_anchors.sql'), label='anchor-lifecycle')
         if available:
             prove_scan_selection(cluster)
             crash_boundaries(cluster)
             cancellation(cluster)
             concurrent_reader_writer_maintenance(cluster)
+            if cluster.anchors:
+                anchor_seek_qualification(cluster)
         cluster.restart(immediate=False)
         cluster.compare('g9_small')
-        results.update(passed=True, stages=list(STAGES) if available else [],
+        results.update(passed=True, stages=list((*STAGES, 39) if cluster.anchors else STAGES) if available else [],
                        spill_observed=True, low_memory_fallback_observed=True)
     finally:
         cluster.cleanup()

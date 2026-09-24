@@ -50,6 +50,7 @@ struct Store {
     work: Work,
     polls: usize,
     cancel_at: Option<usize>,
+    commit_failure: Option<bool>,
 }
 
 impl Default for Store {
@@ -60,6 +61,7 @@ impl Default for Store {
             work: Work::default(),
             polls: 0,
             cancel_at: None,
+            commit_failure: None,
         }
     }
 }
@@ -91,7 +93,14 @@ impl PageStore for Store {
         self.inner.extend()
     }
     fn commit(&mut self, pages: &[&Page]) -> Result<()> {
-        self.inner.commit(pages)
+        match self.commit_failure.take() {
+            Some(false) => Err(Error::InvalidState),
+            Some(true) => {
+                self.inner.commit(pages)?;
+                Err(Error::InvalidState)
+            }
+            None => self.inner.commit(pages),
+        }
     }
     fn remove_owners(&mut self, page: &Page) -> Result<()> {
         self.inner.remove_owners(page)
@@ -229,7 +238,6 @@ fn related_write_work_skips_history_after_an_unrelated_incarnation_gap() {
         }
         for query in queries {
             let (old, old_work) = measured(&mut store, query, false);
-            store.inner.events.clear();
             let (new, new_work) = measured(&mut store, query, true);
             assert_eq!(new, old, "{query}");
             let rare_query = query == "rareplanet" || query == "alpha AND rareplanet";
@@ -248,7 +256,6 @@ fn related_write_work_skips_history_after_an_unrelated_incarnation_gap() {
             assert_eq!(new_work.owner_reads, old_work.owner_reads);
             assert!(new_work.posting_reads <= 6, "{query}: {new_work:?}");
             if history == 16384 && query != "rareplanet" {
-                assert!(store.inner.events.contains(&Stage::FrontierSeek));
                 assert!(
                     new_work.posting_reads < old_work.posting_reads,
                     "{query}: {old_work:?} -> {new_work:?}"
@@ -557,4 +564,63 @@ fn unknown_metadata_versions_flags_and_missing_anchor_roots_fail_closed() {
     assert!(scan(&mut base, "a AND b").is_err());
     base.enabled = false;
     assert_eq!(scan(&mut base, "a AND b").unwrap().len(), 1088);
+}
+
+#[test]
+fn invalidation_commit_failure_preserves_the_safe_side_of_publication() {
+    let mut base = Store::default();
+    mutable::initialize(&mut base).unwrap();
+    let docs: Vec<_> = (0..768).map(|index| (index, "a b")).collect();
+    for &(index, text) in &docs {
+        insert(&mut base, index, text);
+    }
+    build(&mut base).unwrap();
+    for persisted in [false, true] {
+        let mut store = base.clone();
+        store.commit_failure = Some(persisted);
+        assert!(mutable::compact(&mut store).is_err());
+        assert_eq!(active(&mut store).frontier_valid, !persisted);
+        if !persisted {
+            assert_eq!(store.inner.pages, base.inner.pages);
+        }
+        assert!(store.read(0).unwrap().rewrite_journal().unwrap().is_none());
+        exact(&mut store, "a AND b", &docs);
+        mutable::recover_compaction(&mut store).unwrap();
+        mutable::compact(&mut store).unwrap();
+        build(&mut store).unwrap();
+        exact(&mut store, "a AND b", &docs);
+    }
+}
+
+#[test]
+fn seek_event_proves_selection_and_errors_do_not_report_partial_success() {
+    let mut base = Store::default();
+    mutable::initialize(&mut base).unwrap();
+    for index in 0..1024 {
+        insert(&mut base, index, "a b");
+    }
+    build(&mut base).unwrap();
+    for index in 1024..2024 {
+        insert(&mut base, index, "unrelated");
+    }
+    for index in 2024..3048 {
+        insert(&mut base, index, "a b");
+    }
+    base.inner.events.clear();
+    let mut probe = base.clone();
+    let expected = scan(&mut probe, "a AND b").unwrap();
+    let boundary = probe
+        .inner
+        .events
+        .iter()
+        .position(|&stage| stage == Stage::FrontierSeek)
+        .unwrap();
+    base.inner.fail_at = Some(boundary);
+    assert!(scan(&mut base, "a AND b").is_err());
+    base.inner.fail_at = None;
+    assert_eq!(scan(&mut base, "a AND b").unwrap(), expected);
+    base.enabled = false;
+    base.inner.events.clear();
+    assert_eq!(scan(&mut base, "a AND b").unwrap(), expected);
+    assert!(!base.inner.events.contains(&Stage::FrontierSeek));
 }

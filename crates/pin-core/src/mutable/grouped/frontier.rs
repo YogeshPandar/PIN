@@ -10,7 +10,9 @@ use crate::mutable::grouped::anchors;
 use crate::mutable::page::{
     GroupSnapshot, NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef,
 };
-use crate::mutable::{PageStore, Stage, following, load, load_posting, posting_next, reader::resolve};
+use crate::mutable::{
+    PageStore, Stage, following, load, load_posting, posting_next, reader::resolve,
+};
 
 #[derive(Clone, Copy)]
 pub(super) struct CapturedTerm {
