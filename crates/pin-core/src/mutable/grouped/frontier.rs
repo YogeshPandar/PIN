@@ -455,7 +455,7 @@ fn scan_owner_frontier<S: PageStore>(
     }
     let scratch_limit = available - retained;
     let mut scratch = Vec::new();
-    let membership = document::TermMembership::new(&program.names[..program.terms])?;
+    let membership_plan = document::TermMembership::new(&program.names[..program.terms])?;
     let max_blocks = store.blocks()?;
     store.event(Stage::OwnerFrontierScan)?;
 
@@ -495,7 +495,7 @@ fn scan_owner_frontier<S: PageStore>(
                     let Some(membership) = fragment_membership(
                         store,
                         owner,
-                        &membership,
+                        &membership_plan,
                         &mut scratch,
                         scratch_limit,
                         max_blocks,
@@ -505,7 +505,7 @@ fn scan_owner_frontier<S: PageStore>(
                     };
                     membership
                 } else {
-                    membership.read(owner.inline, owner.tokens, owner.terms)?
+                    membership_plan.read(owner.inline, owner.tokens, owner.terms)?
                 };
                 if matches(program, membership)? {
                     if output.len() == roots {
