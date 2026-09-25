@@ -200,3 +200,36 @@ explicit activation on every profiling connection, and an isolated-build runner.
 117 Python tests pass locally; new-head native and backend performance results
 are pending. Earlier PostgreSQL CI passed with anchors disabled and does not
 qualify this format. No new-head 10x-GIN or TIN-equivalence target has passed.
+
+## 2026-09-25: experimental grouped COUNT vertical slice
+
+A new default-off `pin.enable_grouped_count` consumer is implemented against
+`737a2713302075243d45f37ad49e11fa57c85dbc`. It retains exact grouped page masks
+through PostgreSQL's existing PinCount upper path, instead of expanding every
+sealed match into TIDBitmap/heap/aggregate work. Fresh VM certification permits
+page popcount; uncertified roots use PostgreSQL's MVCC/HOT fetch. A conditional
+shared acquisition of the existing writer interlock protects generation identity
+from before source reads through the last visibility decision. It can block
+subsequent writers for the count duration. Both the native safety and writer-tail
+latency gates remain open; the feature must stay off by default.
+
+This is **not a measured speedup**. The authoring environment had no Rust or
+PostgreSQL toolchain, writable GitHub connector or native GitHub network access.
+Local implementation checks cannot establish native compilation, race freedom,
+recovery success or performance. The paired benchmark and normal/test-hook CI
+qualification have been added, not executed here.
+
+The [design and decision record](docs/g9-grouped-count.md) compares primary
+page/offset postings, incremental mutable segments, SIMD, exact count, ranking,
+and copy/WAL changes. It records the current read/write/maintenance paths,
+conditional executor limits, generation/VM argument and outstanding gates. The
+[run record](docs/runs/2026-09-25-grouped-count/README.md) retains actual local checks
+and reproducible reanalysis of old raw records. The historical PR21 `rare` label
+returned 8,212 of 25,576 rows after related writes; do not call that sample a truly
+rare-result workload. The new harness preserves a genuinely rare term separately.
+
+No new result exists for rare search, selective AND, broad AND/OR, exact count,
+ranked top-k, write CPU, WAL, index size, sustainable throughput or a TIN control.
+The old measurements above remain the last measured evidence. This slice does
+not implement durable incremental sealing/merging, reduce measured write
+amplification, or provide exact-score candidate pruning.

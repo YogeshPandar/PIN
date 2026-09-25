@@ -69,7 +69,8 @@ pub(crate) unsafe fn with_writer<T>(
     result
 }
 
-/// holds the structural read barrier only while producing bitmap candidates.
+/// holds the structural read barrier for one synchronous read operation.
+/// visibility-eliding consumers must additionally protect candidate generations.
 ///
 /// # Safety
 /// index is validated and remains open/locked throughout the guarded callback.

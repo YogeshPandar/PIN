@@ -19,7 +19,7 @@ use pin_core::recheck::SingleTermMatcher;
 use std::ffi::c_void;
 
 const BATCH: usize = 64;
-const COUNTERS: usize = 8;
+pub(crate) const COUNTERS: usize = 18;
 
 static ENABLE_COUNT_RECHECK: GucSetting<bool> = GucSetting::<bool>::new(false);
 
@@ -48,6 +48,7 @@ unsafe extern "C-unwind" {
 /// # Safety
 /// called once during validated postmaster preloading on the backend main thread.
 pub(crate) unsafe fn initialize() {
+    crate::grouped_count::initialize();
     let participant_memory = matching::stored(matching::count_participant_memory());
     // safety: static C methods and the GUC outlive every inherited backend.
     unsafe { native::call(|| pin_count_init(participant_memory)) };

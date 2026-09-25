@@ -2,7 +2,7 @@ name: G0 boundary
 
 on:
   push:
-    branches: [main, 'feat/**']
+    branches: [main, 'feat/**', 'perf/**']
   pull_request:
   workflow_dispatch:
 
@@ -29,7 +29,7 @@ jobs:
           python3 tools/check_contracts.py
           bash -n tools/pg_smoke.sh
           bash -n tools/g2_qualification.sh
-          bash -n tools/g9_qualification.sh tools/issue14_isolated_run.sh
+          bash -n tools/g9_qualification.sh tools/g9_count_qualification.sh tools/issue14_isolated_run.sh
           bash -n tools/g8_qualification.sh tools/g8_release.sh
       - name: Check formatting
         run: cargo fmt --all --check
@@ -88,6 +88,8 @@ jobs:
         run: bash tools/pg_smoke.sh
       - name: Test normal grouped storage lifecycle
         run: bash tools/g9_qualification.sh
+      - name: Test guarded grouped count against PostgreSQL visibility
+        run: bash tools/g9_count_qualification.sh
       - name: Test normal anchored and owner frontier lifecycle
         env:
           PIN_G9_ANCHORS: '1'
@@ -112,6 +114,12 @@ jobs:
         env:
           PIN_G9_TEST_HOOKS: '1'
         run: bash tools/g9_qualification.sh
+      - name: Test grouped count reuse, contention and recovery
+        env:
+          PIN_G9_TEST_HOOKS: '1'
+          PIN_G9_ANCHORS: '1'
+          PIN_G9_OWNER_FRONTIER: '1'
+        run: bash tools/g9_count_qualification.sh
       - name: Test anchored and owner frontier WAL recovery and concurrency
         env:
           PIN_G9_TEST_HOOKS: '1'

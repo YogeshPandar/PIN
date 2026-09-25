@@ -1,0 +1,202 @@
+{
+  "correct": [
+    {
+      "case": "deleted_before_snapshot",
+      "mode": "correct",
+      "states": 63,
+      "transitions": 84,
+      "fallback_states": 6,
+      "failure": null
+    },
+    {
+      "case": "retained_old_snapshot",
+      "mode": "correct",
+      "states": 90,
+      "transitions": 125,
+      "fallback_states": 0,
+      "failure": null
+    },
+    {
+      "case": "live_dirty_page",
+      "mode": "correct",
+      "states": 18,
+      "transitions": 29,
+      "fallback_states": 0,
+      "failure": null
+    },
+    {
+      "case": "retired_before_acquisition",
+      "mode": "correct",
+      "states": 57,
+      "transitions": 81,
+      "fallback_states": 6,
+      "failure": null
+    },
+    {
+      "case": "incomplete_publication",
+      "mode": "correct",
+      "states": 9,
+      "transitions": 10,
+      "fallback_states": 0,
+      "failure": null
+    },
+    {
+      "case": "uncommitted_published_root",
+      "mode": "correct",
+      "states": 9,
+      "transitions": 10,
+      "fallback_states": 0,
+      "failure": null
+    }
+  ],
+  "negative_controls": [
+    {
+      "case": "deleted_before_snapshot",
+      "mode": "ignore_guard",
+      "states": 123,
+      "transitions": 223,
+      "fallback_states": 6,
+      "failure": {
+        "reason": "count 1 differs from independent snapshot oracle 0",
+        "trace": [
+          "reader:guard",
+          "reader:copy",
+          "writer:exclusive",
+          "vacuum:retire_membership",
+          "vacuum:remove_heap",
+          "vacuum:all_visible_empty_page",
+          "reader:vm",
+          "reader:count",
+          "reader:release"
+        ],
+        "state": {
+          "reader": 5,
+          "writer": 4,
+          "shared": false,
+          "exclusive": true,
+          "live": false,
+          "heap_present": false,
+          "vm": true,
+          "copied": true,
+          "observed_vm": true,
+          "private_count": 1,
+          "result": 1,
+          "fallback": false,
+          "cancelled": false,
+          "heap_changed": false
+        }
+      }
+    },
+    {
+      "case": "deleted_before_snapshot",
+      "mode": "copy_before_guard",
+      "states": 92,
+      "transitions": 139,
+      "fallback_states": 11,
+      "failure": {
+        "reason": "count 1 differs from independent snapshot oracle 0",
+        "trace": [
+          "reader:copy",
+          "writer:exclusive",
+          "vacuum:retire_membership",
+          "vacuum:remove_heap",
+          "vacuum:all_visible_empty_page",
+          "writer:release",
+          "reader:guard",
+          "reader:vm",
+          "reader:count",
+          "reader:release"
+        ],
+        "state": {
+          "reader": 5,
+          "writer": 5,
+          "shared": false,
+          "exclusive": false,
+          "live": false,
+          "heap_present": false,
+          "vm": true,
+          "copied": true,
+          "observed_vm": true,
+          "private_count": 1,
+          "result": 1,
+          "fallback": false,
+          "cancelled": false,
+          "heap_changed": false
+        }
+      }
+    },
+    {
+      "case": "uncommitted_published_root",
+      "mode": "cached_vm",
+      "states": 9,
+      "transitions": 10,
+      "fallback_states": 0,
+      "failure": {
+        "reason": "count 1 differs from independent snapshot oracle 0",
+        "trace": [
+          "reader:guard",
+          "reader:copy",
+          "reader:vm",
+          "reader:count",
+          "reader:release"
+        ],
+        "state": {
+          "reader": 5,
+          "writer": 0,
+          "shared": false,
+          "exclusive": false,
+          "live": true,
+          "heap_present": true,
+          "vm": false,
+          "copied": true,
+          "observed_vm": true,
+          "private_count": 1,
+          "result": 1,
+          "fallback": false,
+          "cancelled": false,
+          "heap_changed": false
+        }
+      }
+    },
+    {
+      "case": "retained_old_snapshot",
+      "mode": "publish_partial",
+      "states": 90,
+      "transitions": 125,
+      "fallback_states": 0,
+      "failure": {
+        "reason": "partial count was published before completion",
+        "trace": [
+          "reader:guard",
+          "reader:copy",
+          "reader:vm",
+          "reader:count"
+        ],
+        "state": {
+          "reader": 4,
+          "writer": 0,
+          "shared": true,
+          "exclusive": false,
+          "live": true,
+          "heap_present": true,
+          "vm": true,
+          "copied": true,
+          "observed_vm": true,
+          "private_count": 1,
+          "result": 1,
+          "fallback": false,
+          "cancelled": false,
+          "heap_changed": false
+        }
+      }
+    }
+  ],
+  "generation": {
+    "same_ctid_generations": [
+      1,
+      2
+    ],
+    "exact_and": false,
+    "broken_tid_union_and": true
+  }
+}

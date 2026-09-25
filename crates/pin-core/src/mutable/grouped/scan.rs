@@ -5,7 +5,9 @@ use super::super::page::{CatalogEntry, GroupSnapshot, NO_BLOCK, PageKind};
 use super::super::{PageStore, find_term, load, load_posting};
 use super::storage::{self, BITMAP_BYTES, Cursor, Value};
 use crate::error::{Error, Result};
-use crate::grouped::{Bitmap, GroupKey, Node, QueryScratch, Source, evaluate_source, needed_terms};
+use crate::grouped::{
+    Bitmap, GroupKey, Node, QueryScratch, QueryStats, Source, evaluate_source, needed_terms,
+};
 use crate::identity::{HeapLayout, RootTid};
 use crate::query::{Kind, Query};
 use pin_kernels::grouped::{OffsetMask, PageMask};
@@ -230,92 +232,101 @@ fn next_group<S: PageStore>(
     }
 }
 
-/// consumes exact snapshot masks separately from uncertified root candidates.
-/// masks are not visibility certificates. a host using them without heap checks
-/// must also exclude liveness retirement and physical membership replacement.
-/// frontier, sparse and legacy output always enters `root`, never `page`.
-pub trait GroupSink {
-    fn root(&mut self, root: RootTid, recheck: bool) -> Result<()>;
+/// consumes exact predicate membership, not a PostgreSQL visibility proof.
+/// page masks belong to one protected snapshot; suffix roots remain owner-qualified.
+/// the default expands offsets only for consumers that need individual TIDs.
+pub trait ExactSink {
+    /// records work from one sealed group, excluding sparse and frontier payloads.
+    ///
+    /// # errors
+    /// accounting failure invalidates the whole scan like a row callback failure.
+    fn work(&mut self, _stats: QueryStats) -> Result<()> {
+        Ok(())
+    }
 
-    /// the default adapter preserves ordinary bitmap scan output.
-    fn page(&mut self, block: u32, offsets: &OffsetMask, layout: HeapLayout) -> Result<()> {
+    /// accepts one predicate-qualified root from the sparse or mutable path.
+    ///
+    /// # errors
+    /// a consumer failure aborts the entire scan and invalidates earlier output.
+    fn tid(&mut self, root: RootTid) -> Result<()>;
+
+    /// accepts one nonempty, liveness-masked heap-page result.
+    ///
+    /// # errors
+    /// invalid offsets or a consumer failure abort the entire scan.
+    fn page(&mut self, layout: HeapLayout, block: u32, offsets: &[u64; 8]) -> Result<()> {
         for (word, &value) in offsets.iter().enumerate() {
             let mut pending = value;
             while pending != 0 {
                 let bit = word * 64 + pending.trailing_zeros() as usize;
                 pending &= pending - 1;
-                self.root(
+                self.tid(
                     RootTid::new(block, (bit + 1) as u16, layout)
                         .map_err(|_| Error::InvalidState)?,
-                    false,
                 )?;
             }
         }
         Ok(())
     }
+}
 
-    fn work(&mut self, _stats: &crate::grouped::QueryStats) -> Result<()> {
-        Ok(())
+struct ScalarSink<'a, F>(&'a mut F);
+
+impl<F: FnMut(RootTid, bool) -> Result<()>> ExactSink for ScalarSink<'_, F> {
+    fn tid(&mut self, root: RootTid) -> Result<()> {
+        self.0(root, false)
     }
 }
 
-struct RootSink<F>(F);
-impl<F: FnMut(RootTid, bool) -> Result<()>> GroupSink for RootSink<F> {
-    fn root(&mut self, root: RootTid, recheck: bool) -> Result<()> {
-        (self.0)(root, recheck)
-    }
-}
-
-/// checks syntax only; snapshot availability and memory are checked at execution.
+/// reports syntactic eligibility only; storage and memory are checked by scan_exact.
 #[must_use]
-pub fn supports_query(query: &Query) -> bool {
+pub fn supports_exact(query: &Query) -> bool {
     compile(query).is_some()
 }
 
-/// scans exact grouped and newer-owner boolean matches without heap visibility claims.
-/// unsupported syntax, unavailable snapshots and small budgets use the legacy kernel.
-/// the host holds a shared structural barrier; only MVCC bitmap consumers are allowed.
+/// scans grouped matches, retaining the legacy bitmap fallback unchanged.
+/// the host holds its structural reader barrier and supplies an MVCC bitmap sink.
 ///
 /// # errors
-/// corruption and host failures abort the scan; previously emitted output must be discarded.
-/// returned accounting is candidate cardinality, not a visible or distinct SQL count.
+/// corruption or host failures invalidate all previously emitted candidates.
 pub fn scan_query<S: PageStore>(
     store: &mut S,
     query: &Query,
     memory_bytes: usize,
-    emit: impl FnMut(RootTid, bool) -> Result<()>,
+    mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
-    scan_into(store, query, memory_bytes, &mut RootSink(emit))
+    match scan_exact(store, query, memory_bytes, &mut ScalarSink(&mut emit))? {
+        Some(count) => Ok(count),
+        None => super::super::scan_query_with_recheck(store, query, memory_bytes, emit),
+    }
 }
 
-/// scans into a page-aware host sink without changing the stored representation.
-/// the host holds the structural barrier, discards partial output on error and
-/// proves any stronger liveness/visibility contract required by its sink.
+/// scans exact grouped matches without expanding sealed page masks into TIDs.
+/// sparse and newer-owner paths retain their bounded scalar representation.
+/// returns None before any emission for unsupported syntax, snapshot or memory budget.
+/// the host holds the structural barrier. Visibility-eliding consumers additionally
+/// prevent owner retirement/reuse from before the first read through the last decision.
+/// one live owner per heap root is a host lifecycle invariant, not a deduplication here.
 ///
 /// # errors
-/// corruption, callback failures and allocation limits abort the scan.
-pub fn scan_into<S: PageStore>(
+/// corruption and host failures abort; the consumer must discard all partial output.
+/// Some contains candidate cardinality, never a visible SQL count by itself.
+pub fn scan_exact<S: PageStore, T: ExactSink>(
     store: &mut S,
     query: &Query,
     memory_bytes: usize,
-    sink: &mut impl GroupSink,
-) -> Result<u64> {
+    sink: &mut T,
+) -> Result<Option<u64>> {
     let Some(program) = compile(query) else {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
-            sink.root(root, recheck)
-        });
+        return Ok(None);
     };
     let required = program.terms * (BITMAP_BYTES + core::mem::size_of::<Term>()) + 128 * 1024;
     if memory_bytes < required.max(frontier::memory(program.terms)) {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
-            sink.root(root, recheck)
-        });
+        return Ok(None);
     }
     let meta = load(store, 0, PageKind::Meta)?;
     let Some(snapshot) = meta.grouped_state()?.active else {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
-            sink.root(root, recheck)
-        });
+        return Ok(None);
     };
     let mut terms = Vec::new();
     let mut captured = [None; NODES];
@@ -329,7 +340,7 @@ pub fn scan_into<S: PageStore>(
                 }
                 if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
                     let Some((dictionary, reference)) = found else {
-                        return Ok(0);
+                        return Ok(Some(0));
                     };
                     let entry = dictionary.term(reference)?;
                     if entry.head == entry.tail {
@@ -347,8 +358,9 @@ pub fn scan_into<S: PageStore>(
                                 store,
                                 entry,
                                 first_page,
-                                |root| sink.root(root, false),
-                            );
+                                |root| sink.tid(root),
+                            )
+                            .map(Some);
                         }
                     }
                     Some((u64::from(reference.page) << 16) | u64::from(reference.offset))
@@ -436,9 +448,9 @@ pub fn scan_into<S: PageStore>(
                 &mut source,
                 &program.nodes[..program.len],
                 &mut scratch,
-                |block, offsets| sink.page(block, offsets, layout),
+                |block, offsets| sink.page(layout, block, offsets),
             )?;
-            sink.work(&stats)?;
+            sink.work(stats)?;
             count = count
                 .checked_add(u64::from(stats.emitted_tids))
                 .ok_or(Error::Limit("group candidates"))?;
@@ -460,9 +472,15 @@ pub fn scan_into<S: PageStore>(
         &meta,
         snapshot,
         memory_bytes,
-        |root, recheck| sink.root(root, recheck),
+        |root, recheck| {
+            if recheck {
+                return Err(Error::InvalidState);
+            }
+            sink.tid(root)
+        },
     )?;
     count
         .checked_add(delta)
+        .map(Some)
         .ok_or(Error::Limit("group candidates"))
 }

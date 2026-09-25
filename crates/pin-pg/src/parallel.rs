@@ -122,9 +122,6 @@ pub(crate) unsafe fn with_vacuum<T>(
 ) -> Result<T> {
     // safety: delay points run before and after the Pin writer critical section.
     unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
-    // safety: retirement excludes grouped count before taking the writer lock.
-    // the transaction resource owner releases this interlock on ERROR.
-    unsafe { native::call(|| native::pin_liveness_lock(index, true)) };
     // safety: the caller retains both host resources; the writer lock is resource-owned.
     let result = unsafe {
         storage::with_writer(index, |store| {
@@ -136,9 +133,7 @@ pub(crate) unsafe fn with_vacuum<T>(
             operation(&mut vacuum)
         })
     };
-    // safety: release the one retirement acquisition after the writer lock.
-    unsafe { native::call(|| native::pin_liveness_unlock(index, true)) };
-    // safety: no Pin interlock or buffer lock is held at this delay point.
+    // safety: no Pin interlock or buffer lock is held after with_writer returns.
     unsafe { native::call(|| native::pin_storage_vacuum_delay()) };
     result
 }

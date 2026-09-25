@@ -1,0 +1,11 @@
+base=737a2713302075243d45f37ad49e11fa57c85dbc
+branch=perf/grouped-count-page-popcount
+Linux f820124ebdd3 6.18.44 #1 SMP Tue Sep 22 17:26:16 UTC 2026 x86_64 GNU/Linux
+cc (Debian 14.2.0-19) 14.2.0
+Python 3.13.5
+cargo: unavailable
+rustc: unavailable
+rustfmt: unavailable
+psql: unavailable
+/usr/bin/pg_config
+gh: unavailable

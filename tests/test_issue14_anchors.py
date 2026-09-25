@@ -164,13 +164,13 @@ class AnchorQualificationTests(unittest.TestCase):
         self.assertIn('FrontierSeek = 40', core)
         self.assertIn('OwnerFrontierScan = 41', core)
         self.assertEqual(frontier.count('store.event(Stage::FrontierSeek)?'), 2)
-        self.assertIn('!(32..=41).contains(&stage)', hooks)
+        self.assertIn('!(32..=42).contains(&stage)', hooks)
         self.assertIn('if !unsafe { pg_sys::superuser() }', hooks)
 
     def test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append(self):
         workflow = (ROOT / '.github/workflows/g0.yml').read_text()
         driver = (ROOT / 'tools/g9_qualification.py').read_text()
-        self.assertEqual(workflow.count("PIN_G9_ANCHORS: '1'"), 2)
+        self.assertEqual(workflow.count("PIN_G9_ANCHORS: '1'"), 3)
         self.assertIn('(*STAGES, 39) if cluster.anchors else STAGES', driver)
         for probe in ('prove-frontier-seek', 'prove-anchor-fallback',
                       'prove-invalidated-fallback', 'related-writer-during-anchor-read',

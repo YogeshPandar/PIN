@@ -1084,3 +1084,100 @@ identity/visibility review, exact-head Rust and PostgreSQL matrices, paired
 activation-off/on profiles, all query-class regressions, sustained writes,
 fragment-heavy documents, allocation/RSS evidence, write CPU, maintenance CPU,
 WAL bytes, cold I/O, and direct TIN measurements before any parity statement.
+
+## COUNT03: grouped exact COUNT generation interlock
+
+Verified against the named sources on 2026-09-25. Local implementation:
+`mutable/grouped/scan.rs`, `pin-pg/src/grouped_count.rs`, `cshim/pin_count.c` and
+`pin_count.h`. [Design, path trace and proof obligations](g9-grouped-count.md).
+This is implementation self-review, **not independent approval**. The new
+superuser GUC remains default off. Rust/native PostgreSQL compilation, isolation,
+recovery and performance results have not been observed for these changes.
+
+### Immutable contracts read and rechecked
+
+The six requested PostgreSQL 18 manual sections were read: [AM functions](https://www.postgresql.org/docs/18/index-functions.html),
+[index scanning](https://www.postgresql.org/docs/18/index-scanning.html),
+[index locking](https://www.postgresql.org/docs/18/index-locking.html),
+[CustomScan](https://www.postgresql.org/docs/18/custom-scan.html),
+[VM](https://www.postgresql.org/docs/18/storage-vm.html), and
+[generic WAL](https://www.postgresql.org/docs/18/generic-wal.html).
+The mutable manual URLs are explanatory references, not immutable ABI authority.
+Exact code authority is PostgreSQL 18.6 commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+
+| Boundary and pinned upstream source | Local obligation and test/gate |
+| --- | --- |
+| [`nodeIndexonlyscan.c`, especially the VM memory-ordering argument](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeIndexonlyscan.c#L120-L185) | Acquire source protection before reading membership and VM. Heap insert clears VM before index publication. Delete visibility depends on the PostgreSQL snapshot/VM ordering, not a process-local cached bit. New native concurrency and old-snapshot tests are written but unrun. |
+| [`visibilitymap.c` ownership, locking and WAL notes](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/visibilitymap.c#L20-L86) | Use `visibilitymap_get_status`, retain/release its buffer through the existing resource-owning C state, test `VISIBILITYMAP_ALL_VISIBLE`, never conflate frozen and visible. VM-off forces heap fetch. Host-double tests verify fresh probes; actual VM/cache ordering is an independent native gate. |
+| [`lmgr.c`, `ConditionalLockPage` and `UnlockPage`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/lmgr/lmgr.c#L499-L552) | New shared page-0 lock conflicts with PIN's existing exclusive writer interlock. Acquire after structural share, never upgrade, and fall back on failed conditional acquisition. Set the ownership flag only after success, release exactly once; resource cleanup handles ERROR. Debug/UBSan actual-body tests cover rejection/idempotence; native deadlock and starvation gates remain. |
+| [`tableam.h`, `table_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/tableam.h#L1181-L1236) | Dirty roots use the supported snapshot and HOT-aware callback, not `table_tuple_fetch_row_version`. Copy the root because the callback may modify it. Initialize `call_again=false`; reject unexpected continuation for MVCC. Keep fetch/slot initialized until release. Test double mutates TID and exercises domain/snapshot/continuation/errors; real HOT/visibility oracle is unrun. |
+| [`vacuumlazy.c`, three-phase ordering](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/vacuumlazy.c#L6-L43) | Index retirement must precede freeing indexed heap slots. The group liveness clear precedes canonical owner retirement under the existing interlock. A structural snapshot reference alone is insufficient. Independent review must confirm dead-root/VM and HOT-redirect cases, multi-round VACUUM and concurrent maintenance. Native harness asserts actual CTID reuse with changed terms. |
+| [Custom path](https://www.postgresql.org/docs/18/custom-scan-path.html), [plan](https://www.postgresql.org/docs/18/custom-scan-plan.html), [execution](https://www.postgresql.org/docs/18/custom-scan-execution.html) plus existing pinned COUNT01 planner/executor sources | Extend syntactic eligibility only; preserve retained ordinary AggPath and existing runtime security/snapshot/relation checks. Do not invent an `amcanreturn` capability. Recheck GUC on cached execution, clear counters on rescan, exclude parallel/recovery/SSI/unsupported predicates. G0 schedules full integration; local source tripwires do not prove host lifecycle. |
+| Generic WAL manual and existing pinned G2/G9 storage ledger | No new page modification, WAL record, buffer borrow, liveness format, crash state or redo callback. Preserve registered-copy/exclusive-buffer contracts. Count protection is primary-side only; existing recovery-time index-read refusal remains. |
+
+pgrx 0.19.2 authority is commit
+`70383e884582d1bcc7cd681d10886b995a2830cb`:
+[`pgrx-macros/src/rewriter.rs`](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx-macros/src/rewriter.rs)
+and [`pgrx/src/guc.rs`](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx/src/guc.rs).
+New exported Rust callbacks use `#[pg_guard] extern "C-unwind"`; throwing C calls
+are inside the existing `native::call` FFI guard with trivial scalar/pointer
+captures. PostgreSQL pointers stay out of pin-core. GUC access is backend-thread
+local through the audited wrapper, not a thread-safe work-queue configuration.
+Nested C/Rust error/unwind and whole-library link compatibility require independent
+review and native tests; the host doubles do not establish them.
+
+Rust 1.98.1 authority is commit
+`48a229ceaefd4985c50990b14116b6d856af0985`:
+[`slice/raw.rs`](https://github.com/rust-lang/rust/blob/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/slice/raw.rs#L6-L37)
+and [`num/uint_macros.rs`](https://github.com/rust-lang/rust/blob/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/num/uint_macros.rs#L61-L87).
+Query bytes form one initialized immutable allocation retained by C for the
+synchronous call; reject null and length above `isize::MAX`. No borrow survives
+query/slot reset. Output pointers refer to one aligned `i64` and 18 exclusively
+writable aligned `u64`s. Output is written only on complete success. The C/Rust
+counter widths, arrays and older parallel participant memory change together.
+Private C ABI is not a persistent format. All objects must be rebuilt together.
+
+Scalar `count_ones` and the existing checked bit loop operate on validated offset
+masks, with tail bits constrained by `HeapLayout`. No new ISA intrinsic or
+`target_feature` promise is made. The compiler's popcount implementation is not
+an assertion about native speed. Core code remains safe Rust. `try_reserve_exact`
+and checked allocation/error contracts remain as recorded in the preceding
+frontier ledger. Sink failure invalidates all partial work; `None` is available
+only before emissions. Optional owner-frontier fallback happens within the existing
+bounded frontier machinery, not by restarting the entire count after output.
+
+Cargo authority for the selected Rust toolchain is submodule commit
+`797e8a9bca276c1c9f9f738d2a20f484fa4eea9d`:
+[lockfile contract](https://github.com/rust-lang/cargo/blob/797e8a9bca276c1c9f9f738d2a20f484fa4eea9d/src/doc/src/guide/cargo-toml-vs-cargo-lock.md)
+and [profiles](https://github.com/rust-lang/cargo/blob/797e8a9bca276c1c9f9f738d2a20f484fa4eea9d/src/doc/src/reference/profiles.md).
+The existing Cargo-generated lockfile, unwind profile, dependency set and pinned
+Rust toolchain are preserved. Native CI remains responsible for `--locked` builds,
+rustfmt, Clippy, debug/release tests and the full PostgreSQL matrix. No Rust
+installation was attempted in the authoring VM.
+
+### Evidence and unresolved gates
+
+Independent input oracles: Rust page-mask tests enumerate the full coordinate
+domain, compare complete root identity sets to the document evaluator, retain the
+original bitmap adapter control, test sparse/dense/Boolean/NOT/empty membership,
+short/long frontiers and retired-A/reused-B false-AND rejection. These tests are
+written, not executed here. The finite Python protocol model uses a separately
+supplied snapshot outcome, and its broken-protocol controls must find witnesses.
+The new C bridge bodies compile/run against host doubles in debug and UBSan/bounds
+modes; they cover stale lock state, rejection, private TID mutation, VM probing,
+continuation and interruption. Neither suite substitutes for PostgreSQL.
+
+Native normal/test-hook qualification is wired into G0 with durable settings and
+independent PostgreSQL row identities. It adds generation-pause stage 42 and reuses
+visibility stages 14/15, including cancellation after partial work. All hooks remain
+privileged and absent from normal builds. Native expected results, crash/replay,
+standby guard qualification, full memory-pressure/failure testing, hardware matrix,
+performance and sustained writer latency are still open. The new benchmark rejects
+unregistered placeholder GUCs, dirty worktrees and source/binary revision mismatch,
+retains GIN in every balanced block and does not change ranking semantics.
+
+Final observed local test counts, failed experiments and source hashes are in the
+[run record](runs/2026-09-25-grouped-count/README.md). That record explicitly
+separates native tests scheduled from tests actually executed. No 10x or TIN-parity
+claim follows from this implementation.

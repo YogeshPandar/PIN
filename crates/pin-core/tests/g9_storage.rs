@@ -729,3 +729,239 @@ fn sparse_policy_covers_mutable_sealed_direct_and_retired_postings() {
         );
     }
 }
+
+// this wrapper opts into the owner frontier without changing the test store globally.
+struct ExactStore {
+    inner: MemoryStore,
+    enabled: bool,
+}
+
+impl PageStore for ExactStore {
+    fn owner_frontier(&self) -> bool {
+        self.enabled
+    }
+    fn layout(&self) -> HeapLayout {
+        self.inner.layout()
+    }
+    fn blocks(&mut self) -> Result<u32> {
+        self.inner.blocks()
+    }
+    fn read(&mut self, block: u32) -> Result<Page> {
+        self.inner.read(block)
+    }
+    fn extend(&mut self) -> Result<u32> {
+        self.inner.extend()
+    }
+    fn commit(&mut self, pages: &[&Page]) -> Result<()> {
+        self.inner.commit(pages)
+    }
+    fn remove_owners(&mut self, page: &Page) -> Result<()> {
+        self.inner.remove_owners(page)
+    }
+    fn event(&mut self, stage: Stage) -> Result<()> {
+        self.inner.event(stage)
+    }
+}
+
+// this consumer records row identities independently of the bitmap adapter.
+#[derive(Default)]
+struct ExactPages {
+    rows: BTreeSet<RootTid>,
+    pages: usize,
+    scalar: usize,
+    population: u64,
+    term_bytes: u64,
+}
+
+impl grouped::ExactSink for ExactPages {
+    fn work(&mut self, stats: pin_core::grouped::QueryStats) -> Result<()> {
+        self.term_bytes += u64::from(stats.term_bytes);
+        Ok(())
+    }
+
+    fn tid(&mut self, root: RootTid) -> Result<()> {
+        assert!(self.rows.insert(root), "duplicate exact root {root:?}");
+        self.scalar += 1;
+        self.population += 1;
+        Ok(())
+    }
+
+    fn page(&mut self, layout: HeapLayout, block: u32, offsets: &[u64; 8]) -> Result<()> {
+        self.pages += 1;
+        let population: u64 = offsets.iter().map(|word| u64::from(word.count_ones())).sum();
+        assert_ne!(population, 0);
+        self.population += population;
+        // enumerate the coordinate domain rather than copying the production bit loop.
+        let mut enumerated = 0;
+        for offset in 1..=layout.max_offset() {
+            let bit = usize::from(offset - 1);
+            if offsets[bit / 64] & (1 << (bit % 64)) != 0 {
+                assert!(self.rows.insert(RootTid::new(block, offset, layout).unwrap()));
+                enumerated += 1;
+            }
+        }
+        assert_eq!(population, enumerated, "out-of-layout mask bit");
+        Ok(())
+    }
+}
+
+fn exact_pages(store: &mut impl PageStore, source: &str) -> ExactPages {
+    let query = Query::parse(source, QueryLimits::default()).unwrap();
+    let mut sink = ExactPages::default();
+    assert!(grouped::supports_exact(&query));
+    let result = grouped::scan_exact(store, &query, 8 << 20, &mut sink).unwrap();
+    assert_eq!(result, Some(sink.rows.len() as u64));
+    assert_eq!(result, Some(sink.population));
+    sink
+}
+
+fn assert_exact_oracle(store: &mut impl PageStore, docs: &BTreeMap<RootTid, &str>, source: &str) {
+    let query = Query::parse(source, QueryLimits::default()).unwrap();
+    let mut expected = BTreeSet::new();
+    for (&root, &text) in docs {
+        let document = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
+        if oracle::matches(&document, &query, 1 << 20, 1 << 20).unwrap() {
+            expected.insert(root);
+        }
+    }
+    assert_eq!(exact_pages(store, source).rows, expected, "{source}");
+    let bitmap = raw(store, source, 8 << 20).unwrap();
+    assert!(bitmap.iter().all(|(_, recheck)| !recheck));
+    assert_eq!(
+        bitmap.into_iter().map(|(root, _)| root).collect::<BTreeSet<_>>(),
+        expected
+    );
+}
+
+#[test]
+fn exact_page_sink_preserves_scalar_rare_and_page_dense_membership() {
+    let mut store = MemoryStore::default();
+    mutable::initialize(&mut store).unwrap();
+    let mut docs = BTreeMap::new();
+    for index in 0..400 {
+        let text = match index % 4 {
+            0 => "alpha bravo",
+            1 => "bravo",
+            2 => "alpha",
+            _ => "",
+        };
+        let tid = root((index / 100) * 256, (index % 100 + 1) as u16);
+        insert(&mut store, tid, text);
+        docs.insert(tid, text);
+    }
+    insert(&mut store, root(1024, 291), "rare");
+    docs.insert(root(1024, 291), "rare");
+    build(&mut store).unwrap();
+    let rare = exact_pages(&mut store, "rare");
+    assert_eq!((rare.pages, rare.scalar), (0, 1));
+    let broad = exact_pages(&mut store, "alpha OR bravo");
+    assert_eq!((broad.pages, broad.scalar, broad.population), (4, 0, 300));
+    assert!(broad.term_bytes > 0);
+    for query in [
+        "rare",
+        "alpha",
+        "bravo",
+        "alpha AND bravo",
+        "alpha OR bravo",
+        "alpha AND NOT bravo",
+        "NOT alpha",
+        "NOT missing",
+        "NOT (alpha OR bravo)",
+        "missing",
+        "",
+        "(alpha OR rare) AND NOT bravo",
+    ] {
+        assert_exact_oracle(&mut store, &docs, query);
+    }
+}
+
+#[test]
+fn exact_page_count_does_not_mix_generations_across_long_frontier_and_reuse() {
+    for enabled in [false, true] {
+        // exercise both owner-payload and posting frontiers.
+        let mut store = ExactStore {
+            inner: MemoryStore::default(),
+            enabled,
+        };
+        mutable::initialize(&mut store).unwrap();
+        let mut docs = BTreeMap::from([(root(1, 1), "alpha"), (root(1, 2), "alpha bravo")]);
+        for (&tid, &text) in &docs {
+            insert(&mut store, tid, text);
+        }
+        build(&mut store).unwrap();
+        for delta in [17, 600] {
+            for index in 0..delta {
+                let tid = root(2 + index / 291, (index % 291 + 1) as u16);
+                if docs.contains_key(&tid) {
+                    continue;
+                }
+                let text = if index % 3 == 0 { "alpha bravo" } else { "bravo" };
+                insert(&mut store, tid, text);
+                docs.insert(tid, text);
+            }
+            for query in [
+                "alpha AND bravo",
+                "alpha OR bravo",
+                "NOT alpha",
+                "NOT missing",
+            ] {
+                assert_exact_oracle(&mut store, &docs, query);
+            }
+        }
+        mutable::vacuum(&mut store, |tid| Ok(tid == root(1, 1))).unwrap();
+        insert(&mut store, root(1, 1), "bravo");
+        docs.insert(root(1, 1), "bravo");
+        assert_exact_oracle(&mut store, &docs, "alpha AND bravo");
+        assert!(
+            !exact_pages(&mut store, "alpha AND bravo")
+                .rows
+                .contains(&root(1, 1))
+        );
+        build(&mut store).unwrap();
+        for query in [
+            "alpha AND bravo",
+            "alpha OR bravo",
+            "NOT alpha",
+            "NOT missing",
+        ] {
+            assert_exact_oracle(&mut store, &docs, query);
+        }
+    }
+}
+
+#[test]
+fn exact_sink_declines_before_output_and_propagates_consumer_errors() {
+    let mut store = MemoryStore::default();
+    mutable::initialize(&mut store).unwrap();
+    insert(&mut store, root(1, 1), "alpha bravo");
+    let query = Query::parse("alpha OR bravo", QueryLimits::default()).unwrap();
+    let mut sink = ExactPages::default();
+    assert_eq!(
+        grouped::scan_exact(&mut store, &query, 8 << 20, &mut sink),
+        Ok(None)
+    );
+    assert_eq!(sink.population, 0);
+    build(&mut store).unwrap();
+    assert_eq!(grouped::scan_exact(&mut store, &query, 0, &mut sink), Ok(None));
+    assert_eq!(sink.population, 0);
+    for text in ["alpha*", "\"alpha bravo\"", "NOT \"alpha bravo\""] {
+        let unsupported = Query::parse(text, QueryLimits::default()).unwrap();
+        assert!(!grouped::supports_exact(&unsupported));
+        assert_eq!(
+            grouped::scan_exact(&mut store, &unsupported, 8 << 20, &mut sink),
+            Ok(None)
+        );
+        assert_eq!(sink.population, 0);
+    }
+    struct Failing;
+    impl grouped::ExactSink for Failing {
+        fn tid(&mut self, _root: RootTid) -> Result<()> {
+            Err(Error::InvalidParameters)
+        }
+    }
+    assert_eq!(
+        grouped::scan_exact(&mut store, &query, 8 << 20, &mut Failing),
+        Err(Error::InvalidParameters),
+    );
+    assert_eq!(exact_pages(&mut store, "alpha OR bravo").population, 1);
+}

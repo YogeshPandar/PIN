@@ -104,7 +104,7 @@ class OwnerFrontierActivationTests(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/g0.yml').read_text()
         driver = (ROOT / 'tools/g9_qualification.py').read_text()
         shell = (ROOT / 'tools/g9_qualification.sh').read_text()
-        self.assertEqual(workflow.count("PIN_G9_OWNER_FRONTIER: '1'"), 2)
+        self.assertEqual(workflow.count("PIN_G9_OWNER_FRONTIER: '1'"), 3)
         for contract in ('pin.g2_inject(41, 1, false)',
                          'writer-during-owner-frontier-read',
                          'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_owner_frontier',

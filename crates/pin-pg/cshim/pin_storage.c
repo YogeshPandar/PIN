@@ -1,6 +1,6 @@
 /* PostgreSQL-only page operations; Rust owns formats and publication state.
  * contracts: PostgreSQL 18.6 generic_xlog, tableam, bufpage, genam and lmgr.
- * lock order: optional retirement, structural barrier, writer, ascending buffers, WAL.
+ * lock order: structural barrier, writer lock, ascending buffers, generic WAL.
  * every entry runs inside pgrx's PG_TRY boundary; resource owners clean ERROR.
  */
 #include "postgres.h"
@@ -93,7 +93,7 @@ pin_writer_unlock(Relation index)
     UnlockPage(index, 0, ExclusiveLock);
 }
 
-/* tags 0, 1 and 2 are logical interlocks, not retained buffer pins. */
+/* lock tags 0 and 1 are logical interlocks, not retained buffer pins. */
 void
 pin_structure_lock(Relation index, bool exclusive)
 {
@@ -104,19 +104,6 @@ void
 pin_structure_unlock(Relation index, bool exclusive)
 {
     UnlockPage(index, 1, exclusive ? ExclusiveLock : ShareLock);
-}
-
-/* acquire before the structural/writer barrier, never with a content lock held. */
-void
-pin_liveness_lock(Relation index, bool exclusive)
-{
-    LockPage(index, 2, exclusive ? ExclusiveLock : ShareLock);
-}
-
-void
-pin_liveness_unlock(Relation index, bool exclusive)
-{
-    UnlockPage(index, 2, exclusive ? ExclusiveLock : ShareLock);
 }
 
 uint32

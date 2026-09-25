@@ -1,0 +1,160 @@
+test_both_count_switches_default_off_and_superuser_settable (test_g5_source_contracts.CountSourceContracts.test_both_count_switches_default_off_and_superuser_settable) ... ok
+test_count_candidate_stream_is_bounded_and_safe (test_g5_source_contracts.CountSourceContracts.test_count_candidate_stream_is_bounded_and_safe) ... ok
+test_count_does_not_claim_index_only_capability (test_g5_source_contracts.CountSourceContracts.test_count_does_not_claim_index_only_capability) ... ok
+test_count_pause_points_cover_pin_and_visibility_windows (test_g5_source_contracts.CountSourceContracts.test_count_pause_points_cover_pin_and_visibility_windows) ... ok
+test_heap_fetch_requires_same_owner_pin (test_g5_source_contracts.CountSourceContracts.test_heap_fetch_requires_same_owner_pin) ... ok
+test_owner_copy_keeps_only_a_pin_after_validation (test_g5_source_contracts.CountSourceContracts.test_owner_copy_keeps_only_a_pin_after_validation) ... ok
+test_owner_removal_uses_cleanup_permission_before_wal (test_g5_source_contracts.CountSourceContracts.test_owner_removal_uses_cleanup_permission_before_wal) ... ok
+test_planner_accepts_only_single_term_count_queries (test_g5_source_contracts.CountSourceContracts.test_planner_accepts_only_single_term_count_queries) ... ok
+test_runtime_fallback_retains_real_aggregate_child (test_g5_source_contracts.CountSourceContracts.test_runtime_fallback_retains_real_aggregate_child) ... ok
+test_unknown_adapters_cannot_bypass_cleanup_interlock (test_g5_source_contracts.CountSourceContracts.test_unknown_adapters_cannot_bypass_cleanup_interlock) ... ok
+test_vm_status_requires_owner_pin_and_fresh_core_read (test_g5_source_contracts.CountSourceContracts.test_vm_status_requires_owner_pin_and_fresh_core_read) ... ok
+test_correct_graphs_cover_all_bounded_schedules (test_g5_visibility_model.VisibilityModelTests.test_correct_graphs_cover_all_bounded_schedules) ... ok
+test_each_broken_protocol_has_a_replayable_counterexample (test_g5_visibility_model.VisibilityModelTests.test_each_broken_protocol_has_a_replayable_counterexample) ... ok
+test_empty_all_visible_page_does_not_certify_removed_owner (test_g5_visibility_model.VisibilityModelTests.test_empty_all_visible_page_does_not_certify_removed_owner) ... ok
+test_unknown_protocol_mode_is_an_error (test_g5_visibility_model.VisibilityModelTests.test_unknown_protocol_mode_is_an_error) ... ok
+test_rate_controlled_latency_includes_schedule_lag (test_g6_latency.LatencySummaryTests.test_rate_controlled_latency_includes_schedule_lag) ... ok
+test_service_percentiles_and_failures (test_g6_latency.LatencySummaryTests.test_service_percentiles_and_failures) ... ok
+test_truncated_line_fails (test_g6_latency.LatencySummaryTests.test_truncated_line_fails) ... ok
+test_ascii_does_not_skip_the_profile_or_full_tail_validation (test_g6_optimization.RecheckSourceTests.test_ascii_does_not_skip_the_profile_or_full_tail_validation) ... ok
+test_benchmark_harness_checks_semantics_plans_and_durability (test_g6_optimization.RecheckSourceTests.test_benchmark_harness_checks_semantics_plans_and_durability) ... ok
+test_borrowed_match_still_follows_visibility_and_precedes_clear (test_g6_optimization.RecheckSourceTests.test_borrowed_match_still_follows_visibility_and_precedes_clear) ... ok
+test_experiment_defaults_off_and_is_privileged (test_g6_optimization.RecheckSourceTests.test_experiment_defaults_off_and_is_privileged) ... ok
+test_new_sql_is_in_the_existing_disposable_cluster_runner (test_g6_optimization.RecheckSourceTests.test_new_sql_is_in_the_existing_disposable_cluster_runner) ... ok
+test_sql_streams_single_terms_and_keeps_the_complex_query_oracle (test_g6_optimization.RecheckSourceTests.test_sql_streams_single_terms_and_keeps_the_complex_query_oracle) ... ok
+test_every_domain_and_word_carry (test_g6_optimization.RunCountModelTests.test_every_domain_and_word_carry) ... ok
+test_exhaustive_sixteen_bit_patterns (test_g6_optimization.RunCountModelTests.test_exhaustive_sixteen_bit_patterns) ... ok
+test_custom_count_cannot_replace_native_parallel (test_g7_qualification.PlanTests.test_custom_count_cannot_replace_native_parallel) ... ok
+test_low_and_high_memory_paths_must_be_observed (test_g7_qualification.PlanTests.test_low_and_high_memory_paths_must_be_observed) ... ok
+test_parallel_heap_and_serial_reference_are_distinct (test_g7_qualification.PlanTests.test_parallel_heap_and_serial_reference_are_distinct) ... ok
+test_planned_workers_are_not_execution_evidence (test_g7_qualification.PlanTests.test_planned_workers_are_not_execution_evidence) ... ok
+test_recheck_is_not_optional (test_g7_qualification.PlanTests.test_recheck_is_not_optional) ... ok
+test_reference_settings_do_not_enable_custom_shortcuts (test_g7_qualification.PlanTests.test_reference_settings_do_not_enable_custom_shortcuts) ... ok
+test_sql_is_sent_as_top_level_commands_not_one_implicit_transaction (test_g7_qualification.PlanTests.test_sql_is_sent_as_top_level_commands_not_one_implicit_transaction) ... ok
+test_worker_local_block_counters_are_counted_once (test_g7_qualification.PlanTests.test_worker_local_block_counters_are_counted_once) ... ok
+test_wrong_missing_and_duplicate_index_nodes_fail (test_g7_qualification.PlanTests.test_wrong_missing_and_duplicate_index_nodes_fail) ... ok
+test_parallel_am_scan_and_build_capabilities_match_callbacks (test_g7_qualification.SourceTests.test_parallel_am_scan_and_build_capabilities_match_callbacks) ... ok
+test_parallel_count_uses_fixed_pointer_free_work (test_g7_qualification.SourceTests.test_parallel_count_uses_fixed_pointer_free_work) ... ok
+test_real_host_suites_use_existing_driver (test_g7_qualification.SourceTests.test_real_host_suites_use_existing_driver) ... ok
+test_retained_boundary_and_retirement_are_published_together (test_g7_qualification.SourceTests.test_retained_boundary_and_retirement_are_published_together) ... ok
+test_storage_experiment_defaults_off_and_is_privileged (test_g7_qualification.SourceTests.test_storage_experiment_defaults_off_and_is_privileged) ... ok
+test_bad_sql_library_control_and_inventory (test_g8_package.PackageTests.test_bad_sql_library_control_and_inventory) ... ok
+test_deployment_metadata_rejects_gates_and_version_drift (test_g8_package.PackageTests.test_deployment_metadata_rejects_gates_and_version_drift) ... ok
+test_duplicate_link_traversal_and_checksum_changes_fail (test_g8_package.PackageTests.test_duplicate_link_traversal_and_checksum_changes_fail) ... ok
+test_failed_postwrite_validation_removes_partial_output (test_g8_package.PackageTests.test_failed_postwrite_validation_removes_partial_output) ... ok
+test_links_and_missing_payload_fail (test_g8_package.PackageTests.test_links_and_missing_payload_fail) ... ok
+test_roundtrip_and_deterministic_metadata (test_g8_package.PackageTests.test_roundtrip_and_deterministic_metadata) ... ok
+test_stream_bounds_and_short_reads (test_g8_package.PackageTests.test_stream_bounds_and_short_reads) ... ok
+test_marshalling_in_debug_and_sanitized_optimized_builds (test_g9_c_adapter.CAdapterTests.test_marshalling_in_debug_and_sanitized_optimized_builds) ... ok
+test_c_and_rust_counter_extents_match (test_g9_count_adapter.CountContracts.test_c_and_rust_counter_extents_match) ... ok
+test_guard_precedes_reads_and_normal_errors_release_before_propagation (test_g9_count_adapter.CountContracts.test_guard_precedes_reads_and_normal_errors_release_before_propagation) ... ok
+test_new_gate_is_off_and_cached_compound_plans_can_fall_back (test_g9_count_adapter.CountContracts.test_new_gate_is_off_and_cached_compound_plans_can_fall_back) ... ok
+test_protected_heap_bridge_does_not_retokenize_or_follow_raw_heap_tid (test_g9_count_adapter.CountContracts.test_protected_heap_bridge_does_not_retokenize_or_follow_raw_heap_tid) ... ok
+test_real_bridge_debug_and_ubsan (test_g9_count_adapter.CountContracts.test_real_bridge_debug_and_ubsan) ... ok
+test_every_position_and_order_retains_gin (test_g9_count_bench.PairedCountBench.test_every_position_and_order_retains_gin) ... ok
+test_large_row_output_is_received_not_replaced_by_aggregate (test_g9_count_bench.PairedCountBench.test_large_row_output_is_received_not_replaced_by_aggregate) ... ok
+test_new_deltas_do_not_make_rare_term_common (test_g9_count_bench.PairedCountBench.test_new_deltas_do_not_make_rare_term_common) ... ok
+test_ns_backend_cpu_and_identity_checks (test_g9_count_bench.PairedCountBench.test_ns_backend_cpu_and_identity_checks) ... ok
+test_plan_must_prove_grouped_execution_not_just_enablement (test_g9_count_bench.PairedCountBench.test_plan_must_prove_grouped_execution_not_just_enablement) ... ok
+test_ranking_uses_identical_postgres_scoring_and_ties (test_g9_count_bench.PairedCountBench.test_ranking_uses_identical_postgres_scoring_and_ties) ... ok
+test_each_broken_protocol_has_a_replayable_witness (test_g9_count_model.CountModelTests.test_each_broken_protocol_has_a_replayable_witness) ... ok
+test_every_correct_schedule_agrees_with_snapshot_oracle (test_g9_count_model.CountModelTests.test_every_correct_schedule_agrees_with_snapshot_oracle) ... ok
+test_tid_only_union_is_not_boolean_identity (test_g9_count_model.CountModelTests.test_tid_only_union_is_not_boolean_identity) ... ok
+test_backend_cpu_ticks_and_pid_reuse (test_g9_profile.ProfileTests.test_backend_cpu_ticks_and_pid_reuse) ... ok
+test_complete_balanced_orders (test_g9_profile.ProfileTests.test_complete_balanced_orders) ... ok
+test_percentiles_and_literals (test_g9_profile.ProfileTests.test_percentiles_and_literals) ... ok
+test_persistent_pipe_chunks_errors_and_timeout (test_g9_profile.ProfileTests.test_persistent_pipe_chunks_errors_and_timeout) ... ok
+test_plan_scopes_are_not_added_twice (test_g9_profile.ProfileTests.test_plan_scopes_are_not_added_twice) ... ok
+test_same_count_different_ctids_is_rejected (test_g9_profile.ProfileTests.test_same_count_different_ctids_is_rejected) ... ok
+test_snapshot_and_ci_contracts (test_g9_profile.ProfileTests.test_snapshot_and_ci_contracts) ... ok
+test_expected_error_rejects_success_and_unrelated_errors (test_g9_qualification.DriverTests.test_expected_error_rejects_success_and_unrelated_errors) ... ok
+test_expected_injection_is_not_mistaken_for_success (test_g9_qualification.DriverTests.test_expected_injection_is_not_mistaken_for_success) ... ok
+test_fixture_identifiers_are_bounded (test_g9_qualification.DriverTests.test_fixture_identifiers_are_bounded) ... ok
+test_literals_and_full_row_results (test_g9_qualification.DriverTests.test_literals_and_full_row_results) ... ok
+test_nested_bitmap_plan_is_required (test_g9_qualification.DriverTests.test_nested_bitmap_plan_is_required) ... ok
+test_psql_uses_stdin_so_vacuum_is_not_in_an_implicit_command_batch (test_g9_qualification.DriverTests.test_psql_uses_stdin_so_vacuum_is_not_in_an_implicit_command_batch) ... ok
+test_cancellation_observes_live_spill_and_cleanup (test_g9_qualification.SourceTests.test_cancellation_observes_live_spill_and_cleanup) ... ok
+test_ci_requires_normal_and_test_hook_runs (test_g9_qualification.SourceTests.test_ci_requires_normal_and_test_hook_runs) ... ok
+test_core_events_do_not_collide_with_parallel_worker_events (test_g9_qualification.SourceTests.test_core_events_do_not_collide_with_parallel_worker_events) ... ok
+test_crash_driver_flushes_witness_before_immediate_stop (test_g9_qualification.SourceTests.test_crash_driver_flushes_witness_before_immediate_stop) ... ok
+test_default_off_privileged_independent_gates (test_g9_qualification.SourceTests.test_default_off_privileged_independent_gates) ... ok
+test_ffi_signatures_and_record_width_agree (test_g9_qualification.SourceTests.test_ffi_signatures_and_record_width_agree) ... ok
+test_liveness_retirement_is_unconditional_and_precedes_owner_removal (test_g9_qualification.SourceTests.test_liveness_retirement_is_unconditional_and_precedes_owner_removal) ... ok
+test_rebuild_and_bitmap_use_existing_host_barriers (test_g9_qualification.SourceTests.test_rebuild_and_bitmap_use_existing_host_barriers) ... ok
+test_sort_uses_native_bounded_forward_only_storage (test_g9_qualification.SourceTests.test_sort_uses_native_bounded_forward_only_storage) ... ok
+test_sql_fixture_checks_actual_reuse_and_lossification (test_g9_qualification.SourceTests.test_sql_fixture_checks_actual_reuse_and_lossification) ... ok
+test_child_profiler_gets_both_flag_and_session_options (test_issue14_anchors.AnchorActivationTests.test_child_profiler_gets_both_flag_and_session_options) ... ok
+test_cpu_cases_cover_the_same_boolean_and_fallback_classes (test_issue14_anchors.AnchorActivationTests.test_cpu_cases_cover_the_same_boolean_and_fallback_classes) ... ok
+test_cpu_sampler_rejects_pid_reuse_and_counter_reversal (test_issue14_anchors.AnchorActivationTests.test_cpu_sampler_rejects_pid_reuse_and_counter_reversal) ... ok
+test_every_backend_applies_and_verifies_the_requested_gate (test_issue14_anchors.AnchorActivationTests.test_every_backend_applies_and_verifies_the_requested_gate) ... ok
+test_gate_defaults_off_without_mutating_shared_settings (test_issue14_anchors.AnchorActivationTests.test_gate_defaults_off_without_mutating_shared_settings) ... ok
+test_optional_updates_keep_individual_and_lifecycle_write_costs (test_issue14_anchors.AnchorActivationTests.test_optional_updates_keep_individual_and_lifecycle_write_costs) ... ok
+test_paired_psql_does_not_lose_gate_when_replacing_pgoptions (test_issue14_anchors.AnchorActivationTests.test_paired_psql_does_not_lose_gate_when_replacing_pgoptions) ... ok
+test_placeholder_is_not_proof_of_registered_activation (test_issue14_anchors.AnchorActivationTests.test_placeholder_is_not_proof_of_registered_activation) ... ok
+test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append (test_issue14_anchors.AnchorQualificationTests.test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append) ... FAIL
+test_foreground_and_concurrent_sql_use_the_same_activation (test_issue14_anchors.AnchorQualificationTests.test_foreground_and_concurrent_sql_use_the_same_activation) ... ok
+test_isolated_runner_rejects_provenance_overrides_before_host_access (test_issue14_anchors.AnchorQualificationTests.test_isolated_runner_rejects_provenance_overrides_before_host_access) ... ok
+test_isolated_runner_separates_builds_and_finishes_logs_before_hashing (test_issue14_anchors.AnchorQualificationTests.test_isolated_runner_separates_builds_and_finishes_logs_before_hashing) ... ok
+test_seek_and_invalidation_probes_are_distinct_and_privileged (test_issue14_anchors.AnchorQualificationTests.test_seek_and_invalidation_probes_are_distinct_and_privileged) ... ok
+test_sql_long_history_and_independent_identity_oracles_are_required (test_issue14_anchors.AnchorQualificationTests.test_sql_long_history_and_independent_identity_oracles_are_required) ... ok
+test_delta_growth_is_bounded_and_never_rewinds (test_issue14_frontier_bench.FrontierBenchTests.test_delta_growth_is_bounded_and_never_rewinds) ... ok
+test_disabled_cpu_accounting_is_not_a_zero_cpu_result (test_issue14_frontier_bench.FrontierBenchTests.test_disabled_cpu_accounting_is_not_a_zero_cpu_result) ... ok
+test_engine_predicates_keep_explicit_semantics (test_issue14_frontier_bench.FrontierBenchTests.test_engine_predicates_keep_explicit_semantics) ... ok
+test_host_requires_exact_binary_and_durable_pinned_server (test_issue14_frontier_bench.FrontierBenchTests.test_host_requires_exact_binary_and_durable_pinned_server) ... ok
+test_manifest_writer_does_not_accept_nonfinite_measurements (test_issue14_frontier_bench.FrontierBenchTests.test_manifest_writer_does_not_accept_nonfinite_measurements) ... ok
+test_pid_reuse_and_counter_reversal_fail_closed (test_issue14_frontier_bench.FrontierBenchTests.test_pid_reuse_and_counter_reversal_fail_closed) ... ok
+test_all_four_group_three_term_assignments_have_no_missed_matches (test_issue14_model.FiniteModelTests.test_all_four_group_three_term_assignments_have_no_missed_matches) ... ok
+test_disjoint_streams_terminate_without_payload_candidates (test_issue14_model.FiniteModelTests.test_disjoint_streams_terminate_without_payload_candidates) ... ok
+test_phrase_ring_preserves_windows_comparison_counts_and_budget (test_issue14_model.FiniteModelTests.test_phrase_ring_preserves_windows_comparison_counts_and_budget) ... ok
+test_selective_conjunction_is_operand_order_independent (test_issue14_model.FiniteModelTests.test_selective_conjunction_is_operand_order_independent) ... ok
+test_gate_defaults_off_without_mutating_shared_settings (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_gate_defaults_off_without_mutating_shared_settings) ... ok
+test_missing_registered_setting_is_only_valid_for_disabled_controls (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_missing_registered_setting_is_only_valid_for_disabled_controls) ... ok
+test_native_matrix_activates_read_path_and_recovery_checks (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_native_matrix_activates_read_path_and_recovery_checks) ... FAIL
+test_psql_and_child_processes_retain_activation (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_psql_and_child_processes_retain_activation) ... ok
+test_psycopg_backends_apply_and_verify_the_requested_gate (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_psycopg_backends_apply_and_verify_the_requested_gate) ... ok
+test_source_keeps_default_off_and_fail_before_emit_fallback (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_source_keeps_default_off_and_fail_before_emit_fallback) ... ok
+test_backend_stat_fields_ignore_spaces_and_parentheses_in_comm (test_issue14_perf.PerformanceEvidenceTests.test_backend_stat_fields_ignore_spaces_and_parentheses_in_comm) ... ok
+test_cpu_uses_backend_ticks_not_wall_time (test_issue14_perf.PerformanceEvidenceTests.test_cpu_uses_backend_ticks_not_wall_time) ... ok
+test_explain_does_not_double_count_inclusive_buffers (test_issue14_perf.PerformanceEvidenceTests.test_explain_does_not_double_count_inclusive_buffers) ... ok
+test_table_identifiers_and_literals_are_explicit (test_issue14_perf.PerformanceEvidenceTests.test_table_identifiers_and_literals_are_explicit) ... ok
+test_three_engines_only_toggle_the_group_scan_gate (test_issue14_perf.PerformanceEvidenceTests.test_three_engines_only_toggle_the_group_scan_gate) ... ok
+test_unstable_controls_are_never_qualified (test_issue14_perf.PerformanceEvidenceTests.test_unstable_controls_are_never_qualified) ... ok
+test_all_edges_preserve_the_corrected_invariant (test_publication_model.PublicationModelTests.test_all_edges_preserve_the_corrected_invariant) ... ok
+test_graph_matches_checked_in_rust_fixture (test_publication_model.PublicationModelTests.test_graph_matches_checked_in_rust_fixture) ... ok
+test_negative_controls_replay_to_real_violations (test_publication_model.PublicationModelTests.test_negative_controls_replay_to_real_violations) ... ok
+test_partial_documents_never_publish (test_publication_model.PublicationModelTests.test_partial_documents_never_publish) ... ok
+test_c_field_omission_is_detected (test_source_contracts.SourceContractTests.test_c_field_omission_is_detected) ... ok
+test_capability_enablement_is_detected (test_source_contracts.SourceContractTests.test_capability_enablement_is_detected) ... ok
+test_current_sources_match (test_source_contracts.SourceContractTests.test_current_sources_match) ... ok
+test_default_test_hook_enablement_is_detected (test_source_contracts.SourceContractTests.test_default_test_hook_enablement_is_detected) ... ok
+test_dummy_sql_argument_is_not_read_by_rust (test_source_contracts.SourceContractTests.test_dummy_sql_argument_is_not_read_by_rust) ... ok
+test_missing_callback_guard_is_detected (test_source_contracts.SourceContractTests.test_missing_callback_guard_is_detected) ... ok
+test_missing_hook_privilege_revocation_is_detected (test_source_contracts.SourceContractTests.test_missing_hook_privilege_revocation_is_detected) ... ok
+test_missing_runtime_call_is_detected (test_source_contracts.SourceContractTests.test_missing_runtime_call_is_detected) ... ok
+test_missing_runtime_page_check_is_detected (test_source_contracts.SourceContractTests.test_missing_runtime_page_check_is_detected) ... ok
+test_rust_field_order_is_detected (test_source_contracts.SourceContractTests.test_rust_field_order_is_detected) ... ok
+test_scan_enablement_is_detected (test_source_contracts.SourceContractTests.test_scan_enablement_is_detected) ... ok
+test_strict_handler_is_detected (test_source_contracts.SourceContractTests.test_strict_handler_is_detected) ... ok
+
+======================================================================
+FAIL: test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append (test_issue14_anchors.AnchorQualificationTests.test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pin-work/PIN-main/tests/test_issue14_anchors.py", line 173, in test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append
+    self.assertEqual(workflow.count("PIN_G9_ANCHORS: '1'"), 2)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 3 != 2
+
+======================================================================
+FAIL: test_native_matrix_activates_read_path_and_recovery_checks (test_issue14_owner_frontier.OwnerFrontierActivationTests.test_native_matrix_activates_read_path_and_recovery_checks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/pin-work/PIN-main/tests/test_issue14_owner_frontier.py", line 107, in test_native_matrix_activates_read_path_and_recovery_checks
+    self.assertEqual(workflow.count("PIN_G9_OWNER_FRONTIER: '1'"), 2)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 3 != 2
+
+----------------------------------------------------------------------
+Ran 137 tests in 4.230s
+
+FAILED (failures=2)
