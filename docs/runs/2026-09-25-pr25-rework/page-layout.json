@@ -1,0 +1,45 @@
+{
+  "relation": "pin_grouped_count_bench.documents_pin",
+  "state": "post benchmark VACUUM; CHECKPOINT before read",
+  "revision": "3a3cbbb582b3f6caa25634223f6c65bb47d487ef",
+  "relation_bytes": 79470592,
+  "page_bytes": 8192,
+  "kinds": {
+    "dictionary": {
+      "pages": 512,
+      "payload_bytes": 270412,
+      "minimum_payload_bytes": 80,
+      "maximum_payload_bytes": 1269
+    },
+    "free": {
+      "pages": 4252,
+      "payload_bytes": 68032,
+      "minimum_payload_bytes": 16,
+      "maximum_payload_bytes": 16
+    },
+    "grouped": {
+      "pages": 194,
+      "payload_bytes": 1418572,
+      "minimum_payload_bytes": 200,
+      "maximum_payload_bytes": 8168
+    },
+    "metadata": {
+      "pages": 1,
+      "payload_bytes": 4232,
+      "minimum_payload_bytes": 4232,
+      "maximum_payload_bytes": 4232
+    },
+    "owners": {
+      "pages": 605,
+      "payload_bytes": 4846357,
+      "minimum_payload_bytes": 7070,
+      "maximum_payload_bytes": 8168
+    },
+    "sealed_postings": {
+      "pages": 4137,
+      "payload_bytes": 536489,
+      "minimum_payload_bytes": 39,
+      "maximum_payload_bytes": 8168
+    }
+  }
+}
