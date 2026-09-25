@@ -24,7 +24,10 @@ Native lifecycle qualification on the final build passed with grouped page
 visibility on and off, including count result identity, HOT changes, deletion,
 VACUUM, restart, cached plans, and RLS fallback. Its SQL and output are in
 [native-qualification.tar.gz](native-qualification.tar.gz), status `passed`.
-The standalone delta SQL also passed. Pure Rust tests: 13 passed, 1 ignored.
+The standalone delta SQL also passed. The pure Rust library and grouped
+integration tests: 51 passed, 1 ignored. The two grouped storage read-count
+assertions were updated after CI showed that inline postings correctly avoid
+those posting-page reads; their result-identity and liveness assertions passed.
 Python tests: 147 passed. Workspace clippy passed with warnings denied. This
 does not replace an independent review of the new C buffer and FFI path, nor
 old-snapshot, fault-injection, and concurrent-write stress testing.

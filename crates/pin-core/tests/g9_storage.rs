@@ -575,7 +575,8 @@ fn selective_and_seeks_past_common_groups_in_both_operand_orders() {
             vec![(root(255 * 256, 1), false)]
         );
         assert_eq!(store.reads.liveness, 1, "{query}");
-        assert_eq!(store.reads.postings, 2, "{query}");
+        // sparse postings live in catalog entries, so no posting page is read.
+        assert_eq!(store.reads.postings, 0, "{query}");
         assert!(
             store.reads.catalog < 32,
             "{query}: {} catalog reads",
@@ -601,7 +602,7 @@ fn broad_scan_reuses_liveness_catalog_leaves() {
         130
     );
     assert_eq!(store.reads.liveness, 130);
-    assert_eq!(store.reads.postings, 130);
+    assert_eq!(store.reads.postings, 0);
     assert!(
         store.reads.catalog < 32,
         "{} catalog reads",
