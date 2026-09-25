@@ -58,6 +58,7 @@ pub enum Stage {
     FrontierInvalidated = 39,
     FrontierSeek = 40,
     OwnerFrontierScan = 41,
+    GroupCountProtected = 42,
 }
 
 /// Host I/O contract; implementations must not retain page borrows.

@@ -1,0 +1,1183 @@
+{
+  "kind": "historical-reanalysis-not-new-performance",
+  "revision": "2a5818fd66cfe5a5e9622d19798f2fee61ef7d37",
+  "source": {
+    "archive": "docs/runs/2026-09-25-pr21-paired-cpu/same-backend-toggle.tar.gz",
+    "archive_sha256": "2553d2820d2b41933051a6e5d2888cbcf21bcf31bcbd3fca274ddfa65b67fb2d",
+    "member": "./results.json",
+    "member_sha256": "283916ace768946f441b6664a5e4456f59752fe5006c4348bf828df7302bb4c7"
+  },
+  "fixture_rows": 25576,
+  "related_new_rows": 4096,
+  "controls": [
+    {
+      "historical_label": "and",
+      "modes": {
+        "off": {
+          "median_cpu_us": 6221.795464999999,
+          "median_wall_us": 6436.181055,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "on": {
+          "median_cpu_us": 5075.483695,
+          "median_wall_us": 5165.571725,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "gin": {
+          "median_cpu_us": 7244.185705,
+          "median_wall_us": 7409.697295,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        }
+      },
+      "owner_on_speedup_vs_off": 1.2258527145165028,
+      "owner_on_speedup_vs_gin": 1.4272897206105595,
+      "selectivity": [
+        0.960900844541758
+      ]
+    },
+    {
+      "historical_label": "or",
+      "modes": {
+        "off": {
+          "median_cpu_us": 5791.496424999999,
+          "median_wall_us": 5977.978265,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "on": {
+          "median_cpu_us": 4610.99416,
+          "median_wall_us": 4726.9245599999995,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "gin": {
+          "median_cpu_us": 4916.484745,
+          "median_wall_us": 5019.59602,
+          "matched_rows": [
+            24576
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        }
+      },
+      "owner_on_speedup_vs_off": 1.2560190327805574,
+      "owner_on_speedup_vs_gin": 1.066252650599757,
+      "selectivity": [
+        0.960900844541758
+      ]
+    },
+    {
+      "historical_label": "rare",
+      "modes": {
+        "off": {
+          "median_cpu_us": 3820.2498,
+          "median_wall_us": 4005.473265,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "on": {
+          "median_cpu_us": 3735.6847049999997,
+          "median_wall_us": 4112.812295,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "gin": {
+          "median_cpu_us": 2759.83647,
+          "median_wall_us": 2834.917595,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        }
+      },
+      "owner_on_speedup_vs_off": 1.0226371071645353,
+      "owner_on_speedup_vs_gin": 0.7387766066836736,
+      "selectivity": [
+        0.32108226462308415
+      ]
+    },
+    {
+      "historical_label": "selective_and",
+      "modes": {
+        "off": {
+          "median_cpu_us": 4249.75645,
+          "median_wall_us": 4372.397655000001,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "on": {
+          "median_cpu_us": 2577.389635,
+          "median_wall_us": 2674.0733849999997,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        },
+        "gin": {
+          "median_cpu_us": 2678.33831,
+          "median_wall_us": 2753.6879,
+          "matched_rows": [
+            8212
+          ],
+          "samples": 4,
+          "queries": [
+            100,
+            100,
+            100,
+            100
+          ]
+        }
+      },
+      "owner_on_speedup_vs_off": 1.6488606892376207,
+      "owner_on_speedup_vs_gin": 1.039167021403809,
+      "selectivity": [
+        0.32108226462308415
+      ]
+    }
+  ],
+  "maintenance": [
+    {
+      "owner_gate": "on",
+      "source": {
+        "archive": "docs/runs/2026-09-25-pr21-paired-cpu/owner-on-evidence.tar.gz",
+        "archive_sha256": "10b4bf826a5669544e81c8a0ad17fc821ef2952ae4a954560d5132968fcb80a3",
+        "member": "./measurements/write-maintenance.json",
+        "member_sha256": "5b6c2fc4bbdd897af231c9d776c87013ab256b19032ca54701f15a99f6f848ab"
+      },
+      "metrics": {
+        "pin": {
+          "backend_cpu_ns": 175168047,
+          "wal_bytes": 3869752,
+          "index_bytes": 368640
+        },
+        "gin": {
+          "backend_cpu_ns": 83181451,
+          "wal_bytes": 944392,
+          "index_bytes": 147456
+        }
+      },
+      "pin_over_gin": {
+        "backend_cpu_ns": 2.105854669450284,
+        "wal_bytes": 4.097612008572711,
+        "index_bytes": 2.5
+      }
+    },
+    {
+      "owner_gate": "off",
+      "source": {
+        "archive": "docs/runs/2026-09-25-pr21-paired-cpu/owner-off-evidence.tar.gz",
+        "archive_sha256": "947b02df5821db0e2de701e6b55cf0ce43219e214b7dbef3935d21f055941329",
+        "member": "evidence/measurements/write-maintenance.json",
+        "member_sha256": "925056ef3c66798bd62d34be17e9d0bc3572f18543769290ce1031d96e8c4286"
+      },
+      "metrics": {
+        "pin": {
+          "backend_cpu_ns": 131910056,
+          "wal_bytes": 3869752,
+          "index_bytes": 368640
+        },
+        "gin": {
+          "backend_cpu_ns": 60329029,
+          "wal_bytes": 944392,
+          "index_bytes": 147456
+        }
+      },
+      "pin_over_gin": {
+        "backend_cpu_ns": 2.186510510553717,
+        "wal_bytes": 4.097612008572711,
+        "index_bytes": 2.5
+      }
+    }
+  ],
+  "sampled_profiles": [
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/rare-grouped-perf.dso.txt",
+      "sha256": "a49d504bcc24e0e3ee17fc3a29de844dd88916f20ae74de1e760028760b9020f",
+      "dso_self_percent": {
+        "libc.so.6": 35.01,
+        "postgres": 29.59,
+        "pin.so": 23.51,
+        "[kernel.kallsyms]": 10.96,
+        "ld-linux-x86-64.so.2": 0.53,
+        "[vdso]": 0.4
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/rare-grouped-perf.flat.txt",
+      "flat_sha256": "f3af751c893953f76b54d6ca174d896ec8e665e3828f8f9054e5ffdfc758ddb8",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 24.7,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 3.17,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "finish_task_switch.isra.0"
+        },
+        {
+          "self_percent": 3.17,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 2.64,
+          "dso": "libc.so.6",
+          "symbol": "__memset_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 2.51,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 2.25,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::group_node_info"
+        },
+        {
+          "self_percent": 2.11,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::open"
+        },
+        {
+          "self_percent": 1.98,
+          "dso": "postgres",
+          "symbol": "hash_search_with_hash_value"
+        },
+        {
+          "self_percent": 1.85,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 1.72,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 1.19,
+          "dso": "postgres",
+          "symbol": "AllocSetAlloc"
+        },
+        {
+          "self_percent": 1.06,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "_raw_spin_unlock_irqrestore"
+        },
+        {
+          "self_percent": 1.06,
+          "dso": "libc.so.6",
+          "symbol": "__syscall_cancel"
+        },
+        {
+          "self_percent": 1.06,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::owner"
+        },
+        {
+          "self_percent": 1.06,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate_group_node"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/selective_and-grouped-perf.dso.txt",
+      "sha256": "5a303344ee580b9bf8e65971daf3b685be5468647fa2c7db40f3150c24ba9b46",
+      "dso_self_percent": {
+        "libc.so.6": 38.77,
+        "pin.so": 31.52,
+        "postgres": 20.41,
+        "[kernel.kallsyms]": 8.21,
+        "[vdso]": 0.6,
+        "ld-linux-x86-64.so.2": 0.48
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/selective_and-grouped-perf.flat.txt",
+      "flat_sha256": "03ab27b65e6c2b4300ad0378e7dd4b8f3610c053dce9434a6dcd2c9c205fa145",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 31.16,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 5.07,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::group_node_info"
+        },
+        {
+          "self_percent": 3.74,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 3.5,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::grouped::scan::scan_query::<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>"
+        },
+        {
+          "self_percent": 2.54,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 2.42,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 2.17,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "finish_task_switch.isra.0"
+        },
+        {
+          "self_percent": 2.17,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate_group_node"
+        },
+        {
+          "self_percent": 2.05,
+          "dso": "libc.so.6",
+          "symbol": "__memset_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 2.05,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::open"
+        },
+        {
+          "self_percent": 1.69,
+          "dso": "postgres",
+          "symbol": "AllocSetAlloc"
+        },
+        {
+          "self_percent": 1.57,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 1.21,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::grouped::storage::Cursor>::seek::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 1.09,
+          "dso": "postgres",
+          "symbol": "mdnblocks"
+        },
+        {
+          "self_percent": 0.97,
+          "dso": "libc.so.6",
+          "symbol": "__sigsetjmp"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/and-grouped-perf.dso.txt",
+      "sha256": "5c2e4c0544fd34c14f0779ad86582db7baf4e3433d8f95cecbfd6c2c3eac86d9",
+      "dso_self_percent": {
+        "postgres": 73.63,
+        "pin.so": 17.75,
+        "[kernel.kallsyms]": 5.04,
+        "libc.so.6": 3.57
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-full/and-grouped-perf.flat.txt",
+      "flat_sha256": "477af88c8f54d73bd045631501bffa93d19c9a2f2d633a256162df7ee4b5861e",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 11.76,
+          "dso": "postgres",
+          "symbol": "heap_hot_search_buffer"
+        },
+        {
+          "self_percent": 5.57,
+          "dso": "postgres",
+          "symbol": "pg_qsort"
+        },
+        {
+          "self_percent": 4.62,
+          "dso": "pin.so",
+          "symbol": "pin_core::grouped::query::evaluate_source::<pin_core::mutable::grouped::scan::Loaded<pin::storage_impl::PgStore>, pin_core::mutable::grouped::scan::scan_query<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>::{closure#8}>"
+        },
+        {
+          "self_percent": 3.68,
+          "dso": "postgres",
+          "symbol": "hash_search_with_hash_value"
+        },
+        {
+          "self_percent": 3.26,
+          "dso": "postgres",
+          "symbol": "ExecScan"
+        },
+        {
+          "self_percent": 2.73,
+          "dso": "pin.so",
+          "symbol": "pin_kernels::grouped::offsets"
+        },
+        {
+          "self_percent": 2.73,
+          "dso": "postgres",
+          "symbol": "tbm_add_tuples"
+        },
+        {
+          "self_percent": 2.31,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::span"
+        },
+        {
+          "self_percent": 2.1,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_user_addr_fault"
+        },
+        {
+          "self_percent": 2.0,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::offsets"
+        },
+        {
+          "self_percent": 1.89,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 1.58,
+          "dso": "pin.so",
+          "symbol": "pin_core::grouped::query::dependencies"
+        },
+        {
+          "self_percent": 1.58,
+          "dso": "postgres",
+          "symbol": "0x000000000048e389"
+        },
+        {
+          "self_percent": 1.47,
+          "dso": "postgres",
+          "symbol": "0x00000000005c19a7"
+        },
+        {
+          "self_percent": 1.37,
+          "dso": "postgres",
+          "symbol": "HeapTupleSatisfiesVisibility"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-broad-profile/common-grouped-perf.dso.txt",
+      "sha256": "52eae88440e79b3b08d7edd9150d47b4db22ce949a1e77c48c3371ea85c08309",
+      "dso_self_percent": {
+        "postgres": 80.2,
+        "pin.so": 10.46,
+        "[kernel.kallsyms]": 5.3,
+        "libc.so.6": 4.04
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-broad-profile/common-grouped-perf.flat.txt",
+      "flat_sha256": "3dd47f0666d89efabbf07014af906145eeb962dac37c957343ac307fede5b978",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 11.3,
+          "dso": "postgres",
+          "symbol": "heap_hot_search_buffer"
+        },
+        {
+          "self_percent": 6.83,
+          "dso": "postgres",
+          "symbol": "hash_search_with_hash_value"
+        },
+        {
+          "self_percent": 6.0,
+          "dso": "postgres",
+          "symbol": "pg_qsort"
+        },
+        {
+          "self_percent": 3.07,
+          "dso": "postgres",
+          "symbol": "ExecScan"
+        },
+        {
+          "self_percent": 2.79,
+          "dso": "pin.so",
+          "symbol": "pin_core::grouped::query::evaluate_source::<pin_core::mutable::grouped::scan::Loaded<pin::storage_impl::PgStore>, pin_core::mutable::grouped::scan::scan_query<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>::{closure#8}>"
+        },
+        {
+          "self_percent": 1.67,
+          "dso": "postgres",
+          "symbol": "0x00000000005c19a7"
+        },
+        {
+          "self_percent": 1.39,
+          "dso": "postgres",
+          "symbol": "tbm_add_tuples"
+        },
+        {
+          "self_percent": 1.39,
+          "dso": "postgres",
+          "symbol": "tbm_private_iterate"
+        },
+        {
+          "self_percent": 1.39,
+          "dso": "postgres",
+          "symbol": "0x000000000048e389"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::offsets"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "postgres",
+          "symbol": "HeapTupleSatisfiesVisibility"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "postgres",
+          "symbol": "MemoryContextReset"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "postgres",
+          "symbol": "StartReadBuffers"
+        },
+        {
+          "self_percent": 1.26,
+          "dso": "postgres",
+          "symbol": "0x00000000003ba4bd"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-broad-profile/or-grouped-perf.dso.txt",
+      "sha256": "aef7b2376693d96de6940139de5af96034ef380dd3fa46cf4b74061a55908445",
+      "dso_self_percent": {
+        "postgres": 77.68,
+        "pin.so": 12.23,
+        "[kernel.kallsyms]": 6.27,
+        "libc.so.6": 3.67,
+        "ld-linux-x86-64.so.2": 0.15
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-broad-profile/or-grouped-perf.flat.txt",
+      "flat_sha256": "ba080becd23801a4ca21113c7f1c5ab4734d935e11d608769c2a2e8215940753",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 10.09,
+          "dso": "postgres",
+          "symbol": "heap_hot_search_buffer"
+        },
+        {
+          "self_percent": 5.35,
+          "dso": "postgres",
+          "symbol": "hash_search_with_hash_value"
+        },
+        {
+          "self_percent": 5.05,
+          "dso": "postgres",
+          "symbol": "pg_qsort"
+        },
+        {
+          "self_percent": 4.89,
+          "dso": "postgres",
+          "symbol": "ExecScan"
+        },
+        {
+          "self_percent": 2.45,
+          "dso": "pin.so",
+          "symbol": "<pin_core::grouped::bitmap::Bitmap>::offsets"
+        },
+        {
+          "self_percent": 2.45,
+          "dso": "pin.so",
+          "symbol": "pin_core::grouped::query::evaluate_source::<pin_core::mutable::grouped::scan::Loaded<pin::storage_impl::PgStore>, pin_core::mutable::grouped::scan::scan_query<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>::{closure#8}>"
+        },
+        {
+          "self_percent": 1.83,
+          "dso": "postgres",
+          "symbol": "MemoryContextReset"
+        },
+        {
+          "self_percent": 1.68,
+          "dso": "postgres",
+          "symbol": "HeapTupleSatisfiesVisibility"
+        },
+        {
+          "self_percent": 1.68,
+          "dso": "postgres",
+          "symbol": "tbm_private_iterate"
+        },
+        {
+          "self_percent": 1.53,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_user_addr_fault"
+        },
+        {
+          "self_percent": 1.38,
+          "dso": "postgres",
+          "symbol": "ResourceOwnerForget"
+        },
+        {
+          "self_percent": 1.38,
+          "dso": "postgres",
+          "symbol": "tbm_add_tuples"
+        },
+        {
+          "self_percent": 1.22,
+          "dso": "postgres",
+          "symbol": "ExecStoreBufferHeapTuple"
+        },
+        {
+          "self_percent": 1.22,
+          "dso": "postgres",
+          "symbol": "0x00000000005c19a7"
+        },
+        {
+          "self_percent": 1.07,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write/pin_cpu_write_pin_0-perf.dso.txt",
+      "sha256": "1e0608ce245731e534d3dde9ccf9546198554823631681c88f1faa609df2c0f9",
+      "dso_self_percent": {
+        "pin.so": 58.03,
+        "libc.so.6": 21.64,
+        "postgres": 19.02,
+        "[kernel.kallsyms]": 1.31
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write/pin_cpu_write_pin_0-perf.flat.txt",
+      "flat_sha256": "c19b08e5924cf7d81dadaa2ffc27b9758c7db6567abc01a1adc31201595a7847",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 28.2,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate"
+        },
+        {
+          "self_percent": 16.07,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 10.16,
+          "dso": "pin.so",
+          "symbol": "unicode_segmentation::tables::word::word_category"
+        },
+        {
+          "self_percent": 9.84,
+          "dso": "postgres",
+          "symbol": "0x0000000000228020"
+        },
+        {
+          "self_percent": 2.95,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::OwnerRef>::read"
+        },
+        {
+          "self_percent": 2.95,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 2.95,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 2.3,
+          "dso": "pin.so",
+          "symbol": "<pin_core::analysis::Analyzed>::analyze"
+        },
+        {
+          "self_percent": 1.97,
+          "dso": "libc.so.6",
+          "symbol": "__memcmp_evex_movbe"
+        },
+        {
+          "self_percent": 1.97,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 1.64,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::owner"
+        },
+        {
+          "self_percent": 1.64,
+          "dso": "postgres",
+          "symbol": "0x0000000000228031"
+        },
+        {
+          "self_percent": 1.31,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Terms as core::iter::traits::iterator::Iterator>::next"
+        },
+        {
+          "self_percent": 1.31,
+          "dso": "pin.so",
+          "symbol": "core::slice::sort::shared::smallsort::small_sort_general::<pin_core::analysis::Token, <[pin_core::analysis::Token]>::sort_unstable_by<<pin_core::mutable::document::PreparedDocument>::prepare::{closure#0}>::{closure#0}>"
+        },
+        {
+          "self_percent": 0.98,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write/pin_cpu_write_pin_1-perf.dso.txt",
+      "sha256": "6e7c3872f87d4d2b31ff9008bd173aaa97d61a5a4de5254fadcb94edc7e9f1da",
+      "dso_self_percent": {
+        "pin.so": 55.92,
+        "libc.so.6": 24.01,
+        "postgres": 16.12,
+        "[kernel.kallsyms]": 3.95
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write/pin_cpu_write_pin_1-perf.flat.txt",
+      "flat_sha256": "7417a49d615f8e3b4007926933399be2722aa07e80c7789d0a5e77318e004a01",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 27.63,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate"
+        },
+        {
+          "self_percent": 20.72,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 6.25,
+          "dso": "postgres",
+          "symbol": "0x0000000000228020"
+        },
+        {
+          "self_percent": 5.92,
+          "dso": "pin.so",
+          "symbol": "unicode_segmentation::tables::word::word_category"
+        },
+        {
+          "self_percent": 2.96,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::OwnerRef>::read"
+        },
+        {
+          "self_percent": 2.96,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 2.63,
+          "dso": "pin.so",
+          "symbol": "<pin_core::analysis::Analyzed>::analyze"
+        },
+        {
+          "self_percent": 1.64,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 1.64,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::writer::link_term::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 1.32,
+          "dso": "pin.so",
+          "symbol": "<pin_core::codec::bytes::Writer>::var_u32"
+        },
+        {
+          "self_percent": 1.32,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 0.99,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 0.99,
+          "dso": "pin.so",
+          "symbol": "core::slice::sort::unstable::quicksort::quicksort::<pin_core::analysis::Token, <[pin_core::analysis::Token]>::sort_unstable_by<<pin_core::mutable::document::PreparedDocument>::prepare::{closure#0}>::{closure#0}>"
+        },
+        {
+          "self_percent": 0.99,
+          "dso": "postgres",
+          "symbol": "GenericXLogRegisterBuffer"
+        },
+        {
+          "self_percent": 0.99,
+          "dso": "postgres",
+          "symbol": "0x0000000000228027"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-long/pin_cpu_write_long_pin_0-perf.dso.txt",
+      "sha256": "4824971eb165caf7cfb6923e9ef59297c175aeace799e1a0e74a35e8eac9dedb",
+      "dso_self_percent": {
+        "pin.so": 51.18,
+        "libc.so.6": 23.23,
+        "postgres": 19.54,
+        "[kernel.kallsyms]": 5.96,
+        "ld-linux-x86-64.so.2": 0.09
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-long/pin_cpu_write_long_pin_0-perf.flat.txt",
+      "flat_sha256": "f7e8e8097845f48635a4e45aa2e38ee9e368b9ea270501a80ed92c66311ee6b4",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 28.31,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate"
+        },
+        {
+          "self_percent": 18.49,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 6.22,
+          "dso": "pin.so",
+          "symbol": "unicode_segmentation::tables::word::word_category"
+        },
+        {
+          "self_percent": 5.7,
+          "dso": "postgres",
+          "symbol": "0x0000000000228020"
+        },
+        {
+          "self_percent": 2.72,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::OwnerRef>::read"
+        },
+        {
+          "self_percent": 2.19,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 2.19,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 2.02,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 1.93,
+          "dso": "pin.so",
+          "symbol": "<pin_core::analysis::Analyzed>::analyze"
+        },
+        {
+          "self_percent": 1.93,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 1.67,
+          "dso": "postgres",
+          "symbol": "GenericXLogRegisterBuffer"
+        },
+        {
+          "self_percent": 1.14,
+          "dso": "postgres",
+          "symbol": "0x000000000022802c"
+        },
+        {
+          "self_percent": 1.05,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::writer::link_term::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 0.96,
+          "dso": "postgres",
+          "symbol": "0x0000000000228023"
+        },
+        {
+          "self_percent": 0.88,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::owner"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-long/pin_cpu_write_long_pin_1-perf.dso.txt",
+      "sha256": "1dcf6394019f3cfc90f2f733a5570aabcece7197a4df44e15eae1035a539f45c",
+      "dso_self_percent": {
+        "pin.so": 53.07,
+        "libc.so.6": 24.39,
+        "postgres": 17.46,
+        "[kernel.kallsyms]": 4.91,
+        "ld-linux-x86-64.so.2": 0.18
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-long/pin_cpu_write_long_pin_1-perf.flat.txt",
+      "flat_sha256": "8ab78c2619c348697bee16c1c327d66ed5adc36dfa6ff1df02266261bfee8660",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 25.35,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate"
+        },
+        {
+          "self_percent": 20.44,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 7.19,
+          "dso": "pin.so",
+          "symbol": "unicode_segmentation::tables::word::word_category"
+        },
+        {
+          "self_percent": 5.96,
+          "dso": "postgres",
+          "symbol": "0x0000000000228020"
+        },
+        {
+          "self_percent": 3.42,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::OwnerRef>::read"
+        },
+        {
+          "self_percent": 3.16,
+          "dso": "pin.so",
+          "symbol": "<pin_core::analysis::Analyzed>::analyze"
+        },
+        {
+          "self_percent": 2.11,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 2.02,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::load_any::<pin::storage_impl::PgStore>"
+        },
+        {
+          "self_percent": 1.49,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 1.4,
+          "dso": "libc.so.6",
+          "symbol": "__memcmp_evex_movbe"
+        },
+        {
+          "self_percent": 1.4,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::owner"
+        },
+        {
+          "self_percent": 1.32,
+          "dso": "postgres",
+          "symbol": "GenericXLogRegisterBuffer"
+        },
+        {
+          "self_percent": 1.32,
+          "dso": "postgres",
+          "symbol": "0x0000000000228031"
+        },
+        {
+          "self_percent": 1.23,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        },
+        {
+          "self_percent": 1.05,
+          "dso": "pin.so",
+          "symbol": "pin_core::mutable::writer::link_term::<pin::storage_impl::PgStore>"
+        }
+      ]
+    },
+    {
+      "file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-system/pin_cpu_write_system_pin_0-perf.dso.txt",
+      "sha256": "2f8259f3d8215752c374548645e03165b5168e92b818aeb738ea66766ab77ebb",
+      "dso_self_percent": {
+        "pin.so": 47.88,
+        "libc.so.6": 24.5,
+        "postgres": 23.98,
+        "[kernel.kallsyms]": 3.65
+      },
+      "flat_file": "docs/runs/2026-09-24-g9-cpu-profile/raw/g9-cpu-write-system/pin_cpu_write_system_pin_0-perf.flat.txt",
+      "flat_sha256": "b16e331b9e76f56fc2ccad1068de66572bed7cea92b22950ba51f3d1b0ae04f3",
+      "top_15_self_symbols": [
+        {
+          "self_percent": 24.94,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::validate"
+        },
+        {
+          "self_percent": 19.43,
+          "dso": "libc.so.6",
+          "symbol": "__memmove_avx512_unaligned_erms"
+        },
+        {
+          "self_percent": 6.78,
+          "dso": "pin.so",
+          "symbol": "unicode_segmentation::tables::word::word_category"
+        },
+        {
+          "self_percent": 4.69,
+          "dso": "postgres",
+          "symbol": "0x0000000000228020"
+        },
+        {
+          "self_percent": 3.8,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::OwnerRef>::read"
+        },
+        {
+          "self_percent": 2.98,
+          "dso": "postgres",
+          "symbol": "0x000000000022802c"
+        },
+        {
+          "self_percent": 2.83,
+          "dso": "postgres",
+          "symbol": "0x0000000000228031"
+        },
+        {
+          "self_percent": 2.16,
+          "dso": "libc.so.6",
+          "symbol": "__memcmp_evex_movbe"
+        },
+        {
+          "self_percent": 1.86,
+          "dso": "pin.so",
+          "symbol": "<pin_core::analysis::Analyzed>::analyze"
+        },
+        {
+          "self_percent": 1.71,
+          "dso": "pin.so",
+          "symbol": "<pin_core::mutable::page::Page>::bucket"
+        },
+        {
+          "self_percent": 1.49,
+          "dso": "postgres",
+          "symbol": "GenericXLogRegisterBuffer"
+        },
+        {
+          "self_percent": 1.49,
+          "dso": "postgres",
+          "symbol": "0x0000000000228027"
+        },
+        {
+          "self_percent": 1.34,
+          "dso": "postgres",
+          "symbol": "0x0000000000228023"
+        },
+        {
+          "self_percent": 1.12,
+          "dso": "[kernel.kallsyms]",
+          "symbol": "do_syscall_64"
+        },
+        {
+          "self_percent": 1.12,
+          "dso": "libc.so.6",
+          "symbol": "llseek@GLIBC_2.2.5"
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "small warm VM fixtures",
+    "older G9 profiles are not PR21 phase CPU",
+    "DSO self samples are not additive call-chain timings",
+    "historical rare label is not rare after related writes",
+    "no grouped COUNT native measurements",
+    "no matched TIN run"
+  ]
+}

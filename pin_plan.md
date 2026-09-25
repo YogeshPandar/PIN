@@ -2177,3 +2177,24 @@ The most important reading sequence is the PostgreSQL Internals map, all six Ind
 [License-Apache]: https://www.apache.org/licenses/LICENSE-2.0
 [License-MIT]: https://opensource.org/license/mit
 [DCO-Official]: https://developercertificate.org/
+
+## Implementation follow-up: grouped COUNT consumer, 2026-09-25
+
+An opt-in implementation of the section 13 exact-count equation is now present
+in `pin-pg/src/grouped_count.rs` and the retained PinCount CustomScan. The engine
+exposes sealed page masks directly; fresh VM probes certify pages, and other
+roots use PostgreSQL's HOT/MVCC callback. A nonblocking shared writer-interlock
+acquisition, held through the visibility decisions, prevents owner retirement
+and TID-reuse mixing. The structural barrier alone is not used as certification.
+
+This is a coarse-lock vertical slice, not completion of the release gates.
+`pin.enable_grouped_count` remains default off; native compilation, exact-head
+isolation/recovery, independent unsafe/visibility review, and concurrent-writer
+latency measurements are unresolved. No new persistent format or migration is
+introduced. Bounded durable incremental sealing/merging, write amplification,
+score-aware exact top-k and standby-safe search remain separate work.
+
+See [the implementation/alternatives record](docs/g9-grouped-count.md),
+[COUNT03 API obligations](docs/api-evidence.md#count03-grouped-exact-count-generation-interlock)
+and [observed versus unrun evidence](docs/runs/2026-09-25-grouped-count/README.md).
+No 10x or TIN-parity statement is supported by this local implementation alone.

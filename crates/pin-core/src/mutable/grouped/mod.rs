@@ -11,7 +11,7 @@ pub use build::{
     BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, build_memory_with_anchors,
     needs_rebuild, rebuild,
 };
-pub use scan::scan_query;
+pub use scan::{ExactSink, scan_exact, scan_query, supports_exact};
 
 pub(super) use anchors::invalidate as invalidate_frontier;
 

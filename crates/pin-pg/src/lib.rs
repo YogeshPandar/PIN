@@ -13,6 +13,7 @@ mod am;
 mod compatibility;
 mod count;
 mod grouped;
+mod grouped_count;
 mod maintenance;
 mod matching;
 mod native;
