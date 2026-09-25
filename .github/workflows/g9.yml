@@ -35,10 +35,10 @@ jobs:
       - name: Check scalar grouped truth tables
         run: cargo test --locked -p pin-kernels --test grouped
       - name: Check grouped physical storage and recovery
-        run: cargo test --locked -p pin-core --lib --test g9_grouped --test g9_storage
+        run: cargo test --locked -p pin-core --lib --test g9_grouped --test g9_storage --test g9_count
       - name: Check optimized grouped storage and scalar kernels
         run: |
-          cargo test --locked --release -p pin-core --lib --test g9_grouped --test g9_storage
+          cargo test --locked --release -p pin-core --lib --test g9_grouped --test g9_storage --test g9_count
           cargo test --locked --release -p pin-kernels --test grouped
       - name: Lint grouped contracts
         run: cargo clippy --locked -p pin-core -p pin-kernels --all-targets -- -D warnings

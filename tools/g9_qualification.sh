@@ -53,6 +53,11 @@ python3 "$root/tools/g9_qualification.py" \
   --server-log "$work/postgres.log" --artifacts "$artifacts" --hooks "$mode" \
   --anchors "$anchors" --owner-frontier "$owner_frontier"
 
+python3 "$root/tools/g9_count.py" \
+  --psql "$bin/psql" --pg-ctl "$bin/pg_ctl" --data "$work/data" \
+  --server-log "$work/postgres.log" --artifacts "$artifacts/group-count" --hooks "$mode" \
+  --anchors "$anchors" --owner-frontier "$owner_frontier"
+
 if [[ $mode == 0 && $anchors == 0 && $owner_frontier == 0 ]]; then
   "$bin/psql" -X -w -v ON_ERROR_STOP=1 -f "$root/tests/sql/g9_profile.sql"
   python3 "$root/tools/g9_profile.py" --bindir "$bin" \

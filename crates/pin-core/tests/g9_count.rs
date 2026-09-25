@@ -89,7 +89,10 @@ impl grouped::GroupSink for PageOracle {
                 assert!(roots.insert(RootTid::new(block, offset, layout).unwrap()));
             }
         }
-        assert_eq!(roots.len() as u32, offsets.iter().map(|w| w.count_ones()).sum::<u32>());
+        assert_eq!(
+            roots.len() as u32,
+            offsets.iter().map(|w| w.count_ones()).sum::<u32>()
+        );
         Ok(())
     }
     fn work(&mut self, stats: &pin_core::grouped::QueryStats) -> Result<()> {
@@ -119,7 +122,13 @@ fn page_sink_matches_independent_rows_and_never_certifies_frontier_roots() {
     let delta = root(1, 3);
     insert(&mut store, delta, "a b c");
     docs.insert(delta, "a b c");
-    for source in ["a AND b", "a OR b", "NOT a", "NOT (b AND c)", "a AND absent"] {
+    for source in [
+        "a AND b",
+        "a OR b",
+        "NOT a",
+        "NOT (b AND c)",
+        "a AND absent",
+    ] {
         let query = Query::parse(source, QueryLimits::default()).unwrap();
         assert!(grouped::supports_query(&query));
         let mut sink = PageOracle::default();
@@ -147,13 +156,27 @@ fn page_sink_matches_independent_rows_and_never_certifies_frontier_roots() {
         assert_eq!(count, actual.len() as u64);
         // model mixed VM pages with a visibility oracle independent of postings.
         for visible_mod in 1..=4 {
-            let visible = |tid: RootTid| tid.block() % visible_mod == 0 || tid.offset() % 2 == 0;
-            let from_pages = sink.pages.values().flatten().filter(|&&tid| visible(tid)).count();
+            let visible = |tid: RootTid| {
+                tid.block().is_multiple_of(visible_mod) || tid.offset().is_multiple_of(2)
+            };
+            let from_pages = sink
+                .pages
+                .values()
+                .flatten()
+                .filter(|&&tid| visible(tid))
+                .count();
             let from_roots = sink.roots.iter().filter(|&&(tid, _)| visible(tid)).count();
-            assert_eq!(from_pages + from_roots, expected.iter().filter(|&&tid| visible(tid)).count());
+            assert_eq!(
+                from_pages + from_roots,
+                expected.iter().filter(|&&tid| visible(tid)).count()
+            );
         }
     }
-    assert!(!raw(&mut store, "a AND b", 8 << 20).unwrap().contains(&(retired, false)));
+    assert!(
+        !raw(&mut store, "a AND b", 8 << 20)
+            .unwrap()
+            .contains(&(retired, false))
+    );
 }
 
 #[test]
@@ -165,7 +188,10 @@ fn page_sink_fallbacks_never_claim_a_snapshot_and_callback_errors_propagate() {
     }
     let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
     let mut sink = PageOracle::default();
-    assert_eq!(grouped::scan_into(&mut store, &query, 8 << 20, &mut sink).unwrap(), 65);
+    assert_eq!(
+        grouped::scan_into(&mut store, &query, 8 << 20, &mut sink).unwrap(),
+        65
+    );
     assert!(sink.pages.is_empty());
     build(&mut store).unwrap();
     for (source, budget) in [("a AND b", 1), ("a*", 8 << 20), ("\"a b\"", 8 << 20)] {
@@ -179,7 +205,10 @@ fn page_sink_fallbacks_never_claim_a_snapshot_and_callback_errors_propagate() {
             assert!(!grouped::supports_query(&query));
         }
     }
-    let mut sink = PageOracle { fail: true, ..PageOracle::default() };
+    let mut sink = PageOracle {
+        fail: true,
+        ..PageOracle::default()
+    };
     assert!(grouped::scan_into(&mut store, &query, 8 << 20, &mut sink).is_err());
     // a caller discards partial output after error; another scan remains usable.
     assert_eq!(raw(&mut store, "a AND b", 8 << 20).unwrap().len(), 65);
