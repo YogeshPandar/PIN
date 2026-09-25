@@ -1209,3 +1209,21 @@ bindings are unchanged. The new codec uses safe Rust and fixed-size scratch.
 Local pure tests cover sparse round trip, bitmap equivalence, corrupt page masks,
 and overflow to the old format. PostgreSQL 18.6 native lifecycle and paired
 performance qualification are required before enabling the format by default.
+
+### Grouped dirty-page visibility batch
+
+Exact PostgreSQL 18.6 authority is
+[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L2315-L2469),
+[`heapam.h`, HOT/prune prototypes](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/heapam.h#L1608-L1722),
+and [`pg_bitutils.h`, set-bit iteration](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/port/pg_bitutils.h#L140-L169).
+The supported heap AM and MVCC snapshot checks already precede the grouped
+COUNT path. The new opt-in bridge consumes one validated eight-word offset mask
+while the owner generation guard remains held, uses PostgreSQL's buffer manager,
+prunes only on a buffer switch, takes one shared content lock, and calls the
+same `heap_hot_search_buffer` routine as the heap AM for each root. It retains
+the buffer pin in backend-local state until the next page or cleanup. It reads
+no text datum and does not copy a heap tuple into a slot. The fallback keeps
+`table_index_fetch_tuple`. The new GUC is superuser-only and default off.
+Native old-snapshot, HOT, VACUUM, abort, crash, and paired CPU tests are required
+before this bridge can be enabled by default. An independent FFI/locking review
+remains open.

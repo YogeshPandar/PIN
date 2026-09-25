@@ -28,6 +28,7 @@ SET max_parallel_workers_per_gather=0; SET max_parallel_maintenance_workers=0;
 SET pin.parallel_count_workers=0; SET jit=off;
 SET pin.enable_count_fastpath=on; SET pin.enable_count_vm=on;
 SET pin.enable_grouped_count=on; SET pin.enable_grouped_scan=on;
+SET pin.enable_grouped_page_visibility=off;
 SET pin.enable_exact_bitmap=on; SET work_mem='4MB';
 SET maintenance_work_mem='4MB';
 """
@@ -69,21 +70,24 @@ def verify(cluster: Cluster, label: str, *, table: str = TABLE,
             if rows != oracle:
                 raise AssertionError(f'{label}/{pin}: full row identity oracle mismatch for {engine}')
         for vm in ('off', 'on'):
-            settings = BASE + f'SET pin.enable_count_vm={vm}; '
-            result = cluster.run(settings + count_sql(pin, table), label=label+'-count-'+vm)
-            if int(result) != len(oracle):
-                raise AssertionError(f'{label}/{pin}/{vm}: visible count differs from PG identities')
-            plan = json.loads(cluster.run(settings + 'EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '
-                                          + count_sql(pin, table), label=label+'-plan-'+vm))
-            selected = custom(plan)
-            if pin.startswith('"') or pin.endswith('*'):
-                if selected:
-                    raise AssertionError('phrase/prefix must retain the ordinary executor')
-            elif require_grouped and pin == 'alpha AND bravo':
-                if len(selected) != 1 or selected[0].get('Grouped Count Runs') != 1:
-                    raise AssertionError('expected actual grouped COUNT execution, not GUC enablement')
-                if vm == 'off' and selected[0].get('VM Certified Roots') != 0:
-                    raise AssertionError('VM-off query elided heap checks')
+            for batch in ('off', 'on'):
+                settings = BASE + (f'SET pin.enable_count_vm={vm}; '
+                                   f'SET pin.enable_grouped_page_visibility={batch}; ')
+                suffix = vm+'-'+batch
+                result = cluster.run(settings + count_sql(pin, table), label=label+'-count-'+suffix)
+                if int(result) != len(oracle):
+                    raise AssertionError(f'{label}/{pin}/{suffix}: visible count differs from PG identities')
+                plan = json.loads(cluster.run(settings + 'EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) '
+                                              + count_sql(pin, table), label=label+'-plan-'+suffix))
+                selected = custom(plan)
+                if pin.startswith('"') or pin.endswith('*'):
+                    if selected:
+                        raise AssertionError('phrase/prefix must retain the ordinary executor')
+                elif require_grouped and pin == 'alpha AND bravo':
+                    if len(selected) != 1 or selected[0].get('Grouped Count Runs') != 1:
+                        raise AssertionError('expected actual grouped COUNT execution, not GUC enablement')
+                    if vm == 'off' and selected[0].get('VM Certified Roots') != 0:
+                        raise AssertionError('VM-off query elided heap checks')
 
 
 def fixtures(cluster: Cluster) -> None:

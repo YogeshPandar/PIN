@@ -3,7 +3,10 @@
 
 SET max_parallel_maintenance_workers = 0;
 SET max_parallel_workers_per_gather = 0;
-SET pin.enable_count_fastpath = off;
+SET pin.enable_count_fastpath = on;
+SET pin.enable_grouped_count = on;
+SET pin.enable_count_vm = on;
+SET pin.enable_grouped_page_visibility = on;
 SET pin.enable_grouped_storage = on;
 SET pin.enable_grouped_scan = on;
 SET pin.enable_grouped_delta_seal = on;
@@ -21,6 +24,7 @@ DECLARE
     query text;
     expected bigint[];
     actual bigint[];
+    counted bigint;
 BEGIN
     FOREACH query IN ARRAY ARRAY[
         'alpha', 'alpha AND beta', 'alpha OR beta', 'alpha AND NOT beta',
@@ -30,6 +34,11 @@ BEGIN
         actual := pg_temp.g2_result('g10_docs', query, true);
         IF actual IS DISTINCT FROM expected THEN
             RAISE EXCEPTION 'g10 mismatch for %: expected %, actual %', query, expected, actual;
+        END IF;
+        EXECUTE format('SELECT count(*) FROM g10_docs WHERE body OPERATOR(pin.@@@) pin.parse_query(%L)', query)
+            INTO counted;
+        IF counted <> cardinality(expected) THEN
+            RAISE EXCEPTION 'g10 count mismatch for %: expected %, actual %', query, cardinality(expected), counted;
         END IF;
     END LOOP;
 END;
