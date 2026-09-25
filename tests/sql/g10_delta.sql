@@ -44,13 +44,21 @@ INSERT INTO g10_docs(id, body)
 SELECT n, CASE WHEN n % 2 = 0 THEN 'alpha beta newterm' ELSE 'gamma newterm' END
 FROM generate_series(1714, 2226) n;
 SELECT pg_temp.g10_check();
+INSERT INTO g10_docs(id, body)
+SELECT n, CASE WHEN n % 2 = 0 THEN 'alpha beta newterm' ELSE 'gamma newterm' END
+FROM generate_series(2227, 2739) n;
+SELECT pg_temp.g10_check();
+INSERT INTO g10_docs(id, body)
+SELECT n, CASE WHEN n % 2 = 0 THEN 'alpha beta newterm' ELSE 'gamma newterm' END
+FROM generate_series(2740, 3252) n;
+SELECT pg_temp.g10_check();
 UPDATE g10_docs SET note = note + 1 WHERE id % 101 = 0;
 UPDATE g10_docs SET body = 'beta changed' WHERE id % 103 = 0;
 DELETE FROM g10_docs WHERE id % 107 = 0;
 SELECT pg_temp.g10_check();
 VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g10_docs;
 SELECT pg_temp.g10_check();
-INSERT INTO g10_docs VALUES (3000, 'alpha beta newterm');
+INSERT INTO g10_docs VALUES (4000, 'alpha beta newterm');
 SELECT pg_temp.g10_check();
 REINDEX INDEX g10_docs_pin;
 SELECT pg_temp.g10_check();

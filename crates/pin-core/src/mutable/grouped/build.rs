@@ -770,6 +770,7 @@ fn seal<S: PageStore>(
             members: members_head,
             member_bytes,
             count,
+            inline: None,
         }
         .entry(key),
     )

@@ -15,7 +15,7 @@ use pin_kernels::grouped::PageMask;
 pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
 pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
 const LEVELS: usize = MAX_CATALOG_LEVEL as usize + 1;
-const INLINE_POSTINGS: usize = 6;
+const INLINE_POSTINGS: usize = 18;
 pub(super) const CATALOG_MEMORY: usize =
     LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
 
@@ -27,11 +27,15 @@ pub(super) struct Value {
     pub members: u32,
     pub member_bytes: u32,
     pub count: u32,
+    pub(super) inline: Option<[u8; INLINE_POSTINGS * 3]>,
 }
 
 impl Value {
-    fn inline_bytes(self) -> [u8; 20] {
-        let mut bytes = [0; 20];
+    fn inline_bytes(self) -> [u8; INLINE_POSTINGS * 3] {
+        if let Some(bytes) = self.inline {
+            return bytes;
+        }
+        let mut bytes = [0; INLINE_POSTINGS * 3];
         for (index, block) in self.blocks.iter().enumerate() {
             bytes[index * 4..index * 4 + 4].copy_from_slice(&block.to_le_bytes());
         }
@@ -42,7 +46,7 @@ impl Value {
 
     fn inline_pages(self, max_offset: u16) -> Result<([PageOffsets; INLINE_POSTINGS], usize)> {
         let count = usize::try_from(self.count).map_err(|_| Error::InvalidState)?;
-        if self.len != 0 || count == 0 || count > INLINE_POSTINGS {
+        if self.len != 0 || count == 0 || count > self.inline.map_or(6, |_| INLINE_POSTINGS) {
             return Err(Error::InvalidState);
         }
         let bytes = self.inline_bytes();
@@ -73,7 +77,7 @@ impl Value {
             let bit = usize::from(offset - 1);
             pages[used - 1].offsets[bit / 64] |= 1 << (bit % 64);
         }
-        if mask != self.pages {
+        if self.inline.is_none() && mask != self.pages {
             return Err(Error::InvalidState);
         }
         Ok((pages, used))
@@ -82,6 +86,11 @@ impl Value {
     pub fn entry(self, key: [u64; 2]) -> CatalogEntry {
         let mut value = [0; 64];
         value[..4].copy_from_slice(&self.len.to_le_bytes());
+        if let Some(inline) = self.inline {
+            value[4..58].copy_from_slice(&inline);
+            value[60..64].copy_from_slice(&self.count.to_le_bytes());
+            return CatalogEntry { key, value };
+        }
         for (index, block) in self.blocks.iter().enumerate() {
             value[4 + index * 4..8 + index * 4].copy_from_slice(&block.to_le_bytes());
         }
@@ -96,6 +105,32 @@ impl Value {
 
     pub fn read(entry: CatalogEntry) -> Result<Self> {
         use crate::codec::bytes::Reader;
+        if entry.value[..4] == [0; 4] && entry.value[60..64] != [0; 4] {
+            if entry.key[0] == 0 || entry.value[58..60] != [0; 2] {
+                return Err(Error::InvalidState);
+            }
+            let mut inline = [0; INLINE_POSTINGS * 3];
+            inline.copy_from_slice(&entry.value[4..58]);
+            let mut value = Self {
+                len: 0,
+                blocks: [NO_BLOCK; 3],
+                pages: [0; 4],
+                members: NO_BLOCK,
+                member_bytes: 0,
+                count: u32::from_le_bytes([
+                    entry.value[60],
+                    entry.value[61],
+                    entry.value[62],
+                    entry.value[63],
+                ]),
+                inline: Some(inline),
+            };
+            let (pages, used) = value.inline_pages(512)?;
+            for page in &pages[..used] {
+                value.pages[usize::from(page.page) / 64] |= 1 << (page.page % 64);
+            }
+            return Ok(value);
+        }
         let mut reader = Reader::new(&entry.value);
         let len = reader.u32()?;
         let blocks = [reader.u32()?, reader.u32()?, reader.u32()?];
@@ -114,6 +149,7 @@ impl Value {
                 members,
                 member_bytes,
                 count,
+                inline: None,
             };
             if entry.key[0] == 0 {
                 return Err(Error::InvalidState);
@@ -157,11 +193,12 @@ impl Value {
             members,
             member_bytes,
             count,
+            inline: None,
         })
     }
 }
 
-/// embeds sparse delta postings in the catalog leaf, avoiding one WAL page per term.
+/// embeds sparse postings in the catalog leaf, avoiding one WAL page per term.
 pub(super) fn inline_postings(
     key: [u64; 2],
     pages: &[PageOffsets],
@@ -170,7 +207,7 @@ pub(super) fn inline_postings(
     if key[0] == 0 || pages.is_empty() {
         return Err(Error::InvalidState);
     }
-    let mut bytes = [0u8; 20];
+    let mut bytes = [0u8; INLINE_POSTINGS * 3];
     let mut mask = [0u64; 4];
     let mut count = 0usize;
     let mut previous_page = None;
@@ -203,19 +240,12 @@ pub(super) fn inline_postings(
     }
     let value = Value {
         len: 0,
-        blocks: core::array::from_fn(|index| {
-            let start = index * 4;
-            u32::from_le_bytes([
-                bytes[start],
-                bytes[start + 1],
-                bytes[start + 2],
-                bytes[start + 3],
-            ])
-        }),
+        blocks: [NO_BLOCK; 3],
         pages: mask,
-        members: u32::from_le_bytes([bytes[12], bytes[13], bytes[14], bytes[15]]),
-        member_bytes: u32::from_le_bytes([bytes[16], bytes[17], bytes[18], bytes[19]]),
+        members: NO_BLOCK,
+        member_bytes: 0,
         count: count as u32,
+        inline: Some(bytes),
     };
     value.inline_pages(layout.max_offset())?;
     Ok(Some(value.entry(key)))
@@ -1007,13 +1037,46 @@ mod inline_tests {
         assert_eq!(&expected[..expected_len], &actual[..actual_len]);
 
         let mut corrupt = entry;
-        corrupt.value[16] = 0;
+        corrupt.value[58] = 1;
         assert!(Value::read(corrupt).is_err());
+
+        let mut legacy_bytes = [0u8; 20];
+        legacy_bytes[..9].copy_from_slice(&value.inline.unwrap()[..9]);
+        let legacy = Value {
+            len: 0,
+            blocks: core::array::from_fn(|index| {
+                let start = index * 4;
+                u32::from_le_bytes([
+                    legacy_bytes[start],
+                    legacy_bytes[start + 1],
+                    legacy_bytes[start + 2],
+                    legacy_bytes[start + 3],
+                ])
+            }),
+            pages: value.pages,
+            members: u32::from_le_bytes([
+                legacy_bytes[12],
+                legacy_bytes[13],
+                legacy_bytes[14],
+                legacy_bytes[15],
+            ]),
+            member_bytes: u32::from_le_bytes([
+                legacy_bytes[16],
+                legacy_bytes[17],
+                legacy_bytes[18],
+                legacy_bytes[19],
+            ]),
+            count: 3,
+            inline: None,
+        };
+        assert!(Value::read(legacy.entry(key)).is_ok());
         let mut many = [PageOffsets {
             page: 1,
             offsets: [0; 8],
         }];
-        many[0].offsets[0] = 127;
+        many[0].offsets[0] = (1 << 18) - 1;
+        assert!(inline_postings(key, &many, layout).unwrap().is_some());
+        many[0].offsets[0] = (1 << 19) - 1;
         assert!(inline_postings(key, &many, layout).unwrap().is_none());
     }
 }

@@ -1193,9 +1193,9 @@ listed above. The relevant reviewed contracts are
 [`runtime-config-client`](https://www.postgresql.org/docs/18/runtime-config-client.html).
 Catalog entries and grouped pages remain private PIN payloads inside PostgreSQL
 index pages. The host still owns buffer locks, generic WAL publication, index
-scan rechecks, heap visibility, and VACUUM ordering. The new six-posting inline
+scan rechecks, heap visibility, and VACUUM ordering. The new 18-posting inline
 encoding changes no PostgreSQL pointer or FFI boundary. It packs sorted
-heap-page/offset coordinates into 18 catalog bytes; decoding validates order,
+heap-page/offset coordinates into 54 catalog bytes; decoding validates order,
 page mask, offset domain, and zero padding before constructing the existing
 checked bitmap view. It writes no separate posting page for these entries.
 Large postings retain the previous page-backed format. Inline values use
