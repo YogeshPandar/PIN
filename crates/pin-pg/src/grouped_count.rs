@@ -144,7 +144,10 @@ impl ExactSink for PageCounter {
 
     fn page(&mut self, layout: HeapLayout, block: u32, offsets: &[u64; 8]) -> Result<()> {
         // the core has validated both term and liveness masks for this heap layout.
-        let count: u64 = offsets.iter().map(|word| u64::from(word.count_ones())).sum();
+        let count: u64 = offsets
+            .iter()
+            .map(|word| u64::from(word.count_ones()))
+            .sum();
         self.note(0, count)?;
         self.note(8, 1)?;
         self.note(9, count)?;
@@ -179,7 +182,10 @@ pub extern "C-unwind" fn pin_count_grouped_enabled() -> bool {
 /// bytes contains one initialized immutable query allocation for this call.
 #[pg_guard]
 #[unsafe(no_mangle)]
-pub unsafe extern "C-unwind" fn pin_count_grouped_eligible(bytes: *const u8, length: usize) -> bool {
+pub unsafe extern "C-unwind" fn pin_count_grouped_eligible(
+    bytes: *const u8,
+    length: usize,
+) -> bool {
     if !ENABLE_GROUPED_COUNT.get() {
         return false;
     }

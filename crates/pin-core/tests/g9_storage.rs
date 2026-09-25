@@ -788,7 +788,10 @@ impl grouped::ExactSink for ExactPages {
 
     fn page(&mut self, layout: HeapLayout, block: u32, offsets: &[u64; 8]) -> Result<()> {
         self.pages += 1;
-        let population: u64 = offsets.iter().map(|word| u64::from(word.count_ones())).sum();
+        let population: u64 = offsets
+            .iter()
+            .map(|word| u64::from(word.count_ones()))
+            .sum();
         assert_ne!(population, 0);
         self.population += population;
         // enumerate the coordinate domain rather than copying the production bit loop.
@@ -796,7 +799,10 @@ impl grouped::ExactSink for ExactPages {
         for offset in 1..=layout.max_offset() {
             let bit = usize::from(offset - 1);
             if offsets[bit / 64] & (1 << (bit % 64)) != 0 {
-                assert!(self.rows.insert(RootTid::new(block, offset, layout).unwrap()));
+                assert!(
+                    self.rows
+                        .insert(RootTid::new(block, offset, layout).unwrap())
+                );
                 enumerated += 1;
             }
         }
@@ -828,7 +834,10 @@ fn assert_exact_oracle(store: &mut impl PageStore, docs: &BTreeMap<RootTid, &str
     let bitmap = raw(store, source, 8 << 20).unwrap();
     assert!(bitmap.iter().all(|(_, recheck)| !recheck));
     assert_eq!(
-        bitmap.into_iter().map(|(root, _)| root).collect::<BTreeSet<_>>(),
+        bitmap
+            .into_iter()
+            .map(|(root, _)| root)
+            .collect::<BTreeSet<_>>(),
         expected
     );
 }
@@ -895,7 +904,11 @@ fn exact_page_count_does_not_mix_generations_across_long_frontier_and_reuse() {
                 if docs.contains_key(&tid) {
                     continue;
                 }
-                let text = if index % 3 == 0 { "alpha bravo" } else { "bravo" };
+                let text = if index % 3 == 0 {
+                    "alpha bravo"
+                } else {
+                    "bravo"
+                };
                 insert(&mut store, tid, text);
                 docs.insert(tid, text);
             }
@@ -942,7 +955,10 @@ fn exact_sink_declines_before_output_and_propagates_consumer_errors() {
     );
     assert_eq!(sink.population, 0);
     build(&mut store).unwrap();
-    assert_eq!(grouped::scan_exact(&mut store, &query, 0, &mut sink), Ok(None));
+    assert_eq!(
+        grouped::scan_exact(&mut store, &query, 0, &mut sink),
+        Ok(None)
+    );
     assert_eq!(sink.population, 0);
     for text in ["alpha*", "\"alpha bravo\"", "NOT \"alpha bravo\""] {
         let unsupported = Query::parse(text, QueryLimits::default()).unwrap();
