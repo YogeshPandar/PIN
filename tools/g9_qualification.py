@@ -63,6 +63,7 @@ class Cluster:
     def __init__(self, args: argparse.Namespace):
         self.args = args
         self.anchors = getattr(args, 'anchors', '0') == '1'
+        self.owner_frontier = getattr(args, 'owner_frontier', '0') == '1'
         self.sequence = 0
         self.children: list[subprocess.Popen] = []
         self.args.artifacts.mkdir(parents=True, exist_ok=True)
@@ -77,7 +78,9 @@ class Cluster:
 
     def settings(self, sql: str) -> str:
         return ('SET pin.enable_frontier_anchors = '
-                + ('on' if self.anchors else 'off') + ';\n' + sql)
+                + ('on' if self.anchors else 'off') + ';\n'
+                + 'SET pin.enable_owner_frontier = '
+                + ('on' if self.owner_frontier else 'off') + ';\n' + sql)
 
     def run(self, sql: str, *, error: str | None = None, label: str = 'query') -> str:
         sql = self.settings(sql)
@@ -331,10 +334,57 @@ def concurrent_reader_writer_maintenance(cluster: Cluster) -> None:
     cluster.compare('g9_crash')
 
 
+def owner_frontier_qualification(cluster: Cluster, hooks: bool) -> None:
+    cluster.run(SETTINGS + """
+        DROP TABLE IF EXISTS g9_owner_frontier;
+        CREATE TABLE g9_owner_frontier(id bigint PRIMARY KEY, body text, marker integer)
+            WITH (autovacuum_enabled = false, fillfactor = 50);
+        INSERT INTO g9_owner_frontier
+            SELECT i, CASE WHEN i <= 20 THEN 'alpha beta rareplanet'
+                           ELSE 'alpha beta' END, 0
+            FROM generate_series(1, 1024) AS i;
+        SET pin.enable_grouped_storage = on;
+        CREATE INDEX g9_owner_frontier_pin ON g9_owner_frontier USING pin(body);
+        SET pin.enable_grouped_storage = off;
+        INSERT INTO g9_owner_frontier
+            SELECT i, CASE WHEN i % 3 = 0 THEN 'alpha beta rareplanet'
+                           ELSE 'alpha rareplanet' END, 0
+            FROM generate_series(1025, 2048) AS i;
+        UPDATE g9_owner_frontier SET marker = marker + 1 WHERE id <= 10;
+        UPDATE g9_owner_frontier SET body = 'beta replacement' WHERE id = 11;
+        DELETE FROM g9_owner_frontier WHERE id = 12;
+    """, label='owner-frontier-fixture')
+    queries = ('alpha AND rareplanet', 'alpha OR rareplanet',
+               'alpha AND NOT rareplanet', 'NOT missing')
+    cluster.compare('g9_owner_frontier', queries)
+    statement = select_rows('g9_owner_frontier', 'alpha AND rareplanet')
+    prefix = SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
+    if hooks:
+        cluster.run(prefix + 'SELECT pin.g2_inject(41, 1, false);\n' + statement,
+                    error='Pin injected storage error', label='prove-owner-frontier')
+        blocker = cluster.blocker('g9-owner-frontier-blocker')
+        expected = json.loads(cluster.run(prefix + statement, label='owner-frontier-before-pause'))
+        reader = cluster.start(prefix + 'SELECT pin.g2_inject(41, 1, true);\n' + statement,
+                               'g9-owner-frontier-reader')
+        cluster.wait_lock('g9-owner-frontier-reader', False)
+        cluster.run("INSERT INTO g9_owner_frontier VALUES "
+                    "(3000, 'alpha rareplanet concurrent', 0);",
+                    label='writer-during-owner-frontier-read')
+        cluster.release('g9-owner-frontier-blocker', blocker)
+        if json.loads(cluster.finish(reader)) != expected:
+            raise AssertionError('owner-frontier reader observed a later heap snapshot')
+    cluster.run('VACUUM (INDEX_CLEANUP ON, PARALLEL 0) g9_owner_frontier;',
+                label='owner-frontier-vacuum')
+    cluster.compare('g9_owner_frontier', queries)
+    cluster.restart(immediate=True)
+    cluster.compare('g9_owner_frontier', queries)
+    cluster.run('DROP TABLE g9_owner_frontier;', label='owner-frontier-cleanup')
+
 def anchor_seek_qualification(cluster: Cluster) -> None:
     query = 'alpha AND rareplanet'
     statement = select_rows('g9_anchor', query)
-    prefix = SETTINGS + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n'
+    prefix = (SETTINGS + 'SET pin.enable_owner_frontier = off;\n'
+              + 'SET enable_seqscan = off; SET enable_bitmapscan = on;\n')
     expected = json.loads(cluster.run(prefix + statement, label='anchor-before-pause'))
     cluster.run(prefix + 'SELECT pin.g2_inject(40, 1, false);\n' + statement,
                 error='Pin injected storage error', label='prove-frontier-seek')
@@ -391,8 +441,18 @@ def permissions(cluster: Cluster) -> None:
                     error='permission denied to set parameter', label='gate-permissions')
     cluster.run('SET ROLE pin_g9_reader; SET pin.enable_frontier_anchors = on;',
                 error='permission denied to set parameter', label='anchor-permissions')
-    if cluster.run("SELECT boot_val FROM pg_settings WHERE name = 'pin.enable_frontier_anchors'") != 'off':
+    cluster.run('SET ROLE pin_g9_reader; SET pin.enable_owner_frontier = on;',
+                error='permission denied to set parameter', label='owner-frontier-permissions')
+    anchor_default = cluster.run(
+        "SELECT boot_val FROM pg_settings WHERE name = 'pin.enable_frontier_anchors'"
+    )
+    if anchor_default != 'off':
         raise AssertionError('frontier anchors must default off')
+    owner_default = cluster.run(
+        "SELECT boot_val FROM pg_settings WHERE name = 'pin.enable_owner_frontier'"
+    )
+    if owner_default != 'off':
+        raise AssertionError('owner frontier must default off')
     cluster.run('DROP ROLE pin_g9_reader;')
 
 
@@ -405,10 +465,12 @@ def main() -> None:
     parser.add_argument('--artifacts', required=True, type=Path)
     parser.add_argument('--hooks', choices=('0', '1'), required=True)
     parser.add_argument('--anchors', choices=('0', '1'), default='0')
+    parser.add_argument('--owner-frontier', choices=('0', '1'), default='0')
     args = parser.parse_args()
     cluster = Cluster(args)
     results: dict[str, Any] = {'postgres': '18.6', 'hooks': args.hooks == '1',
-                               'anchors': cluster.anchors, 'passed': False}
+                               'anchors': cluster.anchors,
+                               'owner_frontier': cluster.owner_frontier, 'passed': False}
     try:
         cluster.run('CREATE EXTENSION pin;')
         if cluster.run('SHOW server_version_num') != '180006':
@@ -435,9 +497,16 @@ def main() -> None:
             concurrent_reader_writer_maintenance(cluster)
             if cluster.anchors:
                 anchor_seek_qualification(cluster)
+            if cluster.owner_frontier:
+                owner_frontier_qualification(cluster, True)
+        if cluster.owner_frontier and not available:
+            owner_frontier_qualification(cluster, False)
         cluster.restart(immediate=False)
         cluster.compare('g9_small')
-        results.update(passed=True, stages=list((*STAGES, 39) if cluster.anchors else STAGES) if available else [],
+        stages = list((*STAGES, 39) if cluster.anchors else STAGES) if available else []
+        if available and cluster.owner_frontier:
+            stages.append(41)
+        results.update(passed=True, stages=stages,
                        spill_observed=True, low_memory_fallback_observed=True)
     finally:
         cluster.cleanup()

@@ -16,10 +16,11 @@ import subprocess
 import time
 
 if __package__:
-    from . import frontier_options
+    from . import frontier_options, owner_frontier_options
     from .g9_profile import CASES
 else:
     import frontier_options
+    import owner_frontier_options
     from g9_profile import CASES
 
 BASE_SETTINGS = (
@@ -81,7 +82,7 @@ def delta(before: dict[str, int], after: dict[str, int]) -> dict[str, int]:
     return result
 
 
-def connect(engine: str, *, anchors: bool = False):
+def connect(engine: str, *, anchors: bool = False, owner_frontier: bool = False):
     import psycopg2
     conn = psycopg2.connect(application_name='pin_g9_cpu_profile', connect_timeout=10)
     conn.autocommit = True
@@ -94,6 +95,11 @@ def connect(engine: str, *, anchors: bool = False):
         cur.execute(frontier_options.SETTING_SQL)
         row = cur.fetchone()
         frontier_options.require_setting(row[0] if row else None, anchors)
+        owner_state = 'on' if owner_frontier else 'off'
+        cur.execute(f'SET {owner_frontier_options.NAME} = {owner_state}')
+        cur.execute(owner_frontier_options.SETTING_SQL)
+        row = cur.fetchone()
+        owner_frontier_options.require_setting(row[0] if row else None, owner_frontier)
         return conn, cur
     except BaseException:
         conn.close()
@@ -204,6 +210,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--frontier-anchors', action='store_true')
+    parser.add_argument('--owner-frontier', action='store_true')
     parser.add_argument('--seconds', type=float, default=3)
     parser.add_argument('--samples', type=int, default=3)
     parser.add_argument('--cases', nargs='+', choices=CASES, default=list(CASES))
@@ -245,11 +252,12 @@ def main() -> None:
         'hardware_pmu_counters_collected': False,
         'metric': '/proc/PID/schedstat backend on-CPU nanoseconds',
     }
-    conn, cur = connect('legacy', anchors=args.frontier_anchors)
+    conn, cur = connect('legacy', anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
     try:
         cur.execute("SELECT json_object_agg(name, setting) FROM pg_settings WHERE name IN "
                     "('server_version', 'shared_buffers', 'work_mem', 'fsync', "
-                    "'full_page_writes', 'synchronous_commit', 'block_size', 'pin.enable_frontier_anchors')")
+                    "'full_page_writes', 'synchronous_commit', 'block_size', "
+                    "'pin.enable_frontier_anchors', 'pin.enable_owner_frontier')")
         environment['postgres_settings'] = cur.fetchone()[0]
         cur.execute("SELECT relname, pg_relation_size(oid) FROM pg_class WHERE oid IN "
                     "('public.pin_g6_bench'::regclass, "
@@ -262,7 +270,7 @@ def main() -> None:
         conn.close()
     (args.output / 'environment.json').write_text(json.dumps(environment, indent=2) + '\n')
     for case in args.cases:
-        conn, cur = connect('legacy', anchors=args.frontier_anchors)
+        conn, cur = connect('legacy', anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
         try:
             pin_rows = 'SELECT id FROM ONLY public.pin_g6_bench WHERE ' + predicate(case, 'legacy')
             gin_rows = 'SELECT id FROM ONLY public.pin_g6_bench WHERE ' + predicate(case, 'gin')
@@ -274,7 +282,7 @@ def main() -> None:
             conn.close()
         counts = {}
         for engine in engines:
-            conn, cur = connect(engine, anchors=args.frontier_anchors)
+            conn, cur = connect(engine, anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
             try:
                 cur.execute('SELECT pg_backend_pid()')
                 pid = cur.fetchone()[0]
@@ -294,7 +302,7 @@ def main() -> None:
     for sample_index in range(args.samples):
         order = rows if sample_index % 2 == 0 else list(reversed(rows))
         for row in order:
-            conn, cur = connect(row['engine'], anchors=args.frontier_anchors)
+            conn, cur = connect(row['engine'], anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
             try:
                 pid = conn.get_backend_pid()
                 prepare(cur, row['case'], row['engine'])
@@ -310,7 +318,7 @@ def main() -> None:
         for row in rows:
             if row['case'] not in args.profile_cases:
                 continue
-            conn, cur = connect(row['engine'], anchors=args.frontier_anchors)
+            conn, cur = connect(row['engine'], anchors=args.frontier_anchors, owner_frontier=args.owner_frontier)
             try:
                 pid = conn.get_backend_pid()
                 prepare(cur, row['case'], row['engine'])

@@ -127,6 +127,10 @@ impl PageStore for PgStore<'_> {
         crate::grouped::frontier_anchors_enabled()
     }
 
+    fn owner_frontier(&self) -> bool {
+        crate::grouped::owner_frontier_enabled()
+    }
+
     fn layout(&self) -> HeapLayout {
         self.layout
     }

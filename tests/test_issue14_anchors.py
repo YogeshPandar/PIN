@@ -13,6 +13,7 @@ from unittest.mock import MagicMock, patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
 from tools import frontier_options as gates
+from tools import owner_frontier_options as owner_gates
 from tools import g9_profile as paired
 from tools import g9_qualification as qualification
 
@@ -21,12 +22,19 @@ bench = importlib.import_module('issue14_frontier_bench')
 
 
 @contextmanager
-def connection_stub(setting):
+def connection_stub(setting, owner_setting='off'):
     driver = MagicMock()
     conn = driver.connect.return_value
     cur = conn.cursor.return_value
     cur.__enter__.return_value = cur
-    cur.fetchone.return_value = None if setting is None else (setting,)
+
+    def execute(sql, *_args, **_kwargs):
+        if sql == gates.SETTING_SQL:
+            cur.fetchone.return_value = None if setting is None else (setting,)
+        elif sql == owner_gates.SETTING_SQL:
+            cur.fetchone.return_value = None if owner_setting is None else (owner_setting,)
+
+    cur.execute.side_effect = execute
     with patch.dict(sys.modules, {'psycopg2': driver}):
         yield conn, cur
 
@@ -75,6 +83,7 @@ class AnchorActivationTests(unittest.TestCase):
                     try:
                         actual = popen.call_args.kwargs['env']['PGOPTIONS']
                         self.assertIn(f'{gates.NAME}={"on" if enabled else "off"}', actual)
+                        self.assertIn(f'{owner_gates.NAME}=off', actual)
                     finally:
                         session.close()
 
@@ -87,6 +96,7 @@ class AnchorActivationTests(unittest.TestCase):
                     self.assertEqual('--frontier-anchors' in argv, enabled)
                     options = run.call_args.kwargs['env']['PGOPTIONS']
                     self.assertIn(f'{gates.NAME}={"on" if enabled else "off"}', options)
+                    self.assertIn(f'{owner_gates.NAME}=off', options)
 
     def test_cpu_cases_cover_the_same_boolean_and_fallback_classes(self):
         self.assertEqual(cpu.CASES, paired.CASES)
@@ -152,8 +162,9 @@ class AnchorQualificationTests(unittest.TestCase):
         hooks = (ROOT / 'crates/pin-pg/src/test_hooks.rs').read_text()
         self.assertIn('FrontierInvalidated = 39', core)
         self.assertIn('FrontierSeek = 40', core)
+        self.assertIn('OwnerFrontierScan = 41', core)
         self.assertEqual(frontier.count('store.event(Stage::FrontierSeek)?'), 2)
-        self.assertIn('!(32..=40).contains(&stage)', hooks)
+        self.assertIn('!(32..=41).contains(&stage)', hooks)
         self.assertIn('if !unsafe { pg_sys::superuser() }', hooks)
 
     def test_anchored_ci_covers_error_replay_cancellation_and_concurrent_append(self):
@@ -166,6 +177,7 @@ class AnchorQualificationTests(unittest.TestCase):
                       'g9-anchor-cancel', 'anchor-permissions'):
             self.assertIn(probe, driver)
         seek = driver.split('def anchor_seek_qualification(', 1)[1].split('def permissions(', 1)[0]
+        self.assertIn('SET pin.enable_owner_frontier = off;', seek)
         self.assertLess(seek.index("wait_lock('g9-anchor-reader', False)"),
                         seek.index('related-writer-during-anchor-read'))
         self.assertLess(seek.index('related-writer-during-anchor-read'),
@@ -173,7 +185,8 @@ class AnchorQualificationTests(unittest.TestCase):
 
     def test_isolated_runner_rejects_provenance_overrides_before_host_access(self):
         runner = ROOT / 'tools/issue14_isolated_run.sh'
-        for option in ('--revision=other', '--output=other', '--bindir=other', '--frontier-anchors'):
+        for option in ('--revision=other', '--output=other', '--bindir=other',
+                       '--frontier-anchors', '--owner-frontier'):
             result = subprocess.run(
                 ['bash', str(runner), 'a' * 40, '/unused-output', '0', option],
                 capture_output=True, text=True, check=False,

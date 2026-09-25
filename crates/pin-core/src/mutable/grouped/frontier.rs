@@ -6,13 +6,17 @@ use crate::codec::records::Publication;
 use crate::error::{Error, Result};
 use crate::grouped::Node;
 use crate::identity::RootTid;
+use crate::mutable::document;
 use crate::mutable::grouped::anchors;
 use crate::mutable::page::{
-    GroupSnapshot, NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef,
+    GroupSnapshot, NO_BLOCK, OwnedPostings, Owner, OwnerRef, Page, PageKind, Term, TermRef,
 };
 use crate::mutable::{
     PageStore, Stage, following, load, load_posting, posting_next, reader::resolve,
 };
+
+const OWNER_FRONTIER_MIN_SPAN: u64 = 512;
+const OWNER_FRONTIER_FIXED: usize = 128 * 1024;
 
 #[derive(Clone, Copy)]
 pub(super) struct CapturedTerm {
@@ -30,6 +34,28 @@ impl CapturedTerm {
             head: term.head,
             tail: term.tail,
         }
+    }
+
+    fn changed<S: PageStore>(self, store: &mut S, target: u64) -> Result<bool> {
+        if self.first.incarnation.get() >= target {
+            return Ok(true);
+        }
+        if self.head == NO_BLOCK {
+            return Ok(false);
+        }
+        let page = load_posting(store, self.tail, self.reference)?;
+        let mut previous = self.first;
+        let mut found = false;
+        for owner in page.posting_refs()? {
+            let owner = owner?;
+            ordered(previous, owner)?;
+            previous = owner;
+            found = true;
+        }
+        if !found {
+            return Err(Error::InvalidState);
+        }
+        Ok(previous.incarnation.get() >= target)
     }
 }
 
@@ -212,7 +238,10 @@ impl Owners {
         Ok(Self {
             block: snapshot.after.map_or(head, |owner| owner.page),
             tail,
-            slot: snapshot.after.map_or(0, |owner| owner.slot + 1),
+            slot: match snapshot.after {
+                Some(owner) => owner.slot.checked_add(1).ok_or(Error::InvalidState)?,
+                None => 0,
+            },
             anchor: snapshot.after,
             previous: snapshot.after,
             floor: snapshot.id.get(),
@@ -304,8 +333,205 @@ fn matches(program: &Program<'_>, membership: u64) -> Result<bool> {
     Ok(values[program.len - 1])
 }
 
+fn owner_frontier_span<S: PageStore>(
+    store: &mut S,
+    program: &Program<'_>,
+    captured: &[Option<CapturedTerm>],
+    meta: &Page,
+    snapshot: GroupSnapshot,
+) -> Result<Option<u64>> {
+    if !store.owner_frontier() {
+        return Ok(None);
+    }
+    let span = meta.grouped_delta_span(snapshot)?;
+    if span < OWNER_FRONTIER_MIN_SPAN {
+        return Ok(None);
+    }
+    if program.universe {
+        return Ok(Some(span));
+    }
+    let target = snapshot
+        .id
+        .get()
+        .checked_add(1)
+        .ok_or(Error::InvalidState)?;
+    let mut changed = 0u8;
+    for term in captured.iter().flatten() {
+        changed += u8::from(term.changed(store, target)?);
+        if changed == 2 {
+            return Ok(Some(span));
+        }
+    }
+    Ok(None)
+}
+
+fn fragment_membership<S: PageStore>(
+    store: &mut S,
+    owner: Owner<'_>,
+    membership: &document::TermMembership<'_, '_>,
+    scratch: &mut Vec<u8>,
+    scratch_limit: usize,
+    max_blocks: u32,
+) -> Result<Option<u64>> {
+    let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
+    if total > scratch_limit {
+        return Ok(None);
+    }
+    scratch.clear();
+    if scratch.capacity() < total {
+        if scratch.try_reserve_exact(total).is_err() {
+            scratch.clear();
+            return Ok(None);
+        }
+        if scratch.capacity() > scratch_limit {
+            scratch.clear();
+            return Ok(None);
+        }
+    }
+    scratch.resize(total, 0);
+    let mut block = owner.data_head;
+    let mut offset = 0usize;
+    let mut remaining = max_blocks;
+    while block != NO_BLOCK {
+        remaining = remaining.checked_sub(1).ok_or(Error::InvalidState)?;
+        if offset == total {
+            return Err(Error::InvalidState);
+        }
+        let page = load(store, block, PageKind::Fragment)?;
+        let (reference, current, bytes) = page.fragment_data()?;
+        let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
+        let end = current
+            .checked_add(bytes.len())
+            .ok_or(Error::InvalidState)?;
+        if reference != owner.reference || current != offset || end > total {
+            return Err(Error::InvalidState);
+        }
+        scratch[current..end].copy_from_slice(bytes);
+        offset = end;
+        block = page.next()?;
+    }
+    if offset != total {
+        return Err(Error::InvalidState);
+    }
+    membership
+        .read(scratch, owner.tokens, owner.terms)
+        .map(Some)
+}
+
+fn scan_owner_frontier<S: PageStore>(
+    store: &mut S,
+    program: &Program<'_>,
+    meta: &Page,
+    snapshot: GroupSnapshot,
+    span: u64,
+    memory_bytes: usize,
+    mut emit: impl FnMut(RootTid, bool) -> Result<()>,
+) -> Result<Option<u64>> {
+    let ceiling = snapshot
+        .id
+        .get()
+        .checked_add(span)
+        .ok_or(Error::InvalidState)?;
+    let Some(available) = memory_bytes.checked_sub(OWNER_FRONTIER_FIXED) else {
+        return Ok(None);
+    };
+    let roots = usize::try_from(span).map_err(|_| Error::Limit("owner frontier span"))?;
+    let requested = roots
+        .checked_mul(core::mem::size_of::<RootTid>())
+        .ok_or(Error::Limit("owner frontier roots"))?;
+    if requested > available {
+        return Ok(None);
+    }
+    let mut output = Vec::new();
+    if output.try_reserve_exact(roots).is_err() {
+        return Ok(None);
+    }
+    let retained = output
+        .capacity()
+        .checked_mul(core::mem::size_of::<RootTid>())
+        .ok_or(Error::Limit("owner frontier roots"))?;
+    if retained > available {
+        return Ok(None);
+    }
+    let scratch_limit = available - retained;
+    let mut scratch = Vec::new();
+    let membership_plan = document::TermMembership::new(&program.names[..program.terms])?;
+    let max_blocks = store.blocks()?;
+    store.event(Stage::OwnerFrontierScan)?;
+
+    let (head, tail) = meta.owner_chain()?;
+    let mut block = snapshot.after.map_or(head, |owner| owner.page);
+    let mut slot = match snapshot.after {
+        Some(owner) => owner.slot.checked_add(1).ok_or(Error::InvalidState)?,
+        None => 0,
+    };
+    let mut anchor = snapshot.after;
+    let mut previous = snapshot.after;
+    let mut work = 0u8;
+    'owners: while block != NO_BLOCK {
+        let page = load(store, block, PageKind::Owners)?;
+        if let Some(expected) = anchor.take()
+            && page.owner(expected.slot, store.layout())?.reference != expected
+        {
+            return Err(Error::InvalidState);
+        }
+        while slot < page.owner_count()? {
+            let owner = page.owner(slot, store.layout())?;
+            slot += 1;
+            if let Some(previous) = previous {
+                ordered(previous, owner.reference)?;
+            }
+            let incarnation = owner.reference.incarnation.get();
+            if incarnation <= snapshot.id.get() {
+                return Err(Error::InvalidState);
+            }
+            // stop at the metapage allocation fence captured before this scan.
+            if incarnation > ceiling {
+                break 'owners;
+            }
+            previous = Some(owner.reference);
+            if owner.publication == Publication::Published && owner.live {
+                let membership = if owner.inline.is_empty() {
+                    let Some(membership) = fragment_membership(
+                        store,
+                        owner,
+                        &membership_plan,
+                        &mut scratch,
+                        scratch_limit,
+                        max_blocks,
+                    )?
+                    else {
+                        return Ok(None);
+                    };
+                    membership
+                } else {
+                    membership_plan.read(owner.inline, owner.tokens, owner.terms)?
+                };
+                if matches(program, membership)? {
+                    if output.len() == roots {
+                        return Err(Error::InvalidState);
+                    }
+                    output.push(owner.root);
+                }
+            }
+            work = work.wrapping_add(1);
+            if work == 0 {
+                store.interrupt()?;
+            }
+        }
+        block = following(&page, tail)?.unwrap_or(NO_BLOCK);
+        slot = 0;
+    }
+
+    let count = u64::try_from(output.len()).map_err(|_| Error::Limit("owner frontier count"))?;
+    for root in output {
+        emit(root, false)?;
+    }
+    Ok(Some(count))
+}
+
 pub(super) fn memory(terms: usize) -> usize {
-    terms * core::mem::size_of::<Cursor>() + 128 * 1024
+    terms * core::mem::size_of::<Cursor>() + OWNER_FRONTIER_FIXED
 }
 
 // grouped scratch has been released; metadata and posting tails remain captured.
@@ -315,10 +541,24 @@ pub(super) fn scan<S: PageStore>(
     captured: &[Option<CapturedTerm>],
     meta: &Page,
     snapshot: GroupSnapshot,
+    memory_bytes: usize,
     mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
     if !meta.grouped_has_delta(snapshot)? {
         return Ok(0);
+    }
+    if let Some(span) = owner_frontier_span(store, program, captured, meta, snapshot)?
+        && let Some(count) = scan_owner_frontier(
+            store,
+            program,
+            meta,
+            snapshot,
+            span,
+            memory_bytes,
+            &mut emit,
+        )?
+    {
+        return Ok(count);
     }
     let mut cursors = Vec::new();
     cursors

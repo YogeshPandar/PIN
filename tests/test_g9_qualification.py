@@ -70,9 +70,10 @@ class SourceTests(unittest.TestCase):
         cls.driver = (ROOT / 'tools/g9_qualification.py').read_text()
 
     def test_default_off_privileged_independent_gates(self):
-        self.assertEqual(self.adapter.count('GucSetting::<bool>::new(false)'), 3)
-        self.assertEqual(self.adapter.count('GucContext::Suset'), 3)
+        self.assertEqual(self.adapter.count('GucSetting::<bool>::new(false)'), 4)
+        self.assertEqual(self.adapter.count('GucContext::Suset'), 4)
         self.assertIn('pin.enable_frontier_anchors', self.adapter)
+        self.assertIn('pin.enable_owner_frontier', self.adapter)
         self.assertIn('pin.enable_grouped_storage', self.adapter)
         self.assertIn('pin.enable_grouped_scan', self.adapter)
         self.assertIn('mutable::scan_query_with_recheck', self.adapter)

@@ -2,16 +2,22 @@
 # run only against a private postgres installation with no pre-existing pin library.
 set -euo pipefail
 if [[ $# -lt 3 || ! $1 =~ ^[0-9a-f]{40}$ || ! $3 =~ ^[01]$ ]]; then
-  echo 'usage: issue14_isolated_run.sh REVISION OUTPUT ANCHORS_0_OR_1 [benchmark options]' >&2
+  echo 'usage: issue14_isolated_run.sh REVISION OUTPUT ANCHORS_0_OR_1 [OWNER_FRONTIER_0_OR_1] [benchmark options]' >&2
   exit 2
 fi
 revision=$1
 output=$(realpath -m -- "$2")
 anchors=$3
-shift 3
+owner_frontier=0
+if [[ $# -ge 4 && $4 =~ ^[01]$ ]]; then
+  owner_frontier=$4
+  shift 4
+else
+  shift 3
+fi
 for option in "$@"; do
   case "$option" in
-    --revision|--revision=*|--output|--output=*|--bindir|--bindir=*|--frontier-anchors)
+    --revision|--revision=*|--output|--output=*|--bindir|--bindir=*|--frontier-anchors|--owner-frontier)
       echo 'revision, output, bindir and activation are controlled by this runner' >&2
       exit 2 ;;
   esac
@@ -112,6 +118,7 @@ export PGHOST="$cluster/socket" PGPORT=55491 PGDATABASE=postgres
 "$bin/psql" -X -v ON_ERROR_STOP=1 -c 'CREATE EXTENSION pin;'
 flags=()
 if [[ $anchors == 1 ]]; then flags+=(--frontier-anchors); fi
+if [[ $owner_frontier == 1 ]]; then flags+=(--owner-frontier); fi
 # the same current driver tests either binary; nested git provenance uses its worktree.
 cp "$root/tools/"*.py "$output/evidence/"
 (

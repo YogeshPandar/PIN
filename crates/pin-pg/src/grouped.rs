@@ -14,6 +14,7 @@ use std::ptr::NonNull;
 static ENABLE_STORAGE: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_SCAN: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_FRONTIER_ANCHORS: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_OWNER_FRONTIER: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 const _: () = assert!(core::mem::size_of::<SortRecord>() == 32);
 const _: () = assert!(core::mem::align_of::<SortRecord>() == 1);
@@ -25,6 +26,14 @@ pub(crate) fn initialize() {
         c"Build and use experimental snapshot posting-chain seek anchors.",
         c"Requires grouped storage/scan. Off uses the historical frontier; binary downgrade requires rebuilding anchored indexes.",
         &ENABLE_FRONTIER_ANCHORS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_bool_guc(
+        c"pin.enable_owner_frontier",
+        c"Use one-pass owner payloads for dense grouped write frontiers.",
+        c"Requires grouped scans. Off retains term-addressed canonical frontier execution.",
+        &ENABLE_OWNER_FRONTIER,
         GucContext::Suset,
         GucFlags::default(),
     );
@@ -48,6 +57,10 @@ pub(crate) fn initialize() {
 
 pub(crate) fn frontier_anchors_enabled() -> bool {
     ENABLE_FRONTIER_ANCHORS.get()
+}
+
+pub(crate) fn owner_frontier_enabled() -> bool {
+    ENABLE_OWNER_FRONTIER.get()
 }
 
 pub(crate) fn storage_enabled() -> bool {
