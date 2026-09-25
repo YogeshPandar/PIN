@@ -8,8 +8,8 @@ use crate::identity::{HeapLayout, SegmentId};
 
 pub(super) const META_LEGACY_BYTES: usize = META_HEADER + BUCKETS * 8;
 pub(super) const META_GROUPED_BYTES: usize = META_LEGACY_BYTES + 72;
-pub(super) const GROUP_DELTA_SEGMENTS: usize = 16;
-pub(super) const GROUP_RETIRED_SEGMENTS: usize = GROUP_DELTA_SEGMENTS + 1;
+pub const GROUP_DELTA_SEGMENTS: usize = 16;
+pub const GROUP_RETIRED_SEGMENTS: usize = GROUP_DELTA_SEGMENTS + 1;
 const SNAPSHOT_BYTES: usize = 48;
 const DELTA_BYTES: usize = SNAPSHOT_BYTES + 24;
 const JOURNAL_BYTES: usize = 24;
@@ -338,8 +338,14 @@ impl Page {
         writer.u32(snapshot.map_or(NO_BLOCK, |snapshot| snapshot.head))?;
         writer.u32(snapshot.map_or(NO_BLOCK, |snapshot| snapshot.tail))?;
         writer.u32(snapshot.map_or(NO_BLOCK, |snapshot| snapshot.root))?;
-        writer.u32(snapshot.and_then(|snapshot| snapshot.frontier_root).unwrap_or(0))?;
-        writer.u32(u32::from(snapshot.is_some_and(|snapshot| snapshot.frontier_valid)))?;
+        writer.u32(
+            snapshot
+                .and_then(|snapshot| snapshot.frontier_root)
+                .unwrap_or(0),
+        )?;
+        writer.u32(u32::from(
+            snapshot.is_some_and(|snapshot| snapshot.frontier_valid),
+        ))?;
         writer.u32(0)?;
         if let Some(owner) = snapshot.and_then(|snapshot| snapshot.after) {
             owner.write(writer)?;
@@ -478,7 +484,11 @@ impl Page {
                 if reader.take(7)? != [0; 7] {
                     return Err(Error::InvalidState);
                 }
-                *slot = snapshot.map(|snapshot| GroupDelta { snapshot, before, level });
+                *slot = snapshot.map(|snapshot| GroupDelta {
+                    snapshot,
+                    before,
+                    level,
+                });
                 if snapshot.is_none() && (before.is_some() || level != 0) {
                     return Err(Error::InvalidState);
                 }
@@ -610,7 +620,9 @@ impl Page {
             writer.u32(retired.map_or(NO_BLOCK, |retired| retired.head))?;
             writer.u32(retired.map_or(NO_BLOCK, |retired| retired.tail))?;
         }
-        writer.finish()?;
+        if writer.len() != bytes.len() {
+            return Err(Error::InvalidState);
+        }
         self.bytes[META_LEGACY_BYTES..META_GROUPED_V3_BYTES].copy_from_slice(&bytes);
         self.len = META_GROUPED_V3_BYTES;
         Ok(())

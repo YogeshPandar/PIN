@@ -273,7 +273,8 @@ def measure(args: argparse.Namespace) -> None:
              'latency_scope': 'client roundtrip through persistent psql; not pure executor latency',
              'cpu_scope': 'one PostgreSQL backend schedstat; excludes other processes'})
         # never silently drop user data; a new dedicated schema is mandatory.
-        session.execute(f'CREATE SCHEMA {SCHEMA}; SET pin.enable_grouped_storage=on;')
+        session.execute(f'CREATE SCHEMA {SCHEMA}; SET pin.enable_grouped_storage=on; '
+                        'SET pin.enable_grouped_delta_seal=' + ('on' if args.delta_seal else 'off') + ';')
         samples = []
         with (output / 'samples.jsonl').open('x') as journal:
             for corpus, rows in enumerate(args.rows):
@@ -392,6 +393,7 @@ def main() -> None:
     parser.add_argument('--cases', nargs='+', choices=tuple(CASES), default=list(CASES))
     parser.add_argument('--anchors', action='store_true')
     parser.add_argument('--owner-frontier', action='store_true')
+    parser.add_argument('--delta-seal', action='store_true')
     args = parser.parse_args()
     if (any(n < 1200 or n > 10_000_000 for n in args.rows) or len(set(args.rows)) != len(args.rows)
             or not 1 <= args.queries <= 10000 or not 0 <= args.warmup <= 100

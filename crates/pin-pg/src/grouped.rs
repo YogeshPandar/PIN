@@ -187,9 +187,7 @@ pub(crate) fn maintain_delta<S: PageStore>(store: &mut S) -> Result<BuildStats> 
         grouped::DeltaMaintenance::Seal => {
             let memory = grouped::delta_build_memory(store.layout());
             let Some(mut sort) = PgSort::begin(memory) else {
-                pgrx::pg_sys::debug1!(
-                    "Pin grouped delta skipped: maintenance memory is too small"
-                );
+                pgrx::pg_sys::debug1!("Pin grouped delta skipped: maintenance memory is too small");
                 return Ok(BuildStats::default());
             };
             let result = grouped::seal_delta(store, &mut sort, memory);

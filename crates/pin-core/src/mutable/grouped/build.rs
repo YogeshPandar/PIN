@@ -241,12 +241,7 @@ fn emit_document<S: PageStore, T: GroupSort>(
     batch: &mut Batch,
     stats: &mut BuildStats,
 ) -> Result<()> {
-    let terms = document::validated_terms(
-        bytes,
-        owner.tokens,
-        owner.terms,
-        DELTA_VALIDATE_MEMORY,
-    )?;
+    let terms = document::validated_terms(bytes, owner.tokens, owner.terms, DELTA_VALIDATE_MEMORY)?;
     for term in terms {
         store.interrupt()?;
         let term = term?;
@@ -526,7 +521,9 @@ pub fn seal_delta<S: PageStore, T: GroupSort>(
         }
         before = delta.before;
         replace_from -= 1;
-        level = level.checked_add(1).ok_or(Error::Limit("group delta level"))?;
+        level = level
+            .checked_add(1)
+            .ok_or(Error::Limit("group delta level"))?;
     }
     if usize::from(level) >= GROUP_DELTA_SEGMENTS {
         return Err(Error::Limit("group delta level"));

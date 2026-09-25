@@ -347,13 +347,17 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
     }
     let mut retiring = [None; GROUP_RETIRED_SEGMENTS];
     let mut used = 0usize;
-    for old in state
-        .active
-        .into_iter()
-        .chain(state.deltas.into_iter().flatten().map(|delta| delta.snapshot))
-    {
+    for old in state.active.into_iter().chain(
+        state
+            .deltas
+            .into_iter()
+            .flatten()
+            .map(|delta| delta.snapshot),
+    ) {
         if let Some(old) = retired(old) {
-            let slot = retiring.get_mut(used).ok_or(Error::Limit("group retire queue"))?;
+            let slot = retiring
+                .get_mut(used)
+                .ok_or(Error::Limit("group retire queue"))?;
             *slot = Some(old);
             used += 1;
         }
@@ -389,8 +393,7 @@ pub(super) fn publish_delta<S: PageStore>(
     if state.active.is_none()
         || state.retired.iter().any(Option::is_some)
         || replace_from > count
-        || (replace_from == count
-            && state.latest().and_then(|latest| latest.after) != before)
+        || (replace_from == count && state.latest().and_then(|latest| latest.after) != before)
         || (replace_from < count
             && state.deltas[replace_from].is_none_or(|delta| delta.before != before))
     {
@@ -467,7 +470,11 @@ pub(super) fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
                 .iter()
                 .flatten()
                 .any(|delta| delta.snapshot.id == journal.id)
-            || state.retired.iter().flatten().any(|retired| retired.id == journal.id)
+            || state
+                .retired
+                .iter()
+                .flatten()
+                .any(|retired| retired.id == journal.id)
         {
             return Err(Error::InvalidState);
         }
@@ -496,7 +503,9 @@ pub(super) fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
         meta.set_grouped_state(state)?;
         store.commit(&[&meta, &free])?;
         store.event(Stage::GroupReclaimed)?;
-        reclaimed = reclaimed.checked_add(1).ok_or(Error::Limit("group recovery pages"))?;
+        reclaimed = reclaimed
+            .checked_add(1)
+            .ok_or(Error::Limit("group recovery pages"))?;
     }
     loop {
         let mut meta = load(store, 0, PageKind::Meta)?;
@@ -533,7 +542,9 @@ pub(super) fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
         meta.set_grouped_state(state)?;
         store.commit(&[&meta, &free])?;
         store.event(Stage::GroupReclaimed)?;
-        reclaimed = reclaimed.checked_add(1).ok_or(Error::Limit("group recovery pages"))?;
+        reclaimed = reclaimed
+            .checked_add(1)
+            .ok_or(Error::Limit("group recovery pages"))?;
     }
 }
 

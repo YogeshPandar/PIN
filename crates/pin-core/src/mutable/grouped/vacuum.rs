@@ -38,7 +38,11 @@ fn retire_snapshot<S: PageStore>(
                     return Err(Error::InvalidState);
                 }
                 // writer exclusion prevents a stale image from restoring another clear.
-                if chunk.iter().zip(data.bytes).any(|(&new, &old)| new & !old != 0) {
+                if chunk
+                    .iter()
+                    .zip(data.bytes)
+                    .any(|(&new, &old)| new & !old != 0)
+                {
                     return Err(Error::InvalidState);
                 }
                 if chunk != data.bytes {
