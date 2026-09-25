@@ -10,6 +10,8 @@
 
 /* pgrx guards every call; pointers never outlive the synchronous operation. */
 extern void pin_storage_check(Relation index, Relation heap, struct IndexInfo *info);
+extern void pin_liveness_lock(Relation index, bool exclusive);
+extern void pin_liveness_unlock(Relation index, bool exclusive);
 extern void pin_writer_lock(Relation index);
 extern void pin_writer_unlock(Relation index);
 extern void pin_structure_lock(Relation index, bool exclusive);

@@ -34,6 +34,8 @@ unsafe extern "C-unwind" {
         heap: pg_sys::Relation,
         info: *mut pg_sys::IndexInfo,
     );
+    pub(crate) fn pin_liveness_lock(index: pg_sys::Relation, exclusive: bool);
+    pub(crate) fn pin_liveness_unlock(index: pg_sys::Relation, exclusive: bool);
     pub(crate) fn pin_writer_lock(index: pg_sys::Relation);
     pub(crate) fn pin_writer_unlock(index: pg_sys::Relation);
     pub(crate) fn pin_structure_lock(index: pg_sys::Relation, exclusive: bool);

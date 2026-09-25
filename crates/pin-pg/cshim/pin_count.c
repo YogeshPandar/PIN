@@ -44,6 +44,7 @@
 
 static bool pin_enable_count = false;
 static bool pin_enable_count_vm = false;
+static bool pin_enable_grouped_count = false;
 static int pin_count_parallel_workers = 0;
 static Size pin_count_participant_memory = 0;
 static create_upper_paths_hook_type pin_previous_upper = NULL;
@@ -76,6 +77,9 @@ typedef struct PinCountState
     int eflags;
     Snapshot snapshot;
     bool done;
+    bool group_protected;
+    bool grouped_count;
+    uint64 group_stats[PIN_GROUP_COUNT_STATS];
     const char *fallback_reason;
     uint64 stats[PIN_COUNT_STATS];
 } PinCountState;
@@ -191,9 +195,12 @@ pin_count_upper(PlannerInfo *root, UpperRelationKind stage, RelOptInfo *input,
         bytea *encoded = DatumGetByteaPP(argument->constvalue);
         bool single_term = pin_count_single_term((const uint8 *) VARDATA_ANY(encoded),
                                                   VARSIZE_ANY_EXHDR(encoded));
+        bool grouped = pin_enable_grouped_count &&
+            pin_count_group_supported((const uint8 *) VARDATA_ANY(encoded),
+                                       VARSIZE_ANY_EXHDR(encoded));
         if ((Pointer) encoded != DatumGetPointer(argument->constvalue))
             pfree(encoded);
-        if (!single_term)
+        if (!single_term && !grouped)
             return;
     }
     match = OpernameGetOprid(list_make2(makeString("pin"), makeString("@@@")),
@@ -285,6 +292,9 @@ pin_count_init(Size participant_memory)
     DefineCustomBoolVariable("pin.enable_count_vm", "Enable experimental count VM certification.",
                              "Uncertified candidates always use heap visibility.",
                              &pin_enable_count_vm, false, PGC_SUSET, 0, NULL, NULL, NULL);
+    DefineCustomBoolVariable("pin.enable_grouped_count", "Enable experimental grouped page counts.",
+                             "Requires one binary version in all backends; blocks liveness retirement.",
+                             &pin_enable_grouped_count, false, PGC_SUSET, 0, NULL, NULL, NULL);
     DefineCustomIntVariable("pin.parallel_count_workers",
                             "Maximum PostgreSQL workers for experimental PinCount.",
                             "Zero keeps direct count execution serial.",
@@ -426,8 +436,27 @@ pin_count_next(CustomScanState *node)
         return ExecProcNode(state->fallback);
     query = linitial_node(Const, scan->custom_exprs);
     bytes = DatumGetByteaPP(query->constvalue);
-    if (!pin_count_parallel_run(state, (const uint8 *) VARDATA_ANY(bytes),
-                                VARSIZE_ANY_EXHDR(bytes), &count))
+    state->grouped_count = pin_enable_grouped_count &&
+        pin_count_group_supported((const uint8 *) VARDATA_ANY(bytes), VARSIZE_ANY_EXHDR(bytes));
+    /* a prepared Boolean plan must honor a later GUC change without weakening its query. */
+    if (!state->grouped_count &&
+        !pin_count_single_term((const uint8 *) VARDATA_ANY(bytes), VARSIZE_ANY_EXHDR(bytes)))
+    {
+        if ((Pointer) bytes != DatumGetPointer(query->constvalue))
+            pfree(bytes);
+        state->fallback_reason = "grouped count disabled at execution";
+        pin_count_release(state);
+        return ExecProcNode(state->fallback);
+    }
+    if (state->grouped_count)
+    {
+        pin_liveness_lock(state->index, false);
+        state->group_protected = true;
+        count = pin_count_group_execute(state->index, state, (const uint8 *) VARDATA_ANY(bytes),
+                                        VARSIZE_ANY_EXHDR(bytes), state->group_stats);
+    }
+    else if (!pin_count_parallel_run(state, (const uint8 *) VARDATA_ANY(bytes),
+                                     VARSIZE_ANY_EXHDR(bytes), &count))
         count = pin_count_execute(state->index, state, (const uint8 *) VARDATA_ANY(bytes),
                                   VARSIZE_ANY_EXHDR(bytes), state->stats);
     if ((Pointer) bytes != DatumGetPointer(query->constvalue))
@@ -463,6 +492,9 @@ pin_count_release(PinCountState *state)
         MemoryContextDelete(state->scratch);
     state->scratch = NULL;
     state->snapshot = NULL;
+    if (state->group_protected)
+        pin_liveness_unlock(state->index, false);
+    state->group_protected = false;
     if (state->index != NULL)
         index_close(state->index, AccessShareLock);
     state->index = NULL;
@@ -488,6 +520,7 @@ pin_count_rescan(CustomScanState *node)
     PinCountState *state = (PinCountState *) node;
     pin_count_release(state);
     state->done = false;
+    state->grouped_count = false;
     state->fallback_reason = NULL;
     ExecReScan(state->fallback);
     ExecClearTuple(node->ss.ss_ScanTupleSlot);
@@ -502,7 +535,20 @@ pin_count_explain(CustomScanState *node, List *ancestors, ExplainState *es)
         "VM Certified Roots", "Heap Fetches", "Heap Matches", "Uncertified Source Roots"
     };
     (void) ancestors;
-    ExplainPropertyText("Certification", "sealed exact term with protected canonical owner", es);
+    ExplainPropertyText("Certification", state->grouped_count ?
+                         "exact grouped masks with retirement exclusion" :
+                         "sealed exact term with protected canonical owner", es);
+    if (es->analyze && state->grouped_count)
+    {
+        static const char *group_names[PIN_GROUP_COUNT_STATS] = {
+            "Group Snapshot Pages", "Group VM Checks", "Group VM Visible Pages",
+            "Group VM Certified Roots", "Group Heap Fetches", "Group Heap Matches",
+            "Group Fallback Roots", "Group Term Bytes Decoded", "Group Index Pages Read",
+            "Group Index Bytes Copied", "Group Predicate Rechecks"
+        };
+        for (int i = 0; i < PIN_GROUP_COUNT_STATS; i++)
+            ExplainPropertyUInteger(group_names[i], NULL, state->group_stats[i], es);
+    }
     if (state->fallback_reason != NULL)
         ExplainPropertyText("Fallback", state->fallback_reason, es);
     if (es->analyze)
@@ -551,7 +597,8 @@ pin_count_fetch(void *context, uint32 block, uint16 offset, const uint8 **bytes,
     text *body;
     *bytes = NULL;
     *length = 0;
-    if (!BufferIsValid(state->owner_buffer) || block == InvalidBlockNumber ||
+    if ((!BufferIsValid(state->owner_buffer) && !state->group_protected) ||
+        block == InvalidBlockNumber ||
         offset == InvalidOffsetNumber || offset > MaxHeapTuplesPerPage)
         elog(ERROR, "invalid PinCount heap fetch");
     CHECK_FOR_INTERRUPTS();
@@ -581,6 +628,42 @@ pin_count_clear(void *context)
     ExecClearTuple(state->heap_slot);
     table_index_fetch_reset(state->fetch);
     MemoryContextReset(state->scratch);
+}
+
+/* exact predicates need visibility, not text detoasting or reparsing. */
+bool
+pin_count_group_visible(void *context, uint32 block, uint16 offset)
+{
+    PinCountState *state = context;
+    ItemPointerData visible;
+    bool again = false;
+    bool found;
+    if (!state->group_protected || state->snapshot == NULL ||
+        block == InvalidBlockNumber || offset == InvalidOffsetNumber ||
+        offset > MaxHeapTuplesPerPage)
+        elog(ERROR, "invalid PinCount exact group fetch");
+    CHECK_FOR_INTERRUPTS();
+    ItemPointerSet(&visible, block, offset);
+    found = table_index_fetch_tuple(state->fetch, &visible, state->snapshot,
+                                    state->heap_slot, &again, NULL);
+    if (again)
+        elog(ERROR, "PinCount requires one MVCC-visible HOT version");
+    ExecClearTuple(state->heap_slot);
+    return found;
+}
+
+/* only immutable snapshot masks use VM; sparse and frontier roots always fetch. */
+bool
+pin_count_group_all_visible(void *context, uint32 block)
+{
+    PinCountState *state = context;
+    if (!state->group_protected || block == InvalidBlockNumber)
+        elog(ERROR, "PinCount group VM check requires retirement protection");
+    CHECK_FOR_INTERRUPTS();
+    if (!pin_enable_count_vm)
+        return false;
+    return (visibilitymap_get_status(state->heap, block, &state->vm_buffer) &
+            VISIBILITYMAP_ALL_VISIBLE) != 0;
 }
 
 

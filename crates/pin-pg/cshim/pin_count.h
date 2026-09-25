@@ -13,6 +13,12 @@ extern bool pin_count_all_visible(void *context, uint32 block);
 extern bool pin_count_fetch(void *context, uint32 block, uint16 offset,
                             const uint8 **bytes, Size *length);
 extern void pin_count_clear(void *context);
+#define PIN_GROUP_COUNT_STATS 11
+extern bool pin_count_group_visible(void *context, uint32 block, uint16 offset);
+extern bool pin_count_group_all_visible(void *context, uint32 block);
+extern bool pin_count_group_supported(const uint8 *query, Size length);
+extern int64 pin_count_group_execute(Relation index, void *context,
+                                     const uint8 *query, Size length, uint64 *stats);
 extern bool pin_count_single_term(const uint8 *query, Size length);
 extern int64 pin_count_execute(Relation index, void *context,
                                 const uint8 *query, Size length, uint64 *stats);

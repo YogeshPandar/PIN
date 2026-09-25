@@ -12,6 +12,7 @@ mod abi;
 mod am;
 mod compatibility;
 mod count;
+mod count_grouped;
 mod grouped;
 mod maintenance;
 mod matching;
