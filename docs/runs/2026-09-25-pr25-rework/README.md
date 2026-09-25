@@ -47,6 +47,11 @@ within the *same* run. Builds and VM noise differ between run columns.
 | Updated/deleted broad OR | 4417 / 4556 | 4370 / 4039 | 1151 / 4117 |
 | Rebuilt broad AND | 286 / 3409 | 233 / 3217 | 272 / 3705 |
 
+The final selective AND COUNT case was **141 / 181 microseconds** (PIN / GIN)
+on fresh data, **188 / 743** after a long delta, **266 / 883** after
+updates/deletes, and **161 / 207** after rebuild. This remains far from a
+general 10x CPU target even on the accelerated count shape.
+
 On the same final binary and mutated table, alternating page visibility off/on
 gave broad AND medians **1447 / 465 microseconds** and broad OR **1869 / 598
 microseconds**. Both modes returned the same count and used the grouped plan.
