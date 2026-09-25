@@ -142,7 +142,8 @@ pub(super) fn references(page: &Page, target: u32) -> Result<bool> {
                     super::anchors::Anchor::read(entry)?;
                 } else {
                     let value = Value::read(entry)?;
-                    if value.blocks.contains(&target) || value.members == target {
+                    if value.len != 0 && (value.blocks.contains(&target) || value.members == target)
+                    {
                         return Ok(true);
                     }
                 }

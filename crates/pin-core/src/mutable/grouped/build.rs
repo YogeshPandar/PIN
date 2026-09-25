@@ -258,6 +258,10 @@ fn emit_document<S: PageStore, T: GroupSort>(
     Ok(())
 }
 
+#[allow(
+    clippy::too_many_arguments,
+    reason = "bounded suffix capture shares one sort batch and scratch"
+)]
 fn emit_owner<S: PageStore, T: GroupSort>(
     store: &mut S,
     meta: &super::super::page::Page,
@@ -746,6 +750,10 @@ fn seal<S: PageStore>(
             GroupPageKind::Liveness,
         )
     } else {
+        if let Some(entry) = storage::inline_postings(key, pages, store.layout())? {
+            stats.term_groups += 1;
+            return catalog.push(store, snapshot, entry);
+        }
         let len = encode_bitmap(logical_key, BitmapKind::Posting, pages, bytes)?;
         stats.term_groups += 1;
         (len, NO_BLOCK, 0, 0, GroupPageKind::Posting)
