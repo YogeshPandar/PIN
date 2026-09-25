@@ -6,7 +6,7 @@ use super::super::{PageStore, find_term, load, load_posting};
 use super::storage::{self, BITMAP_BYTES, Cursor, Value};
 use crate::error::{Error, Result};
 use crate::grouped::{Bitmap, GroupKey, Node, QueryScratch, Source, evaluate_source, needed_terms};
-use crate::identity::RootTid;
+use crate::identity::{HeapLayout, RootTid};
 use crate::query::{Kind, Query};
 use pin_kernels::grouped::{OffsetMask, PageMask};
 
@@ -230,6 +230,48 @@ fn next_group<S: PageStore>(
     }
 }
 
+/// consumes exact snapshot masks separately from uncertified root candidates.
+/// masks are not visibility certificates. a host using them without heap checks
+/// must also exclude liveness retirement and physical membership replacement.
+/// frontier, sparse and legacy output always enters `root`, never `page`.
+pub trait GroupSink {
+    fn root(&mut self, root: RootTid, recheck: bool) -> Result<()>;
+
+    /// the default adapter preserves ordinary bitmap scan output.
+    fn page(&mut self, block: u32, offsets: &OffsetMask, layout: HeapLayout) -> Result<()> {
+        for (word, &value) in offsets.iter().enumerate() {
+            let mut pending = value;
+            while pending != 0 {
+                let bit = word * 64 + pending.trailing_zeros() as usize;
+                pending &= pending - 1;
+                self.root(
+                    RootTid::new(block, (bit + 1) as u16, layout)
+                        .map_err(|_| Error::InvalidState)?,
+                    false,
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    fn work(&mut self, _stats: &crate::grouped::QueryStats) -> Result<()> {
+        Ok(())
+    }
+}
+
+struct RootSink<F>(F);
+impl<F: FnMut(RootTid, bool) -> Result<()>> GroupSink for RootSink<F> {
+    fn root(&mut self, root: RootTid, recheck: bool) -> Result<()> {
+        (self.0)(root, recheck)
+    }
+}
+
+/// checks syntax only; snapshot availability and memory are checked at execution.
+#[must_use]
+pub fn supports_query(query: &Query) -> bool {
+    compile(query).is_some()
+}
+
 /// scans exact grouped and newer-owner boolean matches without heap visibility claims.
 /// unsupported syntax, unavailable snapshots and small budgets use the legacy kernel.
 /// the host holds a shared structural barrier; only MVCC bitmap consumers are allowed.
@@ -241,18 +283,39 @@ pub fn scan_query<S: PageStore>(
     store: &mut S,
     query: &Query,
     memory_bytes: usize,
-    mut emit: impl FnMut(RootTid, bool) -> Result<()>,
+    emit: impl FnMut(RootTid, bool) -> Result<()>,
+) -> Result<u64> {
+    scan_into(store, query, memory_bytes, &mut RootSink(emit))
+}
+
+/// scans into a page-aware host sink without changing the stored representation.
+/// the host holds the structural barrier, discards partial output on error and
+/// proves any stronger liveness/visibility contract required by its sink.
+///
+/// # errors
+/// corruption, callback failures and allocation limits abort the scan.
+pub fn scan_into<S: PageStore>(
+    store: &mut S,
+    query: &Query,
+    memory_bytes: usize,
+    sink: &mut impl GroupSink,
 ) -> Result<u64> {
     let Some(program) = compile(query) else {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
+        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
+            sink.root(root, recheck)
+        });
     };
     let required = program.terms * (BITMAP_BYTES + core::mem::size_of::<Term>()) + 128 * 1024;
     if memory_bytes < required.max(frontier::memory(program.terms)) {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
+        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
+            sink.root(root, recheck)
+        });
     }
     let meta = load(store, 0, PageKind::Meta)?;
     let Some(snapshot) = meta.grouped_state()?.active else {
-        return super::super::scan_query_with_recheck(store, query, memory_bytes, emit);
+        return super::super::scan_query_with_recheck(store, query, memory_bytes, |root, recheck| {
+            sink.root(root, recheck)
+        });
     };
     let mut terms = Vec::new();
     let mut captured = [None; NODES];
@@ -284,7 +347,7 @@ pub fn scan_query<S: PageStore>(
                                 store,
                                 entry,
                                 first_page,
-                                |root| emit(root, false),
+                                |root| sink.root(root, false),
                             );
                         }
                     }
@@ -373,22 +436,9 @@ pub fn scan_query<S: PageStore>(
                 &mut source,
                 &program.nodes[..program.len],
                 &mut scratch,
-                |block, offsets| {
-                    for (word, &value) in offsets.iter().enumerate() {
-                        let mut pending = value;
-                        while pending != 0 {
-                            let bit = word * 64 + pending.trailing_zeros() as usize;
-                            pending &= pending - 1;
-                            emit(
-                                RootTid::new(block, (bit + 1) as u16, layout)
-                                    .map_err(|_| Error::InvalidState)?,
-                                false,
-                            )?;
-                        }
-                    }
-                    Ok(())
-                },
+                |block, offsets| sink.page(block, offsets, layout),
             )?;
+            sink.work(&stats)?;
             count = count
                 .checked_add(u64::from(stats.emitted_tids))
                 .ok_or(Error::Limit("group candidates"))?;
@@ -410,7 +460,7 @@ pub fn scan_query<S: PageStore>(
         &meta,
         snapshot,
         memory_bytes,
-        emit,
+        |root, recheck| sink.root(root, recheck),
     )?;
     count
         .checked_add(delta)
