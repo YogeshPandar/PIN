@@ -1,0 +1,210 @@
+2026-09-25 09:38:33.928 UTC [19864] DEBUG:  registering background worker "logical replication launcher"
+2026-09-25 09:38:33.929 UTC [19864] DEBUG:  loaded library "pin"
+2026-09-25 09:38:33.929 UTC [19864] DEBUG:  mmap(157286400) with MAP_HUGETLB failed, huge pages disabled: Cannot allocate memory
+2026-09-25 09:38:33.937 UTC [19864] LOG:  starting PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-25 09:38:33.937 UTC [19864] LOG:  listening on Unix socket "/tmp/pin-count.9rFc5zCS/socket/.s.PGSQL.55490"
+2026-09-25 09:38:33.937 UTC [19864] DEBUG:  updating PMState from PM_INIT to PM_STARTUP
+2026-09-25 09:38:33.939 UTC [19870] LOG:  database system was shut down at 2026-09-25 09:38:33 UTC
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  checkpoint record is at 0/1765CE0
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  redo record is at 0/1765CE0; shutdown true
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  next transaction ID: 752; next OID: 13691
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  next MultiXactId: 1; next MultiXactOffset: 0
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  oldest unfrozen transaction ID: 744, in database 1
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  oldest MultiXactId: 1, in database 1
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  commit timestamp Xid oldest/newest: 0/0
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  transaction ID wrap limit is 2147484391, limited by database with OID 1
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  MultiXactId wrap limit is 2147483648, limited by database with OID 1
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  starting up replication slots
+2026-09-25 09:38:33.939 UTC [19870] DEBUG:  xmin required by slots: data 0, catalog 0
+2026-09-25 09:38:33.940 UTC [19870] DEBUG:  MultiXactId wrap limit is 2147483648, limited by database with OID 1
+2026-09-25 09:38:33.940 UTC [19870] DEBUG:  MultiXact member stop limit is now 4294914944 based on MultiXact 1
+2026-09-25 09:38:33.941 UTC [19864] DEBUG:  updating PMState from PM_STARTUP to PM_RUN
+2026-09-25 09:38:33.941 UTC [19864] LOG:  database system is ready to accept connections
+2026-09-25 09:38:33.941 UTC [19864] DEBUG:  starting background worker process "logical replication launcher"
+2026-09-25 09:38:33.942 UTC [19872] DEBUG:  logical replication launcher started
+2026-09-25 09:38:34.090 UTC [19875] DEBUG:  executing extension script for "pin" version '0.0.0'
+2026-09-25 09:38:34.106 UTC [19879] DEBUG:  building index "pg_toast_16404_index" on table "pg_toast_16404" serially
+2026-09-25 09:38:34.106 UTC [19879] DEBUG:  index "pg_toast_16404_index" can safely use deduplication
+2026-09-25 09:38:34.115 UTC [19879] DEBUG:  building index "g9_count_pin" on table "g9_count_docs" serially
+2026-09-25 09:38:36.090 UTC [19879] DEBUG:  Pin grouped snapshot: documents=1201 groups=1 written_pages=1224 reclaimed_pages=0 sort_spilled=false frontier_terms=0
+2026-09-25 09:38:36.091 UTC [19879] DEBUG:  building index "g9_count_gin" on table "g9_count_docs" serially
+2026-09-25 09:38:36.191 UTC [19879] DEBUG:  Pin compaction: retained_pages=0 written_pages=6 reclaimed_pages=15 reused_pages=5
+2026-09-25 09:38:36.191 UTC [19879] CONTEXT:  while cleaning up index "g9_count_pin" of relation "public.g9_count_docs"
+2026-09-25 09:38:42.948 UTC [20452] DEBUG:  Pin grouped snapshot: documents=1733 groups=1 written_pages=1661 reclaimed_pages=1224 sort_spilled=false frontier_terms=0
+2026-09-25 09:38:42.948 UTC [20452] CONTEXT:  while cleaning up index "g9_count_pin" of relation "public.g9_count_docs"
+2026-09-25 09:38:42.948 UTC [20452] DEBUG:  Pin compaction: retained_pages=0 written_pages=1668 reclaimed_pages=1241 reused_pages=27
+2026-09-25 09:38:42.948 UTC [20452] CONTEXT:  while cleaning up index "g9_count_pin" of relation "public.g9_count_docs"
+2026-09-25 09:38:44.316 UTC [20600] DEBUG:  building index "pg_toast_16416_index" on table "pg_toast_16416" serially
+2026-09-25 09:38:44.317 UTC [20600] DEBUG:  index "pg_toast_16416_index" can safely use deduplication
+2026-09-25 09:38:44.318 UTC [20600] DEBUG:  building index "g9_count_legacy_body_idx" on table "g9_count_legacy" serially
+2026-09-25 09:38:44.447 UTC [20630] ERROR:  permission denied to set parameter "pin.enable_grouped_count"
+2026-09-25 09:38:44.447 UTC [20630] STATEMENT:  SET pin.enable_grouped_count=on;
+2026-09-25 09:38:44.458 UTC [20634] DEBUG:  building index "pg_toast_16424_index" on table "pg_toast_16424" serially
+2026-09-25 09:38:44.458 UTC [20634] DEBUG:  index "pg_toast_16424_index" can safely use deduplication
+2026-09-25 09:38:44.458 UTC [20634] DEBUG:  building index "g9_count_reuse_body_idx" on table "g9_count_reuse" serially
+2026-09-25 09:38:44.470 UTC [20634] DEBUG:  Pin grouped snapshot: documents=0 groups=0 written_pages=0 reclaimed_pages=0 sort_spilled=false frontier_terms=0
+2026-09-25 09:38:44.509 UTC [20634] DEBUG:  building index "g9_count_reuse_to_tsvector_idx" on table "g9_count_reuse" serially
+2026-09-25 09:38:44.526 UTC [20634] DEBUG:  Pin grouped snapshot: documents=66 groups=1 written_pages=6 reclaimed_pages=0 sort_spilled=false frontier_terms=0
+2026-09-25 09:38:44.526 UTC [20634] CONTEXT:  while cleaning up index "g9_count_reuse_body_idx" of relation "public.g9_count_reuse"
+2026-09-25 09:38:44.526 UTC [20634] DEBUG:  Pin compaction: retained_pages=0 written_pages=8 reclaimed_pages=2 reused_pages=2
+2026-09-25 09:38:44.526 UTC [20634] CONTEXT:  while cleaning up index "g9_count_reuse_body_idx" of relation "public.g9_count_reuse"
+2026-09-25 09:38:44.529 UTC [20634] DEBUG:  Pin compaction: retained_pages=0 written_pages=0 reclaimed_pages=0 reused_pages=0
+2026-09-25 09:38:44.529 UTC [20634] CONTEXT:  while cleaning up index "g9_count_reuse_body_idx" of relation "public.g9_count_reuse"
+2026-09-25 09:38:44.607 UTC [20650] DEBUG:  Pin grouped snapshot: documents=66 groups=1 written_pages=6 reclaimed_pages=6 sort_spilled=false frontier_terms=0
+2026-09-25 09:38:44.607 UTC [20650] CONTEXT:  while cleaning up index "g9_count_reuse_body_idx" of relation "public.g9_count_reuse"
+2026-09-25 09:38:44.607 UTC [20650] DEBUG:  Pin compaction: retained_pages=0 written_pages=7 reclaimed_pages=7 reused_pages=1
+2026-09-25 09:38:44.607 UTC [20650] CONTEXT:  while cleaning up index "g9_count_reuse_body_idx" of relation "public.g9_count_reuse"
+2026-09-25 09:38:44.658 UTC [19864] LOG:  received immediate shutdown request
+2026-09-25 09:38:44.658 UTC [19864] DEBUG:  updating PMState from PM_RUN to PM_WAIT_BACKENDS
+2026-09-25 09:38:44.659 UTC [19864] DEBUG:  updating PMState from PM_WAIT_BACKENDS to PM_WAIT_DEAD_END
+2026-09-25 09:38:44.659 UTC [19864] DEBUG:  updating PMState from PM_WAIT_DEAD_END to PM_NO_CHILDREN
+2026-09-25 09:38:44.663 UTC [19864] LOG:  database system is shut down
+2026-09-25 09:38:44.783 UTC [20669] DEBUG:  registering background worker "logical replication launcher"
+2026-09-25 09:38:44.784 UTC [20669] DEBUG:  loaded library "pin"
+2026-09-25 09:38:44.785 UTC [20669] DEBUG:  mmap(157286400) with MAP_HUGETLB failed, huge pages disabled: Cannot allocate memory
+2026-09-25 09:38:44.793 UTC [20669] LOG:  starting PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-25 09:38:44.793 UTC [20669] LOG:  listening on Unix socket "/tmp/pin-count.9rFc5zCS/socket/.s.PGSQL.55490"
+2026-09-25 09:38:44.793 UTC [20669] DEBUG:  updating PMState from PM_INIT to PM_STARTUP
+2026-09-25 09:38:44.795 UTC [20675] LOG:  database system was interrupted; last known up at 2026-09-25 09:38:33 UTC
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  checkpoint record is at 0/1765CE0
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  redo record is at 0/1765CE0; shutdown true
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  next transaction ID: 752; next OID: 13691
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  next MultiXactId: 1; next MultiXactOffset: 0
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  oldest unfrozen transaction ID: 744, in database 1
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  oldest MultiXactId: 1, in database 1
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  commit timestamp Xid oldest/newest: 0/0
+2026-09-25 09:38:44.798 UTC [20675] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  transaction ID wrap limit is 2147484391, limited by database with OID 1
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  MultiXactId wrap limit is 2147483648, limited by database with OID 1
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  starting up replication slots
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  xmin required by slots: data 0, catalog 0
+2026-09-25 09:38:44.798 UTC [20675] DEBUG:  resetting unlogged relations: cleanup 1 init 0
+2026-09-25 09:38:44.799 UTC [20675] LOG:  redo starts at 0/1765D58
+2026-09-25 09:38:44.799 UTC [20669] DEBUG:  updating PMState from PM_STARTUP to PM_RECOVERY
+2026-09-25 09:38:44.838 UTC [20675] LOG:  invalid record length at 0/21B28F0: expected at least 24, got 0
+2026-09-25 09:38:44.838 UTC [20675] LOG:  redo done at 0/21B28B8 system usage: CPU: user: 0.02 s, system: 0.01 s, elapsed: 0.03 s
+2026-09-25 09:38:44.838 UTC [20675] DEBUG:  resetting unlogged relations: cleanup 0 init 1
+2026-09-25 09:38:44.839 UTC [20675] DEBUG:  MultiXactId wrap limit is 2147483648, limited by database with OID 1
+2026-09-25 09:38:44.839 UTC [20675] DEBUG:  MultiXact member stop limit is now 4294914944 based on MultiXact 1
+2026-09-25 09:38:44.839 UTC [20673] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-25 09:38:44.839 UTC [20673] DEBUG:  performing replication slot checkpoint
+2026-09-25 09:38:44.853 UTC [20673] DEBUG:  checkpoint sync: number=1 file=base/5/2619 time=0.004 ms
+2026-09-25 09:38:44.853 UTC [20673] DEBUG:  checkpoint sync: number=2 file=base/5/2609_vm time=0.001 ms
+2026-09-25 09:38:44.853 UTC [20673] DEBUG:  checkpoint sync: number=3 file=base/5/1249 time=0.001 ms
+2026-09-25 09:38:44.853 UTC [20673] DEBUG:  checkpoint sync: number=4 file=base/5/2662 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=5 file=base/5/2840_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=6 file=base/5/16428 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=7 file=base/5/16404_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=8 file=base/5/16427 time=0.005 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=9 file=base/5/2674 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=10 file=base/5/2601_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=11 file=base/5/2579 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=12 file=global/1233 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=13 file=base/5/2608 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=14 file=base/5/2688 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=15 file=base/5/16429 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=16 file=base/5/2685 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=17 file=base/5/1247 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=18 file=base/5/2841 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=19 file=base/5/3081 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=20 file=base/5/2658 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=21 file=base/5/16430 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=22 file=base/5/1259 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=23 file=base/5/2704 time=0.002 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=24 file=base/5/1249_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=25 file=base/5/16419 time=0.002 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=26 file=base/5/16410 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=27 file=base/5/1247_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=28 file=base/5/2691 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=29 file=base/5/2616_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=30 file=base/5/2615 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=31 file=base/5/2651 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=32 file=global/1260_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=33 file=base/5/2840 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=34 file=base/5/16404_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=35 file=base/5/2659 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=36 file=base/5/2609 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=37 file=base/5/2608_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=38 file=base/5/2616 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=39 file=base/5/1259_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=40 file=pg_xact/0000 time=0.003 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=41 file=pg_multixact/offsets/0000 time=0.003 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=42 file=base/5/2610_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=43 file=base/5/2673 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=44 file=base/5/2654 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=45 file=base/5/2675 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=46 file=base/5/16404 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=47 file=base/5/2606_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=48 file=base/5/2753 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=49 file=base/5/2755 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=50 file=base/5/16411_fsm time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=51 file=base/5/2615_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=52 file=base/5/3079_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=53 file=base/5/2606 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=54 file=base/5/16416 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=55 file=base/5/1255 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=56 file=base/5/2686 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=57 file=base/5/3257 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=58 file=global/2676 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=59 file=base/5/3258 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=60 file=base/5/1255_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=61 file=base/5/2667 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=62 file=global/2677 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=63 file=base/5/2679 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=64 file=base/5/2602_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=65 file=base/5/2665 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=66 file=base/5/2663 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=67 file=global/1214 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=68 file=base/5/1249_vm time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=69 file=base/5/16424 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=70 file=base/5/2687 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=71 file=base/5/2756 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=72 file=base/5/2753_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=73 file=base/5/1259_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=74 file=base/5/16424_vm time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=75 file=base/5/2690 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=76 file=base/5/16408 time=0.002 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=77 file=base/5/16424_fsm time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=78 file=global/1232 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=79 file=base/5/3080 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=80 file=base/5/2696 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=81 file=base/5/2684 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=82 file=base/5/2689 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=83 file=base/5/16411 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=84 file=base/5/2608_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=85 file=base/5/16421 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=86 file=base/5/3079 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=87 file=base/5/2617_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=88 file=base/5/2840_fsm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=89 file=base/5/1255_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=90 file=base/5/2666 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=91 file=base/5/2604 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=92 file=base/5/16409 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=93 file=base/5/2754 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=94 file=base/5/3256 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=95 file=base/5/2678 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=96 file=base/5/3455 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=97 file=base/5/2610 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=98 file=base/5/16420 time=0.000 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=99 file=base/5/2657 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=100 file=base/5/2653 time=0.002 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=101 file=base/5/2656 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=102 file=base/5/2602 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=103 file=base/5/2601 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=104 file=base/5/2610_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=105 file=base/5/2664 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=106 file=global/1260 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=107 file=base/5/2703 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=108 file=base/5/2652 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=109 file=base/5/2617 time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] DEBUG:  checkpoint sync: number=110 file=base/5/2619_vm time=0.001 ms
+2026-09-25 09:38:44.854 UTC [20673] LOG:  checkpoint complete: wrote 3728 buffers (22.8%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.015 s, sync=0.001 s, total=0.015 s; sync files=110, longest=0.001 s, average=0.001 s; distance=10547 kB, estimate=10547 kB; lsn=0/21B28F0, redo lsn=0/21B28F0
+2026-09-25 09:38:44.856 UTC [20669] DEBUG:  updating PMState from PM_RECOVERY to PM_RUN
+2026-09-25 09:38:44.856 UTC [20669] LOG:  database system is ready to accept connections
+2026-09-25 09:38:44.856 UTC [20669] DEBUG:  starting background worker process "logical replication launcher"
+2026-09-25 09:38:44.857 UTC [20677] DEBUG:  logical replication launcher started
+2026-09-25 09:38:44.981 UTC [20669] LOG:  received immediate shutdown request
+2026-09-25 09:38:44.981 UTC [20669] DEBUG:  updating PMState from PM_RUN to PM_WAIT_BACKENDS
+2026-09-25 09:38:44.983 UTC [20669] DEBUG:  updating PMState from PM_WAIT_BACKENDS to PM_WAIT_DEAD_END
+2026-09-25 09:38:44.983 UTC [20669] DEBUG:  updating PMState from PM_WAIT_DEAD_END to PM_NO_CHILDREN
+2026-09-25 09:38:44.987 UTC [20669] LOG:  database system is shut down
