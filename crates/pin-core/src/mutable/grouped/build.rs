@@ -1,8 +1,10 @@
 //! complete-owner capture and bounded grouped snapshot construction.
 //! the host sort spills fixed-width records; legacy storage remains the oracle.
 
-use super::super::page::{BUCKETS, GroupPageKind, NO_BLOCK, OwnerRef, PageKind, TermRef};
-use super::super::{PageStore, following, load, load_posting, posting_next};
+use super::super::page::{
+    BUCKETS, GROUP_DELTA_SEGMENTS, GroupPageKind, NO_BLOCK, Owner, OwnerRef, PageKind, TermRef,
+};
+use super::super::{PageStore, find_term, following, load, load_posting, posting_next};
 use super::anchors::Anchor;
 use super::storage::{self, BITMAP_BYTES, CATALOG_MEMORY, CatalogBuilder, MEMBER_BYTES, Value};
 use crate::codec::records::Publication;
@@ -11,6 +13,7 @@ use crate::grouped::{
     Bitmap, BitmapKind, Member, Members, PageOffsets, encode_bitmap, encode_members,
 };
 use crate::identity::{HeapLayout, Incarnation, RootTid};
+use crate::mutable::document::{self, MAX_DOCUMENT_BYTES};
 
 pub const SORT_BATCH: usize = 256;
 
@@ -227,6 +230,152 @@ fn capture<S: PageStore, T: GroupSort>(
     Ok((stats, after))
 }
 
+const DELTA_VALIDATE_MEMORY: usize = 64 * 1024;
+
+fn emit_document<S: PageStore, T: GroupSort>(
+    store: &mut S,
+    meta: &super::super::page::Page,
+    owner: Owner<'_>,
+    bytes: &[u8],
+    sort: &mut T,
+    batch: &mut Batch,
+    stats: &mut BuildStats,
+) -> Result<()> {
+    let terms = document::validated_terms(
+        bytes,
+        owner.tokens,
+        owner.terms,
+        DELTA_VALIDATE_MEMORY,
+    )?;
+    for term in terms {
+        store.interrupt()?;
+        let term = term?;
+        let (_, reference) = find_term(store, meta, term.term)?.ok_or(Error::InvalidState)?;
+        batch.push(
+            sort,
+            SortRecord::new(term_key(reference), owner.root, owner.reference),
+        )?;
+        stats.postings = stats
+            .postings
+            .checked_add(1)
+            .ok_or(Error::Limit("group postings"))?;
+    }
+    Ok(())
+}
+
+fn emit_owner<S: PageStore, T: GroupSort>(
+    store: &mut S,
+    meta: &super::super::page::Page,
+    owner: Owner<'_>,
+    sort: &mut T,
+    batch: &mut Batch,
+    scratch: &mut Vec<u8>,
+    max_blocks: u32,
+    stats: &mut BuildStats,
+) -> Result<()> {
+    batch.push(sort, SortRecord::new(0, owner.root, owner.reference))?;
+    stats.documents = stats
+        .documents
+        .checked_add(1)
+        .ok_or(Error::Limit("group documents"))?;
+    if !owner.inline.is_empty() {
+        return emit_document(store, meta, owner, owner.inline, sort, batch, stats);
+    }
+    let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
+    if total > MAX_DOCUMENT_BYTES {
+        return Err(Error::Limit("document payload"));
+    }
+    scratch.clear();
+    if scratch.capacity() < total {
+        scratch
+            .try_reserve_exact(total)
+            .map_err(|_| Error::Allocation)?;
+    }
+    scratch.resize(total, 0);
+    let mut block = owner.data_head;
+    let mut offset = 0usize;
+    let mut remaining = max_blocks;
+    while block != NO_BLOCK {
+        remaining = remaining.checked_sub(1).ok_or(Error::InvalidState)?;
+        if offset == total {
+            return Err(Error::InvalidState);
+        }
+        let page = load(store, block, PageKind::Fragment)?;
+        let (reference, current, bytes) = page.fragment_data()?;
+        let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
+        let end = current
+            .checked_add(bytes.len())
+            .ok_or(Error::InvalidState)?;
+        if reference != owner.reference || current != offset || end > total {
+            return Err(Error::InvalidState);
+        }
+        scratch[current..end].copy_from_slice(bytes);
+        offset = end;
+        block = page.next()?;
+    }
+    if offset != total {
+        return Err(Error::InvalidState);
+    }
+    emit_document(store, meta, owner, scratch, sort, batch, stats)
+}
+
+fn capture_delta<S: PageStore, T: GroupSort>(
+    store: &mut S,
+    sort: &mut T,
+    before: Option<OwnerRef>,
+) -> Result<(BuildStats, Option<OwnerRef>)> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let (head, tail) = meta.owner_chain()?;
+    let mut block = before.map_or(head, |owner| owner.page);
+    let mut slot = match before {
+        Some(owner) => owner.slot.checked_add(1).ok_or(Error::InvalidState)?,
+        None => 0,
+    };
+    let mut anchor = before;
+    let mut previous = before;
+    let mut after = before;
+    let mut batch = Batch::new();
+    let mut scratch = Vec::new();
+    let mut stats = BuildStats::default();
+    let max_blocks = store.blocks()?;
+    while block != NO_BLOCK {
+        let page = load(store, block, PageKind::Owners)?;
+        if let Some(expected) = anchor.take()
+            && page.owner(expected.slot, store.layout())?.reference != expected
+        {
+            return Err(Error::InvalidState);
+        }
+        while slot < page.owner_count()? {
+            let owner = page.owner(slot, store.layout())?;
+            slot += 1;
+            if previous.is_some_and(|previous| {
+                (previous.page, previous.slot) >= (owner.reference.page, owner.reference.slot)
+                    || previous.incarnation >= owner.reference.incarnation
+            }) {
+                return Err(Error::InvalidState);
+            }
+            previous = Some(owner.reference);
+            after = Some(owner.reference);
+            if owner.publication == Publication::Published && owner.live {
+                emit_owner(
+                    store,
+                    &meta,
+                    owner,
+                    sort,
+                    &mut batch,
+                    &mut scratch,
+                    max_blocks,
+                    &mut stats,
+                )?;
+            }
+        }
+        block = following(&page, tail)?.unwrap_or(NO_BLOCK);
+        slot = 0;
+    }
+    batch.flush(sort)?;
+    Ok((stats, after))
+}
+
 fn buffer<T: Clone>(capacity: usize, value: T) -> Result<Vec<T>> {
     let mut result = Vec::new();
     result
@@ -250,6 +399,41 @@ pub fn build_memory(layout: HeapLayout) -> usize {
 /// reserves one additional bounded catalog for opt-in frontier anchors.
 pub fn build_memory_with_anchors(layout: HeapLayout) -> usize {
     build_memory(layout) + CATALOG_MEMORY
+}
+
+/// scratch bound for a suffix seal; the document payload is borrowed after one bounded read.
+pub fn delta_build_memory(layout: HeapLayout) -> usize {
+    build_memory(layout).max(MAX_DOCUMENT_BYTES + DELTA_VALIDATE_MEMORY + 128 * 1024)
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeltaMaintenance {
+    None,
+    Seal,
+    Rebuild,
+}
+
+/// selects bounded suffix sealing or a full fallback before segment fanout can grow.
+pub fn delta_maintenance<S: PageStore>(
+    store: &mut S,
+    seal_owners: u64,
+) -> Result<DeltaMaintenance> {
+    if seal_owners == 0 {
+        return Err(Error::InvalidParameters);
+    }
+    let meta = load(store, 0, PageKind::Meta)?;
+    let state = meta.grouped_state()?;
+    let Some(latest) = state.latest() else {
+        return Ok(DeltaMaintenance::Rebuild);
+    };
+    if meta.grouped_delta_span(latest)? < seal_owners {
+        return Ok(DeltaMaintenance::None);
+    }
+    if state.delta_count() == GROUP_DELTA_SEGMENTS {
+        Ok(DeltaMaintenance::Rebuild)
+    } else {
+        Ok(DeltaMaintenance::Seal)
+    }
 }
 
 /// tests the append-only owner cutoff while holding both maintenance barriers.
@@ -302,7 +486,6 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
     sort: &mut T,
     memory_bytes: usize,
 ) -> Result<BuildStats> {
-    let limit = 256 * usize::from(store.layout().max_offset());
     let required = if store.frontier_anchors() {
         build_memory_with_anchors(store.layout())
     } else {
@@ -316,12 +499,68 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
         .ok_or(Error::Limit("group recovery pages"))?;
     let (mut stats, after) = capture(store, sort)?;
     stats.reclaimed_pages = recovered;
+    write_sorted(store, sort, stats, after, true, None)
+}
+
+/// seals only owners after the newest immutable coverage fence.
+/// publication appends one immutable delta and leaves the canonical index authoritative.
+pub fn seal_delta<S: PageStore, T: GroupSort>(
+    store: &mut S,
+    sort: &mut T,
+    memory_bytes: usize,
+) -> Result<BuildStats> {
+    if memory_bytes < delta_build_memory(store.layout()) {
+        return Err(Error::Limit("group delta scratch"));
+    }
+    let recovered = storage::recover(store)?;
+    let meta = load(store, 0, PageKind::Meta)?;
+    let state = meta.grouped_state()?;
+    let latest = state.latest().ok_or(Error::InvalidState)?;
+    let mut replace_from = state.delta_count();
+    let mut level = 0u8;
+    let mut before = latest.after;
+    while replace_from != 0 {
+        let delta = state.deltas[replace_from - 1].ok_or(Error::InvalidState)?;
+        if delta.level != level {
+            break;
+        }
+        before = delta.before;
+        replace_from -= 1;
+        level = level.checked_add(1).ok_or(Error::Limit("group delta level"))?;
+    }
+    if usize::from(level) >= GROUP_DELTA_SEGMENTS {
+        return Err(Error::Limit("group delta level"));
+    }
+    let (mut stats, after) = capture_delta(store, sort, before)?;
+    if after == before {
+        return Err(Error::InvalidState);
+    }
+    stats.reclaimed_pages = recovered;
+    write_sorted(
+        store,
+        sort,
+        stats,
+        after,
+        false,
+        Some((before, level, replace_from)),
+    )
+}
+
+fn write_sorted<S: PageStore, T: GroupSort>(
+    store: &mut S,
+    sort: &mut T,
+    mut stats: BuildStats,
+    after: Option<OwnerRef>,
+    with_anchors: bool,
+    delta: Option<(Option<OwnerRef>, u8, usize)>,
+) -> Result<BuildStats> {
+    let limit = 256 * usize::from(store.layout().max_offset());
     sort.finish()?;
     store.event(super::super::Stage::GroupSortReady)?;
-    let before = store.blocks()?;
+    let before_blocks = store.blocks()?;
     let mut snapshot = storage::begin(store, after)?;
     let mut catalog = CatalogBuilder::new()?;
-    let mut anchors = if store.frontier_anchors() {
+    let mut anchors = if with_anchors && store.frontier_anchors() {
         Some(CatalogBuilder::new()?)
     } else {
         None
@@ -357,7 +596,7 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
             }
             previous = Some(row);
             if let Some((term, anchor)) = Anchor::from_sort(row)? {
-                if anchor.last >= snapshot.id.get() {
+                if anchors.is_none() || anchor.last >= snapshot.id.get() {
                     return Err(Error::InvalidState);
                 }
                 anchors.as_mut().ok_or(Error::InvalidState)?.push(
@@ -453,10 +692,15 @@ pub fn rebuild<S: PageStore, T: GroupSort>(
         snapshot.frontier_valid = true;
         snapshot.root = root;
     }
-    let (reclaimed, written) = storage::publish(store, snapshot)?;
+    let (reclaimed, written) = match delta {
+        Some((before, level, replace_from)) => {
+            storage::publish_delta(store, snapshot, before, level, replace_from)?
+        }
+        None => storage::publish(store, snapshot)?,
+    };
     let extended = store
         .blocks()?
-        .checked_sub(before)
+        .checked_sub(before_blocks)
         .ok_or(Error::InvalidState)?;
     stats.reclaimed_pages = stats
         .reclaimed_pages

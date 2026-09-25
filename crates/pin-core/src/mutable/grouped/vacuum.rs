@@ -7,14 +7,12 @@ use crate::error::{Error, Result};
 use crate::grouped::retire_roots;
 use crate::identity::RootTid;
 
-pub(super) fn retire<S: PageStore>(
+fn retire_snapshot<S: PageStore>(
     store: &mut S,
-    mut removable: impl FnMut(RootTid) -> Result<bool>,
+    snapshot: super::super::page::GroupSnapshot,
+    removable: &mut impl FnMut(RootTid) -> Result<bool>,
 ) -> Result<u64> {
     let meta = load(store, 0, PageKind::Meta)?;
-    let Some(snapshot) = meta.grouped_state()?.active else {
-        return Ok(0);
-    };
     let mut cursor = Cursor::new();
     let mut entry = cursor.seek(store, snapshot, [0, 0])?;
     let mut bytes = [0; BITMAP_BYTES];
@@ -23,7 +21,7 @@ pub(super) fn retire<S: PageStore>(
         let value = storage::read_bitmap(store, snapshot, current, &mut bytes)?;
         let key = storage::key(snapshot, current.key[1] as u32, store.layout())?;
         let bytes = &mut bytes[..value.len as usize];
-        let removed = retire_roots(bytes, key, &mut removable)?;
+        let removed = retire_roots(bytes, key, &mut *removable)?;
         if removed != 0 {
             let mut changes: [Option<Page>; 3] = core::array::from_fn(|_| None);
             let mut used = 0;
@@ -40,11 +38,7 @@ pub(super) fn retire<S: PageStore>(
                     return Err(Error::InvalidState);
                 }
                 // writer exclusion prevents a stale image from restoring another clear.
-                if chunk
-                    .iter()
-                    .zip(data.bytes)
-                    .any(|(&new, &old)| new & !old != 0)
-                {
+                if chunk.iter().zip(data.bytes).any(|(&new, &old)| new & !old != 0) {
                     return Err(Error::InvalidState);
                 }
                 if chunk != data.bytes {
@@ -71,9 +65,29 @@ pub(super) fn retire<S: PageStore>(
             }
             store.commit(&refs[..used])?;
             store.event(Stage::GroupRetired)?;
-            total += u64::from(removed);
+            total = total
+                .checked_add(u64::from(removed))
+                .ok_or(Error::Limit("group retired roots"))?;
         }
         entry = cursor.advance(store, snapshot)?;
+    }
+    Ok(total)
+}
+
+pub(super) fn retire<S: PageStore>(
+    store: &mut S,
+    mut removable: impl FnMut(RootTid) -> Result<bool>,
+) -> Result<u64> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let state = meta.grouped_state()?;
+    let Some(active) = state.active else {
+        return Ok(0);
+    };
+    let mut total = retire_snapshot(store, active, &mut removable)?;
+    for delta in state.deltas.iter().flatten() {
+        total = total
+            .checked_add(retire_snapshot(store, delta.snapshot, &mut removable)?)
+            .ok_or(Error::Limit("group retired roots"))?;
     }
     Ok(total)
 }
@@ -85,9 +99,19 @@ pub(super) fn references(page: &Page, target: u32) -> Result<bool> {
             [active.head, active.tail, active.root].contains(&target)
                 || active.frontier_root == Some(target)
                 || active.after.is_some_and(|owner| owner.page == target)
+        }) || state.deltas.iter().flatten().any(|delta| {
+            let snapshot = delta.snapshot;
+            [snapshot.head, snapshot.tail, snapshot.root].contains(&target)
+                || snapshot.after.is_some_and(|owner| owner.page == target)
+                || delta.before.is_some_and(|owner| owner.page == target)
         }) || state
             .journal
-            .is_some_and(|journal| [journal.head, journal.tail].contains(&target)));
+            .is_some_and(|journal| [journal.head, journal.tail].contains(&target))
+            || state
+                .retired
+                .iter()
+                .flatten()
+                .any(|retired| [retired.head, retired.tail].contains(&target)));
     }
     if page.kind() != PageKind::Grouped {
         return Ok(false);

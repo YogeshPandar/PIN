@@ -2,8 +2,9 @@
 //! publication and retirement use the existing atomic page-store contract.
 
 use super::super::page::{
-    CATALOG_ENTRIES, CatalogEntry, GROUP_DATA_BYTES, GroupJournal, GroupPageKind, GroupSnapshot,
-    GroupState, MAX_CATALOG_LEVEL, NO_BLOCK, OwnerRef, Page, PageKind, RewritePhase,
+    CATALOG_ENTRIES, CatalogEntry, GROUP_DATA_BYTES, GROUP_DELTA_SEGMENTS, GROUP_RETIRED_SEGMENTS,
+    GroupDelta, GroupJournal, GroupPageKind, GroupRetired, GroupSnapshot, GroupState,
+    MAX_CATALOG_LEVEL, NO_BLOCK, OwnerRef, Page, PageKind, RewritePhase,
 };
 use super::super::{PageStore, Stage, allocate, load, posting_next};
 use crate::error::{Error, Result};
@@ -297,7 +298,11 @@ pub(super) fn read_bitmap_view<'a, S: PageStore>(
     Ok((value, view))
 }
 
-pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
+fn verify_build<S: PageStore>(
+    store: &mut S,
+    state: GroupState,
+    snapshot: GroupSnapshot,
+) -> Result<u32> {
     if snapshot.frontier_root.is_none() && snapshot.root != snapshot.tail {
         return Err(Error::InvalidState);
     }
@@ -314,8 +319,6 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
             page.group_node_info()?;
         }
     }
-    let mut meta = load(store, 0, PageKind::Meta)?;
-    let state = meta.grouped_state()?;
     let journal = state.journal.ok_or(Error::InvalidState)?;
     if journal.id != snapshot.id
         || journal.phase != RewritePhase::Building
@@ -324,19 +327,94 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
     {
         return Err(Error::InvalidState);
     }
-    let retired = state
+    Ok(written)
+}
+
+fn retired(snapshot: GroupSnapshot) -> Option<GroupRetired> {
+    (snapshot.head != NO_BLOCK).then_some(GroupRetired {
+        id: snapshot.id,
+        head: snapshot.head,
+        tail: snapshot.tail,
+    })
+}
+
+pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
+    let mut meta = load(store, 0, PageKind::Meta)?;
+    let state = meta.grouped_state()?;
+    let written = verify_build(store, state, snapshot)?;
+    if state.retired.iter().any(Option::is_some) {
+        return Err(Error::InvalidState);
+    }
+    let mut retiring = [None; GROUP_RETIRED_SEGMENTS];
+    let mut used = 0usize;
+    for old in state
         .active
-        .filter(|old| old.head != NO_BLOCK)
-        .map(|old| GroupJournal {
-            id: old.id,
-            head: old.head,
-            tail: old.tail,
-            phase: RewritePhase::Retiring,
-        });
+        .into_iter()
+        .chain(state.deltas.into_iter().flatten().map(|delta| delta.snapshot))
+    {
+        if let Some(old) = retired(old) {
+            let slot = retiring.get_mut(used).ok_or(Error::Limit("group retire queue"))?;
+            *slot = Some(old);
+            used += 1;
+        }
+    }
     meta.set_grouped_state(GroupState {
         active: Some(snapshot),
-        journal: retired,
+        journal: None,
+        deltas: [None; GROUP_DELTA_SEGMENTS],
+        retired: retiring,
     })?;
+    store.commit(&[&meta])?;
+    store.event(Stage::GroupPublished)?;
+    Ok((recover(store)?, written))
+}
+
+pub(super) fn publish_delta<S: PageStore>(
+    store: &mut S,
+    snapshot: GroupSnapshot,
+    before: Option<OwnerRef>,
+    level: u8,
+    replace_from: usize,
+) -> Result<(u32, u32)> {
+    if snapshot.frontier_root.is_some()
+        || snapshot.frontier_valid
+        || usize::from(level) >= GROUP_DELTA_SEGMENTS
+    {
+        return Err(Error::InvalidState);
+    }
+    let mut meta = load(store, 0, PageKind::Meta)?;
+    let mut state = meta.grouped_state()?;
+    let written = verify_build(store, state, snapshot)?;
+    let count = state.delta_count();
+    if state.active.is_none()
+        || state.retired.iter().any(Option::is_some)
+        || replace_from > count
+        || (replace_from == count
+            && state.latest().and_then(|latest| latest.after) != before)
+        || (replace_from < count
+            && state.deltas[replace_from].is_none_or(|delta| delta.before != before))
+    {
+        return Err(Error::InvalidState);
+    }
+    let mut retiring = [None; GROUP_RETIRED_SEGMENTS];
+    let mut retired_count = 0usize;
+    for delta in state.deltas[replace_from..count].iter().flatten() {
+        if let Some(old) = retired(delta.snapshot) {
+            retiring[retired_count] = Some(old);
+            retired_count += 1;
+        }
+    }
+    for slot in &mut state.deltas[replace_from..] {
+        *slot = None;
+    }
+    state.deltas[replace_from] = Some(GroupDelta {
+        snapshot,
+        before,
+        level,
+    });
+    state.journal = None;
+    state.retired = retiring;
+    meta.set_grouped_state(state)?;
     store.commit(&[&meta])?;
     store.event(Stage::GroupPublished)?;
     Ok((recover(store)?, written))
@@ -366,58 +444,97 @@ fn inspect<S: PageStore>(store: &mut S, id: SegmentId, head: u32, tail: u32) -> 
     }
 }
 
-/// reclaims only journal-owned output; publication requires prior reader quiescence.
+fn shift_retired(state: &mut GroupState, index: usize) {
+    for slot in index..GROUP_RETIRED_SEGMENTS - 1 {
+        state.retired[slot] = state.retired[slot + 1];
+    }
+    state.retired[GROUP_RETIRED_SEGMENTS - 1] = None;
+}
+
+/// reclaims only unpublished or retired grouped chains under reader quiescence.
 pub(super) fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
-    let mut meta = load(store, 0, PageKind::Meta)?;
-    let mut state = meta.grouped_state()?;
-    let Some(journal) = state.journal else {
-        return Ok(0);
-    };
-    inspect(store, journal.id, journal.head, journal.tail)?;
-    if state.active.is_some_and(|active| {
-        active.id == journal.id || active.tail == journal.tail && journal.tail != NO_BLOCK
-    }) {
-        return Err(Error::InvalidState);
-    }
-    let mut reclaimed = 0;
-    let mut head = journal.head;
-    while head != NO_BLOCK {
-        let first = load(store, head, PageKind::Grouped)?;
-        let mut next = first.next()?;
-        let free = Page::free(head, meta.free_head()?)?;
-        if head == journal.tail {
-            next = NO_BLOCK;
-            state.journal = None;
-            meta.set_free_head(head)?;
-            meta.set_grouped_state(state)?;
-            store.commit(&[&meta, &free])?;
-            reclaimed += 1;
-        } else {
-            let second = load(store, next, PageKind::Grouped)?;
-            let second_free = Page::free(next, head)?;
-            next = if second.block() == journal.tail {
-                NO_BLOCK
-            } else {
-                second.next()?
-            };
-            state.journal = (next != NO_BLOCK).then_some(GroupJournal {
-                head: next,
-                ..journal
-            });
-            meta.set_free_head(second.block())?;
-            meta.set_grouped_state(state)?;
-            store.commit(&[&meta, &free, &second_free])?;
-            reclaimed += 2;
+    let mut reclaimed = 0u32;
+    loop {
+        let mut meta = load(store, 0, PageKind::Meta)?;
+        let mut state = meta.grouped_state()?;
+        let Some(journal) = state.journal else {
+            break;
+        };
+        inspect(store, journal.id, journal.head, journal.tail)?;
+        if state.active.is_some_and(|active| active.id == journal.id)
+            || state
+                .deltas
+                .iter()
+                .flatten()
+                .any(|delta| delta.snapshot.id == journal.id)
+            || state.retired.iter().flatten().any(|retired| retired.id == journal.id)
+        {
+            return Err(Error::InvalidState);
         }
-        store.event(Stage::GroupReclaimed)?;
-        head = next;
-    }
-    if state.journal.is_some() {
-        state.journal = None;
+        if journal.head == NO_BLOCK {
+            state.journal = None;
+            meta.set_grouped_state(state)?;
+            store.commit(&[&meta])?;
+            continue;
+        }
+        let page = load(store, journal.head, PageKind::Grouped)?;
+        let next = if journal.head == journal.tail {
+            NO_BLOCK
+        } else {
+            let next = page.next()?;
+            if next == NO_BLOCK {
+                return Err(Error::InvalidState);
+            }
+            next
+        };
+        let free = Page::free(journal.head, meta.free_head()?)?;
+        meta.set_free_head(journal.head)?;
+        state.journal = (next != NO_BLOCK).then_some(GroupJournal {
+            head: next,
+            ..journal
+        });
         meta.set_grouped_state(state)?;
-        store.commit(&[&meta])?;
+        store.commit(&[&meta, &free])?;
+        store.event(Stage::GroupReclaimed)?;
+        reclaimed = reclaimed.checked_add(1).ok_or(Error::Limit("group recovery pages"))?;
     }
-    Ok(reclaimed)
+    loop {
+        let mut meta = load(store, 0, PageKind::Meta)?;
+        let mut state = meta.grouped_state()?;
+        let Some((index, retiring)) = state
+            .retired
+            .iter()
+            .enumerate()
+            .find_map(|(index, entry)| entry.map(|entry| (index, entry)))
+        else {
+            return Ok(reclaimed);
+        };
+        inspect(store, retiring.id, retiring.head, retiring.tail)?;
+        let page = load(store, retiring.head, PageKind::Grouped)?;
+        let next = if retiring.head == retiring.tail {
+            NO_BLOCK
+        } else {
+            let next = page.next()?;
+            if next == NO_BLOCK {
+                return Err(Error::InvalidState);
+            }
+            next
+        };
+        let free = Page::free(retiring.head, meta.free_head()?)?;
+        meta.set_free_head(retiring.head)?;
+        if next == NO_BLOCK {
+            shift_retired(&mut state, index);
+        } else {
+            state.retired[index] = Some(GroupRetired {
+                head: next,
+                ..retiring
+            });
+        }
+        meta.set_grouped_state(state)?;
+        store.commit(&[&meta, &free])?;
+        store.event(Stage::GroupReclaimed)?;
+        reclaimed = reclaimed.checked_add(1).ok_or(Error::Limit("group recovery pages"))?;
+    }
 }
 
 pub(super) struct CatalogBuilder {

@@ -8,8 +8,9 @@ mod storage;
 mod vacuum;
 
 pub use build::{
-    BuildStats, GroupSort, SORT_BATCH, SortRecord, build_memory, build_memory_with_anchors,
-    needs_rebuild, rebuild,
+    BuildStats, DeltaMaintenance, GroupSort, SORT_BATCH, SortRecord, build_memory,
+    build_memory_with_anchors, delta_build_memory, delta_maintenance, needs_rebuild, rebuild,
+    seal_delta,
 };
 pub use scan::{ExactSink, scan_exact, scan_query, supports_exact};
 

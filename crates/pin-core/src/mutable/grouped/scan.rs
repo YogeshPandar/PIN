@@ -232,6 +232,99 @@ fn next_group<S: PageStore>(
     }
 }
 
+fn reset_terms(terms: &mut [Term]) {
+    for term in terms {
+        term.cursor = Cursor::new();
+        term.next = None;
+        term.initialized = false;
+    }
+}
+
+#[allow(
+    clippy::too_many_arguments,
+    reason = "one reusable query workspace serves every immutable segment"
+)]
+fn scan_snapshot<S: PageStore, T: ExactSink>(
+    store: &mut S,
+    snapshot: GroupSnapshot,
+    program: &Program<'_>,
+    terms: &mut [Term],
+    bytes: &mut [u8],
+    live_bytes: &mut [u8; BITMAP_BYTES],
+    scratch: &mut QueryScratch,
+    sink: &mut T,
+) -> Result<u64> {
+    reset_terms(terms);
+    let mut groups = Cursor::new();
+    let mut count = 0u64;
+    let mut target = Some(0);
+    while let Some(start) = target {
+        let Some(base) = next_group(store, snapshot, program, terms, &mut groups, start)? else {
+            break;
+        };
+        let live_entry = groups
+            .seek(store, snapshot, [0, u64::from(base)])?
+            .filter(|entry| entry.key == [0, u64::from(base)])
+            .ok_or(Error::InvalidState)?;
+        let live_value = Value::read(live_entry)?;
+        let mut masks = [[0; 4]; NODES];
+        let mut entries = [None; NODES];
+        for (index, term) in terms.iter_mut().enumerate() {
+            entries[index] = term.at(store, snapshot, base)?;
+            if let Some(entry) = entries[index] {
+                masks[index] = Value::read(entry)?.pages;
+            }
+        }
+        let (candidate_pages, needed) = needed_terms(
+            &program.nodes[..program.len],
+            live_value.pages,
+            &masks[..program.terms],
+            scratch,
+        )?;
+        if candidate_pages != [0; 4] {
+            let (_, live) = storage::read_bitmap_view(store, snapshot, live_entry, live_bytes)?;
+            let mut parsed = [None; NODES];
+            for (index, chunk) in bytes.chunks_mut(BITMAP_BYTES).enumerate() {
+                if needed & (1 << index) != 0 {
+                    let (_, view) = storage::read_bitmap_view(
+                        store,
+                        snapshot,
+                        entries[index].ok_or(Error::InvalidState)?,
+                        chunk,
+                    )?;
+                    parsed[index] = Some(view);
+                }
+            }
+            let layout = store.layout();
+            let key = storage::key(snapshot, base, layout)?;
+            let mut source = Loaded {
+                store,
+                key,
+                live,
+                masks: &masks[..program.terms],
+                terms: &parsed[..program.terms],
+            };
+            let stats = evaluate_source(
+                &mut source,
+                &program.nodes[..program.len],
+                scratch,
+                |block, offsets| sink.page(layout, block, offsets),
+            )?;
+            sink.work(stats)?;
+            count = count
+                .checked_add(u64::from(stats.emitted_tids))
+                .ok_or(Error::Limit("group candidates"))?;
+        }
+        for (index, term) in terms.iter_mut().enumerate() {
+            if program.seek_terms & (1 << index) != 0 {
+                term.advance(store, snapshot, base)?;
+            }
+        }
+        target = base.checked_add(256);
+    }
+    Ok(count)
+}
+
 /// consumes exact predicate membership, not a PostgreSQL visibility proof.
 /// page masks belong to one protected snapshot; suffix roots remain owner-qualified.
 /// the default expands offsets only for consumers that need individual TIDs.
@@ -325,9 +418,11 @@ pub fn scan_exact<S: PageStore, T: ExactSink>(
         return Ok(None);
     }
     let meta = load(store, 0, PageKind::Meta)?;
-    let Some(snapshot) = meta.grouped_state()?.active else {
+    let state = meta.grouped_state()?;
+    let Some(active) = state.active else {
         return Ok(None);
     };
+    let latest = state.latest().ok_or(Error::InvalidState)?;
     let mut terms = Vec::new();
     let mut captured = [None; NODES];
     for (index, name) in program.names[..program.terms].iter().enumerate() {
@@ -335,8 +430,7 @@ pub fn scan_exact<S: PageStore, T: ExactSink>(
             Some(name) => {
                 let found = find_term(store, &meta, name)?;
                 if let Some((dictionary, reference)) = &found {
-                    captured[index] =
-                        Some(frontier::CapturedTerm::new(dictionary.term(*reference)?));
+                    captured[index] = Some(frontier::CapturedTerm::new(dictionary.term(*reference)?));
                 }
                 if matches!(query.nodes[query.root].kind, Kind::Term(_)) {
                     let Some((dictionary, reference)) = found else {
@@ -392,85 +486,39 @@ pub fn scan_exact<S: PageStore, T: ExactSink>(
     bytes.resize(program.terms * BITMAP_BYTES, 0);
     let mut live_bytes = [0; BITMAP_BYTES];
     let mut scratch = QueryScratch::default();
-    let mut groups = Cursor::new();
-    let mut count = 0u64;
-    let mut target = Some(0);
-    while let Some(start) = target {
-        let Some(base) = next_group(store, snapshot, &program, &mut terms, &mut groups, start)?
-        else {
-            break;
-        };
-        // the shared structural barrier keeps this private catalog leaf valid.
-        let live_entry = groups
-            .seek(store, snapshot, [0, u64::from(base)])?
-            .filter(|entry| entry.key == [0, u64::from(base)])
-            .ok_or(Error::InvalidState)?;
-        let live_value = Value::read(live_entry)?;
-        let mut masks = [[0; 4]; NODES];
-        let mut entries = [None; NODES];
-        for (index, term) in terms.iter_mut().enumerate() {
-            entries[index] = term.at(store, snapshot, base)?;
-            if let Some(entry) = entries[index] {
-                masks[index] = Value::read(entry)?.pages;
-            }
-        }
-        let (candidate_pages, needed) = needed_terms(
-            &program.nodes[..program.len],
-            live_value.pages,
-            &masks[..program.terms],
+    let mut count = scan_snapshot(
+        store,
+        active,
+        &program,
+        &mut terms,
+        &mut bytes,
+        &mut live_bytes,
+        &mut scratch,
+        sink,
+    )?;
+    for delta in state.deltas.iter().flatten() {
+        let segment = scan_snapshot(
+            store,
+            delta.snapshot,
+            &program,
+            &mut terms,
+            &mut bytes,
+            &mut live_bytes,
             &mut scratch,
+            sink,
         )?;
-        if candidate_pages != [0; 4] {
-            let (_, live) =
-                storage::read_bitmap_view(store, snapshot, live_entry, &mut live_bytes)?;
-            let mut parsed = [None; NODES];
-            for (index, chunk) in bytes.chunks_mut(BITMAP_BYTES).enumerate() {
-                if needed & (1 << index) != 0 {
-                    let (_, view) = storage::read_bitmap_view(
-                        store,
-                        snapshot,
-                        entries[index].ok_or(Error::InvalidState)?,
-                        chunk,
-                    )?;
-                    parsed[index] = Some(view);
-                }
-            }
-            let layout = store.layout();
-            let key = storage::key(snapshot, base, layout)?;
-            let mut source = Loaded {
-                store,
-                key,
-                live,
-                masks: &masks[..program.terms],
-                terms: &parsed[..program.terms],
-            };
-            let stats = evaluate_source(
-                &mut source,
-                &program.nodes[..program.len],
-                &mut scratch,
-                |block, offsets| sink.page(layout, block, offsets),
-            )?;
-            sink.work(stats)?;
-            count = count
-                .checked_add(u64::from(stats.emitted_tids))
-                .ok_or(Error::Limit("group candidates"))?;
-        }
-        for (index, term) in terms.iter_mut().enumerate() {
-            if program.seek_terms & (1 << index) != 0 {
-                term.advance(store, snapshot, base)?;
-            }
-        }
-        target = base.checked_add(256);
+        count = count
+            .checked_add(segment)
+            .ok_or(Error::Limit("group candidates"))?;
     }
-    // release snapshot payloads before allocating owner-ordered suffix cursors.
     drop(bytes);
     drop(terms);
-    let delta = frontier::scan(
+    let frontier = frontier::scan(
         store,
         &program,
         &captured[..program.terms],
         &meta,
-        snapshot,
+        latest,
         memory_bytes,
         |root, recheck| {
             if recheck {
@@ -480,7 +528,7 @@ pub fn scan_exact<S: PageStore, T: ExactSink>(
         },
     )?;
     count
-        .checked_add(delta)
+        .checked_add(frontier)
         .map(Some)
         .ok_or(Error::Limit("group candidates"))
 }
