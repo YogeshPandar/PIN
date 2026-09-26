@@ -93,6 +93,20 @@ pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Resu
                 if entry.head == NO_BLOCK {
                     continue;
                 }
+                if let Some(second) = entry.inline_second {
+                    let mut cache = None;
+                    if super::reader::resolve(store, &mut cache, second)?.is_none() {
+                        let mut current = load(store, block, PageKind::Dictionary)?;
+                        if current.term(entry.reference)?.inline_second != Some(second) {
+                            return Err(Error::InvalidState);
+                        }
+                        current.set_inline_second(entry.reference, None)?;
+                        store.commit(&[&current])?;
+                        stats.removed_postings += 1;
+                        stats.rewritten_terms += 1;
+                    }
+                    continue;
+                }
                 let summary = inspect(
                     store,
                     entry.reference,

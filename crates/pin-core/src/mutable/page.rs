@@ -147,6 +147,7 @@ pub struct Term<'a> {
     pub first: OwnerRef,
     pub head: u32,
     pub tail: u32,
+    pub inline_second: Option<OwnerRef>,
 }
 
 /// Explicit publication and liveness changes; removal cannot republish an owner.
@@ -229,7 +230,8 @@ impl Page {
                 10 => PageKind::Grouped,
                 _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
             };
-            if reader.u8()? != 0 || reader.u32()? != block {
+            let flags = reader.u8()?;
+            if flags > 1 || (flags != 0 && kind != PageKind::Dictionary) || reader.u32()? != block {
                 return Err(corrupt(7));
             }
             reader.u32()?;
@@ -303,6 +305,16 @@ impl Page {
 
     pub fn dictionary(block: u32) -> Result<Self> {
         Self::new(block, PageKind::Dictionary)
+    }
+
+    pub fn packed_dictionary(block: u32) -> Result<Self> {
+        let mut page = Self::dictionary(block)?;
+        page.bytes[7] = 1;
+        Ok(page)
+    }
+
+    pub fn packed_dictionary_format(&self) -> bool {
+        self.kind == PageKind::Dictionary && self.bytes[7] == 1
     }
 
     pub fn postings(block: u32, term: TermRef) -> Result<Self> {
@@ -407,7 +419,7 @@ impl Page {
                     || self.u32(20)? != 8192
                     || self.u16(24)? != layout.max_offset()
                     || usize::from(self.u16(26)?) != BUCKETS
-                    || self.u32(28)? != 0
+                    || self.u32(28)? & !4 != 0
                     || self.u64(32)? == 0
                 {
                     return Err(corrupt(16));
@@ -500,6 +512,16 @@ impl Page {
         let incarnation = Incarnation::new(value).map_err(|_| corrupt(32))?;
         self.put_u64(32, next)?;
         Ok(incarnation)
+    }
+
+    pub fn packed_postings(&self) -> Result<bool> {
+        self.require(PageKind::Meta)?;
+        Ok(self.u32(28)? & 4 != 0)
+    }
+
+    pub fn enable_packed_postings(&mut self) -> Result<()> {
+        self.require(PageKind::Meta)?;
+        self.put_u32(28, self.u32(28)? | 4)
     }
 
     pub fn owner_chain(&self) -> Result<(u32, u32)> {
@@ -796,6 +818,7 @@ impl Page {
         Ok(Terms {
             page: self.block,
             reader: Reader::new(&self.bytes()[HEADER..]),
+            packed: self.packed_dictionary_format(),
             failed: false,
         })
     }
@@ -805,7 +828,8 @@ impl Page {
         if term.is_empty() || term.len() > MAX_TERM_BYTES {
             return Err(Error::InvalidDocument);
         }
-        let next = self.len + DICTIONARY_ENTRY + term.len();
+        let packed = self.packed_dictionary_format();
+        let next = self.len + DICTIONARY_ENTRY + term.len() + if packed { 16 } else { 0 };
         if next > CAPACITY {
             return Ok(None);
         }
@@ -821,6 +845,9 @@ impl Page {
         first.write(&mut writer)?;
         writer.u32(0)?;
         writer.put(term.as_bytes())?;
+        if packed {
+            writer.put(&[0; 16])?;
+        }
         self.len = next;
         Ok(Some(reference))
     }
@@ -839,12 +866,69 @@ impl Page {
     }
 
     pub fn set_posting_chain(&mut self, term: TermRef, head: u32, tail: u32) -> Result<()> {
-        self.term(term)?;
+        if self.term(term)?.inline_second.is_some() {
+            return Err(Error::InvalidState);
+        }
         if !posting_pair_valid(head, tail) {
             return Err(corrupt(usize::from(term.offset)));
         }
         self.put_u32(usize::from(term.offset) + 4, head)?;
         self.put_u32(usize::from(term.offset) + 8, tail)
+    }
+
+    pub fn promote_inline_second(&mut self, reference: TermRef, block: u32) -> Result<OwnerRef> {
+        let term = self.term(reference)?;
+        let second = term.inline_second.ok_or(Error::InvalidState)?;
+        if !block_valid(block) || block == self.block {
+            return Err(Error::InvalidState);
+        }
+        let at = usize::from(reference.offset) + DICTIONARY_ENTRY + term.term.len();
+        self.bytes[at..at + 16].fill(0);
+        self.put_u32(usize::from(reference.offset) + 28, 0)?;
+        self.put_u32(usize::from(reference.offset) + 4, block)?;
+        self.put_u32(usize::from(reference.offset) + 8, block)?;
+        Ok(second)
+    }
+
+    pub fn set_inline_second(
+        &mut self,
+        reference: TermRef,
+        second: Option<OwnerRef>,
+    ) -> Result<()> {
+        if !self.packed_dictionary_format() {
+            return Err(Error::InvalidState);
+        }
+        let term = self.term(reference)?;
+        let at = usize::from(reference.offset) + DICTIONARY_ENTRY + term.term.len();
+        match second {
+            Some(owner) => {
+                if term.inline_second.is_some()
+                    || term.head != NO_BLOCK
+                    || term.tail != NO_BLOCK
+                    || (owner.page, owner.slot) <= (term.first.page, term.first.slot)
+                    || owner.incarnation <= term.first.incarnation
+                {
+                    return Err(Error::InvalidState);
+                }
+                let mut writer = Writer::new(&mut self.bytes[at..at + 16]);
+                owner.write(&mut writer)?;
+                self.put_u32(usize::from(reference.offset) + 28, 1)?;
+                self.put_u32(usize::from(reference.offset) + 4, self.block)?;
+                self.put_u32(usize::from(reference.offset) + 8, self.block)
+            }
+            None => {
+                if term.inline_second.is_none()
+                    || term.head != self.block
+                    || term.tail != self.block
+                {
+                    return Err(Error::InvalidState);
+                }
+                self.put_u32(usize::from(reference.offset) + 28, 0)?;
+                self.bytes[at..at + 16].fill(0);
+                self.put_u32(usize::from(reference.offset) + 4, NO_BLOCK)?;
+                self.put_u32(usize::from(reference.offset) + 8, NO_BLOCK)
+            }
+        }
     }
 
     pub fn posting_term(&self) -> Result<TermRef> {
@@ -1189,6 +1273,7 @@ fn read_delta(reader: &mut Reader<'_>, previous: Option<OwnerRef>) -> Result<Own
 pub struct Terms<'a> {
     page: u32,
     reader: Reader<'a>,
+    packed: bool,
     failed: bool,
 }
 
@@ -1208,11 +1293,33 @@ impl<'a> Iterator for Terms<'a> {
             let head = self.reader.u32()?;
             let tail = self.reader.u32()?;
             let first = OwnerRef::read(&mut self.reader)?;
-            if !posting_pair_valid(head, tail) || self.reader.u32()? != 0 {
+            let inline = self.reader.u32()?;
+            if !posting_pair_valid(head, tail) || inline > u32::from(self.packed) {
                 return Err(corrupt(offset + 4));
             }
             let term = std::str::from_utf8(self.reader.take(len)?)
                 .map_err(|_| corrupt(offset + DICTIONARY_ENTRY))?;
+            let inline_second = if self.packed {
+                let bytes = self.reader.take(16)?;
+                if inline == 1 {
+                    let mut reader = Reader::new(bytes);
+                    let second = OwnerRef::read(&mut reader)?;
+                    if (head, tail) != (self.page, self.page)
+                        || (second.page, second.slot) <= (first.page, first.slot)
+                        || second.incarnation <= first.incarnation
+                    {
+                        return Err(corrupt(offset + DICTIONARY_ENTRY + len));
+                    }
+                    Some(second)
+                } else {
+                    if bytes != [0; 16] || head == self.page || tail == self.page {
+                        return Err(corrupt(offset + DICTIONARY_ENTRY + len));
+                    }
+                    None
+                }
+            } else {
+                None
+            };
             Ok(Term {
                 reference: TermRef {
                     page: self.page,
@@ -1222,6 +1329,7 @@ impl<'a> Iterator for Terms<'a> {
                 first,
                 head,
                 tail,
+                inline_second,
             })
         })();
         self.failed = result.is_err();

@@ -13,8 +13,17 @@ use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 
 static ENABLE_EXACT_BITMAP: GucSetting<bool> = GucSetting::<bool>::new(true);
+static ENABLE_PACKED_POSTINGS: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_packed_postings",
+        c"Pack the second posting into its dictionary page on newly built indexes.",
+        c"Experimental persistent format; REINDEX selects the current setting.",
+        &ENABLE_PACKED_POSTINGS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_exact_bitmap",
         c"Use proven exact term and Boolean bitmap matches.",
@@ -136,6 +145,9 @@ pub(crate) unsafe fn with_maintenance<T>(
 }
 
 impl PageStore for PgStore<'_> {
+    fn packed_postings(&self) -> bool {
+        ENABLE_PACKED_POSTINGS.get()
+    }
     fn frontier_anchors(&self) -> bool {
         crate::grouped::frontier_anchors_enabled()
     }
