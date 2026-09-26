@@ -13,6 +13,7 @@ from g9_profile import Session
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--direct-documents', action='store_true')
+    parser.add_argument('--blocked-positions', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -21,6 +22,8 @@ def main() -> None:
     record = []
     with Session(Path('/usr/lib/postgresql/18/bin/psql'), args.output / 'psql.stderr',
                  'pin_legacy') as session:
+        if args.blocked_positions:
+            session.execute('SET pin.enable_blocked_positions=on;')
         if args.direct_documents:
             session.execute('SET pin.enable_direct_documents=on;')
         session.execute(f'CREATE SCHEMA {schema};')

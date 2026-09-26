@@ -416,7 +416,8 @@ impl Page {
                     || self.u32(20)? != 8192
                     || self.u16(24)? != layout.max_offset()
                     || usize::from(self.u16(26)?) != BUCKETS
-                    || self.u32(28)? & !1 != 0
+                    || self.u32(28)? & !3 != 0
+                    || self.u32(28)? == 2
                     || self.u64(32)? == 0
                 {
                     return Err(corrupt(16));

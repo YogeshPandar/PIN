@@ -229,7 +229,17 @@ unsafe fn insert_value(
     // safety: the relation and prepared document stay live through this synchronous insert.
     let result = unsafe {
         storage::with_writer(index, |store| {
-            mutable::insert(store, root, &document)?;
+            mutable::insert_with_format(store, root, |blocked| {
+                if blocked {
+                    // experimental re-encoding follows the persisted capability.
+                    // release the provisional pd02 allocation before preparing pd03.
+                    drop(document);
+                    let analyzed = Analyzed::analyze(text, AnalysisLimits::default())?;
+                    PreparedDocument::prepare_blocked(&analyzed, memory_bytes)
+                } else {
+                    Ok(document)
+                }
+            })?;
             if parallel_writer.is_null() && crate::grouped::delta_seal_enabled() {
                 crate::grouped::delta_due(store)
             } else {

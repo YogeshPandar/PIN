@@ -740,6 +740,29 @@ fn resolve_phrase<S: PageStore>(
     if !owner.live || owner.publication != crate::codec::records::Publication::Published {
         return Ok(None);
     }
+    if owner.inline.starts_with(b"PD03") {
+        let retained_pages =
+            usize::from(buffers.head.is_some()) + usize::from(buffers.tail.is_some());
+        let Some(budget) = memory_bytes.checked_sub(retained_pages * std::mem::size_of::<Page>())
+        else {
+            return Ok(Some((owner.root, true)));
+        };
+        return match super::block_phrase::matches(
+            owner.inline.len(),
+            owner.tokens,
+            owner.terms,
+            terms,
+            budget,
+            &mut buffers.bytes,
+            |offset, output| {
+                output.copy_from_slice(&owner.inline[offset..offset + output.len()]);
+                Ok(())
+            },
+        )? {
+            Some(matched) => Ok(matched.then_some((owner.root, false))),
+            None => Ok(Some((owner.root, true))),
+        };
+    }
     if !owner.inline.is_empty() {
         return Ok(super::phrase_prefix::matches(
             owner.inline,
@@ -780,8 +803,9 @@ fn resolve_phrase<S: PageStore>(
     if identity != reference || start != 0 || payload.len() > total {
         return Err(Error::InvalidState);
     }
-    if let Some(matched) =
-        super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
+    if !payload.starts_with(b"PD03")
+        && let Some(matched) =
+            super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
     {
         return Ok(matched.then_some((owner.root, false)));
     }

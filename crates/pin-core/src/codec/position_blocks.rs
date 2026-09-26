@@ -43,15 +43,14 @@ impl PositionBlockRequest {
         self.start..self.end
     }
 
-    // the caller supplies exactly the selected bytes, not the complete stream.
-    // all selected deltas are validated even if the first position is a match.
-    pub fn seek_ge(self, bytes: &[u8], target: u32) -> Result<SeekResult> {
+    // validates the entire selected block before callers may use its result.
+    fn decode(self, bytes: &[u8], mut visit: impl FnMut(u32)) -> Result<()> {
         if bytes.len() != self.end - self.start {
             return Err(Error::new(self.start, ErrorKind::InvalidValue));
         }
         let mut reader = Reader::new(bytes);
         let mut position = self.first;
-        let mut found = (position >= target).then_some(position);
+        visit(position);
         for _ in 1..self.count {
             let offset = reader.offset();
             let delta = reader.var_u32()?;
@@ -61,19 +60,41 @@ impl PositionBlockRequest {
             position = position
                 .checked_add(delta)
                 .ok_or(Error::new(offset, ErrorKind::Overflow))?;
-            if found.is_none() && position >= target {
-                found = Some(position);
-            }
+            visit(position);
         }
         reader.finish()?;
         if position != self.last {
             return Err(Error::new(self.start, ErrorKind::InvalidValue));
         }
+        Ok(())
+    }
+
+    pub fn seek_ge(self, bytes: &[u8], target: u32) -> Result<SeekResult> {
+        let mut found = None;
+        self.decode(bytes, |position| {
+            if found.is_none() && position >= target {
+                found = Some(position);
+            }
+        })?;
         Ok(SeekResult {
             position: found,
             decoded_positions: self.count,
             decoded_bytes: bytes.len(),
         })
+    }
+
+    /// Decodes into caller-owned bounded scratch for repeated nearby seeks.
+    /// On error, partially written output must be discarded.
+    pub fn decode_into(self, bytes: &[u8], output: &mut [u32]) -> Result<usize> {
+        if output.len() < self.count {
+            return Err(Error::new(self.start, ErrorKind::Truncated));
+        }
+        let mut index = 0;
+        self.decode(bytes, |position| {
+            output[index] = position;
+            index += 1;
+        })?;
+        Ok(index)
     }
 }
 

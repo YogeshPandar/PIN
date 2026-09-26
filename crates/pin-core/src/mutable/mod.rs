@@ -4,6 +4,7 @@
 //! G3 reclaims posting pages only after host reader quiescence.
 //! Owner slots and dictionary identities are never reused.
 
+pub mod block_phrase;
 mod compact;
 mod count;
 pub mod document;
@@ -24,7 +25,7 @@ pub use count::{CountCandidate, scan_count};
 pub use query::{scan_query, scan_query_with_options, scan_query_with_recheck};
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
-pub use writer::{initialize, insert};
+pub use writer::{initialize, insert, insert_with_format};
 
 use crate::error::{Error, Result};
 use crate::identity::HeapLayout;
@@ -75,6 +76,10 @@ pub enum Stage {
 /// unreachable journal pages. Resource cleanup belongs to the host.
 pub trait PageStore {
     /// selects the document extent capability only when initializing a new index.
+    fn blocked_positions(&self) -> bool {
+        false
+    }
+
     fn direct_documents(&self) -> bool {
         false
     }

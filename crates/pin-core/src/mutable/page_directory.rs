@@ -42,10 +42,20 @@ impl Page {
     pub fn direct_documents(&self) -> Result<bool> {
         self.require(PageKind::Meta)?;
         let flags = self.u32(28)?;
-        if flags & !1 != 0 {
+        if flags & !3 != 0 || flags == 2 {
             return Err(corrupt(28));
         }
         Ok(flags & 1 != 0)
+    }
+
+    pub fn blocked_positions(&self) -> Result<bool> {
+        self.direct_documents()?;
+        Ok(self.u32(28)? & 2 != 0)
+    }
+
+    pub fn enable_blocked_positions(&mut self) -> Result<()> {
+        self.require(PageKind::Meta)?;
+        self.put_u32(28, 3)
     }
 
     pub fn enable_direct_documents(&mut self) -> Result<()> {

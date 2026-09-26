@@ -17,6 +17,7 @@ from g9_count_bench import cpu_read, cpu_delta
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disposable', action='store_true', required=True)
+    parser.add_argument('--blocked-positions', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--direct-documents', action='store_true')
     parser.add_argument('--late-terms', action='store_true', help='place requested rare terms after the dense stream in lexical order')
@@ -45,6 +46,8 @@ def main():
         def execute(sql):
             statements.append(sql)
             return s.execute(sql.rstrip(';') + ';')
+        if args.blocked_positions:
+            execute('SET pin.enable_blocked_positions=on;')
         if args.direct_documents:
             execute('SET pin.enable_direct_documents=on;')
         first, second = ('omega', 'zulu') if args.late_terms else ('alpha', 'beta')
@@ -166,7 +169,7 @@ def main():
             summary.append(dict(case=name, mode=mode, median_cpu_us=statistics.median(
                 x['cpu']['cpu_us_per_query'] for x in selected)))
     (args.output / 'result.json').write_text(json.dumps(dict(
-        revision=revision, profiles=profiles, pin_only=args.pin_only, server=server, platform=platform.platform(), build=build, direct_documents=args.direct_documents, late_terms=args.late_terms,
+        blocked_positions=args.blocked_positions, revision=revision, profiles=profiles, pin_only=args.pin_only, server=server, platform=platform.platform(), build=build, direct_documents=args.direct_documents, late_terms=args.late_terms,
         cpu=subprocess.run(['lscpu'], capture_output=True, text=True, check=True).stdout, rows=args.rows, repeated_tokens=args.tokens, stored_control=args.stored_control, samples=samples, summary=summary, checks=checks), indent=2)+'\n')
     (args.output / 'plans.json').write_text(json.dumps(plans, indent=2)+'\n')
     print(json.dumps(summary, indent=2))

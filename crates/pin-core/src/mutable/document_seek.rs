@@ -106,6 +106,30 @@ pub(super) fn matches<S: PageStore>(
     {
         return Err(Error::InvalidDocument);
     }
+    if directory.prefix.starts_with(b"PD03") {
+        let page_cost = if cache.is_none() {
+            std::mem::size_of::<Page>()
+        } else {
+            0
+        };
+        let Some(budget) = memory_bytes.checked_sub(page_cost) else {
+            return Ok(None);
+        };
+        let mut input = Input {
+            store,
+            directory,
+            cache,
+        };
+        return super::block_phrase::matches(
+            directory.total,
+            owner.tokens,
+            owner.terms,
+            wanted,
+            budget,
+            bytes,
+            |offset, output| input.read(offset, output),
+        );
+    }
     let fixed = if cache.is_none() {
         std::mem::size_of::<Page>()
     } else {

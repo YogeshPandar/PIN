@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disposable', action='store_true', required=True)
     parser.add_argument('--cluster', type=Path, required=True)
+    parser.add_argument('--blocked-positions', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -27,7 +28,7 @@ def main():
         return result
 
     def configure(session):
-        execute(session, 'SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; '
+        execute(session, 'SET pin.enable_blocked_positions=off; SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; '
                 'SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;')
 
     def check(session, expected):
@@ -58,6 +59,8 @@ def main():
         for setting in ['fsync', 'full_page_writes', 'synchronous_commit']:
             assert execute(session, f'SHOW {setting};') == 'on'
         execute(session, f'CREATE TABLE {table}(id int PRIMARY KEY,body text) WITH (autovacuum_enabled=false);')
+        if args.blocked_positions:
+            execute(session, 'SET pin.enable_blocked_positions=on;')
         execute(session, 'SET pin.enable_direct_documents=on;')
         execute(session, f'CREATE INDEX ON {table} USING pin(body);')
         configure(session)
@@ -75,6 +78,8 @@ def main():
         execute(session, f'VACUUM (INDEX_CLEANUP ON, PARALLEL 0) {table};')
         execute(session, f'INSERT INTO {table} VALUES (3,{body});')
         check(session, [1, 3])
+        if args.blocked_positions:
+            execute(session, 'SET pin.enable_blocked_positions=on;')
         execute(session, 'SET pin.enable_direct_documents=on;')
         execute(session, f'REINDEX TABLE {table};')
         check(session, [1, 3])

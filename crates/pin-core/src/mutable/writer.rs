@@ -17,7 +17,9 @@ pub fn initialize<S: PageStore>(store: &mut S) -> Result<()> {
         return Err(Error::InvalidState);
     }
     let mut meta = Page::metadata(store.layout())?;
-    if store.direct_documents() {
+    if store.blocked_positions() {
+        meta.enable_blocked_positions()?;
+    } else if store.direct_documents() {
         meta.enable_direct_documents()?;
     }
     store.commit(&[&meta])
@@ -34,11 +36,31 @@ pub fn insert<S: PageStore>(
     root: RootTid,
     document: &PreparedDocument,
 ) -> Result<OwnerRef> {
-    // pd03 needs a persisted capability and native readers before publication.
-    if document.bytes().starts_with(b"PD03") {
+    let meta = load(store, 0, PageKind::Meta)?;
+    insert_ready(store, root, document, meta)
+}
+
+/// Chooses preparation from persisted metadata before any owner allocation.
+/// The host retains its writer interlock; no buffer lock is retained here.
+pub fn insert_with_format<S: PageStore>(
+    store: &mut S,
+    root: RootTid,
+    prepare: impl FnOnce(bool) -> Result<PreparedDocument>,
+) -> Result<OwnerRef> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let document = prepare(meta.blocked_positions()?)?;
+    insert_ready(store, root, &document, meta)
+}
+
+fn insert_ready<S: PageStore>(
+    store: &mut S,
+    root: RootTid,
+    document: &PreparedDocument,
+    mut meta: Page,
+) -> Result<OwnerRef> {
+    if document.bytes().starts_with(b"PD03") != meta.blocked_positions()? {
         return Err(Error::InvalidDocument);
     }
-    let mut meta = load(store, 0, PageKind::Meta)?;
     let owner = reserve_owner(store, &mut meta, root, document)?;
     store.event(Stage::OwnerReserved)?;
     let mut data_head = NO_BLOCK;

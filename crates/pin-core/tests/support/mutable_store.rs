@@ -7,11 +7,16 @@ use pin_core::mutable::{PageStore, Stage};
 pub struct MemoryStore {
     pub pages: Vec<Vec<u8>>,
     pub direct_documents: bool,
+    pub blocked_positions: bool,
     pub events: Vec<Stage>,
     pub fail_at: Option<usize>,
 }
 
 impl PageStore for MemoryStore {
+    fn blocked_positions(&self) -> bool {
+        self.blocked_positions
+    }
+
     fn direct_documents(&self) -> bool {
         self.direct_documents
     }
