@@ -12,6 +12,11 @@ unsafe extern "C-unwind" {
     pub(crate) fn pin_group_sort_finish(sort: *mut c_void);
     pub(crate) fn pin_group_sort_read(sort: *mut c_void, records: *mut u8, capacity: u32) -> u32;
     pub(crate) fn pin_group_sort_end(sort: *mut c_void) -> bool;
+    pub(crate) fn pin_primary_sort_begin(reserved_bytes: u64) -> *mut c_void;
+    pub(crate) fn pin_primary_sort_put(sort: *mut c_void, key: *const u8, length: u32);
+    pub(crate) fn pin_primary_sort_finish(sort: *mut c_void);
+    pub(crate) fn pin_primary_sort_read(sort: *mut c_void, key: *mut u8, capacity: u32) -> u32;
+    pub(crate) fn pin_primary_sort_end(sort: *mut c_void) -> bool;
     pub(crate) fn pin_parallel_init();
     pub(crate) fn pin_parallel_vacuum_options() -> u8;
     pub(crate) fn pin_parallel_build(
