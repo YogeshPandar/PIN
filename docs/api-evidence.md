@@ -1264,3 +1264,27 @@ Pure tests compare the indexed proof with the independent text oracle,
 including repeated terms and Unicode, and cover fragmented fallback. Native
 PostgreSQL lifecycle, recovery, and paired CPU measurements remain release
 gates. This change is experimental until those gates and review are complete.
+
+### Callback-local relation size cache
+
+Review date: 26 September 2026. Authority: pinned PostgreSQL 18.6
+[`md.c`, `mdnblocks`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/smgr/md.c),
+[`bufmgr.c`, `ReadBufferExtended`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/bufmgr.c),
+and [index locking](https://www.postgresql.org/docs/18/index-locking.html).
+A trace of 40 warm phrase queries on the merged baseline showed 50,320
+`lseek` calls and no file reads in the backend. PIN calls
+`RelationGetNumberOfBlocks` repeatedly through `PageStore::blocks`; the C page
+reader also checks the relation size. `mdnblocks` obtains file length through
+the storage manager, so the first change caches the block count inside one
+`PgStore` callback and advances it only after that callback extends the index.
+
+The reader's existing structural barrier prevents page reclamation or index
+truncation while it uses a captured bound. Concurrent append is permitted, but
+a scan follows captured page references and need not include a later append;
+PostgreSQL index scanning explicitly permits this. The writer interlock makes
+allocation serial. The C page read and WAL commit retain their independent
+relation-size checks, so this first cache does not weaken their bounds. The
+cache never survives a callback or transaction. No new FFI or unsafe operation
+is introduced. The observed syscall count is a hypothesis for the specific
+call path; paired traces and CPU measurements are required to attribute the
+effect before a speedup claim.
