@@ -230,7 +230,7 @@ unsafe fn insert_value(
     let result = unsafe {
         storage::with_writer(index, |store| {
             mutable::insert_with_format(store, root, |blocked| {
-                if blocked {
+                if blocked && document.has_block_candidate()? {
                     // experimental re-encoding follows the persisted capability.
                     // release the provisional pd02 allocation before preparing pd03.
                     drop(document);

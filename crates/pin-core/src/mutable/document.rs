@@ -73,6 +73,8 @@ impl PreparedDocument {
         if length > MAX_DOCUMENT_BYTES {
             return Err(Error::Limit("document payload"));
         }
+        // keep the established representation when no stream can use blocks.
+        let blocked = blocked && largest_blocked != 0;
         let mut block_values: Vec<u32> = vector(largest_blocked, &mut budget)?;
         let mut block_bytes: Vec<u8> = vector(largest_payload, &mut budget)?;
         block_bytes.resize(largest_payload, 0);
@@ -137,6 +139,21 @@ impl PreparedDocument {
 
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
+    }
+
+    /// True when a PD02 document has a term large enough for PB01 blocks.
+    pub fn has_block_candidate(&self) -> Result<bool> {
+        if self.bytes.starts_with(b"PD03") {
+            return Ok(true);
+        }
+        for term in self.terms() {
+            let term = term?;
+            let count = Reader::new(term.positions).u32()?;
+            if count >= 256 {
+                return Ok(true);
+            }
+        }
+        Ok(false)
     }
 
     pub const fn token_count(&self) -> u32 {

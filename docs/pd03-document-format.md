@@ -1,8 +1,9 @@
 # Experimental PD03 document encoding
 
-Status: pure encoder and complete consumers implemented. Storage insertion rejects
-PD03 before allocation/publication. The native adapter continues producing PD02.
-This is an integration checkpoint, not a native performance result.
+Status: an opt-in persisted index capability now permits PD03 under the existing
+writer, reader and WAL barriers. The creation option `pin.enable_blocked_positions`
+defaults off; it implies mapped document extents. Native measurements remain
+necessary before default enablement or a performance claim.
 
 ## Encoding
 
@@ -21,7 +22,8 @@ PD02 continues requiring encoding 0. PD03 rejects encoding values above 1.
 PB01 retains its unchanged block directory and per-block delta payload. Frequencies
 come from the selected codec's count; their sum must equal the document count.
 The experimental encoder selects PB01 at 256 occurrences and counted deltas below
-that threshold. This is a provisional crossover, not a tuned production constant.
+that threshold. If no term reaches the threshold, it emits PD02 under the blocked
+index capability; native inserts retain their provisional PD02 document. This is a provisional crossover, not a tuned production constant.
 
 Preparation keeps explicit peak-budget charges for analyzed input, sorted token
 references, largest block-term position scratch, reusable encoding scratch and
@@ -37,11 +39,14 @@ positions across terms as well as malformed streams and out-of-domain positions.
 - Grouped consumers' validated term iteration and membership reader.
 - PB01 streaming iteration with bounded state, overflow/order/trailing checks.
 
-The optimized prefix reader and mapped selective reader are not yet PD03-aware.
-A storage insertion guard prevents publishing PD03 until those paths and a
-persisted metadata capability are implemented. Existing readers must reject
-unsupported index capabilities before interpreting document bytes. A writer
-setting alone is insufficient because later sessions must obey the index format.
+Metadata field 28 uses bit 0 for mapped extents and bit 1 for PD03; only values
+0, 1 and 3 are accepted. Bit 1 requires bit 0. Old readers reject the new
+capability. The writer chooses PD03 using this persisted flag, even after the
+creation GUC is switched off. The optimized inline and mapped phrase readers use
+selected directory metadata and one checked block payload at a time. They cache
+decoded blocks for successive targets and retain independent cursors for repeated
+query terms. Complete grouped readers reconstruct/validate both formats. A PD03 document in a legacy index is rejected before owner allocation. The
+blocked capability accepts both PD02 and PD03 documents.
 
 ## Evidence and remaining qualification
 
@@ -53,12 +58,13 @@ as PD02, empty input, insufficient budgets, pre-publication rejection and duplic
 positions across individually valid PB01 streams. Membership and full term
 iteration are checked on both formats. Codec tests cover selected block reads.
 
-Native integration must add a persisted capability and complete both inline and
-mapped readers. The mapped reader should retain directory metadata and use the
-external range callback, rather than reassemble a whole selected stream. Cursor
-state must avoid repeated block decodes for nearby targets and repeated phrase
-terms. Every allocation retained by those cursors must count against scratch.
+The fixed cursor and metadata arrays, selected directory bytes, additional
+page image and byte scratch are charged against query scratch. A budget shortfall
+returns heap recheck. The native adapter currently prepares PD02 before acquiring
+the writer interlock, then reanalyzes and prepares PD03 inside that interlock if
+the persisted flag requires it. This preserves existing lock ordering and default
+index behavior but adds write CPU and lock hold time to experimental PD03 indexes.
 
-After integration, rerun semantic/MVCC/VACUUM/replay qualification and native
-paired CPU, index-size, build/WAL and broad query controls. Metadata itself can
-consume pages and CPU; the PB01 work bound does not guarantee a SQL speedup.
+Native paired CPU, index size, build/WAL, MVCC/VACUUM/replay and broad query
+controls remain qualification gates. Metadata can consume pages and CPU; PB01's
+work bound alone does not guarantee SQL speedup.

@@ -58,7 +58,7 @@ fn insert_ready<S: PageStore>(
     document: &PreparedDocument,
     mut meta: Page,
 ) -> Result<OwnerRef> {
-    if document.bytes().starts_with(b"PD03") != meta.blocked_positions()? {
+    if document.bytes().starts_with(b"PD03") && !meta.blocked_positions()? {
         return Err(Error::InvalidDocument);
     }
     let owner = reserve_owner(store, &mut meta, root, document)?;

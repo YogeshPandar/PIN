@@ -280,3 +280,24 @@ fn pd03_publication_failure_recovery_and_vacuum_preserve_exact_queries() {
         );
     }
 }
+
+#[test]
+fn blocked_index_keeps_small_documents_in_pd02_without_reencoding() {
+    let mut store = MemoryStore {
+        blocked_positions: true,
+        ..Default::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    let text = "alpha beta omega zulu";
+    let doc = prepare(text, true);
+    assert!(doc.bytes().starts_with(b"PD02"));
+    assert!(!doc.has_block_candidate().unwrap());
+    let root = RootTid::new(1, 7, store.layout()).unwrap();
+    mutable::insert(&mut store, root, &doc).unwrap();
+    assert_eq!(
+        scan_exact(&mut store, "\"omega zulu\"", 1 << 20),
+        vec![(root, false)]
+    );
+    let dense = prepare(&"echo ".repeat(300), true);
+    assert!(dense.bytes().starts_with(b"PD03"));
+}
