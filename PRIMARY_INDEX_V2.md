@@ -158,6 +158,11 @@ references. Term frequencies and positions need separate streams; this record
 does not repeat a long document's lexeme for every occurrence. The host sorter,
 exact vocabulary catalogue, immutable manifest publication, and read-only SQL
 prototype are still to be implemented and measured.
+The checked reducer consumes that sorted stream with one heap page's offsets
+resident at a time, rejects out-of-order roots, coalesces duplicate term/root
+pairs, and emits `(term, 256-page group, heap page, offsets)` runs. The host
+writer still needs to pack those runs into durable containers and publish their
+directory only after every referenced extent exists.
 
 For `amgetbitmap`, v2 must emit every candidate CTID for a supported predicate.
 It may clear a predicate recheck only after exact membership proof for every

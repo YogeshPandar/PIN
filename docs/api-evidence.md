@@ -1619,3 +1619,10 @@ catalogue, build callback dispatch, DML rejection for a static prototype,
 manifest publication, and SQL bitmap scan remain unimplemented. The record
 omits TF and positions to avoid repeating every token in a document; those
 streams are required before full TIN-like feature coverage.
+
+The pure `BuildReducer` takes sorted term/root records, checks their order and
+heap layout, and emits one page's sorted offsets at a time. A failed callback
+poisons the reducer; callers must abort the build rather than publish an
+incomplete directory. Duplicate term/root inputs coalesce. Focused stream,
+wrong-order, wrong-layout and callback-failure tests plus Clippy qualify this
+pure stage. Physical page packing and PostgreSQL build publication remain open.
