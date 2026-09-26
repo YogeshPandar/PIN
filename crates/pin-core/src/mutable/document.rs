@@ -196,6 +196,75 @@ pub(crate) fn validated_terms(
     })
 }
 
+/// proves one bounded phrase against the stored, complete positional payload.
+/// the caller still needs the heap AM to check MVCC visibility.
+pub fn phrase_matches(
+    bytes: &[u8],
+    expected_tokens: u32,
+    expected_terms: u32,
+    phrase: &[String],
+    memory_bytes: usize,
+) -> Result<bool> {
+    if phrase.is_empty() || phrase.len() > 64 {
+        return Err(Error::Limit("phrase terms"));
+    }
+    let mut positions: [Option<Positions<'_>>; 64] = [None; 64];
+    let (tokens, terms) = validate_inner(bytes, memory_bytes, |term, view| {
+        for (index, wanted) in phrase.iter().enumerate() {
+            if wanted == term {
+                positions[index] = Some(view);
+            }
+        }
+        Ok(())
+    })?;
+    if tokens != expected_tokens || terms != expected_terms {
+        return Err(Error::InvalidDocument);
+    }
+    let Some(first) = positions[0] else {
+        return Ok(false);
+    };
+    if positions[..phrase.len()].iter().any(Option::is_none) {
+        return Ok(false);
+    }
+    let mut cursors = [const { None }; 64];
+    for index in 1..phrase.len() {
+        cursors[index] = positions[index].map(Positions::iter);
+    }
+    let mut current = [None; 64];
+    for start in first.iter() {
+        let start = start?;
+        let mut matched = true;
+        for index in 1..phrase.len() {
+            let Some(target) = start.checked_add(index as u32) else {
+                return Ok(false);
+            };
+            let cursor = cursors[index].as_mut().ok_or(Error::InvalidState)?;
+            loop {
+                let value = match current[index] {
+                    Some(value) => Some(value),
+                    None => cursor.next().transpose()?,
+                };
+                current[index] = value;
+                match value {
+                    Some(value) if value < target => current[index] = None,
+                    Some(value) if value == target => break,
+                    _ => {
+                        matched = false;
+                        break;
+                    }
+                }
+            }
+            if !matched {
+                break;
+            }
+        }
+        if matched {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 /// query-constant ordering for exact boolean term membership.
 pub(crate) struct TermMembership<'a, 'b> {
     names: &'a [Option<&'b str>],
@@ -309,6 +378,14 @@ impl<'a, 'b> TermMembership<'a, 'b> {
 /// Rejects malformed bytes, duplicate or missing positions, profile mismatch,
 /// noncanonical ordering and resource limits. Scratch is at most one position bitset.
 pub fn validate(bytes: &[u8], memory_bytes: usize) -> Result<(u32, u32)> {
+    validate_inner(bytes, memory_bytes, |_, _| Ok(()))
+}
+
+fn validate_inner<'a>(
+    bytes: &'a [u8],
+    memory_bytes: usize,
+    mut on_term: impl FnMut(&'a str, Positions<'a>) -> Result<()>,
+) -> Result<(u32, u32)> {
     if bytes.len() > MAX_DOCUMENT_BYTES {
         return Err(Error::Limit("document payload"));
     }
@@ -349,6 +426,7 @@ pub fn validate(bytes: &[u8], memory_bytes: usize) -> Result<(u32, u32)> {
         if positions.is_empty() {
             return Err(Error::InvalidDocument);
         }
+        on_term(entry.term, positions)?;
         for position in positions.iter() {
             let position = position?;
             if position >= tokens {

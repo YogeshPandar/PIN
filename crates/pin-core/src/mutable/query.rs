@@ -1,8 +1,10 @@
 //! Bounded streaming intersections and unions over stable owner identities.
 //! Positive Boolean plans can prove membership; covers retain recheck obligations.
-//! Neither path evaluates SQL visibility or phrase positions.
+//! Neither path evaluates SQL visibility. The opt-in inline phrase path proves
+//! positional membership, leaving fragmented documents for heap recheck.
 //! Contracts: docs/g4-query-execution.md and PostgreSQL 18 index-scanning.
 
+use super::document;
 use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef};
 use super::reader::resolve;
 use super::{PageStore, find_term, load, load_posting, posting_next, scan};
@@ -601,6 +603,18 @@ pub fn scan_query_with_recheck<S: PageStore>(
     store: &mut S,
     query: &Query,
     memory_bytes: usize,
+    emit: impl FnMut(RootTid, bool) -> Result<()>,
+) -> Result<u64> {
+    scan_query_with_options(store, query, memory_bytes, false, emit)
+}
+
+/// optionally proves a single phrase from an inline indexed positional payload.
+/// fragmented payloads retain the heap predicate recheck.
+pub fn scan_query_with_options<S: PageStore>(
+    store: &mut S,
+    query: &Query,
+    memory_bytes: usize,
+    phrase_positions: bool,
     mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
     if let Kind::Term(text) = &query.nodes[query.root].kind {
@@ -626,6 +640,14 @@ pub fn scan_query_with_recheck<S: PageStore>(
             Kind::None | Kind::Term(_) | Kind::And(_, _) | Kind::Or(_, _)
         )
     });
+    let exact_phrase = if phrase_positions && query.node_count() == 1 {
+        match &query.nodes[query.root].kind {
+            Kind::Phrase(terms) if !terms.is_empty() && terms.len() <= 64 => Some(terms.as_slice()),
+            _ => None,
+        }
+    } else {
+        None
+    };
     plan.open(store)?;
     let mut previous = None;
     let mut cache: Option<Page> = None;
@@ -637,6 +659,17 @@ pub fn scan_query_with_recheck<S: PageStore>(
             return Err(Error::InvalidState);
         }
         previous = Some(owner);
+        if let Some(terms) = exact_phrase {
+            if let Some((root, needs_recheck)) =
+                resolve_phrase(store, &mut cache, owner, terms, memory_bytes)?
+            {
+                emit(root, needs_recheck)?;
+                count = count
+                    .checked_add(1)
+                    .ok_or(Error::Limit("candidate count"))?;
+            }
+            continue;
+        }
         let mut direct = None;
         for cursor in &plan.cursors {
             if cursor.current == Some(owner)
@@ -660,6 +693,37 @@ pub fn scan_query_with_recheck<S: PageStore>(
         }
     }
     Ok(count)
+}
+
+fn resolve_phrase<S: PageStore>(
+    store: &mut S,
+    cache: &mut Option<Page>,
+    reference: OwnerRef,
+    terms: &[String],
+    memory_bytes: usize,
+) -> Result<Option<(RootTid, bool)>> {
+    let reload = match cache.as_ref() {
+        Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
+        _ => true,
+    };
+    if reload {
+        *cache = Some(load(store, reference.page, PageKind::Owners)?);
+    }
+    let page = cache.as_ref().ok_or(Error::InvalidState)?;
+    let owner = page.owner(reference.slot, store.layout())?;
+    if owner.reference != reference {
+        return Err(Error::InvalidState);
+    }
+    if !owner.live || owner.publication != crate::codec::records::Publication::Published {
+        return Ok(None);
+    }
+    if owner.inline.is_empty() {
+        return Ok(Some((owner.root, true)));
+    }
+    Ok(
+        document::phrase_matches(owner.inline, owner.tokens, owner.terms, terms, memory_bytes)?
+            .then_some((owner.root, false)),
+    )
 }
 
 // direct pages already carry checked roots; mutable pages still resolve owners.

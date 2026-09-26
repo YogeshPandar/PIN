@@ -1213,7 +1213,7 @@ performance qualification are required before enabling the format by default.
 ### Grouped dirty-page visibility batch
 
 Exact PostgreSQL 18.6 authority is
-[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L2315-L2469),
+[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L115-L160),
 [`heapam.h`, HOT/prune prototypes](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/heapam.h#L1608-L1722),
 and [`pg_bitutils.h`, set-bit iteration](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/port/pg_bitutils.h#L140-L169).
 The supported heap AM and MVCC snapshot checks already precede the grouped
@@ -1227,3 +1227,70 @@ no text datum and does not copy a heap tuple into a slot. The fallback keeps
 Native old-snapshot, HOT, VACUUM, abort, crash, and paired CPU tests are required
 before this bridge can be enabled by default. An independent FFI/locking review
 remains open.
+
+### Inline positional phrase proof
+
+Review date: 26 September 2026. Baseline: merged PR #26,
+`c90df9c8166c55ad19ae1045aed9305c30e27c2d`. Modules:
+`mutable/document.rs`, `mutable/query.rs`, `mutable/grouped/scan.rs`, and
+`pin-pg/grouped.rs`. Exact PostgreSQL 18 authority:
+[index scanning and recheck semantics](https://www.postgresql.org/docs/18/index-scanning.html),
+[index access method callbacks](https://www.postgresql.org/docs/18/index-functions.html),
+and pinned upstream
+[`tidbitmap.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/nodes/tidbitmap.c),
+[`nodeBitmapHeapscan.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeBitmapHeapscan.c),
+and [`heapam_handler.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L115-L160).
+The access method must return all matching TIDs. A false recheck flag is valid
+only when index membership is exact; heap MVCC visibility remains PostgreSQL's
+responsibility. Bitmap scans do not support index-only tuple delivery.
+
+The opt-in `pin.enable_phrase_positions` GUC is superuser-only and default off.
+Only a root-level phrase of at most 64 normalized terms is eligible. The
+existing posting intersection finds candidates. For each candidate, PIN reads
+the current published, live owner at its full incarnation and validates the
+complete inline PD02 positional payload against its token and term counts.
+Success emits that root with `recheck=false`; absence emits nothing. A
+fragmented owner or a plan-budget fallback keeps `recheck=true`. The host's
+existing `pin.enable_exact_bitmap` gate, multiple-key rule, and bitmap sink
+still decide the final recheck flag. PostgreSQL retains HOT-chain and snapshot
+checks on every heap visit. There is no new FFI, unsafe operation, persistent
+format, WAL path, or heap visibility shortcut.
+
+Proof obligations: the indexed token normalization and position numbering must
+equal the SQL `pin.matches` phrase oracle; owner publication and incarnation
+must prevent a cross-version positional proof; every emitted exact root must
+match the whole predicate; and every unproven path must retain a heap recheck.
+Pure tests compare the indexed proof with the independent text oracle,
+including repeated terms and Unicode, and cover fragmented fallback. The
+26 September native run compared full heap identities across HOT, indexed
+update, rollback, delete, VACUUM, and REINDEX; a paired CPU run measured the
+phrase benefit. Concurrent writers, old snapshots, crash recovery, standby
+replay, and independent review remain gates before default enablement.
+
+The CPU-clock profile of the first phrase implementation showed separate
+`document::validate`, `DocumentTerm::positions`, and `phrase_matches` work on
+each candidate. The follow-up `validate_inner` callback records selected
+position views while it validates every term and every token once; the public
+`validate` API delegates to the same validation loop. The callback's selected
+views are used only after validation and expected token/term count checks
+succeed. This changes neither PD02 bytes nor the corruption rule. On the
+replayed fixture, full identities matched across PIN old, PIN one-pass, and
+GIN; backend CPU for `"bravo charlie"` fell from 27.53 to 22.47 ms. A native
+repeatable-read snapshot held its full result stream across committed writes.
+
+### Rejected relation-size syscall experiment
+
+Review date: 26 September 2026. Authority: pinned PostgreSQL 18.6
+[`md.c`, `mdnblocks`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/smgr/md.c),
+[`bufmgr.c`, `ReadBufferExtended`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/bufmgr.c),
+and [index locking](https://www.postgresql.org/docs/18/index-locking.html).
+A trace of 40 warm phrase queries on the merged baseline showed 50,320
+`lseek` calls and no file reads in the backend. `RelationGetNumberOfBlocks`
+calls from the Rust page bound and C page reader were the cause. A callback
+size cache followed by a bounded C page-read entry reduced the traced `lseek`
+count to 200 for 40 queries. Paired backend CPU for `"bravo charlie"` was
+27.53 ms with positional proof before the cache versus 27.59 ms with both
+syscall changes; the legacy path stayed near 79 ms. Neither CPU result supports
+retaining a new FFI and concurrency proof burden. Both changes were reverted
+before this candidate was proposed. The trace scripts and raw measurements
+remain as evidence that syscall count alone is a poor proxy for query CPU.

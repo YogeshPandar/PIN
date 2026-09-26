@@ -12,7 +12,7 @@ pub use build::{
     build_memory_with_anchors, delta_build_memory, delta_maintenance, needs_rebuild, rebuild,
     seal_delta,
 };
-pub use scan::{ExactSink, scan_exact, scan_query, supports_exact};
+pub use scan::{ExactSink, scan_exact, scan_query, scan_query_with_options, supports_exact};
 
 pub(super) use anchors::invalidate as invalidate_frontier;
 

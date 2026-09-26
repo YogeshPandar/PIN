@@ -1,0 +1,9 @@
+{
+  "revision": "a8c796f63dbb7f2266e1dc4ec19e2b5362ad5ca1",
+  "pid": 14454,
+  "queries": 40,
+  "phrase_positions": false,
+  "answer": "15991",
+  "client_elapsed_seconds_with_strace": 3.195746995000036,
+  "trace_exit": -2
+}

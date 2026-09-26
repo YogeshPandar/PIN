@@ -1,0 +1,58 @@
+[
+  {
+    "engine": "gin",
+    "rows": 100,
+    "insert": {
+      "backend_cpu": {
+        "cpu_ns": 1974950,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1974.95,
+        "short_batch_warning": true
+      },
+      "wall_ns": 2113265,
+      "cluster_wal_bytes": 55056,
+      "sql": "INSERT INTO pin_grouped_count_bench.write_gin SELECT g,concat(CASE WHEN g%4<3 THEN 'alpha ' ELSE '' END,CASE WHEN g%3<2 THEN 'bravo charlie ' ELSE 'charlie bravo ' END,CASE WHEN g%97=0 THEN 'uncommon ' ELSE '' END,translate(md5((g%4093)::text),'0123456789','ghijklmnop'),' ',repeat('delta echo ',1+(g%13)::int), CASE WHEN g % 65537 = 1 THEN ' rareplanet' ELSE '' END) FROM generate_series(1,100) g;"
+    },
+    "vacuum": {
+      "backend_cpu": {
+        "cpu_ns": 520530,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 520.53,
+        "short_batch_warning": true
+      },
+      "wall_ns": 595183,
+      "cluster_wal_bytes": 63432,
+      "sql": "VACUUM (INDEX_CLEANUP ON,PARALLEL 0) pin_grouped_count_bench.write_gin;"
+    },
+    "index_bytes": 57344,
+    "one_search_index_only": true
+  },
+  {
+    "engine": "pin",
+    "rows": 100,
+    "insert": {
+      "backend_cpu": {
+        "cpu_ns": 10492290,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 10492.29,
+        "short_batch_warning": true
+      },
+      "wall_ns": 10693420,
+      "cluster_wal_bytes": 405032,
+      "sql": "INSERT INTO pin_grouped_count_bench.write_pin SELECT g,concat(CASE WHEN g%4<3 THEN 'alpha ' ELSE '' END,CASE WHEN g%3<2 THEN 'bravo charlie ' ELSE 'charlie bravo ' END,CASE WHEN g%97=0 THEN 'uncommon ' ELSE '' END,translate(md5((g%4093)::text),'0123456789','ghijklmnop'),' ',repeat('delta echo ',1+(g%13)::int), CASE WHEN g % 65537 = 1 THEN ' rareplanet' ELSE '' END) FROM generate_series(1,100) g;"
+    },
+    "vacuum": {
+      "backend_cpu": {
+        "cpu_ns": 2756952,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 2756.952,
+        "short_batch_warning": true
+      },
+      "wall_ns": 2909224,
+      "cluster_wal_bytes": 41520,
+      "sql": "VACUUM (INDEX_CLEANUP ON,PARALLEL 0) pin_grouped_count_bench.write_pin;"
+    },
+    "index_bytes": 942080,
+    "one_search_index_only": true
+  }
+]
