@@ -8,11 +8,21 @@ pub struct MemoryStore {
     pub pages: Vec<Vec<u8>>,
     pub events: Vec<Stage>,
     pub fail_at: Option<usize>,
+    pub packed_postings: bool,
+    pub frontier_anchors: bool,
 }
 
 impl PageStore for MemoryStore {
     fn layout(&self) -> HeapLayout {
         HeapLayout::new(291).unwrap()
+    }
+
+    fn packed_postings(&self) -> bool {
+        self.packed_postings
+    }
+
+    fn frontier_anchors(&self) -> bool {
+        self.frontier_anchors
     }
 
     fn blocks(&mut self) -> Result<u32> {

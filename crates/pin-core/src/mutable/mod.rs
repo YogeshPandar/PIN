@@ -75,6 +75,10 @@ pub enum Stage {
 pub trait PageStore {
     fn layout(&self) -> HeapLayout;
 
+    fn packed_postings(&self) -> bool {
+        false
+    }
+
     /// opts into persisted snapshot frontier anchors and their read-side use.
     /// the host keeps this policy stable for the duration of one operation.
     fn frontier_anchors(&self) -> bool {
@@ -229,6 +233,21 @@ fn posting_next(page: &Page, tail: u32, remaining: &mut u32) -> Result<Option<u3
 
 fn load_posting<S: PageStore>(store: &mut S, block: u32, term: page::TermRef) -> Result<Page> {
     let page = load_any(store, block)?;
+    if page.kind() == PageKind::Dictionary {
+        let entry = page.term(term)?;
+        let second = entry
+            .inline_second
+            .or(entry.shadow_second)
+            .ok_or(Error::InvalidState)?;
+        if entry.inline_second.is_some() && (entry.head != block || entry.tail != block) {
+            return Err(Error::InvalidState);
+        }
+        let mut virtual_page = Page::postings(block, term)?;
+        if !virtual_page.append_posting(second)? {
+            return Err(Error::InvalidState);
+        }
+        return Ok(virtual_page);
+    }
     if page.posting_term()? != term {
         return Err(Error::InvalidState);
     }

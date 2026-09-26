@@ -183,6 +183,7 @@ impl<'q> Plan<'q> {
             let first = entry.first;
             let head = entry.head;
             let tail = entry.tail;
+            let inline_second = entry.inline_second;
             let remaining = store.blocks()?;
             for node in &self.nodes[index..] {
                 let Node::Term {
@@ -197,10 +198,15 @@ impl<'q> Plan<'q> {
                         current: Some(first),
                         chain: Some(Chain {
                             reference,
-                            block: head,
+                            block: if inline_second.is_some() {
+                                NO_BLOCK
+                            } else {
+                                head
+                            },
                             tail,
                             remaining,
                             previous: first,
+                            inline_second,
                             page: None,
                         }),
                     };
@@ -410,6 +416,7 @@ struct Chain {
     tail: u32,
     remaining: u32,
     previous: OwnerRef,
+    inline_second: Option<OwnerRef>,
     page: Option<OwnedPostings>,
 }
 
@@ -533,6 +540,15 @@ impl Chain {
     }
 
     fn advance<S: PageStore>(&mut self, store: &mut S) -> Result<Option<OwnerRef>> {
+        if let Some(second) = self.inline_second.take() {
+            if compare(self.previous, second)? != Ordering::Less
+                || second.incarnation <= self.previous.incarnation
+            {
+                return Err(Error::InvalidState);
+            }
+            self.previous = second;
+            return Ok(Some(second));
+        }
         loop {
             if let Some(page) = &mut self.page {
                 if let Some(owner) = page.next() {
@@ -836,6 +852,18 @@ pub(super) fn scan_term_entry<S: PageStore>(
     if let Some(root) = resolve(store, &mut owner_page, term.first)? {
         emit(root)?;
         count = 1;
+    }
+    if let Some(second) = term.inline_second {
+        if first_page.is_some() {
+            return Err(Error::InvalidState);
+        }
+        if let Some(root) = resolve(store, &mut owner_page, second)? {
+            emit(root)?;
+            count = count
+                .checked_add(1)
+                .ok_or(Error::Limit("candidate count"))?;
+        }
+        return Ok(count);
     }
     if term.head == NO_BLOCK {
         return Ok(count);

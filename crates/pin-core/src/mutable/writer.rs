@@ -13,7 +13,10 @@ pub fn initialize<S: PageStore>(store: &mut S) -> Result<()> {
     if store.blocks()? != 0 || allocate(store)? != 0 {
         return Err(Error::InvalidState);
     }
-    let meta = Page::metadata(store.layout())?;
+    let mut meta = Page::metadata(store.layout())?;
+    if store.packed_postings() {
+        meta.enable_packed_postings()?;
+    }
     store.commit(&[&meta])
 }
 
@@ -137,7 +140,20 @@ fn link_term<S: PageStore>(
     if let Some((mut dictionary, reference)) = find_term(store, meta, text)? {
         let term = dictionary.term(reference)?;
         let (head, tail) = (term.head, term.tail);
+        if let Some(second) = term.inline_second {
+            super::grouped::invalidate_frontier(store, meta)?;
+            let mut page = Page::postings(allocate(store)?, reference)?;
+            if !page.append_posting(second)? || !page.append_posting(owner)? {
+                return Err(Error::InvalidState);
+            }
+            dictionary.promote_inline_second(reference, page.block())?;
+            return store.commit(&[&dictionary, &page]);
+        }
         if head == NO_BLOCK {
+            if dictionary.packed_dictionary_format() {
+                dictionary.set_inline_second(reference, Some(owner))?;
+                return store.commit(&[&dictionary]);
+            }
             let mut page = Page::postings(allocate(store)?, reference)?;
             if !page.append_posting(owner)? {
                 return Err(Error::InvalidState);
@@ -164,7 +180,11 @@ fn link_term<S: PageStore>(
     let bucket = super::page::bucket_for(text);
     let (head, tail) = meta.bucket(bucket)?;
     if head == NO_BLOCK {
-        let mut page = Page::dictionary(allocate(store)?)?;
+        let mut page = if meta.packed_postings()? {
+            Page::packed_dictionary(allocate(store)?)?
+        } else {
+            Page::dictionary(allocate(store)?)?
+        };
         page.append_term(text, owner)?.ok_or(Error::InvalidState)?;
         meta.set_bucket(bucket, page.block(), page.block())?;
         return store.commit(&[meta, &page]);
@@ -173,7 +193,11 @@ fn link_term<S: PageStore>(
     if page.append_term(text, owner)?.is_some() {
         return store.commit(&[&page]);
     }
-    let mut next = Page::dictionary(allocate(store)?)?;
+    let mut next = if meta.packed_postings()? {
+        Page::packed_dictionary(allocate(store)?)?
+    } else {
+        Page::dictionary(allocate(store)?)?
+    };
     next.append_term(text, owner)?.ok_or(Error::InvalidState)?;
     page.set_next(next.block())?;
     meta.set_bucket(bucket, head, next.block())?;

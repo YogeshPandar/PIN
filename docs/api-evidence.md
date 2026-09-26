@@ -1431,3 +1431,54 @@ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
 assert stable buffer address, exercise failures/recovery and preserve zero tails.
 The in-memory query adapter also exercises read_into, not just its default.
 Native tests and measurements must qualify the implementation before retention.
+
+## PACKDICT01: second posting in a persistent dictionary entry (2026-09-26)
+
+Contract sources rechecked for this page/WAL boundary: PostgreSQL 18
+[generic WAL](https://www.postgresql.org/docs/18/generic-wal.html),
+[index access methods](https://www.postgresql.org/docs/18/indexam.html), and
+[index locking](https://www.postgresql.org/docs/18/index-locking.html);
+pgrx 0.19.2 [`GucRegistry::define_bool_guc`](https://docs.rs/pgrx/0.19.2/pgrx/guc/struct.GucRegistry.html)
+and [`GucContext::Suset`](https://docs.rs/pgrx/0.19.2/pgrx/guc/enum.GucContext.html);
+Rust 1.98.1 [slice borrowing and bounds](https://doc.rust-lang.org/std/primitive.slice.html);
+Cargo [release profile selection](https://doc.rust-lang.org/cargo/reference/profiles.html).
+The exact local adapter remains `crates/pin-pg/src/storage.rs` and its C shim.
+No new FFI, unsafe block, C API, buffer lock sequence or custom WAL resource
+manager is introduced. Existing `PageStore::commit` persists one dictionary
+page or the dictionary and promoted posting page in one bounded generic WAL
+batch. PostgreSQL continues to own heap visibility.
+
+Local obligations: the superuser creation GUC defaults off; metapage bit 2
+persists format choice; page header byte 7 identifies packed dictionaries;
+term header states 0/1/2 and their 16-byte owner slot are checked on read.
+State 2 retains a shadow for readers that captured the old dictionary head
+before concurrent promotion. Promotion invalidates grouped frontier anchors
+before switching the term head. Dead inline removal runs under the existing
+exclusive structural barrier. Legacy page images and index builds remain
+readable. A captured-remote reader, the normal scan, grouped build, VACUUM,
+REINDEX and crash replay are qualification gates. `docs/packed-canonical.md`
+defines the format, and the dated run holds raw measurements.
+
+Review status: safe Rust and checked byte writes; no independent unsafe review
+is needed because no unsafe operation was added. Focused pure tests and native
+qualification are recorded with their exact commit in the run artifact. The
+default remains off; concurrency stress, standby replay, and upgrade policy
+remain release gates.
+
+## DIRECTBUILD01: optional direct-TID sealing after CREATE INDEX (2026-09-26)
+
+PostgreSQL 18 [index locking](https://www.postgresql.org/docs/18/index-locking.html)
+holds the index creation lock while the AM build callback runs. The official
+[generic WAL contract](https://www.postgresql.org/docs/18/generic-wal.html)
+requires WAL page changes through registered images under locks. This option
+invokes PIN's existing `compact_with_mode(DirectTid)` through the existing
+structure-then-writer maintenance wrapper only after PostgreSQL's heap build
+scan and parallel participants have completed. It adds no FFI, unsafe block,
+buffer lifetime or WAL primitive. The setting is superuser-only and defaults
+off; it affects newly built indexes and REINDEX, not existing format routing.
+
+The direct page stores both owner references and copied heap CTIDs, with
+VACUUM liveness handling already present. Build compaction must complete before
+the index becomes searchable. Performance qualification must count the extra
+build CPU, WAL and pages, and compare warm exact Boolean scans before/after
+VACUUM and across lifecycle changes. This is not an MVCC visibility shortcut.

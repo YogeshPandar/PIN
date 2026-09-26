@@ -53,6 +53,10 @@ pub fn scan_count<S: PageStore>(
         let mut previous = entry.first;
         // the inline dictionary owner has no sealed-source certificate.
         send(previous, false)?;
+        if let Some(second) = entry.inline_second {
+            send(second, false)?;
+            return Ok(count);
+        }
         let (mut block, tail) = (entry.head, entry.tail);
         if block != NO_BLOCK {
             let mut remaining = store.blocks()?;

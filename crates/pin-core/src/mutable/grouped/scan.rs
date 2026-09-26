@@ -456,7 +456,8 @@ pub fn scan_exact<S: PageStore, T: ExactSink>(
                     };
                     let entry = dictionary.term(reference)?;
                     if entry.head == entry.tail {
-                        let first_page = if entry.head == NO_BLOCK {
+                        let first_page = if entry.head == NO_BLOCK || entry.inline_second.is_some()
+                        {
                             None
                         } else {
                             Some(load_posting(store, entry.head, reference)?)
