@@ -1,0 +1,192 @@
+[
+  {
+    "sql": "SHOW data_directory;",
+    "result": "/tmp/pin-tailreuse-cluster"
+  },
+  {
+    "sql": "SELECT pin.build_revision();",
+    "result": "81041007ece01b4ff095c9f4cbc97487056b4fab"
+  },
+  {
+    "sql": "SHOW fsync;",
+    "result": "on"
+  },
+  {
+    "sql": "SHOW full_page_writes;",
+    "result": "on"
+  },
+  {
+    "sql": "SHOW synchronous_commit;",
+    "result": "on"
+  },
+  {
+    "sql": "CREATE TABLE public.pin_replay_f123f2612a67(id int PRIMARY KEY,body text) WITH (autovacuum_enabled=false);",
+    "result": ""
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=on;",
+    "result": ""
+  },
+  {
+    "sql": "CREATE INDEX ON public.pin_replay_f123f2612a67 USING pin(body);",
+    "result": ""
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "CHECKPOINT;",
+    "result": ""
+  },
+  {
+    "sql": "INSERT INTO public.pin_replay_f123f2612a67 VALUES (1,repeat('middle ',60000)||'zulu omega');",
+    "result": ""
+  },
+  {
+    "sql": "BEGIN;",
+    "result": ""
+  },
+  {
+    "sql": "INSERT INTO public.pin_replay_f123f2612a67 VALUES (2,repeat('middle ',60000)||'zulu omega');",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n2|(0,2)"
+  },
+  {
+    "sql": "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "[\n  {\n    \"Plan\": {\n      \"Node Type\": \"Sort\",\n      \"Parallel Aware\": false,\n      \"Async Capable\": false,\n      \"Startup Cost\": 153.18,\n      \"Total Cost\": 154.77,\n      \"Plan Rows\": 635,\n      \"Plan Width\": 10,\n      \"Actual Startup Time\": 0.052,\n      \"Actual Total Time\": 0.052,\n      \"Actual Rows\": 2.00,\n      \"Actual Loops\": 1,\n      \"Disabled\": false,\n      \"Sort Key\": [\"id\", \"ctid\"],\n      \"Sort Method\": \"quicksort\",\n      \"Sort Space Used\": 25,\n      \"Sort Space Type\": \"Memory\",\n      \"Shared Hit Blocks\": 11,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0,\n      \"Plans\": [\n        {\n          \"Node Type\": \"Bitmap Heap Scan\",\n          \"Parent Relationship\": \"Outer\",\n          \"Parallel Aware\": false,\n          \"Async Capable\": false,\n          \"Relation Name\": \"pin_replay_f123f2612a67\",\n          \"Alias\": \"pin_replay_f123f2612a67\",\n          \"Startup Cost\": 105.68,\n          \"Total Cost\": 123.62,\n          \"Plan Rows\": 635,\n          \"Plan Width\": 10,\n          \"Actual Startup Time\": 0.048,\n          \"Actual Total Time\": 0.048,\n          \"Actual Rows\": 2.00,\n          \"Actual Loops\": 1,\n          \"Disabled\": false,\n          \"Recheck Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n          \"Rows Removed by Index Recheck\": 0,\n          \"Exact Heap Blocks\": 1,\n          \"Lossy Heap Blocks\": 0,\n          \"Shared Hit Blocks\": 11,\n          \"Shared Read Blocks\": 0,\n          \"Shared Dirtied Blocks\": 0,\n          \"Shared Written Blocks\": 0,\n          \"Local Hit Blocks\": 0,\n          \"Local Read Blocks\": 0,\n          \"Local Dirtied Blocks\": 0,\n          \"Local Written Blocks\": 0,\n          \"Temp Read Blocks\": 0,\n          \"Temp Written Blocks\": 0,\n          \"Plans\": [\n            {\n              \"Node Type\": \"Bitmap Index Scan\",\n              \"Parent Relationship\": \"Outer\",\n              \"Parallel Aware\": false,\n              \"Async Capable\": false,\n              \"Index Name\": \"pin_replay_f123f2612a67_body_idx\",\n              \"Startup Cost\": 0.00,\n              \"Total Cost\": 105.53,\n              \"Plan Rows\": 635,\n              \"Plan Width\": 0,\n              \"Actual Startup Time\": 0.044,\n              \"Actual Total Time\": 0.044,\n              \"Actual Rows\": 2.00,\n              \"Actual Loops\": 1,\n              \"Disabled\": false,\n              \"Index Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n              \"Index Searches\": 0,\n              \"Shared Hit Blocks\": 10,\n              \"Shared Read Blocks\": 0,\n              \"Shared Dirtied Blocks\": 0,\n              \"Shared Written Blocks\": 0,\n              \"Local Hit Blocks\": 0,\n              \"Local Read Blocks\": 0,\n              \"Local Dirtied Blocks\": 0,\n              \"Local Written Blocks\": 0,\n              \"Temp Read Blocks\": 0,\n              \"Temp Written Blocks\": 0\n            }\n          ]\n        }\n      ]\n    },\n    \"Planning\": {\n      \"Shared Hit Blocks\": 0,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0\n    },\n    \"Planning Time\": 0.047,\n    \"Triggers\": [\n    ],\n    \"Execution Time\": 0.064\n  }\n]"
+  },
+  {
+    "sql": "SET enable_seqscan=on; SET enable_bitmapscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n2|(0,2)"
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "command": [
+      "/usr/lib/postgresql/18/bin/pg_ctl",
+      "-D",
+      "/tmp/pin-tailreuse-cluster",
+      "-t",
+      "30",
+      "stop",
+      "-m",
+      "immediate"
+    ],
+    "stdout": "waiting for server to shut down.... done\nserver stopped\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "command": [
+      "/usr/lib/postgresql/18/bin/pg_ctl",
+      "-D",
+      "/tmp/pin-tailreuse-cluster",
+      "-t",
+      "30",
+      "start",
+      "-l",
+      "/tmp/pin-extent-recovery/recovery.log"
+    ],
+    "stdout": "waiting for server to start.... done\nserver started\n",
+    "stderr": "",
+    "returncode": 0
+  },
+  {
+    "sql": "SELECT pin.build_revision();",
+    "result": "81041007ece01b4ff095c9f4cbc97487056b4fab"
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)"
+  },
+  {
+    "sql": "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "[\n  {\n    \"Plan\": {\n      \"Node Type\": \"Sort\",\n      \"Parallel Aware\": false,\n      \"Async Capable\": false,\n      \"Startup Cost\": 153.18,\n      \"Total Cost\": 154.77,\n      \"Plan Rows\": 635,\n      \"Plan Width\": 10,\n      \"Actual Startup Time\": 0.045,\n      \"Actual Total Time\": 0.045,\n      \"Actual Rows\": 1.00,\n      \"Actual Loops\": 1,\n      \"Disabled\": false,\n      \"Sort Key\": [\"id\", \"ctid\"],\n      \"Sort Method\": \"quicksort\",\n      \"Sort Space Used\": 25,\n      \"Sort Space Type\": \"Memory\",\n      \"Shared Hit Blocks\": 7,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0,\n      \"Plans\": [\n        {\n          \"Node Type\": \"Bitmap Heap Scan\",\n          \"Parent Relationship\": \"Outer\",\n          \"Parallel Aware\": false,\n          \"Async Capable\": false,\n          \"Relation Name\": \"pin_replay_f123f2612a67\",\n          \"Alias\": \"pin_replay_f123f2612a67\",\n          \"Startup Cost\": 105.68,\n          \"Total Cost\": 123.62,\n          \"Plan Rows\": 635,\n          \"Plan Width\": 10,\n          \"Actual Startup Time\": 0.037,\n          \"Actual Total Time\": 0.038,\n          \"Actual Rows\": 1.00,\n          \"Actual Loops\": 1,\n          \"Disabled\": false,\n          \"Recheck Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n          \"Rows Removed by Index Recheck\": 0,\n          \"Exact Heap Blocks\": 1,\n          \"Lossy Heap Blocks\": 0,\n          \"Shared Hit Blocks\": 7,\n          \"Shared Read Blocks\": 0,\n          \"Shared Dirtied Blocks\": 0,\n          \"Shared Written Blocks\": 0,\n          \"Local Hit Blocks\": 0,\n          \"Local Read Blocks\": 0,\n          \"Local Dirtied Blocks\": 0,\n          \"Local Written Blocks\": 0,\n          \"Temp Read Blocks\": 0,\n          \"Temp Written Blocks\": 0,\n          \"Plans\": [\n            {\n              \"Node Type\": \"Bitmap Index Scan\",\n              \"Parent Relationship\": \"Outer\",\n              \"Parallel Aware\": false,\n              \"Async Capable\": false,\n              \"Index Name\": \"pin_replay_f123f2612a67_body_idx\",\n              \"Startup Cost\": 0.00,\n              \"Total Cost\": 105.53,\n              \"Plan Rows\": 635,\n              \"Plan Width\": 0,\n              \"Actual Startup Time\": 0.035,\n              \"Actual Total Time\": 0.035,\n              \"Actual Rows\": 1.00,\n              \"Actual Loops\": 1,\n              \"Disabled\": false,\n              \"Index Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n              \"Index Searches\": 0,\n              \"Shared Hit Blocks\": 6,\n              \"Shared Read Blocks\": 0,\n              \"Shared Dirtied Blocks\": 0,\n              \"Shared Written Blocks\": 0,\n              \"Local Hit Blocks\": 0,\n              \"Local Read Blocks\": 0,\n              \"Local Dirtied Blocks\": 0,\n              \"Local Written Blocks\": 0,\n              \"Temp Read Blocks\": 0,\n              \"Temp Written Blocks\": 0\n            }\n          ]\n        }\n      ]\n    },\n    \"Planning\": {\n      \"Shared Hit Blocks\": 0,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0\n    },\n    \"Planning Time\": 0.041,\n    \"Triggers\": [\n    ],\n    \"Execution Time\": 0.066\n  }\n]"
+  },
+  {
+    "sql": "SET enable_seqscan=on; SET enable_bitmapscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)"
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "VACUUM (INDEX_CLEANUP ON, PARALLEL 0) public.pin_replay_f123f2612a67;",
+    "result": ""
+  },
+  {
+    "sql": "INSERT INTO public.pin_replay_f123f2612a67 VALUES (3,repeat('middle ',60000)||'zulu omega');",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n3|(0,2)"
+  },
+  {
+    "sql": "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "[\n  {\n    \"Plan\": {\n      \"Node Type\": \"Sort\",\n      \"Parallel Aware\": false,\n      \"Async Capable\": false,\n      \"Startup Cost\": 8.03,\n      \"Total Cost\": 8.04,\n      \"Plan Rows\": 1,\n      \"Plan Width\": 10,\n      \"Actual Startup Time\": 0.054,\n      \"Actual Total Time\": 0.055,\n      \"Actual Rows\": 2.00,\n      \"Actual Loops\": 1,\n      \"Disabled\": false,\n      \"Sort Key\": [\"id\", \"ctid\"],\n      \"Sort Method\": \"quicksort\",\n      \"Sort Space Used\": 25,\n      \"Sort Space Type\": \"Memory\",\n      \"Shared Hit Blocks\": 11,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0,\n      \"Plans\": [\n        {\n          \"Node Type\": \"Bitmap Heap Scan\",\n          \"Parent Relationship\": \"Outer\",\n          \"Parallel Aware\": false,\n          \"Async Capable\": false,\n          \"Relation Name\": \"pin_replay_f123f2612a67\",\n          \"Alias\": \"pin_replay_f123f2612a67\",\n          \"Startup Cost\": 4.01,\n          \"Total Cost\": 8.02,\n          \"Plan Rows\": 1,\n          \"Plan Width\": 10,\n          \"Actual Startup Time\": 0.050,\n          \"Actual Total Time\": 0.051,\n          \"Actual Rows\": 2.00,\n          \"Actual Loops\": 1,\n          \"Disabled\": false,\n          \"Recheck Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n          \"Rows Removed by Index Recheck\": 0,\n          \"Exact Heap Blocks\": 1,\n          \"Lossy Heap Blocks\": 0,\n          \"Shared Hit Blocks\": 11,\n          \"Shared Read Blocks\": 0,\n          \"Shared Dirtied Blocks\": 0,\n          \"Shared Written Blocks\": 0,\n          \"Local Hit Blocks\": 0,\n          \"Local Read Blocks\": 0,\n          \"Local Dirtied Blocks\": 0,\n          \"Local Written Blocks\": 0,\n          \"Temp Read Blocks\": 0,\n          \"Temp Written Blocks\": 0,\n          \"Plans\": [\n            {\n              \"Node Type\": \"Bitmap Index Scan\",\n              \"Parent Relationship\": \"Outer\",\n              \"Parallel Aware\": false,\n              \"Async Capable\": false,\n              \"Index Name\": \"pin_replay_f123f2612a67_body_idx\",\n              \"Startup Cost\": 0.00,\n              \"Total Cost\": 4.01,\n              \"Plan Rows\": 1,\n              \"Plan Width\": 0,\n              \"Actual Startup Time\": 0.045,\n              \"Actual Total Time\": 0.046,\n              \"Actual Rows\": 2.00,\n              \"Actual Loops\": 1,\n              \"Disabled\": false,\n              \"Index Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n              \"Index Searches\": 0,\n              \"Shared Hit Blocks\": 10,\n              \"Shared Read Blocks\": 0,\n              \"Shared Dirtied Blocks\": 0,\n              \"Shared Written Blocks\": 0,\n              \"Local Hit Blocks\": 0,\n              \"Local Read Blocks\": 0,\n              \"Local Dirtied Blocks\": 0,\n              \"Local Written Blocks\": 0,\n              \"Temp Read Blocks\": 0,\n              \"Temp Written Blocks\": 0\n            }\n          ]\n        }\n      ]\n    },\n    \"Planning\": {\n      \"Shared Hit Blocks\": 0,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0\n    },\n    \"Planning Time\": 0.044,\n    \"Triggers\": [\n    ],\n    \"Execution Time\": 0.067\n  }\n]"
+  },
+  {
+    "sql": "SET enable_seqscan=on; SET enable_bitmapscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n3|(0,2)"
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=on;",
+    "result": ""
+  },
+  {
+    "sql": "REINDEX TABLE public.pin_replay_f123f2612a67;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n3|(0,2)"
+  },
+  {
+    "sql": "EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "[\n  {\n    \"Plan\": {\n      \"Node Type\": \"Sort\",\n      \"Parallel Aware\": false,\n      \"Async Capable\": false,\n      \"Startup Cost\": 8.03,\n      \"Total Cost\": 8.04,\n      \"Plan Rows\": 1,\n      \"Plan Width\": 10,\n      \"Actual Startup Time\": 0.052,\n      \"Actual Total Time\": 0.053,\n      \"Actual Rows\": 2.00,\n      \"Actual Loops\": 1,\n      \"Disabled\": false,\n      \"Sort Key\": [\"id\", \"ctid\"],\n      \"Sort Method\": \"quicksort\",\n      \"Sort Space Used\": 25,\n      \"Sort Space Type\": \"Memory\",\n      \"Shared Hit Blocks\": 11,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0,\n      \"Plans\": [\n        {\n          \"Node Type\": \"Bitmap Heap Scan\",\n          \"Parent Relationship\": \"Outer\",\n          \"Parallel Aware\": false,\n          \"Async Capable\": false,\n          \"Relation Name\": \"pin_replay_f123f2612a67\",\n          \"Alias\": \"pin_replay_f123f2612a67\",\n          \"Startup Cost\": 4.01,\n          \"Total Cost\": 8.02,\n          \"Plan Rows\": 1,\n          \"Plan Width\": 10,\n          \"Actual Startup Time\": 0.048,\n          \"Actual Total Time\": 0.049,\n          \"Actual Rows\": 2.00,\n          \"Actual Loops\": 1,\n          \"Disabled\": false,\n          \"Recheck Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n          \"Rows Removed by Index Recheck\": 0,\n          \"Exact Heap Blocks\": 1,\n          \"Lossy Heap Blocks\": 0,\n          \"Shared Hit Blocks\": 11,\n          \"Shared Read Blocks\": 0,\n          \"Shared Dirtied Blocks\": 0,\n          \"Shared Written Blocks\": 0,\n          \"Local Hit Blocks\": 0,\n          \"Local Read Blocks\": 0,\n          \"Local Dirtied Blocks\": 0,\n          \"Local Written Blocks\": 0,\n          \"Temp Read Blocks\": 0,\n          \"Temp Written Blocks\": 0,\n          \"Plans\": [\n            {\n              \"Node Type\": \"Bitmap Index Scan\",\n              \"Parent Relationship\": \"Outer\",\n              \"Parallel Aware\": false,\n              \"Async Capable\": false,\n              \"Index Name\": \"pin_replay_f123f2612a67_body_idx\",\n              \"Startup Cost\": 0.00,\n              \"Total Cost\": 4.01,\n              \"Plan Rows\": 1,\n              \"Plan Width\": 0,\n              \"Actual Startup Time\": 0.043,\n              \"Actual Total Time\": 0.043,\n              \"Actual Rows\": 2.00,\n              \"Actual Loops\": 1,\n              \"Disabled\": false,\n              \"Index Cond\": \"(body OPERATOR(pin.@@@) '\\\\x50494e3105000100000000001800000001000000010000000c000000227a756c75206f6d65676122'::pin.query)\",\n              \"Index Searches\": 0,\n              \"Shared Hit Blocks\": 10,\n              \"Shared Read Blocks\": 0,\n              \"Shared Dirtied Blocks\": 0,\n              \"Shared Written Blocks\": 0,\n              \"Local Hit Blocks\": 0,\n              \"Local Read Blocks\": 0,\n              \"Local Dirtied Blocks\": 0,\n              \"Local Written Blocks\": 0,\n              \"Temp Read Blocks\": 0,\n              \"Temp Written Blocks\": 0\n            }\n          ]\n        }\n      ]\n    },\n    \"Planning\": {\n      \"Shared Hit Blocks\": 0,\n      \"Shared Read Blocks\": 0,\n      \"Shared Dirtied Blocks\": 0,\n      \"Shared Written Blocks\": 0,\n      \"Local Hit Blocks\": 0,\n      \"Local Read Blocks\": 0,\n      \"Local Dirtied Blocks\": 0,\n      \"Local Written Blocks\": 0,\n      \"Temp Read Blocks\": 0,\n      \"Temp Written Blocks\": 0\n    },\n    \"Planning Time\": 0.044,\n    \"Triggers\": [\n    ],\n    \"Execution Time\": 0.064\n  }\n]"
+  },
+  {
+    "sql": "SET enable_seqscan=on; SET enable_bitmapscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "SELECT id,ctid FROM public.pin_replay_f123f2612a67 WHERE body OPERATOR(pin.@@@)\n                  pin.parse_query('\"zulu omega\"') ORDER BY id,ctid;",
+    "result": "1|(0,1)\n3|(0,2)"
+  },
+  {
+    "sql": "SET pin.enable_direct_documents=off; SET pin.enable_phrase_positions=on; SET enable_seqscan=off; SET enable_bitmapscan=on; SET enable_indexscan=off;",
+    "result": ""
+  },
+  {
+    "sql": "DROP TABLE public.pin_replay_f123f2612a67;",
+    "result": ""
+  }
+]

@@ -131,3 +131,10 @@ not the final packed layout, performance parity or permission to enable by defau
 Next: profile the remaining virtual-reader overhead, measure a native longer
 fixture where physical skipping actually avoids pages, and qualify crash replay.
 Keep both the positive work-bound test and the negative two-page native result.
+
+Longer native follow-up (60K tokens, same binary): mapped late rare phrase CPU
+0.876 ms versus legacy 2.327 ms, a 2.66x gain at equal index size. Negative phrase
+CPU regresses 15.7%; repeated early phrase is approximately unchanged. GIN is
+excluded beyond comparable tsvector positional limits. Raw software CPU profiles
+and one successful committed/uncommitted WAL replay are now archived. This
+supports physical skipping for selected workloads, not universal performance.

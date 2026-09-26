@@ -70,3 +70,48 @@ python3 tools/phrase_lifecycle.py --direct-documents --output /tmp/new-lifecycle
 
 No speed or correctness claim here applies to native BM25, fuzzy, wildcard,
 proximity/range queries or arbitrary concurrent production workloads.
+
+## Longer documents and crash replay
+
+The follow-up uses the same `81041007ece01b4ff095c9f4cbc97487056b4fab`
+binary and 256 documents with 60000 repeated tokens. `--pin-only` excludes GIN:
+PostgreSQL's tsvector positions cannot preserve the late adjacency at this length.
+See [official positional limits](https://www.postgresql.org/docs/18/textsearch-limitations.html).
+Each result is checked against both PIN's scalar scan and fixture-derived IDs
+(even rows for the late phrase, all rows for repetition, none for the negative).
+Four blocks of 100 unprofiled queries precede separate five-second cpu-clock
+samples per case. These layouts were run sequentially, not interleaved.
+
+| Case | Legacy CPU ms | Mapped CPU ms | Outcome |
+| --- | ---: | ---: | --- |
+| Late rare adjacent phrase | 2.327 | 0.876 | 2.66x faster |
+| Repeated early phrase | 0.410 | 0.404 | Approximately unchanged |
+| Late rare then dense, no match | 4.212 | 4.874 | 15.7% slower |
+
+Both PIN indexes occupy 16859136 bytes. Build CPU is 2104 ms legacy and
+2087 ms mapped; WAL is 15781896 versus 15792032 bytes. These are single builds.
+The mapped layout wins when it skips unrelated position pages. It does not yet
+win when the query needs the dense stream. The negative-case regression and the
+16K regression are unresolved and preclude enabling this by default.
+
+Late-match CPU samples attribute 32.93% of legacy time and 12.38% of mapped time
+to memmove. The mapped negative profile attributes 38.24% to the phrase witness,
+17.96% to memmove and 7.98% to memset. Sample percentages are statistical
+attribution, not exact byte counts, instruction counts or causation proof.
+Raw perf recordings (gzip), textual reports, stderr/sample counts, plans and SQL
+are in `long-documents/`; SHA256 hashes cover uncompressed recordings and the
+matching `pin.so` binary. Restore the library to the capture's absolute package
+path for symbol resolution. System binaries are not included. Initial runs failed
+before profiling because the new harness omitted a SQL terminator; failure logs
+are retained and the corrected runs use the `2` suffix.
+
+Final retained-buffer core tests: 221 passed, 3 existing ignored, zero failures. Native recovery on the same binary:
+checkpoint, committed insert, open uncommitted insert, immediate shutdown, WAL
+replay, exact bitmap/scalar comparison, VACUUM, insert with creation GUC off,
+REINDEX and cleanup all passed. `long-documents/pin-extent-recovery/` contains SQL,
+plans, control output and recovery logs. The tool checks the connected data
+folder against the explicitly requested `/tmp` cluster before stopping it.
+[Immediate shutdown invokes crash recovery](https://www.postgresql.org/docs/18/app-pg-ctl.html).
+This is one committed/uncommitted replay scenario, not torn-write, replication,
+concurrent VACUUM or exhaustive crash-point qualification. Successful insertion
+after VACUUM does not by itself prove physical free-page reuse.

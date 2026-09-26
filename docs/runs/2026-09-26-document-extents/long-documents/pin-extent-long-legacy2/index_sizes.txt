@@ -1,0 +1,2 @@
+pin_fragment_ce07d580e9db_body_idx|pin|16859136
+pin_fragment_ce07d580e9db_pkey|btree|16384

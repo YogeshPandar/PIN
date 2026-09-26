@@ -22,18 +22,25 @@ def main():
     parser.add_argument('--late-terms', action='store_true', help='place requested rare terms after the dense stream in lexical order')
     parser.add_argument('--rows', type=int, default=256)
     parser.add_argument('--tokens', type=int, default=10000)
+    parser.add_argument('--profile-seconds', type=float, default=0, help='separate cpu-clock sampling duration per phrase')
+    parser.add_argument('--pin-only', action='store_true', help='omit GIN for documents beyond its comparable positional range')
     parser.add_argument('--stored-control', action='store_true', help='time positions against GIN on a stored tsvector')
     parser.add_argument('--blocks', type=int, default=6)
     parser.add_argument('--queries', type=int, default=6)
     args = parser.parse_args()
     if min(args.rows, args.blocks, args.queries) < 2:
         parser.error('rows, blocks and queries must each be at least two')
-    if not 2 <= args.tokens <= 16000:
-        parser.error('tokens must be between 2 and 16000 for this GIN overlap fixture')
+    if not 0 <= args.profile_seconds <= 30:
+        parser.error('profile-seconds must be between 0 and 30')
+    if args.pin_only and args.stored_control:
+        parser.error('pin-only and stored-control are mutually exclusive')
+    limit = 260000 if args.pin_only else 16000
+    if not 2 <= args.tokens <= limit:
+        parser.error(f'tokens must be between 2 and {limit} for this mode')
     args.output.mkdir(parents=True, exist_ok=False)
-    modes = ('positions', 'gin_stored') if args.stored_control else ('legacy', 'positions', 'gin')
+    modes = ('positions',) if args.pin_only else (('positions', 'gin_stored') if args.stored_control else ('legacy', 'positions', 'gin'))
     table = 'public.pin_fragment_' + uuid.uuid4().hex[:12]
-    samples, checks, plans, statements = [], [], {}, []
+    samples, checks, plans, statements, profiles = [], [], {}, [], []
     with Session(Path('/usr/lib/postgresql/18/bin/psql'), args.output / 'psql.stderr', 'pin_legacy') as s:
         def execute(sql):
             statements.append(sql)
@@ -62,7 +69,8 @@ def main():
             build = dict(before=build_before, after=build_after, cpu=cpu_delta(build_before, build_after, 1),
                          elapsed_ms=build_elapsed, wal_bytes=int(execute(
                              f"SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'{build_lsn}');")))
-            execute(f"CREATE INDEX ON {table} USING gin(to_tsvector('simple',body));")
+            if not args.pin_only:
+                execute(f"CREATE INDEX ON {table} USING gin(to_tsvector('simple',body));")
             execute(f'VACUUM (ANALYZE, INDEX_CLEANUP ON, PARALLEL 0) {table};')
             (args.output / 'index_sizes.txt').write_text(execute(f"SELECT c.relname,a.amname,pg_relation_size(c.oid) FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid JOIN pg_am a ON a.oid=c.relam WHERE i.indrelid='{table}'::regclass ORDER BY c.relname;") + '\n')
             execute('SET pin.enable_count_fastpath=off; SET pin.enable_grouped_count=off;')
@@ -89,6 +97,8 @@ def main():
                     expected = 'Seq Scan' if mode == 'oracle' else 'Bitmap Index Scan'
                     if expected not in plan_text:
                         raise AssertionError(f'{name}/{mode}: missing {expected}')
+                expected_filter = {'adjacent': 'id % 2 = 0', 'repeated': 'true', 'nonadjacent': 'false'}[name]
+                identities['fixture_oracle'] = execute(f'SELECT id,ctid FROM {table} WHERE {expected_filter} ORDER BY id,ctid;')
                 if len(set(identities.values())) != 1:
                     raise AssertionError(identities)
                 checks.append({'case': name, 'identities': identities,
@@ -113,6 +123,37 @@ def main():
                                             cpu=cpu_delta(before, after, args.queries), latency_ms=latency,
                                             answer=answers[0]))
                         (args.output / 'samples.json').write_text(json.dumps(samples, indent=2) + '\n')
+                if args.profile_seconds:
+                    configure('positions')
+                    sql = query('positions') + ';'
+                    expected_answer = s.execute(sql)
+                    data = args.output / (name + '.perf.data')
+                    command = ['sudo', '-n', 'perf', 'record', '-e', 'cpu-clock', '-F', '199',
+                               '-g', '--call-graph', 'dwarf,8192', '-p', str(pid), '-o', str(data),
+                               '--', 'sleep', str(args.profile_seconds + 1)]
+                    recorder = subprocess.Popen(command, stdout=subprocess.DEVNULL,
+                                                stderr=subprocess.PIPE, text=True)
+                    count = 0
+                    try:
+                        time.sleep(.25)
+                        deadline = time.monotonic() + args.profile_seconds
+                        while time.monotonic() < deadline:
+                            if s.execute(sql) != expected_answer:
+                                raise AssertionError('profile answer changed')
+                            count += 1
+                        stderr = recorder.communicate(timeout=15)[1]
+                        (args.output / (name + '.perf.stderr')).write_text(stderr)
+                        if recorder.returncode:
+                            raise RuntimeError('perf record failed: ' + stderr)
+                        report = subprocess.run(['sudo', '-n', 'perf', 'report', '--stdio', '--no-children',
+                                                 '--sort', 'dso,symbol', '-i', str(data)],
+                                                capture_output=True, text=True, check=True, timeout=60)
+                        (args.output / (name + '.perf.txt')).write_text(report.stdout)
+                        profiles.append(dict(case=name, queries=count, command=command, answer=expected_answer))
+                    finally:
+                        if recorder.poll() is None:
+                            recorder.terminate()
+                            recorder.wait(timeout=15)
             execute('ROLLBACK;')
         finally:
             execute('ROLLBACK;')
@@ -125,7 +166,7 @@ def main():
             summary.append(dict(case=name, mode=mode, median_cpu_us=statistics.median(
                 x['cpu']['cpu_us_per_query'] for x in selected)))
     (args.output / 'result.json').write_text(json.dumps(dict(
-        revision=revision, server=server, platform=platform.platform(), build=build, direct_documents=args.direct_documents, late_terms=args.late_terms,
+        revision=revision, profiles=profiles, pin_only=args.pin_only, server=server, platform=platform.platform(), build=build, direct_documents=args.direct_documents, late_terms=args.late_terms,
         cpu=subprocess.run(['lscpu'], capture_output=True, text=True, check=True).stdout, rows=args.rows, repeated_tokens=args.tokens, stored_control=args.stored_control, samples=samples, summary=summary, checks=checks), indent=2)+'\n')
     (args.output / 'plans.json').write_text(json.dumps(plans, indent=2)+'\n')
     print(json.dumps(summary, indent=2))

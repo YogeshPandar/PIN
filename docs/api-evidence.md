@@ -1469,3 +1469,13 @@ Layout version 1 fills available head space; version 0 retains the original 3072
 byte prefix. All allowed document lengths are checked against capacity, exact
 fragment counts and the maximum map bound. Zero-tail and truncated pages have
 explicit tests. Native performance and recovery qualification remain pending.
+
+DOCEXTENT01 native replay follow-up: `tools/document_extent_recovery.py` verifies
+SHOW data_directory equals the explicit disposable /tmp target before invoking
+PG18 pg_ctl immediate stop. The official PG18 pg_ctl contract documents that this
+forces crash recovery on restart: https://www.postgresql.org/docs/18/app-pg-ctl.html.
+One checkpoint/committed/open-transaction replay, VACUUM/insert, REINDEX and exact
+bitmap/scalar identity scenario passes on 81041007. Evidence is under
+`docs/runs/2026-09-26-document-extents/long-documents/pin-extent-recovery/`.
+This adds native evidence to the existing GenericXLog contract, not a new storage
+API or a blanket ACID certification. Wider concurrent/crash-point gates remain.
