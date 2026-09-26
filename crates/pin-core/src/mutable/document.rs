@@ -196,6 +196,73 @@ pub(crate) fn validated_terms(
     })
 }
 
+/// proves one bounded phrase against the stored, complete positional payload.
+/// the caller still needs the heap AM to check MVCC visibility.
+pub fn phrase_matches(
+    bytes: &[u8],
+    expected_tokens: u32,
+    expected_terms: u32,
+    phrase: &[String],
+    memory_bytes: usize,
+) -> Result<bool> {
+    if phrase.is_empty() || phrase.len() > 64 {
+        return Err(Error::Limit("phrase terms"));
+    }
+    let mut positions: [Option<Positions<'_>>; 64] = [None; 64];
+    for entry in validated_terms(bytes, expected_tokens, expected_terms, memory_bytes)? {
+        let entry = entry?;
+        if phrase.iter().any(|term| term == entry.term) {
+            let view = entry.positions()?;
+            for (index, term) in phrase.iter().enumerate() {
+                if term == entry.term {
+                    positions[index] = Some(view);
+                }
+            }
+        }
+    }
+    let Some(first) = positions[0] else {
+        return Ok(false);
+    };
+    if positions[..phrase.len()].iter().any(Option::is_none) {
+        return Ok(false);
+    }
+    let mut cursors =
+        core::array::from_fn::<_, 64, _>(|index| positions[index].map(Positions::iter));
+    let mut current = [None; 64];
+    for start in first.iter() {
+        let start = start?;
+        let mut matched = true;
+        for index in 1..phrase.len() {
+            let Some(target) = start.checked_add(index as u32) else {
+                return Ok(false);
+            };
+            let cursor = cursors[index].as_mut().ok_or(Error::InvalidState)?;
+            loop {
+                let value = match current[index] {
+                    Some(value) => Some(value),
+                    None => cursor.next().transpose()?,
+                };
+                current[index] = value;
+                match value {
+                    Some(value) if value < target => current[index] = None,
+                    Some(value) if value == target => break,
+                    _ => {
+                        matched = false;
+                        break;
+                    }
+                }
+            }
+            if !matched {
+                break;
+            }
+        }
+        if matched {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 /// query-constant ordering for exact boolean term membership.
 pub(crate) struct TermMembership<'a, 'b> {
     names: &'a [Option<&'b str>],

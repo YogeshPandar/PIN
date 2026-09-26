@@ -103,6 +103,62 @@ fn independent_oracle_matches_are_always_covered() {
 }
 
 #[test]
+fn inline_position_phrase_proofs_match_independent_text_oracle() {
+    let documents = [
+        "alpha beta gamma",
+        "beta alpha gamma",
+        "echo echo delta",
+        "delta echo echo",
+        "alpha, beta",
+        "Éclair café",
+        "alpha beta alpha beta",
+    ];
+    let mut store = seeded(&documents);
+    for source in [
+        "\"alpha beta\"",
+        "\"beta gamma\"",
+        "\"echo echo\"",
+        "\"alpha beta alpha\"",
+        "\"éclair café\"",
+        "\"missing word\"",
+    ] {
+        let query = Query::parse(source, QueryLimits::default()).unwrap();
+        let mut actual = BTreeSet::new();
+        mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |root, recheck| {
+            assert!(!recheck, "inline phrase must be fully proven: {source}");
+            assert!(actual.insert(root));
+            Ok(())
+        })
+        .unwrap();
+        let expected: BTreeSet<_> = documents
+            .iter()
+            .enumerate()
+            .filter_map(|(index, text)| {
+                let document = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
+                oracle::matches(&document, &query, 1 << 20, 1 << 20)
+                    .unwrap()
+                    .then_some(root(index as u32))
+            })
+            .collect();
+        assert_eq!(actual, expected, "{source}");
+    }
+}
+
+#[test]
+fn fragmented_phrase_document_keeps_heap_recheck() {
+    let text = "echo ".repeat(10_000);
+    let mut store = seeded(&[&text]);
+    let query = Query::parse("\"echo echo\"", QueryLimits::default()).unwrap();
+    let mut rows = Vec::new();
+    mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |root, recheck| {
+        rows.push((root, recheck));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(rows, vec![(root(0), true)]);
+}
+
+#[test]
 fn positive_boolean_candidates_equal_the_oracle_without_shared_cursor_skips() {
     let documents = ["", "a", "b", "c", "a b", "a c", "b c", "a b c"];
     let mut store = seeded(&documents);

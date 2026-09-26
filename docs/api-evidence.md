@@ -1213,7 +1213,7 @@ performance qualification are required before enabling the format by default.
 ### Grouped dirty-page visibility batch
 
 Exact PostgreSQL 18.6 authority is
-[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L2315-L2469),
+[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L115-L160),
 [`heapam.h`, HOT/prune prototypes](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/heapam.h#L1608-L1722),
 and [`pg_bitutils.h`, set-bit iteration](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/port/pg_bitutils.h#L140-L169).
 The supported heap AM and MVCC snapshot checks already precede the grouped
@@ -1227,3 +1227,40 @@ no text datum and does not copy a heap tuple into a slot. The fallback keeps
 Native old-snapshot, HOT, VACUUM, abort, crash, and paired CPU tests are required
 before this bridge can be enabled by default. An independent FFI/locking review
 remains open.
+
+### Inline positional phrase proof
+
+Review date: 26 September 2026. Baseline: merged PR #26,
+`c90df9c8166c55ad19ae1045aed9305c30e27c2d`. Modules:
+`mutable/document.rs`, `mutable/query.rs`, `mutable/grouped/scan.rs`, and
+`pin-pg/grouped.rs`. Exact PostgreSQL 18 authority:
+[index scanning and recheck semantics](https://www.postgresql.org/docs/18/index-scanning.html),
+[index access method callbacks](https://www.postgresql.org/docs/18/index-functions.html),
+and pinned upstream
+[`tidbitmap.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/nodes/tidbitmap.c),
+[`nodeBitmapHeapscan.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/executor/nodeBitmapHeapscan.c),
+and [`heapam_handler.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L115-L160).
+The access method must return all matching TIDs. A false recheck flag is valid
+only when index membership is exact; heap MVCC visibility remains PostgreSQL's
+responsibility. Bitmap scans do not support index-only tuple delivery.
+
+The opt-in `pin.enable_phrase_positions` GUC is superuser-only and default off.
+Only a root-level phrase of at most 64 normalized terms is eligible. The
+existing posting intersection finds candidates. For each candidate, PIN reads
+the current published, live owner at its full incarnation and validates the
+complete inline PD02 positional payload against its token and term counts.
+Success emits that root with `recheck=false`; absence emits nothing. A
+fragmented owner or a plan-budget fallback keeps `recheck=true`. The host's
+existing `pin.enable_exact_bitmap` gate, multiple-key rule, and bitmap sink
+still decide the final recheck flag. PostgreSQL retains HOT-chain and snapshot
+checks on every heap visit. There is no new FFI, unsafe operation, persistent
+format, WAL path, or heap visibility shortcut.
+
+Proof obligations: the indexed token normalization and position numbering must
+equal the SQL `pin.matches` phrase oracle; owner publication and incarnation
+must prevent a cross-version positional proof; every emitted exact root must
+match the whole predicate; and every unproven path must retain a heap recheck.
+Pure tests compare the indexed proof with the independent text oracle,
+including repeated terms and Unicode, and cover fragmented fallback. Native
+PostgreSQL lifecycle, recovery, and paired CPU measurements remain release
+gates. This change is experimental until those gates and review are complete.

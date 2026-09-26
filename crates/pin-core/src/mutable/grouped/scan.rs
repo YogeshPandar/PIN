@@ -386,11 +386,28 @@ pub fn scan_query<S: PageStore>(
     store: &mut S,
     query: &Query,
     memory_bytes: usize,
+    emit: impl FnMut(RootTid, bool) -> Result<()>,
+) -> Result<u64> {
+    scan_query_with_options(store, query, memory_bytes, false, emit)
+}
+
+/// preserves the grouped bitmap path while allowing the positional fallback.
+pub fn scan_query_with_options<S: PageStore>(
+    store: &mut S,
+    query: &Query,
+    memory_bytes: usize,
+    phrase_positions: bool,
     mut emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
     match scan_exact(store, query, memory_bytes, &mut ScalarSink(&mut emit))? {
         Some(count) => Ok(count),
-        None => super::super::scan_query_with_recheck(store, query, memory_bytes, emit),
+        None => super::super::scan_query_with_options(
+            store,
+            query,
+            memory_bytes,
+            phrase_positions,
+            emit,
+        ),
     }
 }
 

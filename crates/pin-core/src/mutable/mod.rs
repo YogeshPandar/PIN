@@ -19,7 +19,7 @@ pub use compact::{
     CompactMode, CompactStats, compact, compact_with_mode, recover as recover_compaction,
 };
 pub use count::{CountCandidate, scan_count};
-pub use query::{scan_query, scan_query_with_recheck};
+pub use query::{scan_query, scan_query_with_options, scan_query_with_recheck};
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
 pub use writer::{initialize, insert};

@@ -16,6 +16,7 @@ static ENABLE_SCAN: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_FRONTIER_ANCHORS: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_OWNER_FRONTIER: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_DELTA_SEAL: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_PHRASE_POSITIONS: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 const DELTA_SEAL_OWNERS: u64 = 512;
 
@@ -24,6 +25,14 @@ const _: () = assert!(core::mem::align_of::<SortRecord>() == 1);
 const _: () = assert!(SORT_BATCH == 256);
 
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_phrase_positions",
+        c"Prove short phrase matches from indexed positions when inline.",
+        c"Experimental bitmap scan path. Fragmented documents retain heap predicate rechecks.",
+        &ENABLE_PHRASE_POSITIONS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_frontier_anchors",
         c"Build and use experimental snapshot posting-chain seek anchors.",
@@ -214,8 +223,8 @@ pub(crate) fn scan<S: PageStore>(
     emit: impl FnMut(RootTid, bool) -> Result<()>,
 ) -> Result<u64> {
     if ENABLE_SCAN.get() {
-        grouped::scan_query(store, query, memory, emit)
+        grouped::scan_query_with_options(store, query, memory, ENABLE_PHRASE_POSITIONS.get(), emit)
     } else {
-        mutable::scan_query_with_recheck(store, query, memory, emit)
+        mutable::scan_query_with_options(store, query, memory, ENABLE_PHRASE_POSITIONS.get(), emit)
     }
 }
