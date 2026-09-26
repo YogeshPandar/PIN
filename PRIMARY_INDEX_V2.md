@@ -150,6 +150,15 @@ adapter's existence alone establishes no CPU benefit. If
 selective access does not save physical work, revise allocation before building
 the rest of v2 on top of it.
 
+The first direct-build input codec is a variable-length binary key for one
+distinct normalized term and heap root per document. A NUL terminator separates
+UTF-8 lexeme bytes from the big-endian root coordinate, so PostgreSQL's binary
+bytea sort can order term groups and roots without canonical dictionary page
+references. Term frequencies and positions need separate streams; this record
+does not repeat a long document's lexeme for every occurrence. The host sorter,
+exact vocabulary catalogue, immutable manifest publication, and read-only SQL
+prototype are still to be implemented and measured.
+
 For `amgetbitmap`, v2 must emit every candidate CTID for a supported predicate.
 It may clear a predicate recheck only after exact membership proof for every
 term and Boolean clause. PostgreSQL retains heap snapshot and HOT visibility,

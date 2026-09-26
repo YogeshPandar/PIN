@@ -1,7 +1,9 @@
 //! candidate primary format with independently addressable heap-page membership.
 //! this codec does not establish publication, liveness, or sql visibility.
 
+mod build_record;
 mod root;
+pub use build_record::{MAX_SORT_RECORD_BYTES, TermSortRecord, decode_sort_record};
 pub use root::{PrimaryRoot, ROOT_BYTES};
 
 use crate::codec::bytes::{Reader, Writer};

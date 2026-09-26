@@ -1601,3 +1601,21 @@ sentinels, wrong-kind `XX002`, and successful read afterward in one backend.
 The run proves the narrow copy and error recovery on this fixture. It does not
 prove a query CPU gain, crash replay, or v2 index publication. The package
 included local test-hook changes not yet committed when it was built.
+
+## Primary v2 direct-build sort key (2026-09-26)
+
+The proposed host primitive follows the existing PostgreSQL 18.6
+[`tuplesort_begin_datum` contract](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/utils/tuplesort.h)
+with `BYTEAOID` and `ByteaLessOperator`, as already used by
+`cshim/pin_grouped.c`. PostgreSQL's heap-build callback continues to supply
+evaluated indexed text and HOT root coordinates. The pure `TermSortRecord`
+encodes one normalized term/root pair per document as UTF-8 bytes, NUL, and
+big-endian `RootTid::key()`. PostgreSQL text cannot contain NUL and the codec
+rejects one explicitly. The term byte limit is 1,024; malformed lengths, roots,
+and UTF-8 fail closed. Independent tuple-order and malformed-input tests pass.
+
+This is a build-input codec, not a sort implementation. The C host sorter,
+catalogue, build callback dispatch, DML rejection for a static prototype,
+manifest publication, and SQL bitmap scan remain unimplemented. The record
+omits TF and positions to avoid repeating every token in a document; those
+streams are required before full TIN-like feature coverage.
