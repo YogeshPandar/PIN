@@ -437,6 +437,38 @@ impl Query {
         Some(count)
     }
 
+    /// Writes normalized terms in source order when the complete expression is
+    /// a disjunction of exact terms, returning the number written.
+    pub fn exact_disjunction_terms<'a>(&'a self, output: &mut [&'a str]) -> Option<usize> {
+        if !matches!(self.nodes[self.root].kind, Kind::Term(_) | Kind::Or(_, _))
+            || self
+                .nodes
+                .iter()
+                .any(|node| !matches!(node.kind, Kind::Term(_) | Kind::Or(_, _)))
+        {
+            return None;
+        }
+        let count = self
+            .nodes
+            .iter()
+            .filter(|node| matches!(node.kind, Kind::Term(_)))
+            .count();
+        if count > output.len() {
+            return None;
+        }
+        for (slot, term) in
+            output
+                .iter_mut()
+                .zip(self.nodes.iter().filter_map(|node| match &node.kind {
+                    Kind::Term(term) => Some(term.as_str()),
+                    _ => None,
+                }))
+        {
+            *slot = term;
+        }
+        Some(count)
+    }
+
     pub const fn retained_bytes(&self) -> usize {
         self.retained_bytes
     }
@@ -495,6 +527,10 @@ mod tests {
         query.exact_conjunction_terms(output)
     }
 
+    fn disjunction_terms<'a>(query: &'a Query, output: &mut [&'a str]) -> Option<usize> {
+        query.exact_disjunction_terms(output)
+    }
+
     #[test]
     fn exact_conjunction_accepts_single_and_parenthesized_and_terms() {
         let mut output = [""; 4];
@@ -533,5 +569,42 @@ mod tests {
         }
         let query = Query::parse("alpha", QueryLimits::default()).unwrap();
         assert_eq!(terms(&query, &mut []), None);
+    }
+
+    #[test]
+    fn exact_disjunction_accepts_single_and_nested_or_terms() {
+        let mut output = [""; 4];
+        let query = Query::parse("Alpha", QueryLimits::default()).unwrap();
+        assert_eq!(disjunction_terms(&query, &mut output), Some(1));
+        assert_eq!(&output[..1], &["alpha"]);
+
+        let query = Query::parse("(Alpha OR (BRAVO OR charlie))", QueryLimits::default()).unwrap();
+        assert_eq!(disjunction_terms(&query, &mut output), Some(3));
+        assert_eq!(&output[..3], &["alpha", "bravo", "charlie"]);
+    }
+
+    #[test]
+    fn exact_disjunction_rejects_other_expression_kinds() {
+        for source in [
+            "alpha AND bravo",
+            "\"alpha bravo\"",
+            "alpha*",
+            "NOT alpha",
+            "(alpha OR bravo) AND charlie",
+            "alpha OR NOT bravo",
+        ] {
+            let query = Query::parse(source, QueryLimits::default()).unwrap();
+            let mut output = [""; 8];
+            assert_eq!(disjunction_terms(&query, &mut output), None, "{source}");
+        }
+    }
+
+    #[test]
+    fn exact_disjunction_rejects_insufficient_output_capacity() {
+        let query = Query::parse("alpha OR bravo", QueryLimits::default()).unwrap();
+        let mut output = [""; 1];
+        assert_eq!(disjunction_terms(&query, &mut output), None);
+        let query = Query::parse("alpha", QueryLimits::default()).unwrap();
+        assert_eq!(disjunction_terms(&query, &mut []), None);
     }
 }
