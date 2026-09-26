@@ -107,6 +107,7 @@ pub trait PageStore {
     }
 }
 
+#[inline(always)]
 fn load<S: PageStore>(store: &mut S, block: u32, kind: PageKind) -> Result<Page> {
     let page = load_any(store, block)?;
     if page.kind() != kind {
@@ -115,6 +116,7 @@ fn load<S: PageStore>(store: &mut S, block: u32, kind: PageKind) -> Result<Page>
     Ok(page)
 }
 
+#[inline(always)]
 fn load_any<S: PageStore>(store: &mut S, block: u32) -> Result<Page> {
     store.interrupt()?;
     if block >= store.blocks()? {

@@ -174,6 +174,7 @@ impl Page {
     /// # Errors
     /// Rejects invalid block identities, lengths, magic, tags and reserved fields.
     /// A zero-length read represents a physically all-zero allocation orphan only.
+    #[inline(always)]
     pub fn read_with(block: u32, read: impl FnOnce(&mut [u8]) -> Result<usize>) -> Result<Self> {
         if block == NO_BLOCK {
             return Err(corrupt(8));
