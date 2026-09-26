@@ -1505,3 +1505,32 @@ crash behavior, and MVCC correctness remain explicit integration gates.
 Review status: focused independent set and malformed-format tests passed;
 `pin-core` Clippy passed with warnings denied. No unsafe code or host boundary
 was added. Native performance is unmeasured.
+
+# Primary v2 private page prototype (2026-09-26)
+
+Contracts reviewed: PostgreSQL 18 [generic WAL](https://www.postgresql.org/docs/18/generic-wal.html),
+[page layout](https://www.postgresql.org/docs/18/storage-page-layout.html),
+[index AM scan functions](https://www.postgresql.org/docs/18/index-functions.html), and
+the pinned PostgreSQL [`bufpage.h`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/storage/bufpage.h).
+The existing `pin_storage_read` checks the standard PostgreSQL page header and
+copies its payload under a shared buffer lock. `PgStore::commit` validates each
+private page and uses the existing generic WAL operation, with a full image for
+a newly extended block. This change adds no new FFI, unsafe operation, buffer
+lock sequence, or WAL resource manager.
+
+Local obligations: `PageKind::Primary` is tag 11 under the existing 16-byte
+`PIN2` private header. It requires a nonempty payload and `NO_BLOCK` successor.
+The codec rejects malformed directories and selected containers; the reader
+checks the caller-supplied complete `GroupKey` before reading a physical block.
+The current `PageStore` boundary still copies a whole selected page on a PG
+buffer read. A v2 metapage and manifest must bind the group identity and block
+ownership before SQL integration. The access method must preserve complete
+candidate CTIDs, PostgreSQL MVCC/HOT checks, bitmap lossification rechecks,
+and scan lifetime rules.
+
+Review: independent read-only page/WAL review found no concrete page format or
+generic WAL defect and identified the manifest ownership gate. Focused pure
+round-trip, malformed-format, selected-block, wrong-identity, and wrong-kind
+tests plus a `pin-pg` PG18 build check qualify only this prototype. Native
+execution, crash/restart, concurrent reader/writer, and paired CPU tests remain
+unrun for v2.

@@ -44,6 +44,7 @@ pub enum PageKind {
     SealedPostings,
     DirectPostings,
     Grouped,
+    Primary,
     Fragment,
     Free,
 }
@@ -229,6 +230,7 @@ impl Page {
                 7 => PageKind::SealedPostings,
                 9 => PageKind::DirectPostings,
                 10 => PageKind::Grouped,
+                11 => PageKind::Primary,
                 _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
             };
             let flags = reader.u8()?;
@@ -261,6 +263,7 @@ impl Page {
             PageKind::SealedPostings => 7,
             PageKind::DirectPostings => 9,
             PageKind::Grouped => 10,
+            PageKind::Primary => 11,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -316,6 +319,37 @@ impl Page {
 
     pub fn packed_dictionary_format(&self) -> bool {
         self.kind == PageKind::Dictionary && self.bytes[7] == 1
+    }
+
+    /// creates one private v2 prototype extent page; publication belongs to the caller.
+    pub fn primary(block: u32, payload: &[u8]) -> Result<Self> {
+        if payload.is_empty() || payload.len() > CAPACITY - HEADER {
+            return Err(Error::InvalidParameters);
+        }
+        let mut page = Self::new(block, PageKind::Primary)?;
+        page.len = HEADER + payload.len();
+        page.bytes[HEADER..page.len].copy_from_slice(payload);
+        Ok(page)
+    }
+
+    pub fn primary_payload(&self) -> Result<&[u8]> {
+        self.require(PageKind::Primary)?;
+        if self.len <= HEADER || self.next()? != NO_BLOCK {
+            return Err(corrupt(HEADER));
+        }
+        Ok(&self.bytes[HEADER..self.len])
+    }
+
+    pub fn primary_extent(&self, offset: u16, len: u16) -> Result<&[u8]> {
+        self.primary_payload()?;
+        let start = usize::from(offset);
+        let end = start
+            .checked_add(usize::from(len))
+            .ok_or(Error::InvalidState)?;
+        if start < HEADER || end > self.len || start == end {
+            return Err(corrupt(start));
+        }
+        Ok(&self.bytes[start..end])
     }
 
     pub fn postings(block: u32, term: TermRef) -> Result<Self> {
@@ -434,6 +468,9 @@ impl Page {
                 }
             }
             PageKind::Grouped => self.validate_grouped(layout)?,
+            PageKind::Primary => {
+                self.primary_payload()?;
+            }
             PageKind::Owners => {
                 let count = self.owner_count()?;
                 let mut payload = OWNER_HEADER + usize::from(count) * OWNER_BYTES;

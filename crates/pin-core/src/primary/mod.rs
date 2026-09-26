@@ -5,6 +5,7 @@ use crate::codec::bytes::{Reader, Writer};
 use crate::error::{Error, Result};
 use crate::grouped::GroupKey;
 use crate::mutable::page::{CAPACITY, NO_BLOCK};
+use crate::mutable::{PageStore, page::PageKind};
 use pin_kernels::grouped::OffsetMask;
 
 const MAGIC: &[u8; 4] = b"PNP2";
@@ -305,4 +306,24 @@ pub fn encode_offsets(max_offset: u16, offsets: &[u16]) -> Result<(ContainerKind
         }
     }
     Ok((kind, bytes))
+}
+
+/// reads only the private page carrying one selected heap-page container.
+pub fn read_offsets<S: PageStore>(
+    store: &mut S,
+    expected: GroupKey,
+    directory: Directory<'_>,
+    page: u8,
+) -> Result<Option<OffsetMask>> {
+    if directory.key() != expected || expected.layout() != store.layout() {
+        return Err(Error::InvalidState);
+    }
+    directory.offsets(page, |extent, output| {
+        let image = store.read(extent.block)?;
+        if image.kind() != PageKind::Primary {
+            return Err(Error::InvalidState);
+        }
+        output.copy_from_slice(image.primary_extent(extent.offset, extent.len)?);
+        Ok(())
+    })
 }

@@ -1,9 +1,10 @@
 # PIN primary index v2: architecture decision
 
 Status: implementation in progress, not a measured speedup or a deployable index.
-The first checked codec is `crates/pin-core/src/primary/mod.rs`; PostgreSQL does
-not yet read or write it. This decision supersedes the idea that another local
-grouped-bitmap read optimization will deliver TIN-like performance. The fuller
+The checked codec and private page adapter are in `pin-core`; the PostgreSQL
+access method does not yet build or query v2 indexes. This decision supersedes
+the idea that another local grouped-bitmap read optimization will deliver
+TIN-like performance. The fuller
 dependency and correctness analysis remains in `pin_next.md`.
 
 ## Why PIN is still behind the target
@@ -121,9 +122,25 @@ search speedup.
 ## Current code boundary
 
 `pin-core::primary` now checks a proposed v2 directory and sparse/dense
-per-page containers without PostgreSQL pointers. It deliberately has no
-manifest, WAL, liveness, or SQL integration. No existing index is changed by
-this branch. The next required code step is a PostgreSQL-backed extent reader
-that measures whether selective page access saves physical buffer work on a
-paired query. If it does not, revise the allocation layout before building
+per-page containers without PostgreSQL pointers. A prototype `Primary` page
+kind carries directories and payloads through the existing `PageStore` and
+generic WAL adapter. The selected-page reader fetches only referenced blocks
+and decodes only the selected extent. On PostgreSQL it still copies the entire
+selected PIN page from a buffer into private memory. There is no v2 metapage,
+manifest, liveness, writer, or SQL integration, and no existing index is changed
+by this branch. The caller must pass an expected group identity; this catches
+cross-directory misuse but is not a substitute for manifest ownership checks.
+The next required code step is native manifest/build integration, followed by
+paired query measurements of actual buffer reads, copied bytes, and CPU. If
+selective access does not save physical work, revise allocation before building
 the rest of v2 on top of it.
+
+For `amgetbitmap`, v2 must emit every candidate CTID for a supported predicate.
+It may clear a predicate recheck only after exact membership proof for every
+term and Boolean clause. PostgreSQL retains heap snapshot and HOT visibility,
+and bitmap lossification or residual quals can still require executor rechecks.
+Rescan must discard every per-scan iterator, cached directory, and generation
+pin before reopening under the new scan state. A manifest reference must cover
+the full bitmap production interval, with retirement delayed until readers
+release it. These are integration gates; the current codec does not implement
+them.
