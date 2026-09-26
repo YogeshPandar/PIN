@@ -1,0 +1,47 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN-selected-pages/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.66s
+     Running tests/g9_storage.rs (target/debug/deps/g9_storage-7ead65eb7a469b50)
+
+running 22 tests
+test build_memory_floor_is_checked_before_sort_or_storage_changes ... ok
+test conflicting_live_incarnations_never_publish_a_new_snapshot ... ok
+test complete_generation_boolean_matches_equal_the_independent_owner_oracle ... ok
+test broad_scan_reuses_liveness_catalog_leaves ... ok
+test boolean_group_bounds_preserve_holes_negation_and_last_heap_group ... ok
+test exact_sink_declines_before_output_and_propagates_consumer_errors ... ok
+test finished_sort_error_keeps_previous_snapshot_and_has_no_journal ... ok
+test grouped_scan_event_proves_selection_and_fallback_has_no_partial_output ... ok
+test legacy_metadata_and_small_budget_fallback_remain_readable ... ok
+test maintenance_cutoff_skips_unchanged_and_retired_only_snapshots ... ok
+test exact_page_sink_preserves_scalar_rare_and_page_dense_membership ... ok
+test multi_leaf_catalog_iteration_and_seek_keep_group_boundaries ... ok
+test new_writes_are_searchable_before_another_snapshot ... ok
+test multi_page_liveness_keeps_directory_widths_and_retirement_is_idempotent ... ok
+test selective_and_reads_only_first_physical_bitmap_pages ... ok
+test sparse_path_uses_no_group_pages_or_extra_reads_and_covers_new_writes ... ok
+test sparse_policy_covers_mutable_sealed_direct_and_retired_postings ... ok
+test sparse_policy_stops_at_its_explicit_posting_bound ... ok
+test every_atomic_publication_and_retirement_boundary_is_restartable ... ok
+test selective_and_seeks_past_common_groups_in_both_operand_orders ... ok
+test vacuum_clears_old_incarnations_before_slot_reuse ... ok
+test exact_page_count_does_not_mix_generations_across_long_frontier_and_reuse ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.10s
+
+     Running tests/issue14_anchors.rs (target/debug/deps/issue14_anchors-cab44bed9cba57de)
+
+running 11 tests
+test empty_snapshots_empty_documents_dead_terms_and_legacy_upgrades_are_readable ... ok
+test invalidation_commit_failure_preserves_the_safe_side_of_publication ... ok
+test mixed_boolean_oracle_covers_inline_anchors_new_terms_and_multi_page_suffixes ... ok
+test compaction_invalidates_before_every_rewrite_and_recovery_boundary ... ok
+test full_anchor_leaves_and_multi_level_lookups_do_not_require_root_at_journal_tail ... ok
+test legacy_fallback_and_cancellation_remain_correct_with_anchored_storage ... ok
+test unknown_metadata_versions_flags_and_missing_anchor_roots_fail_closed ... ok
+test unpublished_writes_and_reused_tids_never_create_false_conjunctions ... ok
+test publication_failures_reclaim_both_catalogs_without_losing_committed_matches ... ok
+test seek_event_proves_selection_and_errors_do_not_report_partial_success ... ok
+test related_write_work_skips_history_after_an_unrelated_incarnation_gap ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.52s
+

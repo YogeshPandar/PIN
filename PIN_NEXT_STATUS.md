@@ -116,3 +116,21 @@ The plan remains useful and incomplete: A1 packed canonical postings, A2 SQL
 BM25, B1 physical position directories and subsequent ranked/span execution are
 still substantial work. Recent bridge optimizations do not establish final
 production readiness or TIN parity.
+
+## Grouped read experiments after the plan
+
+Two additional plan ideas were tested on PostgreSQL 18.6: selected physical
+group-bitmap pages and direct consumption of inline grouped postings. The
+selected-page core test reduced two physical reads to one for each of the live
+and posting bitmaps, but native selective AND CPU increased from 81.7 to 87.3
+microseconds in the second paired run. Compact inline coordinates were mixed
+across forward and reversed runs and did not establish a selective AND gain.
+Neither implementation is enabled on main. The [raw native results and source
+diffs](docs/runs/2026-09-26-next-optimization-experiments/README.md) make the
+rejection reviewable.
+
+The next high-impact boundary remains B1: make compact CTID/page membership
+the primary read representation, with a direct sorted build and explicit
+publication/retirement lifecycle. A2 native BM25/top-k and A3 independently
+addressable positions are needed for TIN-like features; local grouped read
+tweaks do not supply them.
