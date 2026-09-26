@@ -295,10 +295,11 @@ impl<'a> CataloguePage<'a> {
         let mut previous = [0u8; MAX_TERM_BYTES];
         let mut current = [0u8; MAX_TERM_BYTES];
         let mut prev_len = 0usize;
-        let mut expected_restarts = Vec::new();
-        expected_restarts
+        let mut restarts = Vec::new();
+        restarts
             .try_reserve_exact(restart_count)
             .map_err(|_| Error::Allocation)?;
+        let mut restart_reader = Reader::new(&payload[data_end..]);
         let mut prior_ordinal = 0u64;
         let mut prior_base = 0u32;
         for ordinal in 0..count {
@@ -321,10 +322,24 @@ impl<'a> CataloguePage<'a> {
                 return Err(corrupt(start));
             }
             if ordinal.is_multiple_of(RESTART_EVERY) {
-                expected_restarts.push((
-                    u16::try_from(start - HEADER).map_err(|_| corrupt(start))?,
-                    lexeme.to_vec(),
-                ));
+                let key_offset = data_end
+                    .checked_add(restart_reader.offset())
+                    .and_then(|v| v.checked_add(4))
+                    .ok_or_else(|| corrupt(data_end))?;
+                let off = restart_reader.u16()?;
+                let n = usize::from(restart_reader.u16()?);
+                if off != u16::try_from(start - HEADER).map_err(|_| corrupt(start))?
+                    || n != len
+                    || restart_reader.take(n)? != lexeme
+                {
+                    return Err(corrupt(data_end));
+                }
+                restarts.push(Restart {
+                    record_offset: off,
+                    key_offset: u16::try_from(key_offset).map_err(|_| corrupt(key_offset))?,
+                    key_len: n as u16,
+                    row: (ordinal / RESTART_EVERY) * RESTART_EVERY,
+                });
             }
             previous[..len].copy_from_slice(lexeme);
             prev_len = len;
@@ -335,29 +350,7 @@ impl<'a> CataloguePage<'a> {
         if pos != data_end {
             return Err(corrupt(pos));
         }
-        let mut idx = Reader::new(&payload[data_end..]);
-        let mut restarts = Vec::new();
-        restarts
-            .try_reserve_exact(expected_restarts.len())
-            .map_err(|_| Error::Allocation)?;
-        for (row, (expected_off, expected_key)) in expected_restarts.into_iter().enumerate() {
-            let key_offset = data_end
-                .checked_add(idx.offset())
-                .and_then(|v| v.checked_add(4))
-                .ok_or_else(|| corrupt(data_end))?;
-            let off = idx.u16()?;
-            let n = usize::from(idx.u16()?);
-            if off != expected_off || n != expected_key.len() || idx.take(n)? != expected_key {
-                return Err(corrupt(data_end));
-            }
-            restarts.push(Restart {
-                record_offset: off,
-                key_offset: u16::try_from(key_offset).map_err(|_| corrupt(key_offset))?,
-                key_len: n as u16,
-                row: (row * usize::from(RESTART_EVERY)) as u16,
-            });
-        }
-        idx.finish()?;
+        restart_reader.finish()?;
         Ok(Self {
             payload,
             count,
@@ -387,12 +380,45 @@ impl<'a> CataloguePage<'a> {
 
     /// Finds exact bytewise lexeme and writes it nowhere; decoded term identities are stable.
     pub fn lookup(&self, key: &[u8]) -> Result<Option<CatalogueEntry>> {
-        let rows = self.lookup_range(key)?;
-        if rows.is_empty() {
-            return Ok(None);
-        }
+        self.lookup_counted(key, &mut || {})
+    }
+
+    fn lookup_counted<F>(&self, key: &[u8], mut decoded: F) -> Result<Option<CatalogueEntry>>
+    where
+        F: FnMut(),
+    {
+        let restart = self.restarts.partition_point(|item| {
+            let start = usize::from(item.key_offset);
+            let end = start + usize::from(item.key_len);
+            &self.payload[start..end] < key
+        });
+        let slot = restart.saturating_sub(1);
+        let mut index = self.restarts.get(slot).map_or(0, |item| item.row);
+        let mut pos = self
+            .restarts
+            .get(slot)
+            .map_or(HEADER, |item| HEADER + usize::from(item.record_offset));
+        let mut length = 0usize;
         let mut scratch = [0u8; MAX_TERM_BYTES];
-        Ok(Some(self.entry(rows.start, &mut scratch)?.1))
+        while index < self.count {
+            let prior = scratch;
+            let (n, entry, next) = decode_record(
+                self.payload,
+                pos,
+                self.data_end,
+                &prior[..length],
+                &mut scratch,
+            )?;
+            decoded();
+            length = n;
+            pos = next;
+            match scratch[..length].cmp(key) {
+                std::cmp::Ordering::Equal => return Ok(Some(entry)),
+                std::cmp::Ordering::Greater => return Ok(None),
+                std::cmp::Ordering::Less => index += 1,
+            }
+        }
+        Ok(None)
     }
 
     /// Returns all group rows for this term on the page. Adjacent pages can also
@@ -683,6 +709,41 @@ mod tests {
     }
 
     #[test]
+    fn exact_lookup_decodes_one_record_for_a_repeated_term_run() {
+        let mut builder = CatalogueBuilder::new(1).unwrap();
+        for i in 0..200u32 {
+            assert!(
+                builder
+                    .try_push(
+                        b"shared",
+                        1,
+                        GroupAddress {
+                            group_base: i * 256,
+                            block: 1000 + i,
+                            offset: 16,
+                            len: 32,
+                        }
+                    )
+                    .unwrap()
+            );
+        }
+        let encoded = builder.finish_page_at(7).unwrap();
+        let page = CataloguePage::open(&encoded.payload).unwrap();
+
+        // Before direct lookup, lookup_range decoded every matching row, then
+        // entry decoded the first row again. The optimized path decodes once.
+        let old_decode_work = page.lookup_range(b"shared").unwrap().len() + 1;
+        let mut decode_work = 0;
+        let result = page
+            .lookup_counted(b"shared", &mut || decode_work += 1)
+            .unwrap();
+        assert!(result.is_some());
+        assert_eq!(decode_work, 1);
+        assert_eq!(old_decode_work, page.len() + 1);
+        assert!(decode_work * 100 < old_decode_work);
+    }
+
+    #[test]
     fn deferred_blocks_obey_serial_extend_and_do_not_consume_full_row() {
         let mut store = SerialStore::default();
         let mut builder = CatalogueBuilder::new(1).unwrap();
@@ -718,6 +779,9 @@ mod tests {
         let mut bad = pages[0].payload.clone();
         bad[0] ^= 1;
         assert!(CataloguePage::open(&bad).is_err());
+        let mut bad_restart = pages[0].payload.clone();
+        *bad_restart.last_mut().unwrap() ^= 1;
+        assert!(CataloguePage::open(&bad_restart).is_err());
         let mut b = CatalogueBuilder::new(1).unwrap();
         assert!(
             b.try_push(
