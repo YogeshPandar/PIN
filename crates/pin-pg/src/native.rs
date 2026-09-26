@@ -131,6 +131,7 @@ unsafe extern "C-unwind" {
         direction: pg_sys::ScanDirection::Type,
     ) -> bool;
     pub(crate) fn pin_opclass_validate(opclass: pg_sys::Oid) -> bool;
+    pub(crate) fn pin2_opclass_validate(opclass: pg_sys::Oid) -> bool;
     pub(crate) fn pin_opclass_adjust(
         opclass: pg_sys::Oid,
         operators: *mut pg_sys::List,

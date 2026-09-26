@@ -50,6 +50,7 @@ extern bool pin_scan_work_claim(IndexScanDesc scan, const uint64 *expected,
                                 const uint64 *next, uint32 count);
 extern bool pin_scan_gettuple(IndexScanDesc scan, ScanDirection direction);
 extern bool pin_opclass_validate(Oid opclass);
+extern bool pin2_opclass_validate(Oid opclass);
 extern void pin_opclass_adjust(Oid opclass, List *operators, List *functions);
 extern void pin_index_cost(struct PlannerInfo *root, struct IndexPath *path, double loops,
                            Cost *startup, Cost *total, Selectivity *selectivity,

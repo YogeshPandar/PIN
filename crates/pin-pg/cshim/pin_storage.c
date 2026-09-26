@@ -665,6 +665,32 @@ pin_opclass_validate(Oid opclass)
     return valid;
 }
 
+bool
+pin2_opclass_validate(Oid opclass)
+{
+    HeapTuple tuple = SearchSysCache1(CLAOID, ObjectIdGetDatum(opclass));
+    Form_pg_opclass form;
+    Oid family;
+    bool valid;
+    if (!HeapTupleIsValid(tuple))
+        return false;
+    form = (Form_pg_opclass) GETSTRUCT(tuple);
+    family = form->opcfamily;
+    valid = form->opcnamespace == get_namespace_oid("pin", false) &&
+            strcmp(NameStr(form->opcname), "text2_ops") == 0 &&
+            form->opcmethod == get_am_oid("pin2", false) &&
+            form->opcintype == TEXTOID && !OidIsValid(form->opckeytype);
+    ReleaseSysCache(tuple);
+    if (valid)
+    {
+        Oid query_type = pin_query_type();
+        Oid expected = pin_match_operator(query_type);
+        valid = OidIsValid(expected) &&
+                get_opfamily_member(family, TEXTOID, query_type, 1) == expected;
+    }
+    return valid;
+}
+
 void
 pin_opclass_adjust(Oid opclass, List *operators, List *functions)
 {

@@ -569,7 +569,7 @@ unsafe extern "C-unwind" fn rescan(
     unsafe { prepare_tuple_scan(scan) };
 }
 
-unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<(Query, bool)> {
+pub(crate) unsafe fn chosen_query(scan: pg_sys::IndexScanDesc) -> Option<(Query, bool)> {
     // safety: core owns the descriptor, current mvcc snapshot and key array.
     unsafe { native::call(|| native::pin_scan_validate(scan)) };
     // safety: c validated the dimensions; copy scalars rather than retain field borrows.
