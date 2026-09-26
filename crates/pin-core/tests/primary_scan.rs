@@ -128,3 +128,47 @@ fn and_prunes_pages_then_short_circuits_empty_offsets() {
     assert_eq!(union[0].1[0], 0b111);
     assert_eq!(union[1].1[0], 0b111);
 }
+
+#[test]
+fn inline_singletons_intersect_without_posting_page_reads() {
+    let mut store = CountStore::default();
+    mutable::initialize(&mut store).unwrap();
+    let key = GroupKey::new(
+        Generation::new(1).unwrap(),
+        SegmentId::new(1).unwrap(),
+        256,
+        store.layout(),
+    )
+    .unwrap();
+    let left = encode_directory(key, 1, &[PageDescriptor::singleton(7, 12)]).unwrap();
+    let right = encode_directory(key, 2, &[PageDescriptor::singleton(7, 12)]).unwrap();
+    let directories = [
+        Directory::open(&left).unwrap(),
+        Directory::open(&right).unwrap(),
+    ];
+    let mut output = Vec::new();
+    let work = scan_and(&mut store, key, &directories, |block, mask| {
+        output.push((block, mask));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(work.containers_read, 0);
+    assert_eq!(work.candidate_offsets, 1);
+    assert_eq!(store.reads, 0);
+    assert_eq!(output.len(), 1);
+    assert_eq!(output[0].0, 263);
+    assert_eq!(output[0].1[0], 1 << 11);
+
+    let other = encode_directory(key, 3, &[PageDescriptor::singleton(7, 13)]).unwrap();
+    let directories = [
+        Directory::open(&left).unwrap(),
+        Directory::open(&other).unwrap(),
+    ];
+    let work = scan_and(&mut store, key, &directories, |_, _| {
+        panic!("unexpected match")
+    })
+    .unwrap();
+    assert_eq!(work.containers_read, 0);
+    assert_eq!(work.candidate_offsets, 0);
+    assert_eq!(store.reads, 0);
+}

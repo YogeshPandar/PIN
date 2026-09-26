@@ -56,6 +56,7 @@ pub const MAX_DIRECTORY_BYTES: usize = HEADER + 256 * ENTRY;
 pub enum ContainerKind {
     Sparse = 1,
     Dense = 2,
+    Inline = 3,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -74,9 +75,29 @@ pub struct PageDescriptor {
 }
 
 impl PageDescriptor {
+    /// stores one heap offset in the directory without a posting extent.
+    pub fn singleton(page: u8, offset: u16) -> Self {
+        Self {
+            page,
+            kind: ContainerKind::Inline,
+            count: 1,
+            extent: Extent {
+                block: 0,
+                offset,
+                len: 0,
+            },
+        }
+    }
+
     fn valid(self, max_offset: u16) -> bool {
         let dense_len = usize::from(max_offset).div_ceil(8);
         let length = usize::from(self.extent.len);
+        if self.kind == ContainerKind::Inline {
+            return self.count == 1
+                && self.extent.block == 0
+                && self.extent.len == 0
+                && (1..=max_offset).contains(&self.extent.offset);
+        }
         self.count != 0
             && self.count <= max_offset
             && self.extent.block != 0
@@ -87,6 +108,7 @@ impl PageDescriptor {
                     length == usize::from(self.count) * 2 && length < dense_len
                 }
                 ContainerKind::Dense => length == dense_len,
+                ContainerKind::Inline => false,
             }
     }
 }
@@ -182,6 +204,7 @@ impl<'a> Directory<'a> {
             let kind = match reader.u8()? {
                 1 => ContainerKind::Sparse,
                 2 => ContainerKind::Dense,
+                3 => ContainerKind::Inline,
                 _ => return Err(Error::InvalidState),
             };
             let descriptor = PageDescriptor {
@@ -241,6 +264,7 @@ impl<'a> Directory<'a> {
         let kind = match reader.u8()? {
             1 => ContainerKind::Sparse,
             2 => ContainerKind::Dense,
+            3 => ContainerKind::Inline,
             _ => return Err(Error::InvalidState),
         };
         let descriptor = PageDescriptor {
@@ -268,6 +292,12 @@ impl<'a> Directory<'a> {
         let Some(descriptor) = self.page(page)? else {
             return Ok(None);
         };
+        if descriptor.kind == ContainerKind::Inline {
+            let bit = usize::from(descriptor.extent.offset - 1);
+            let mut offsets = [0u64; 8];
+            offsets[bit / 64] = 1 << (bit % 64);
+            return Ok(Some(offsets));
+        }
         let mut bytes = [0u8; 64];
         let length = usize::from(descriptor.extent.len);
         fetch(descriptor.extent, &mut bytes[..length])?;
@@ -294,6 +324,7 @@ impl<'a> Directory<'a> {
                     return Err(Error::InvalidState);
                 }
             }
+            ContainerKind::Inline => return Err(Error::InvalidState),
         }
         if offsets.iter().map(|word| word.count_ones()).sum::<u32>() != u32::from(descriptor.count)
         {
@@ -415,14 +446,22 @@ pub fn scan_and<S: PageStore>(
             }
             let mut offsets = read_offsets(store, expected, directories[lead], page)?
                 .ok_or(Error::InvalidState)?;
-            work.containers_read += 1;
+            work.containers_read += u32::from(
+                directories[lead]
+                    .page(page)?
+                    .ok_or(Error::InvalidState)?
+                    .kind
+                    != ContainerKind::Inline,
+            );
             for (index, directory) in directories.iter().enumerate() {
                 if index == lead {
                     continue;
                 }
                 let other =
                     read_offsets(store, expected, *directory, page)?.ok_or(Error::InvalidState)?;
-                work.containers_read += 1;
+                work.containers_read += u32::from(
+                    directory.page(page)?.ok_or(Error::InvalidState)?.kind != ContainerKind::Inline,
+                );
                 for (word, rhs) in offsets.iter_mut().zip(other) {
                     *word &= rhs;
                 }
@@ -480,7 +519,10 @@ pub fn scan_or<S: PageStore>(
             let mut offsets = [0u64; 8];
             for directory in directories {
                 if let Some(other) = read_offsets(store, expected, *directory, page)? {
-                    work.containers_read += 1;
+                    work.containers_read += u32::from(
+                        directory.page(page)?.ok_or(Error::InvalidState)?.kind
+                            != ContainerKind::Inline,
+                    );
                     for (word, rhs) in offsets.iter_mut().zip(other) {
                         *word |= rhs;
                     }

@@ -122,6 +122,39 @@ fn corrupt_directory_and_selected_payload_fail_closed() {
 }
 
 #[test]
+fn inline_descriptor_rejects_invalid_offsets_and_physical_references() {
+    let good = PageDescriptor::singleton(4, 70);
+    let encoded = encode_directory(key(70), 1, &[good]).unwrap();
+    let directory = Directory::open(&encoded).unwrap();
+    let mask = directory
+        .offsets(4, |_, _| panic!("inline read"))
+        .unwrap()
+        .unwrap();
+    assert_eq!(mask[1], 1 << 5);
+    for bad in [
+        PageDescriptor::singleton(4, 0),
+        PageDescriptor::singleton(4, 71),
+        PageDescriptor { count: 2, ..good },
+        PageDescriptor {
+            extent: Extent {
+                block: 1,
+                ..good.extent
+            },
+            ..good
+        },
+        PageDescriptor {
+            extent: Extent {
+                len: 1,
+                ..good.extent
+            },
+            ..good
+        },
+    ] {
+        assert!(encode_directory(key(70), 1, &[bad]).is_err());
+    }
+}
+
+#[test]
 fn dense_tail_and_invalid_final_heap_coordinate_are_rejected() {
     let offsets: Vec<u16> = (1..=70).collect();
     let (kind, payload) = encode_offsets(70, &offsets).unwrap();

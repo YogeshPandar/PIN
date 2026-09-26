@@ -1634,3 +1634,17 @@ validated Primary page for the host WAL adapter. This adds no FFI or new WAL
 call; the builder must choose when to allocate and commit each page, and it
 must publish references only after those pages are durable. Focused packing,
 capacity, and readback tests pass. Native packing policy remains unmeasured.
+
+## Primary v2 inline singleton directory (2026-09-26)
+
+PlanetScale's [TIN architecture](https://planetscale.com/blog/introducing-tin)
+describes direct storage for terms occurring once, rather than forcing a
+bitmap. The existing checked v2 directory has room for one offset within its
+12-byte page descriptor. Kind 3 stores `count=1`, `block=0`, `len=0`, and the
+one-based heap offset in the descriptor's offset field. The decoder validates
+that exact shape and returns the offset mask without calling `PageStore`.
+`scan_and` and `scan_or` count actual posting extents fetched, so a pure
+two-term singleton conjunction has zero such reads. No PostgreSQL, pgrx, WAL,
+unsafe, or SQL boundary changes. Focused malformed-descriptor and independent
+result/read-count oracles pass. This is not yet a backend CPU result because the
+SQL builder and reader do not use v2.

@@ -62,6 +62,11 @@ container. Physical allocation must preserve this property: packing unrelated
 containers into the same PostgreSQL buffer page could erase the I/O win, even
 though the codec calls only for the selected extent. A native benchmark must
 count actual buffer reads, copied bytes, and decoded bytes.
+The v2 descriptor can now store a singleton heap offset directly. A focused
+pure AND fixture returns one exact CTID from two singleton directories with
+zero posting extent reads, and rejects malformed inline references. This is a
+codec work reduction for rare matches; the SQL builder does not yet emit inline
+descriptors, so it is not a measured query speedup.
 
 The term directory will use logical term ordinals, not canonical dictionary
 page offsets. Sorted vocabulary blocks must support bounded exact, prefix,
