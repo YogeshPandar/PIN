@@ -96,3 +96,9 @@ normal and dirty heap lifecycle tests, backend CPU and p95/p99 latency, index
 buffer traffic, write WAL volume, and concurrency/recovery qualification. A
 speedup on a count-only or exact bitmap path does not establish ranked or row
 retrieval parity.
+
+The next architecture specification is now tracked in [pin_next.md](pin_next.md).
+Its A3 positional bridge is being implemented first: selected term views over
+inline/fragmented PD02, shortest-list phrase anchoring, and bounded reusable
+payload scratch. Packed primary storage and native SQL BM25 remain outstanding;
+this bridge alone does not establish the full feature/performance target.

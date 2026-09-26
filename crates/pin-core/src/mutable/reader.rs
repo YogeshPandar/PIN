@@ -1,6 +1,7 @@
 //! Bounded candidate streaming with captured chain tails and one owner-page cache.
-//! Readers never follow document payloads, so fragment reclamation cannot invalidate
-//! their borrows. The host must use MVCC and recheck every emitted root tuple.
+//! This conservative reader never follows document payloads. The exact phrase
+//! reader in query.rs follows fragments under the same structural barrier.
+//! The host must use MVCC and recheck every root emitted by this reader.
 
 use super::page::{NO_BLOCK, OwnerRef, Page, PageKind};
 use super::{PageStore, find_term, following, load, load_posting, posting_next};

@@ -220,21 +220,123 @@ pub fn phrase_matches(
     if tokens != expected_tokens || terms != expected_terms {
         return Err(Error::InvalidDocument);
     }
-    let Some(first) = positions[0] else {
-        return Ok(false);
-    };
-    if positions[..phrase.len()].iter().any(Option::is_none) {
+    match_phrase(&positions[..phrase.len()])
+}
+
+/// selected views borrow one complete payload; unused position deltas stay encoded.
+/// full cross-term position uniqueness is checked by `validate`, not this reader.
+pub struct SelectedPositions<'a> {
+    positions: [Option<Positions<'a>>; 64],
+    selected: usize,
+    pub directory_terms: u32,
+    pub selected_positions: u32,
+}
+
+impl<'a> SelectedPositions<'a> {
+    /// validates the directory and selected streams, without a document-sized bitset.
+    pub fn read(
+        bytes: &'a [u8],
+        expected_tokens: u32,
+        expected_terms: u32,
+        wanted: &[String],
+    ) -> Result<Self> {
+        if wanted.is_empty() || wanted.len() > 64 || bytes.len() > MAX_DOCUMENT_BYTES {
+            return Err(Error::Limit("selected positions"));
+        }
+        let mut reader = Reader::new(bytes);
+        if reader.take(4)? != b"PD02" || reader.u32()? != PROFILE_ID {
+            return Err(Error::InvalidProfile);
+        }
+        let tokens = reader.u32()?;
+        let terms = reader.u32()?;
+        if tokens != expected_tokens
+            || terms != expected_terms
+            || tokens > MAX_DOCUMENT_TOKENS
+            || terms > tokens
+        {
+            return Err(Error::InvalidDocument);
+        }
+        if terms == 0 {
+            reader.finish()?;
+        }
+        let mut result = Self {
+            positions: [None; 64],
+            selected: wanted.len(),
+            directory_terms: terms,
+            selected_positions: 0,
+        };
+        let mut previous = "";
+        let mut total = 0u32;
+        for entry in (DocumentTerms {
+            reader,
+            remaining: terms,
+        }) {
+            let entry = entry?;
+            if entry.term <= previous {
+                return Err(Error::InvalidDocument);
+            }
+            previous = entry.term;
+            let mut encoded = Reader::new(entry.positions);
+            let count = encoded.u32()?;
+            if count == 0 || count > tokens || count as usize > encoded.remaining() {
+                return Err(Error::InvalidDocument);
+            }
+            total = total.checked_add(count).ok_or(Error::InvalidDocument)?;
+            if !wanted.iter().any(|name| name == entry.term) {
+                continue;
+            }
+            let view = entry.positions()?;
+            for position in view.iter() {
+                if position? >= tokens {
+                    return Err(Error::InvalidDocument);
+                }
+            }
+            result.selected_positions = result
+                .selected_positions
+                .checked_add(count)
+                .ok_or(Error::InvalidDocument)?;
+            for (index, name) in wanted.iter().enumerate() {
+                if name == entry.term {
+                    result.positions[index] = Some(view);
+                }
+            }
+        }
+        if total != tokens {
+            return Err(Error::InvalidDocument);
+        }
+        Ok(result)
+    }
+
+    pub fn phrase_matches(&self) -> Result<bool> {
+        match_phrase(&self.positions[..self.selected])
+    }
+}
+
+fn match_phrase(positions: &[Option<Positions<'_>>]) -> Result<bool> {
+    if positions.iter().any(Option::is_none) {
         return Ok(false);
     }
+    let anchor = positions
+        .iter()
+        .enumerate()
+        .min_by_key(|(_, view)| view.map_or(u32::MAX, Positions::len))
+        .map(|(index, _)| index)
+        .ok_or(Error::InvalidState)?;
+    let first = positions[anchor].ok_or(Error::InvalidState)?;
     let mut cursors = [const { None }; 64];
-    for index in 1..phrase.len() {
+    for index in 0..positions.len() {
         cursors[index] = positions[index].map(Positions::iter);
     }
     let mut current = [None; 64];
-    for start in first.iter() {
-        let start = start?;
+    for position in first.iter() {
+        let Some(start) = position?.checked_sub(anchor as u32) else {
+            continue;
+        };
         let mut matched = true;
-        for index in 1..phrase.len() {
+        for index in 0..positions.len() {
+            if index == anchor {
+                continue;
+            }
             let Some(target) = start.checked_add(index as u32) else {
                 return Ok(false);
             };

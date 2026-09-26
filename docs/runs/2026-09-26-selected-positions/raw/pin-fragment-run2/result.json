@@ -1,0 +1,1814 @@
+{
+  "revision": "unrecorded",
+  "server": "PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit",
+  "rows": 256,
+  "samples": [
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 8153264692,
+        "runqueue_ns": 1623279
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 9320325907,
+        "runqueue_ns": 1667169
+      },
+      "cpu": {
+        "cpu_ns": 1167061215,
+        "runqueue_ns": 43890,
+        "cpu_us_per_query": 194510.2025,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.106085,
+        195.86088,
+        195.392115,
+        193.830767,
+        193.838515,
+        194.492338
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 9358315422,
+        "runqueue_ns": 1672793
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 9470448541,
+        "runqueue_ns": 1686034
+      },
+      "cpu": {
+        "cpu_ns": 112133119,
+        "runqueue_ns": 13241,
+        "cpu_us_per_query": 18688.853166666668,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.002825,
+        18.828955,
+        18.828457,
+        18.730538,
+        18.777218,
+        18.854262
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 12200732518,
+        "runqueue_ns": 1777265
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 20422705912,
+        "runqueue_ns": 2042116
+      },
+      "cpu": {
+        "cpu_ns": 8221973394,
+        "runqueue_ns": 264851,
+        "cpu_us_per_query": 1370328.899,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1389.555757,
+        1363.456125,
+        1365.456297,
+        1369.354962,
+        1369.267205,
+        1366.561873
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 23165456158,
+        "runqueue_ns": 2151245
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 31411247508,
+        "runqueue_ns": 3102941
+      },
+      "cpu": {
+        "cpu_ns": 8245791350,
+        "runqueue_ns": 951696,
+        "cpu_us_per_query": 1374298.5583333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1370.526419,
+        1369.908322,
+        1374.714163,
+        1372.678642,
+        1368.436764,
+        1392.050269
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 31452246209,
+        "runqueue_ns": 3116657
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 31571222113,
+        "runqueue_ns": 3156463
+      },
+      "cpu": {
+        "cpu_ns": 118975904,
+        "runqueue_ns": 39806,
+        "cpu_us_per_query": 19829.317333333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        23.4012,
+        19.308686,
+        19.287964,
+        19.711104,
+        19.311038,
+        19.265434
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 31965974847,
+        "runqueue_ns": 3156463
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 33140907845,
+        "runqueue_ns": 3183781
+      },
+      "cpu": {
+        "cpu_ns": 1174932998,
+        "runqueue_ns": 27318,
+        "cpu_us_per_query": 195822.16633333336,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.873455,
+        196.461533,
+        196.070774,
+        196.539316,
+        195.785524,
+        195.800596
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 33536728248,
+        "runqueue_ns": 3215786
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 34717050287,
+        "runqueue_ns": 3225437
+      },
+      "cpu": {
+        "cpu_ns": 1180322039,
+        "runqueue_ns": 9651,
+        "cpu_us_per_query": 196720.33983333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        197.331976,
+        197.91097,
+        195.126799,
+        196.413335,
+        196.584179,
+        198.546845
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 34755302148,
+        "runqueue_ns": 3225437
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 34867454143,
+        "runqueue_ns": 3225437
+      },
+      "cpu": {
+        "cpu_ns": 112151995,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 18691.99916666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.022005,
+        18.833015,
+        18.938724,
+        18.70978,
+        18.775394,
+        18.64835
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 37618075334,
+        "runqueue_ns": 3317745
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 45861101772,
+        "runqueue_ns": 3557214
+      },
+      "cpu": {
+        "cpu_ns": 8243026438,
+        "runqueue_ns": 239469,
+        "cpu_us_per_query": 1373837.7396666668,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1369.455417,
+        1375.95834,
+        1376.215997,
+        1372.79298,
+        1379.296478,
+        1370.910628
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 48599093887,
+        "runqueue_ns": 3626753
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 56842526253,
+        "runqueue_ns": 3919733
+      },
+      "cpu": {
+        "cpu_ns": 8243432366,
+        "runqueue_ns": 292980,
+        "cpu_us_per_query": 1373905.3943333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1370.171798,
+        1376.726243,
+        1371.90889,
+        1393.793698,
+        1369.50621,
+        1363.157466
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 56888779274,
+        "runqueue_ns": 3919733
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 57001375780,
+        "runqueue_ns": 3927692
+      },
+      "cpu": {
+        "cpu_ns": 112596506,
+        "runqueue_ns": 7959,
+        "cpu_us_per_query": 18766.084333333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.173908,
+        18.942414,
+        18.901933,
+        18.844532,
+        18.868499,
+        18.705706
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 57391496264,
+        "runqueue_ns": 3948770
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 58565638774,
+        "runqueue_ns": 3983089
+      },
+      "cpu": {
+        "cpu_ns": 1174142510,
+        "runqueue_ns": 34319,
+        "cpu_us_per_query": 195690.41833333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.476235,
+        195.276735,
+        195.316456,
+        195.395276,
+        197.275198,
+        196.810272
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 58954719594,
+        "runqueue_ns": 4000937
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 60121042152,
+        "runqueue_ns": 4056752
+      },
+      "cpu": {
+        "cpu_ns": 1166322558,
+        "runqueue_ns": 55815,
+        "cpu_us_per_query": 194387.093,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.174395,
+        196.011352,
+        194.241865,
+        193.872741,
+        194.106464,
+        194.422598
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 60158986831,
+        "runqueue_ns": 4056752
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 60271198561,
+        "runqueue_ns": 4056752
+      },
+      "cpu": {
+        "cpu_ns": 112211730,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 18701.955,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        18.863212,
+        18.880154,
+        18.866138,
+        18.890268,
+        18.814723,
+        18.710425
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 63001423709,
+        "runqueue_ns": 4153267
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 71194554030,
+        "runqueue_ns": 4445888
+      },
+      "cpu": {
+        "cpu_ns": 8193130321,
+        "runqueue_ns": 292621,
+        "cpu_us_per_query": 1365521.7201666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1373.29763,
+        1364.323327,
+        1366.186485,
+        1363.122904,
+        1362.150285,
+        1365.79941
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 73917838352,
+        "runqueue_ns": 4538468
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 83064790487,
+        "runqueue_ns": 12633030
+      },
+      "cpu": {
+        "cpu_ns": 9146952135,
+        "runqueue_ns": 8094562,
+        "cpu_us_per_query": 1524492.0225,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1362.980534,
+        1389.923879,
+        1618.825685,
+        2052.844461,
+        1367.899817,
+        1364.006013
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 83102961330,
+        "runqueue_ns": 12634979
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 83215850556,
+        "runqueue_ns": 12643023
+      },
+      "cpu": {
+        "cpu_ns": 112889226,
+        "runqueue_ns": 8044,
+        "cpu_us_per_query": 18814.871,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.044142,
+        18.980573,
+        18.977522,
+        18.830044,
+        18.981949,
+        18.901121
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 83606602354,
+        "runqueue_ns": 12668127
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 84780966708,
+        "runqueue_ns": 12681762
+      },
+      "cpu": {
+        "cpu_ns": 1174364354,
+        "runqueue_ns": 13635,
+        "cpu_us_per_query": 195727.39233333335,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.269277,
+        195.252453,
+        196.074811,
+        196.06981,
+        196.34294,
+        196.617919
+      ],
+      "answer": "128"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 88675856705,
+        "runqueue_ns": 12789061
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 89808311640,
+        "runqueue_ns": 12830065
+      },
+      "cpu": {
+        "cpu_ns": 1132454935,
+        "runqueue_ns": 41004,
+        "cpu_us_per_query": 188742.48916666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        189.008022,
+        189.065292,
+        188.791783,
+        189.001521,
+        189.142841,
+        188.836986
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 89846541772,
+        "runqueue_ns": 12830065
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 89960153232,
+        "runqueue_ns": 12830065
+      },
+      "cpu": {
+        "cpu_ns": 113611460,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 18935.243333333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.094611,
+        18.919506,
+        19.038971,
+        19.061852,
+        19.14628,
+        19.191124
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 92688244499,
+        "runqueue_ns": 13019352
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 100860403875,
+        "runqueue_ns": 13254973
+      },
+      "cpu": {
+        "cpu_ns": 8172159376,
+        "runqueue_ns": 235621,
+        "cpu_us_per_query": 1362026.5626666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1373.586027,
+        1359.589029,
+        1358.770262,
+        1364.262993,
+        1359.690273,
+        1358.136818
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 103601966886,
+        "runqueue_ns": 13349401
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 111773137779,
+        "runqueue_ns": 13640441
+      },
+      "cpu": {
+        "cpu_ns": 8171170893,
+        "runqueue_ns": 291040,
+        "cpu_us_per_query": 1361861.8155,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1363.740043,
+        1362.930893,
+        1359.881591,
+        1364.643617,
+        1359.505677,
+        1362.459368
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 111811750658,
+        "runqueue_ns": 13640441
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 111926343121,
+        "runqueue_ns": 13640441
+      },
+      "cpu": {
+        "cpu_ns": 114592463,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 19098.743833333334,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.273365,
+        19.041436,
+        19.322061,
+        19.149621,
+        19.241289,
+        19.423638
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 112307761817,
+        "runqueue_ns": 13640441
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 113454776157,
+        "runqueue_ns": 13690406
+      },
+      "cpu": {
+        "cpu_ns": 1147014340,
+        "runqueue_ns": 49965,
+        "cpu_us_per_query": 191169.05666666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        191.087685,
+        191.708916,
+        191.549264,
+        191.338182,
+        191.253831,
+        191.583467
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 113839723100,
+        "runqueue_ns": 13696259
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 114984336999,
+        "runqueue_ns": 13717605
+      },
+      "cpu": {
+        "cpu_ns": 1144613899,
+        "runqueue_ns": 21346,
+        "cpu_us_per_query": 190768.98316666664,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        191.693607,
+        191.376793,
+        192.671622,
+        192.314053,
+        188.927593,
+        189.061318
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 115022748354,
+        "runqueue_ns": 13717605
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 115136788574,
+        "runqueue_ns": 13726466
+      },
+      "cpu": {
+        "cpu_ns": 114040220,
+        "runqueue_ns": 8861,
+        "cpu_us_per_query": 19006.70333333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.216458,
+        19.102511,
+        19.041367,
+        18.967452,
+        19.554777,
+        19.208426
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 117855637964,
+        "runqueue_ns": 13821154
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 126006877710,
+        "runqueue_ns": 14058029
+      },
+      "cpu": {
+        "cpu_ns": 8151239746,
+        "runqueue_ns": 236875,
+        "cpu_us_per_query": 1358539.9576666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1359.789456,
+        1359.118062,
+        1357.388316,
+        1358.119932,
+        1358.948968,
+        1359.632976
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 128730209290,
+        "runqueue_ns": 14141079
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 136887432893,
+        "runqueue_ns": 14383609
+      },
+      "cpu": {
+        "cpu_ns": 8157223603,
+        "runqueue_ns": 242530,
+        "cpu_us_per_query": 1359537.2671666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1365.903835,
+        1365.153526,
+        1355.862701,
+        1357.775982,
+        1355.562728,
+        1358.94667
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 136925701112,
+        "runqueue_ns": 14391540
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 137039460333,
+        "runqueue_ns": 14397979
+      },
+      "cpu": {
+        "cpu_ns": 113759221,
+        "runqueue_ns": 6439,
+        "cpu_us_per_query": 18959.870166666668,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.238007,
+        19.343353,
+        19.180795,
+        19.243855,
+        19.198206,
+        19.030045
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 137417980769,
+        "runqueue_ns": 14419331
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 138554031943,
+        "runqueue_ns": 14446865
+      },
+      "cpu": {
+        "cpu_ns": 1136051174,
+        "runqueue_ns": 27534,
+        "cpu_us_per_query": 189341.86233333335,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        191.007937,
+        188.862522,
+        190.856479,
+        188.939609,
+        189.315402,
+        188.748635
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 138933555576,
+        "runqueue_ns": 14454250
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 140075413801,
+        "runqueue_ns": 14485033
+      },
+      "cpu": {
+        "cpu_ns": 1141858225,
+        "runqueue_ns": 30783,
+        "cpu_us_per_query": 190309.70416666666,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        190.027238,
+        189.866998,
+        191.660572,
+        192.143959,
+        189.927716,
+        190.088364
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 140114043324,
+        "runqueue_ns": 14485033
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 140230559835,
+        "runqueue_ns": 14485033
+      },
+      "cpu": {
+        "cpu_ns": 116516511,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 19419.4185,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.341689,
+        21.004804,
+        19.78158,
+        19.451226,
+        19.079809,
+        19.081605
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 143694812130,
+        "runqueue_ns": 15186855
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 152159796457,
+        "runqueue_ns": 15482441
+      },
+      "cpu": {
+        "cpu_ns": 8464984327,
+        "runqueue_ns": 295586,
+        "cpu_us_per_query": 1410830.7211666668,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1635.372633,
+        1366.358501,
+        1366.109756,
+        1357.457553,
+        1378.300019,
+        1363.226084
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 154883575312,
+        "runqueue_ns": 15834127
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 163060769637,
+        "runqueue_ns": 16093276
+      },
+      "cpu": {
+        "cpu_ns": 8177194325,
+        "runqueue_ns": 259149,
+        "cpu_us_per_query": 1362865.7208333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1361.583804,
+        1365.359366,
+        1363.567537,
+        1363.560511,
+        1363.588,
+        1361.341767
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 163099284168,
+        "runqueue_ns": 16093276
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 163214851289,
+        "runqueue_ns": 16102398
+      },
+      "cpu": {
+        "cpu_ns": 115567121,
+        "runqueue_ns": 9122,
+        "cpu_us_per_query": 19261.186833333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        19.282588,
+        19.36444,
+        19.407402,
+        19.329671,
+        19.750503,
+        19.797067
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 163594347287,
+        "runqueue_ns": 16118955
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 164735224647,
+        "runqueue_ns": 16131720
+      },
+      "cpu": {
+        "cpu_ns": 1140877360,
+        "runqueue_ns": 12765,
+        "cpu_us_per_query": 190146.22666666665,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        189.46976,
+        189.579505,
+        190.884951,
+        190.266658,
+        190.744531,
+        191.532956
+      ],
+      "answer": "256"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 168983004954,
+        "runqueue_ns": 16891480
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 170160016144,
+        "runqueue_ns": 16925625
+      },
+      "cpu": {
+        "cpu_ns": 1177011190,
+        "runqueue_ns": 34145,
+        "cpu_us_per_query": 196168.53166666665,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        194.365407,
+        195.125306,
+        198.229289,
+        196.806166,
+        195.91561,
+        198.284933
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 170213045096,
+        "runqueue_ns": 16925625
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 170369813455,
+        "runqueue_ns": 16925625
+      },
+      "cpu": {
+        "cpu_ns": 156768359,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 26128.059833333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        26.366475,
+        26.46056,
+        26.50379,
+        26.37794,
+        26.138444,
+        26.200897
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 173098801058,
+        "runqueue_ns": 17203255
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 181291691225,
+        "runqueue_ns": 17845373
+      },
+      "cpu": {
+        "cpu_ns": 8192890167,
+        "runqueue_ns": 642118,
+        "cpu_us_per_query": 1365481.6945,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1365.460066,
+        1362.150295,
+        1368.790401,
+        1365.751035,
+        1368.725275,
+        1364.025923
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 184024929334,
+        "runqueue_ns": 17948540
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 192212438553,
+        "runqueue_ns": 18171414
+      },
+      "cpu": {
+        "cpu_ns": 8187509219,
+        "runqueue_ns": 222874,
+        "cpu_us_per_query": 1364584.8698333332,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1364.596573,
+        1363.565195,
+        1365.72723,
+        1363.825386,
+        1367.912113,
+        1363.510012
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 192265086719,
+        "runqueue_ns": 18171414
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 192421540374,
+        "runqueue_ns": 18171414
+      },
+      "cpu": {
+        "cpu_ns": 156453655,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 26075.60916666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        26.27703,
+        26.298734,
+        26.34435,
+        26.215786,
+        26.132712,
+        26.184963
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 192811040247,
+        "runqueue_ns": 18183510
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 193988968360,
+        "runqueue_ns": 18226337
+      },
+      "cpu": {
+        "cpu_ns": 1177928113,
+        "runqueue_ns": 42827,
+        "cpu_us_per_query": 196321.35216666665,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.228724,
+        196.649285,
+        196.400793,
+        197.108382,
+        196.876306,
+        196.93053
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 194381641150,
+        "runqueue_ns": 18226337
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 195830923703,
+        "runqueue_ns": 18847206
+      },
+      "cpu": {
+        "cpu_ns": 1449282553,
+        "runqueue_ns": 620869,
+        "cpu_us_per_query": 241547.09216666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        197.347152,
+        212.551363,
+        210.532537,
+        201.601646,
+        290.169186,
+        339.082886
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 195919783632,
+        "runqueue_ns": 19331593
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 196186435126,
+        "runqueue_ns": 19559367
+      },
+      "cpu": {
+        "cpu_ns": 266651494,
+        "runqueue_ns": 227774,
+        "cpu_us_per_query": 44441.91566666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        45.265503,
+        45.91988,
+        45.430704,
+        44.561862,
+        43.066267,
+        44.01032
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 199482748865,
+        "runqueue_ns": 62261854
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 207714207480,
+        "runqueue_ns": 63022973
+      },
+      "cpu": {
+        "cpu_ns": 8231458615,
+        "runqueue_ns": 761119,
+        "cpu_us_per_query": 1371909.7691666668,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1367.426043,
+        1365.584478,
+        1367.08695,
+        1366.196582,
+        1395.386734,
+        1372.201003
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 210443258586,
+        "runqueue_ns": 63222701
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 218678910177,
+        "runqueue_ns": 63640416
+      },
+      "cpu": {
+        "cpu_ns": 8235651591,
+        "runqueue_ns": 417715,
+        "cpu_us_per_query": 1372608.5985,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1371.618572,
+        1368.002462,
+        1389.715938,
+        1368.469866,
+        1368.954741,
+        1370.937023
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 218731520570,
+        "runqueue_ns": 63640416
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 218888328656,
+        "runqueue_ns": 63640416
+      },
+      "cpu": {
+        "cpu_ns": 156808086,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 26134.681,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        26.446479,
+        26.203305,
+        26.262941,
+        26.372277,
+        26.219563,
+        26.300548
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 219280203408,
+        "runqueue_ns": 63652155
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 220448150073,
+        "runqueue_ns": 63702274
+      },
+      "cpu": {
+        "cpu_ns": 1167946665,
+        "runqueue_ns": 50119,
+        "cpu_us_per_query": 194657.7775,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        195.28543,
+        195.012415,
+        195.337566,
+        194.617195,
+        194.196342,
+        194.976714
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 220841632748,
+        "runqueue_ns": 63709171
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 222042851316,
+        "runqueue_ns": 63843831
+      },
+      "cpu": {
+        "cpu_ns": 1201218568,
+        "runqueue_ns": 134660,
+        "cpu_us_per_query": 200203.09466666664,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        203.345227,
+        209.60364,
+        198.287858,
+        197.111564,
+        197.461794,
+        196.99354
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 222095646452,
+        "runqueue_ns": 63843831
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 222251938610,
+        "runqueue_ns": 63856804
+      },
+      "cpu": {
+        "cpu_ns": 156292158,
+        "runqueue_ns": 12973,
+        "cpu_us_per_query": 26048.693,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        26.374572,
+        26.363027,
+        26.179301,
+        26.199162,
+        26.082135,
+        26.506498
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 4,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 224993658207,
+        "runqueue_ns": 63955631
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 233338376465,
+        "runqueue_ns": 65270544
+      },
+      "cpu": {
+        "cpu_ns": 8344718258,
+        "runqueue_ns": 1314913,
+        "cpu_us_per_query": 1390786.3763333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1375.280506,
+        1399.382729,
+        1377.903263,
+        1367.764354,
+        1373.719561,
+        1453.640634
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 236071179704,
+        "runqueue_ns": 65348027
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 244303658416,
+        "runqueue_ns": 65657583
+      },
+      "cpu": {
+        "cpu_ns": 8232478712,
+        "runqueue_ns": 309556,
+        "cpu_us_per_query": 1372079.7853333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        1369.63111,
+        1369.882848,
+        1366.913231,
+        1396.005053,
+        1368.133716,
+        1363.642837
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 244356578686,
+        "runqueue_ns": 65664147
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 244513265655,
+        "runqueue_ns": 65671803
+      },
+      "cpu": {
+        "cpu_ns": 156686969,
+        "runqueue_ns": 7656,
+        "cpu_us_per_query": 26114.49483333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        26.522814,
+        26.299757,
+        26.100603,
+        26.267001,
+        26.314423,
+        26.246632
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 5,
+      "before": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 244902271558,
+        "runqueue_ns": 65676554
+      },
+      "after": {
+        "pid": 8164,
+        "start": 84735,
+        "cpu_ns": 246105491603,
+        "runqueue_ns": 65716235
+      },
+      "cpu": {
+        "cpu_ns": 1203220045,
+        "runqueue_ns": 39681,
+        "cpu_us_per_query": 200536.67416666666,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        197.841862,
+        196.707519,
+        198.632381,
+        216.987408,
+        196.826991,
+        197.749093
+      ],
+      "answer": "0"
+    }
+  ],
+  "summary": [
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "median_cpu_us": 195708.90533333336
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "median_cpu_us": 18734.019666666667
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "median_cpu_us": 1373871.567
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "median_cpu_us": 190227.96541666664
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "median_cpu_us": 19052.723583333332
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "median_cpu_us": 1361944.1890833334
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "median_cpu_us": 198262.22341666665
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "median_cpu_us": 26121.27733333333
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "median_cpu_us": 1371994.77725
+    }
+  ],
+  "checks": [
+    {
+      "case": "adjacent",
+      "identities": {
+        "oracle": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(1,2)\n16|(1,4)\n18|(1,6)\n20|(1,8)\n22|(1,10)\n24|(1,12)\n26|(2,2)\n28|(2,4)\n30|(2,6)\n32|(2,8)\n34|(2,10)\n36|(2,12)\n38|(3,2)\n40|(3,4)\n42|(3,6)\n44|(3,8)\n46|(3,10)\n48|(3,12)\n50|(4,2)\n52|(4,4)\n54|(4,6)\n56|(4,8)\n58|(4,10)\n60|(4,12)\n62|(5,2)\n64|(5,4)\n66|(5,6)\n68|(5,8)\n70|(5,10)\n72|(5,12)\n74|(6,2)\n76|(6,4)\n78|(6,6)\n80|(6,8)\n82|(6,10)\n84|(6,12)\n86|(7,2)\n88|(7,4)\n90|(7,6)\n92|(7,8)\n94|(7,10)\n96|(7,12)\n98|(8,2)\n100|(8,4)\n102|(8,6)\n104|(8,8)\n106|(8,10)\n108|(8,12)\n110|(9,2)\n112|(9,4)\n114|(9,6)\n116|(9,8)\n118|(9,10)\n120|(9,12)\n122|(10,2)\n124|(10,4)\n126|(10,6)\n128|(10,8)\n130|(10,10)\n132|(10,12)\n134|(11,2)\n136|(11,4)\n138|(11,6)\n140|(11,8)\n142|(11,10)\n144|(11,12)\n146|(12,2)\n148|(12,4)\n150|(12,6)\n152|(12,8)\n154|(12,10)\n156|(12,12)\n158|(13,2)\n160|(13,4)\n162|(13,6)\n164|(13,8)\n166|(13,10)\n168|(13,12)\n170|(14,2)\n172|(14,4)\n174|(14,6)\n176|(14,8)\n178|(14,10)\n180|(14,12)\n182|(15,2)\n184|(15,4)\n186|(15,6)\n188|(15,8)\n190|(15,10)\n192|(15,12)\n194|(16,2)\n196|(16,4)\n198|(16,6)\n200|(16,8)\n202|(16,10)\n204|(16,12)\n206|(17,2)\n208|(17,4)\n210|(17,6)\n212|(17,8)\n214|(17,10)\n216|(17,12)\n218|(18,2)\n220|(18,4)\n222|(18,6)\n224|(18,8)\n226|(18,10)\n228|(18,12)\n230|(19,2)\n232|(19,4)\n234|(19,6)\n236|(19,8)\n238|(19,10)\n240|(19,12)\n242|(20,2)\n244|(20,4)\n246|(20,6)\n248|(20,8)\n250|(20,10)\n252|(20,12)\n254|(21,2)\n256|(21,4)",
+        "legacy": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(1,2)\n16|(1,4)\n18|(1,6)\n20|(1,8)\n22|(1,10)\n24|(1,12)\n26|(2,2)\n28|(2,4)\n30|(2,6)\n32|(2,8)\n34|(2,10)\n36|(2,12)\n38|(3,2)\n40|(3,4)\n42|(3,6)\n44|(3,8)\n46|(3,10)\n48|(3,12)\n50|(4,2)\n52|(4,4)\n54|(4,6)\n56|(4,8)\n58|(4,10)\n60|(4,12)\n62|(5,2)\n64|(5,4)\n66|(5,6)\n68|(5,8)\n70|(5,10)\n72|(5,12)\n74|(6,2)\n76|(6,4)\n78|(6,6)\n80|(6,8)\n82|(6,10)\n84|(6,12)\n86|(7,2)\n88|(7,4)\n90|(7,6)\n92|(7,8)\n94|(7,10)\n96|(7,12)\n98|(8,2)\n100|(8,4)\n102|(8,6)\n104|(8,8)\n106|(8,10)\n108|(8,12)\n110|(9,2)\n112|(9,4)\n114|(9,6)\n116|(9,8)\n118|(9,10)\n120|(9,12)\n122|(10,2)\n124|(10,4)\n126|(10,6)\n128|(10,8)\n130|(10,10)\n132|(10,12)\n134|(11,2)\n136|(11,4)\n138|(11,6)\n140|(11,8)\n142|(11,10)\n144|(11,12)\n146|(12,2)\n148|(12,4)\n150|(12,6)\n152|(12,8)\n154|(12,10)\n156|(12,12)\n158|(13,2)\n160|(13,4)\n162|(13,6)\n164|(13,8)\n166|(13,10)\n168|(13,12)\n170|(14,2)\n172|(14,4)\n174|(14,6)\n176|(14,8)\n178|(14,10)\n180|(14,12)\n182|(15,2)\n184|(15,4)\n186|(15,6)\n188|(15,8)\n190|(15,10)\n192|(15,12)\n194|(16,2)\n196|(16,4)\n198|(16,6)\n200|(16,8)\n202|(16,10)\n204|(16,12)\n206|(17,2)\n208|(17,4)\n210|(17,6)\n212|(17,8)\n214|(17,10)\n216|(17,12)\n218|(18,2)\n220|(18,4)\n222|(18,6)\n224|(18,8)\n226|(18,10)\n228|(18,12)\n230|(19,2)\n232|(19,4)\n234|(19,6)\n236|(19,8)\n238|(19,10)\n240|(19,12)\n242|(20,2)\n244|(20,4)\n246|(20,6)\n248|(20,8)\n250|(20,10)\n252|(20,12)\n254|(21,2)\n256|(21,4)",
+        "positions": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(1,2)\n16|(1,4)\n18|(1,6)\n20|(1,8)\n22|(1,10)\n24|(1,12)\n26|(2,2)\n28|(2,4)\n30|(2,6)\n32|(2,8)\n34|(2,10)\n36|(2,12)\n38|(3,2)\n40|(3,4)\n42|(3,6)\n44|(3,8)\n46|(3,10)\n48|(3,12)\n50|(4,2)\n52|(4,4)\n54|(4,6)\n56|(4,8)\n58|(4,10)\n60|(4,12)\n62|(5,2)\n64|(5,4)\n66|(5,6)\n68|(5,8)\n70|(5,10)\n72|(5,12)\n74|(6,2)\n76|(6,4)\n78|(6,6)\n80|(6,8)\n82|(6,10)\n84|(6,12)\n86|(7,2)\n88|(7,4)\n90|(7,6)\n92|(7,8)\n94|(7,10)\n96|(7,12)\n98|(8,2)\n100|(8,4)\n102|(8,6)\n104|(8,8)\n106|(8,10)\n108|(8,12)\n110|(9,2)\n112|(9,4)\n114|(9,6)\n116|(9,8)\n118|(9,10)\n120|(9,12)\n122|(10,2)\n124|(10,4)\n126|(10,6)\n128|(10,8)\n130|(10,10)\n132|(10,12)\n134|(11,2)\n136|(11,4)\n138|(11,6)\n140|(11,8)\n142|(11,10)\n144|(11,12)\n146|(12,2)\n148|(12,4)\n150|(12,6)\n152|(12,8)\n154|(12,10)\n156|(12,12)\n158|(13,2)\n160|(13,4)\n162|(13,6)\n164|(13,8)\n166|(13,10)\n168|(13,12)\n170|(14,2)\n172|(14,4)\n174|(14,6)\n176|(14,8)\n178|(14,10)\n180|(14,12)\n182|(15,2)\n184|(15,4)\n186|(15,6)\n188|(15,8)\n190|(15,10)\n192|(15,12)\n194|(16,2)\n196|(16,4)\n198|(16,6)\n200|(16,8)\n202|(16,10)\n204|(16,12)\n206|(17,2)\n208|(17,4)\n210|(17,6)\n212|(17,8)\n214|(17,10)\n216|(17,12)\n218|(18,2)\n220|(18,4)\n222|(18,6)\n224|(18,8)\n226|(18,10)\n228|(18,12)\n230|(19,2)\n232|(19,4)\n234|(19,6)\n236|(19,8)\n238|(19,10)\n240|(19,12)\n242|(20,2)\n244|(20,4)\n246|(20,6)\n248|(20,8)\n250|(20,10)\n252|(20,12)\n254|(21,2)\n256|(21,4)",
+        "gin": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(1,2)\n16|(1,4)\n18|(1,6)\n20|(1,8)\n22|(1,10)\n24|(1,12)\n26|(2,2)\n28|(2,4)\n30|(2,6)\n32|(2,8)\n34|(2,10)\n36|(2,12)\n38|(3,2)\n40|(3,4)\n42|(3,6)\n44|(3,8)\n46|(3,10)\n48|(3,12)\n50|(4,2)\n52|(4,4)\n54|(4,6)\n56|(4,8)\n58|(4,10)\n60|(4,12)\n62|(5,2)\n64|(5,4)\n66|(5,6)\n68|(5,8)\n70|(5,10)\n72|(5,12)\n74|(6,2)\n76|(6,4)\n78|(6,6)\n80|(6,8)\n82|(6,10)\n84|(6,12)\n86|(7,2)\n88|(7,4)\n90|(7,6)\n92|(7,8)\n94|(7,10)\n96|(7,12)\n98|(8,2)\n100|(8,4)\n102|(8,6)\n104|(8,8)\n106|(8,10)\n108|(8,12)\n110|(9,2)\n112|(9,4)\n114|(9,6)\n116|(9,8)\n118|(9,10)\n120|(9,12)\n122|(10,2)\n124|(10,4)\n126|(10,6)\n128|(10,8)\n130|(10,10)\n132|(10,12)\n134|(11,2)\n136|(11,4)\n138|(11,6)\n140|(11,8)\n142|(11,10)\n144|(11,12)\n146|(12,2)\n148|(12,4)\n150|(12,6)\n152|(12,8)\n154|(12,10)\n156|(12,12)\n158|(13,2)\n160|(13,4)\n162|(13,6)\n164|(13,8)\n166|(13,10)\n168|(13,12)\n170|(14,2)\n172|(14,4)\n174|(14,6)\n176|(14,8)\n178|(14,10)\n180|(14,12)\n182|(15,2)\n184|(15,4)\n186|(15,6)\n188|(15,8)\n190|(15,10)\n192|(15,12)\n194|(16,2)\n196|(16,4)\n198|(16,6)\n200|(16,8)\n202|(16,10)\n204|(16,12)\n206|(17,2)\n208|(17,4)\n210|(17,6)\n212|(17,8)\n214|(17,10)\n216|(17,12)\n218|(18,2)\n220|(18,4)\n222|(18,6)\n224|(18,8)\n226|(18,10)\n228|(18,12)\n230|(19,2)\n232|(19,4)\n234|(19,6)\n236|(19,8)\n238|(19,10)\n240|(19,12)\n242|(20,2)\n244|(20,4)\n246|(20,6)\n248|(20,8)\n250|(20,10)\n252|(20,12)\n254|(21,2)\n256|(21,4)"
+      },
+      "sha256": "acf743d6e114a39517882d5ad5a912256d8a0573c23847d5b4efb2b8e7fd7b8d"
+    },
+    {
+      "case": "repeated",
+      "identities": {
+        "oracle": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(1,1)\n14|(1,2)\n15|(1,3)\n16|(1,4)\n17|(1,5)\n18|(1,6)\n19|(1,7)\n20|(1,8)\n21|(1,9)\n22|(1,10)\n23|(1,11)\n24|(1,12)\n25|(2,1)\n26|(2,2)\n27|(2,3)\n28|(2,4)\n29|(2,5)\n30|(2,6)\n31|(2,7)\n32|(2,8)\n33|(2,9)\n34|(2,10)\n35|(2,11)\n36|(2,12)\n37|(3,1)\n38|(3,2)\n39|(3,3)\n40|(3,4)\n41|(3,5)\n42|(3,6)\n43|(3,7)\n44|(3,8)\n45|(3,9)\n46|(3,10)\n47|(3,11)\n48|(3,12)\n49|(4,1)\n50|(4,2)\n51|(4,3)\n52|(4,4)\n53|(4,5)\n54|(4,6)\n55|(4,7)\n56|(4,8)\n57|(4,9)\n58|(4,10)\n59|(4,11)\n60|(4,12)\n61|(5,1)\n62|(5,2)\n63|(5,3)\n64|(5,4)\n65|(5,5)\n66|(5,6)\n67|(5,7)\n68|(5,8)\n69|(5,9)\n70|(5,10)\n71|(5,11)\n72|(5,12)\n73|(6,1)\n74|(6,2)\n75|(6,3)\n76|(6,4)\n77|(6,5)\n78|(6,6)\n79|(6,7)\n80|(6,8)\n81|(6,9)\n82|(6,10)\n83|(6,11)\n84|(6,12)\n85|(7,1)\n86|(7,2)\n87|(7,3)\n88|(7,4)\n89|(7,5)\n90|(7,6)\n91|(7,7)\n92|(7,8)\n93|(7,9)\n94|(7,10)\n95|(7,11)\n96|(7,12)\n97|(8,1)\n98|(8,2)\n99|(8,3)\n100|(8,4)\n101|(8,5)\n102|(8,6)\n103|(8,7)\n104|(8,8)\n105|(8,9)\n106|(8,10)\n107|(8,11)\n108|(8,12)\n109|(9,1)\n110|(9,2)\n111|(9,3)\n112|(9,4)\n113|(9,5)\n114|(9,6)\n115|(9,7)\n116|(9,8)\n117|(9,9)\n118|(9,10)\n119|(9,11)\n120|(9,12)\n121|(10,1)\n122|(10,2)\n123|(10,3)\n124|(10,4)\n125|(10,5)\n126|(10,6)\n127|(10,7)\n128|(10,8)\n129|(10,9)\n130|(10,10)\n131|(10,11)\n132|(10,12)\n133|(11,1)\n134|(11,2)\n135|(11,3)\n136|(11,4)\n137|(11,5)\n138|(11,6)\n139|(11,7)\n140|(11,8)\n141|(11,9)\n142|(11,10)\n143|(11,11)\n144|(11,12)\n145|(12,1)\n146|(12,2)\n147|(12,3)\n148|(12,4)\n149|(12,5)\n150|(12,6)\n151|(12,7)\n152|(12,8)\n153|(12,9)\n154|(12,10)\n155|(12,11)\n156|(12,12)\n157|(13,1)\n158|(13,2)\n159|(13,3)\n160|(13,4)\n161|(13,5)\n162|(13,6)\n163|(13,7)\n164|(13,8)\n165|(13,9)\n166|(13,10)\n167|(13,11)\n168|(13,12)\n169|(14,1)\n170|(14,2)\n171|(14,3)\n172|(14,4)\n173|(14,5)\n174|(14,6)\n175|(14,7)\n176|(14,8)\n177|(14,9)\n178|(14,10)\n179|(14,11)\n180|(14,12)\n181|(15,1)\n182|(15,2)\n183|(15,3)\n184|(15,4)\n185|(15,5)\n186|(15,6)\n187|(15,7)\n188|(15,8)\n189|(15,9)\n190|(15,10)\n191|(15,11)\n192|(15,12)\n193|(16,1)\n194|(16,2)\n195|(16,3)\n196|(16,4)\n197|(16,5)\n198|(16,6)\n199|(16,7)\n200|(16,8)\n201|(16,9)\n202|(16,10)\n203|(16,11)\n204|(16,12)\n205|(17,1)\n206|(17,2)\n207|(17,3)\n208|(17,4)\n209|(17,5)\n210|(17,6)\n211|(17,7)\n212|(17,8)\n213|(17,9)\n214|(17,10)\n215|(17,11)\n216|(17,12)\n217|(18,1)\n218|(18,2)\n219|(18,3)\n220|(18,4)\n221|(18,5)\n222|(18,6)\n223|(18,7)\n224|(18,8)\n225|(18,9)\n226|(18,10)\n227|(18,11)\n228|(18,12)\n229|(19,1)\n230|(19,2)\n231|(19,3)\n232|(19,4)\n233|(19,5)\n234|(19,6)\n235|(19,7)\n236|(19,8)\n237|(19,9)\n238|(19,10)\n239|(19,11)\n240|(19,12)\n241|(20,1)\n242|(20,2)\n243|(20,3)\n244|(20,4)\n245|(20,5)\n246|(20,6)\n247|(20,7)\n248|(20,8)\n249|(20,9)\n250|(20,10)\n251|(20,11)\n252|(20,12)\n253|(21,1)\n254|(21,2)\n255|(21,3)\n256|(21,4)",
+        "legacy": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(1,1)\n14|(1,2)\n15|(1,3)\n16|(1,4)\n17|(1,5)\n18|(1,6)\n19|(1,7)\n20|(1,8)\n21|(1,9)\n22|(1,10)\n23|(1,11)\n24|(1,12)\n25|(2,1)\n26|(2,2)\n27|(2,3)\n28|(2,4)\n29|(2,5)\n30|(2,6)\n31|(2,7)\n32|(2,8)\n33|(2,9)\n34|(2,10)\n35|(2,11)\n36|(2,12)\n37|(3,1)\n38|(3,2)\n39|(3,3)\n40|(3,4)\n41|(3,5)\n42|(3,6)\n43|(3,7)\n44|(3,8)\n45|(3,9)\n46|(3,10)\n47|(3,11)\n48|(3,12)\n49|(4,1)\n50|(4,2)\n51|(4,3)\n52|(4,4)\n53|(4,5)\n54|(4,6)\n55|(4,7)\n56|(4,8)\n57|(4,9)\n58|(4,10)\n59|(4,11)\n60|(4,12)\n61|(5,1)\n62|(5,2)\n63|(5,3)\n64|(5,4)\n65|(5,5)\n66|(5,6)\n67|(5,7)\n68|(5,8)\n69|(5,9)\n70|(5,10)\n71|(5,11)\n72|(5,12)\n73|(6,1)\n74|(6,2)\n75|(6,3)\n76|(6,4)\n77|(6,5)\n78|(6,6)\n79|(6,7)\n80|(6,8)\n81|(6,9)\n82|(6,10)\n83|(6,11)\n84|(6,12)\n85|(7,1)\n86|(7,2)\n87|(7,3)\n88|(7,4)\n89|(7,5)\n90|(7,6)\n91|(7,7)\n92|(7,8)\n93|(7,9)\n94|(7,10)\n95|(7,11)\n96|(7,12)\n97|(8,1)\n98|(8,2)\n99|(8,3)\n100|(8,4)\n101|(8,5)\n102|(8,6)\n103|(8,7)\n104|(8,8)\n105|(8,9)\n106|(8,10)\n107|(8,11)\n108|(8,12)\n109|(9,1)\n110|(9,2)\n111|(9,3)\n112|(9,4)\n113|(9,5)\n114|(9,6)\n115|(9,7)\n116|(9,8)\n117|(9,9)\n118|(9,10)\n119|(9,11)\n120|(9,12)\n121|(10,1)\n122|(10,2)\n123|(10,3)\n124|(10,4)\n125|(10,5)\n126|(10,6)\n127|(10,7)\n128|(10,8)\n129|(10,9)\n130|(10,10)\n131|(10,11)\n132|(10,12)\n133|(11,1)\n134|(11,2)\n135|(11,3)\n136|(11,4)\n137|(11,5)\n138|(11,6)\n139|(11,7)\n140|(11,8)\n141|(11,9)\n142|(11,10)\n143|(11,11)\n144|(11,12)\n145|(12,1)\n146|(12,2)\n147|(12,3)\n148|(12,4)\n149|(12,5)\n150|(12,6)\n151|(12,7)\n152|(12,8)\n153|(12,9)\n154|(12,10)\n155|(12,11)\n156|(12,12)\n157|(13,1)\n158|(13,2)\n159|(13,3)\n160|(13,4)\n161|(13,5)\n162|(13,6)\n163|(13,7)\n164|(13,8)\n165|(13,9)\n166|(13,10)\n167|(13,11)\n168|(13,12)\n169|(14,1)\n170|(14,2)\n171|(14,3)\n172|(14,4)\n173|(14,5)\n174|(14,6)\n175|(14,7)\n176|(14,8)\n177|(14,9)\n178|(14,10)\n179|(14,11)\n180|(14,12)\n181|(15,1)\n182|(15,2)\n183|(15,3)\n184|(15,4)\n185|(15,5)\n186|(15,6)\n187|(15,7)\n188|(15,8)\n189|(15,9)\n190|(15,10)\n191|(15,11)\n192|(15,12)\n193|(16,1)\n194|(16,2)\n195|(16,3)\n196|(16,4)\n197|(16,5)\n198|(16,6)\n199|(16,7)\n200|(16,8)\n201|(16,9)\n202|(16,10)\n203|(16,11)\n204|(16,12)\n205|(17,1)\n206|(17,2)\n207|(17,3)\n208|(17,4)\n209|(17,5)\n210|(17,6)\n211|(17,7)\n212|(17,8)\n213|(17,9)\n214|(17,10)\n215|(17,11)\n216|(17,12)\n217|(18,1)\n218|(18,2)\n219|(18,3)\n220|(18,4)\n221|(18,5)\n222|(18,6)\n223|(18,7)\n224|(18,8)\n225|(18,9)\n226|(18,10)\n227|(18,11)\n228|(18,12)\n229|(19,1)\n230|(19,2)\n231|(19,3)\n232|(19,4)\n233|(19,5)\n234|(19,6)\n235|(19,7)\n236|(19,8)\n237|(19,9)\n238|(19,10)\n239|(19,11)\n240|(19,12)\n241|(20,1)\n242|(20,2)\n243|(20,3)\n244|(20,4)\n245|(20,5)\n246|(20,6)\n247|(20,7)\n248|(20,8)\n249|(20,9)\n250|(20,10)\n251|(20,11)\n252|(20,12)\n253|(21,1)\n254|(21,2)\n255|(21,3)\n256|(21,4)",
+        "positions": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(1,1)\n14|(1,2)\n15|(1,3)\n16|(1,4)\n17|(1,5)\n18|(1,6)\n19|(1,7)\n20|(1,8)\n21|(1,9)\n22|(1,10)\n23|(1,11)\n24|(1,12)\n25|(2,1)\n26|(2,2)\n27|(2,3)\n28|(2,4)\n29|(2,5)\n30|(2,6)\n31|(2,7)\n32|(2,8)\n33|(2,9)\n34|(2,10)\n35|(2,11)\n36|(2,12)\n37|(3,1)\n38|(3,2)\n39|(3,3)\n40|(3,4)\n41|(3,5)\n42|(3,6)\n43|(3,7)\n44|(3,8)\n45|(3,9)\n46|(3,10)\n47|(3,11)\n48|(3,12)\n49|(4,1)\n50|(4,2)\n51|(4,3)\n52|(4,4)\n53|(4,5)\n54|(4,6)\n55|(4,7)\n56|(4,8)\n57|(4,9)\n58|(4,10)\n59|(4,11)\n60|(4,12)\n61|(5,1)\n62|(5,2)\n63|(5,3)\n64|(5,4)\n65|(5,5)\n66|(5,6)\n67|(5,7)\n68|(5,8)\n69|(5,9)\n70|(5,10)\n71|(5,11)\n72|(5,12)\n73|(6,1)\n74|(6,2)\n75|(6,3)\n76|(6,4)\n77|(6,5)\n78|(6,6)\n79|(6,7)\n80|(6,8)\n81|(6,9)\n82|(6,10)\n83|(6,11)\n84|(6,12)\n85|(7,1)\n86|(7,2)\n87|(7,3)\n88|(7,4)\n89|(7,5)\n90|(7,6)\n91|(7,7)\n92|(7,8)\n93|(7,9)\n94|(7,10)\n95|(7,11)\n96|(7,12)\n97|(8,1)\n98|(8,2)\n99|(8,3)\n100|(8,4)\n101|(8,5)\n102|(8,6)\n103|(8,7)\n104|(8,8)\n105|(8,9)\n106|(8,10)\n107|(8,11)\n108|(8,12)\n109|(9,1)\n110|(9,2)\n111|(9,3)\n112|(9,4)\n113|(9,5)\n114|(9,6)\n115|(9,7)\n116|(9,8)\n117|(9,9)\n118|(9,10)\n119|(9,11)\n120|(9,12)\n121|(10,1)\n122|(10,2)\n123|(10,3)\n124|(10,4)\n125|(10,5)\n126|(10,6)\n127|(10,7)\n128|(10,8)\n129|(10,9)\n130|(10,10)\n131|(10,11)\n132|(10,12)\n133|(11,1)\n134|(11,2)\n135|(11,3)\n136|(11,4)\n137|(11,5)\n138|(11,6)\n139|(11,7)\n140|(11,8)\n141|(11,9)\n142|(11,10)\n143|(11,11)\n144|(11,12)\n145|(12,1)\n146|(12,2)\n147|(12,3)\n148|(12,4)\n149|(12,5)\n150|(12,6)\n151|(12,7)\n152|(12,8)\n153|(12,9)\n154|(12,10)\n155|(12,11)\n156|(12,12)\n157|(13,1)\n158|(13,2)\n159|(13,3)\n160|(13,4)\n161|(13,5)\n162|(13,6)\n163|(13,7)\n164|(13,8)\n165|(13,9)\n166|(13,10)\n167|(13,11)\n168|(13,12)\n169|(14,1)\n170|(14,2)\n171|(14,3)\n172|(14,4)\n173|(14,5)\n174|(14,6)\n175|(14,7)\n176|(14,8)\n177|(14,9)\n178|(14,10)\n179|(14,11)\n180|(14,12)\n181|(15,1)\n182|(15,2)\n183|(15,3)\n184|(15,4)\n185|(15,5)\n186|(15,6)\n187|(15,7)\n188|(15,8)\n189|(15,9)\n190|(15,10)\n191|(15,11)\n192|(15,12)\n193|(16,1)\n194|(16,2)\n195|(16,3)\n196|(16,4)\n197|(16,5)\n198|(16,6)\n199|(16,7)\n200|(16,8)\n201|(16,9)\n202|(16,10)\n203|(16,11)\n204|(16,12)\n205|(17,1)\n206|(17,2)\n207|(17,3)\n208|(17,4)\n209|(17,5)\n210|(17,6)\n211|(17,7)\n212|(17,8)\n213|(17,9)\n214|(17,10)\n215|(17,11)\n216|(17,12)\n217|(18,1)\n218|(18,2)\n219|(18,3)\n220|(18,4)\n221|(18,5)\n222|(18,6)\n223|(18,7)\n224|(18,8)\n225|(18,9)\n226|(18,10)\n227|(18,11)\n228|(18,12)\n229|(19,1)\n230|(19,2)\n231|(19,3)\n232|(19,4)\n233|(19,5)\n234|(19,6)\n235|(19,7)\n236|(19,8)\n237|(19,9)\n238|(19,10)\n239|(19,11)\n240|(19,12)\n241|(20,1)\n242|(20,2)\n243|(20,3)\n244|(20,4)\n245|(20,5)\n246|(20,6)\n247|(20,7)\n248|(20,8)\n249|(20,9)\n250|(20,10)\n251|(20,11)\n252|(20,12)\n253|(21,1)\n254|(21,2)\n255|(21,3)\n256|(21,4)",
+        "gin": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(1,1)\n14|(1,2)\n15|(1,3)\n16|(1,4)\n17|(1,5)\n18|(1,6)\n19|(1,7)\n20|(1,8)\n21|(1,9)\n22|(1,10)\n23|(1,11)\n24|(1,12)\n25|(2,1)\n26|(2,2)\n27|(2,3)\n28|(2,4)\n29|(2,5)\n30|(2,6)\n31|(2,7)\n32|(2,8)\n33|(2,9)\n34|(2,10)\n35|(2,11)\n36|(2,12)\n37|(3,1)\n38|(3,2)\n39|(3,3)\n40|(3,4)\n41|(3,5)\n42|(3,6)\n43|(3,7)\n44|(3,8)\n45|(3,9)\n46|(3,10)\n47|(3,11)\n48|(3,12)\n49|(4,1)\n50|(4,2)\n51|(4,3)\n52|(4,4)\n53|(4,5)\n54|(4,6)\n55|(4,7)\n56|(4,8)\n57|(4,9)\n58|(4,10)\n59|(4,11)\n60|(4,12)\n61|(5,1)\n62|(5,2)\n63|(5,3)\n64|(5,4)\n65|(5,5)\n66|(5,6)\n67|(5,7)\n68|(5,8)\n69|(5,9)\n70|(5,10)\n71|(5,11)\n72|(5,12)\n73|(6,1)\n74|(6,2)\n75|(6,3)\n76|(6,4)\n77|(6,5)\n78|(6,6)\n79|(6,7)\n80|(6,8)\n81|(6,9)\n82|(6,10)\n83|(6,11)\n84|(6,12)\n85|(7,1)\n86|(7,2)\n87|(7,3)\n88|(7,4)\n89|(7,5)\n90|(7,6)\n91|(7,7)\n92|(7,8)\n93|(7,9)\n94|(7,10)\n95|(7,11)\n96|(7,12)\n97|(8,1)\n98|(8,2)\n99|(8,3)\n100|(8,4)\n101|(8,5)\n102|(8,6)\n103|(8,7)\n104|(8,8)\n105|(8,9)\n106|(8,10)\n107|(8,11)\n108|(8,12)\n109|(9,1)\n110|(9,2)\n111|(9,3)\n112|(9,4)\n113|(9,5)\n114|(9,6)\n115|(9,7)\n116|(9,8)\n117|(9,9)\n118|(9,10)\n119|(9,11)\n120|(9,12)\n121|(10,1)\n122|(10,2)\n123|(10,3)\n124|(10,4)\n125|(10,5)\n126|(10,6)\n127|(10,7)\n128|(10,8)\n129|(10,9)\n130|(10,10)\n131|(10,11)\n132|(10,12)\n133|(11,1)\n134|(11,2)\n135|(11,3)\n136|(11,4)\n137|(11,5)\n138|(11,6)\n139|(11,7)\n140|(11,8)\n141|(11,9)\n142|(11,10)\n143|(11,11)\n144|(11,12)\n145|(12,1)\n146|(12,2)\n147|(12,3)\n148|(12,4)\n149|(12,5)\n150|(12,6)\n151|(12,7)\n152|(12,8)\n153|(12,9)\n154|(12,10)\n155|(12,11)\n156|(12,12)\n157|(13,1)\n158|(13,2)\n159|(13,3)\n160|(13,4)\n161|(13,5)\n162|(13,6)\n163|(13,7)\n164|(13,8)\n165|(13,9)\n166|(13,10)\n167|(13,11)\n168|(13,12)\n169|(14,1)\n170|(14,2)\n171|(14,3)\n172|(14,4)\n173|(14,5)\n174|(14,6)\n175|(14,7)\n176|(14,8)\n177|(14,9)\n178|(14,10)\n179|(14,11)\n180|(14,12)\n181|(15,1)\n182|(15,2)\n183|(15,3)\n184|(15,4)\n185|(15,5)\n186|(15,6)\n187|(15,7)\n188|(15,8)\n189|(15,9)\n190|(15,10)\n191|(15,11)\n192|(15,12)\n193|(16,1)\n194|(16,2)\n195|(16,3)\n196|(16,4)\n197|(16,5)\n198|(16,6)\n199|(16,7)\n200|(16,8)\n201|(16,9)\n202|(16,10)\n203|(16,11)\n204|(16,12)\n205|(17,1)\n206|(17,2)\n207|(17,3)\n208|(17,4)\n209|(17,5)\n210|(17,6)\n211|(17,7)\n212|(17,8)\n213|(17,9)\n214|(17,10)\n215|(17,11)\n216|(17,12)\n217|(18,1)\n218|(18,2)\n219|(18,3)\n220|(18,4)\n221|(18,5)\n222|(18,6)\n223|(18,7)\n224|(18,8)\n225|(18,9)\n226|(18,10)\n227|(18,11)\n228|(18,12)\n229|(19,1)\n230|(19,2)\n231|(19,3)\n232|(19,4)\n233|(19,5)\n234|(19,6)\n235|(19,7)\n236|(19,8)\n237|(19,9)\n238|(19,10)\n239|(19,11)\n240|(19,12)\n241|(20,1)\n242|(20,2)\n243|(20,3)\n244|(20,4)\n245|(20,5)\n246|(20,6)\n247|(20,7)\n248|(20,8)\n249|(20,9)\n250|(20,10)\n251|(20,11)\n252|(20,12)\n253|(21,1)\n254|(21,2)\n255|(21,3)\n256|(21,4)"
+      },
+      "sha256": "5ef330e289ccd0bbc4e442b4e75fa7043b5ec69b2456343f0191bab1669debb8"
+    },
+    {
+      "case": "nonadjacent",
+      "identities": {
+        "oracle": "",
+        "legacy": "",
+        "positions": "",
+        "gin": ""
+      },
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

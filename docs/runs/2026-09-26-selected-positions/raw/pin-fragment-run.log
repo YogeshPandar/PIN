@@ -1,0 +1,15 @@
+Traceback (most recent call last):
+  File "/home/reing/projects/fts0/PIN/tools/fragment_phrase_bench.py", line 106, in <module>
+    main()
+    ~~~~^^
+  File "/home/reing/projects/fts0/PIN/tools/fragment_phrase_bench.py", line 59, in main
+    plans[name + '-' + mode] = json.loads(execute(
+                                          ~~~~~~~^
+        'EXPLAIN (ANALYZE,BUFFERS,TIMING OFF,FORMAT JSON) ' + query(mode)))
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/reing/projects/fts0/PIN/tools/fragment_phrase_bench.py", line 31, in execute
+    return s.execute(sql)
+           ~~~~~~~~~^^^^^
+  File "/home/reing/projects/fts0/PIN/tools/g9_profile.py", line 115, in execute
+    raise ValueError('complete SQL statement required')
+ValueError: complete SQL statement required

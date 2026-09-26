@@ -1,0 +1,47 @@
+[
+  {
+    "case": "adjacent",
+    "mode": "legacy",
+    "median_cpu_us": 195708.90533333336
+  },
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "median_cpu_us": 18734.019666666667
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin",
+    "median_cpu_us": 1373871.567
+  },
+  {
+    "case": "repeated",
+    "mode": "legacy",
+    "median_cpu_us": 190227.96541666664
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "median_cpu_us": 19052.723583333332
+  },
+  {
+    "case": "repeated",
+    "mode": "gin",
+    "median_cpu_us": 1361944.1890833334
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "legacy",
+    "median_cpu_us": 198262.22341666665
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "median_cpu_us": 26121.27733333333
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin",
+    "median_cpu_us": 1371994.77725
+  }
+]

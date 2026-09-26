@@ -151,3 +151,67 @@ release gates. No bare-PostgreSQL or Tin performance parity is claimed.
 
 The entry in [api-evidence.md](api-evidence.md#g4query01-streaming-bitmap-query-execution)
 records the material-boundary obligations and review status.
+
+
+## Selected indexed positions, September 2026
+
+The opt-in `pin.enable_phrase_positions` path can now prove a root-level phrase
+of at most 64 terms from inline or fragmented PD02 payloads. PostgreSQL still
+performs snapshot/HOT visibility and other SQL qualifications. Nested expressions
+retain their existing conservative behavior. No storage version or write protocol
+changes are required.
+
+`SelectedPositions` validates the document header, complete term directory,
+UTF-8 and term order, lengths, summed frequencies, and the selected position
+streams (canonical deltas, strict order, token bounds and exact consumption).
+Only requested term streams are decoded. This changes corruption detection:
+unselected positional deltas and cross-term global position uniqueness are
+checked by `document::validate`, not by the query reader. That full validator
+remains available; a successful selective query is not an integrity certification.
+The reader reports directory terms and unique selected position counts for work
+accounting; selected positions are not CPU instructions or total decode passes.
+
+Phrase execution anchors on the shortest selected occurrence list and translates
+its positions into candidate starts. Each phrase occurrence has its own cursor,
+including repeated terms. The scalar text oracle remains independent.
+
+Fragment pages are copied into one reusable query buffer under the existing
+shared structural barrier. Every fragment must have the expected owner
+incarnation, contiguous byte offset, valid page kind and bounded chain length.
+A missing tail or inconsistent length errors before a result is emitted for that
+document. This bridge still reads the complete document payload and directory;
+it does not yet provide selective physical I/O. Direct term/position extents are
+part of the next storage format described in `pin_next.md`.
+
+The plan reserves its retained allocations first; fragment capacity fits within
+the remaining query budget. Oversized documents retain heap predicate recheck.
+This per-document fallback can occur after previous exact results. I/O and
+corruption errors do not trigger fallback. Buffer capacity is reused between
+candidates, and fragment copies append without first zero-filling the payload.
+
+### Prefix witnesses and physical tail avoidance
+
+The next iteration adds `phrase_prefix::matches`: a bounded three-way result
+(exact true, exact false, or more bytes needed). It validates the document header,
+consumed directory entries, and every consumed positional delta. It chooses the
+shortest available occurrence stream and stops at the first phrase witness.
+Independent cursors still represent repeated phrase terms.
+
+For fragments, query execution first reads and checks the owner identity and zero
+byte offset of the first fragment. A decidable prefix avoids loading/copying the
+remaining fragments or allocating a document-sized buffer. Otherwise the reader
+assembles the complete payload once using the existing bound and chain checks.
+It does not retry the parser after every fragment, avoiding quadratic rescans.
+
+This intentionally extends the query corruption policy: even unused tails of a
+selected stream and unvisited directory/fragment tails need not be checked after
+a proof. Consumed noncanonical/overflowing/out-of-range deltas still error. The
+full validator and complete chain traversal remain necessary for integrity
+certification. Publication/liveness/incarnation checks and PostgreSQL heap MVCC
+are unchanged. No new storage format or host pointer boundary is introduced.
+
+An incomplete selected stream permits at most 256 cursor advances in the prefix
+probe before requesting the full reader. This bounds duplicate decoding for late
+or absent witnesses. If every selected stream is already complete, evaluation
+finishes in the prefix and never fetches an unrelated tail merely because the
+probe budget was reached. Full evaluation has the ordinary document/query bounds.

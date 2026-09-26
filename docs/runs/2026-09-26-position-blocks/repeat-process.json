@@ -1,0 +1,10 @@
+{
+  "elapsed_s": 2.451201928000046,
+  "user_s": 2.446567,
+  "system_s": 0.003999,
+  "max_rss_kib": 12328,
+  "exit": 0,
+  "command": [
+    "target/release/examples/position_seek_bench"
+  ]
+}

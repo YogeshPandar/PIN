@@ -9,6 +9,7 @@ mod count;
 pub mod document;
 pub mod grouped;
 pub mod page;
+pub mod phrase_prefix;
 mod query;
 mod reader;
 mod vacuum;

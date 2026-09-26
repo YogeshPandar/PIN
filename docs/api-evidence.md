@@ -1294,3 +1294,78 @@ syscall changes; the legacy path stayed near 79 ms. Neither CPU result supports
 retaining a new FFI and concurrency proof burden. Both changes were reverted
 before this candidate was proposed. The trace scripts and raw measurements
 remain as evidence that syscall count alone is a poor proxy for query CPU.
+
+
+## SELPOS01: selected positional views and fragmented phrase proof
+
+Contracts reviewed: PostgreSQL 18 index scanning/locking (MVCC bitmap scans
+continue through heap visibility), and the repository's pinned PostgreSQL
+`724edf9bde9d356724ad384a2e196edc3c9f80f7` contract already recorded above.
+Local `storage::with_reader` retains `pin_structure_lock(index, false)` across
+the pure scan; reclamation requires its exclusive counterpart. Views borrow
+owned page copies or a query-owned fragment buffer, never unlocked PG memory.
+No pgrx, C, WAL, AM capability or unsafe boundary changes are introduced.
+
+Rust `Vec::try_reserve_exact` can provide more capacity than requested: the
+reader checks actual capacity and falls back on allocation/budget failure.
+The existing pinned Rust allocation contracts apply. The versioned online Rust
+1.98.1 documentation was inaccessible during this review; no new foreign API
+assumption relies on it.
+
+Obligations: reject wrong owner/offset/chain/length, preserve publication and
+liveness checks, retain MVCC and bitmap lossification rechecks, charge concurrent
+plan and payload memory, retain the full integrity validator. Query validation
+now intentionally omits unused positional deltas and global cross-term
+uniqueness; `docs/g4-query-execution.md` states that policy explicitly.
+
+Local independent-oracle coverage includes inline and fragmented phrases,
+repeated terms, reversed/nonadjacent terms, selected/unselected corruption and
+budget fallback. Native lifecycle and CPU results are recorded with the run.
+This work is an A3 bridge from `pin_next.md`, not the new primary format, ranked
+SQL execution, or a claim of TIN parity.
+
+## PREFIX01: bounded phrase witnesses
+
+This pure reader uses the existing owned-page and structural-barrier contracts
+from SELPOS01. PostgreSQL 18 index scanning was re-read before this change:
+removing predicate rechecks after an exact proof does not remove heap MVCC or
+bitmap lossification obligations. No PostgreSQL, pgrx, Cargo, unsafe, WAL, or
+storage format boundary changes occur. Rust checked slice/checked-add and the
+existing canonical Reader::var_u32 contracts bound all prefix reads.
+
+The reader validates consumed data and can stop before unneeded stream/fragment
+tails. This observable corruption-policy change is documented in G4. A checked
+witness proves predicate existence; it is not proof of complete index integrity.
+The independent text oracle tests every byte prefix of generated documents;
+physical-work tests prove one fragment read for early witnesses and multiple
+reads for late terms. Required native qualification covers the existing phrase
+lifecycle matrix and the stronger stored-vector GIN control.
+
+Design references (rechecked):
+https://planetscale.com/blog/anatomy-of-a-postgres-search-engine
+https://www.postgresql.org/docs/18/index-scanning.html
+
+## POSBLOCK01: independently seekable position experiment (2026-09-26)
+
+Scope: `pin-core::codec::position_blocks`, its oracle and in-memory benchmark.
+No PostgreSQL/pgrx/FFI/unsafe/WAL/native-format boundary changes. Existing Reader
+and Writer canonical varint, checked slice and integer contracts apply. The wire
+contract and integrity distinction are in `docs/position-blocks.md`.
+
+Official architecture reference re-read:
+https://planetscale.com/blog/anatomy-of-a-postgres-search-engine (2026-09-22).
+It supports separating membership and positional data; PB01's 128-position block
+and directory design are our experiment, not a claim about private TIN code.
+PostgreSQL 18 index locking was re-read:
+https://www.postgresql.org/docs/18/index-locking.html.
+Pinned PostgreSQL source remains commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`; existing scan/visibility obligations
+remain unchanged. There is no new PG function or binding to review here.
+
+Review: safe borrowed slices and caller buffers only; checked count/extent/order
+and bounded selected-block work. Tests compare every target around each generated
+position against a sorted-vector oracle, cover empty/extreme counts, truncation,
+output atomicity, mutated bytes and the selected/skipped corruption distinction.
+Full verification is `validate_all`, not `open`. Native integration is explicitly
+pending owner/lifetime/storage recovery qualification; kernel timing must not be
+reported as SQL performance.

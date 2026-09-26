@@ -1,0 +1,6 @@
+{
+  "sha256": "9a66f891f51ada90a05f3571c5800c341fe5e7b0acab34d1bd45848653bd384f",
+  "revision": "unrecorded dirty build based on e0432821d939b1eac873dff3b4a2ff06a3aa6df1; not an immutable-source baseline",
+  "changes": "full-payload fragmented phrase proof, reusable buffer, plan/payload shared budget; before selected term reader",
+  "limitations": "exploratory run; targeted Rust tests overlapped some CPU batches; immutable final run is authoritative"
+}

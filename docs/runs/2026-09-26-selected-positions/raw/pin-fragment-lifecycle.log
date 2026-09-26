@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/reing/projects/fts0/PIN/tools/phrase_lifecycle.py", line 98, in <module>
+    main()
+    ~~~~^^
+  File "/home/reing/projects/fts0/PIN/tools/phrase_lifecycle.py", line 57, in main
+    check('built')
+    ~~~~~^^^^^^^^^
+  File "/home/reing/projects/fts0/PIN/tools/phrase_lifecycle.py", line 54, in check
+    raise AssertionError(f'{stage}: {source}: {results}')
+AssertionError: built: "éclair café": {'positions': '5|(0,5)', 'legacy': '5|(0,5)', 'gin': ''}

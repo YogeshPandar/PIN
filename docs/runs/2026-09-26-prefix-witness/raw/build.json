@@ -1,0 +1,9 @@
+{
+  "source": "189a02ddbe3c1c67f1495eba2e4725a1af7ace7d",
+  "module_sha256": "6c3f7c0042f75ebe3e433310b3361702be05820ab83231b8d2d09d64095329c3",
+  "prior_prefix_source": "3b312037df72a3824ad55434f66d603f81b9842d",
+  "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "pgrx": "cargo-pgrx 0.19.2\n",
+  "build": "PIN_BUILD_REVISION=189a02ddbe3c1c67f1495eba2e4725a1af7ace7d PGRX_PG_CONFIG_PATH=/usr/lib/postgresql/18/bin/pg_config cargo pgrx package -p pin-pg --pg-config /usr/lib/postgresql/18/bin/pg_config --out-dir /tmp/pin-prefix-final-package"
+}
