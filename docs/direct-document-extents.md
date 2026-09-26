@@ -14,7 +14,8 @@ SET pin.enable_phrase_positions = on;
 ```
 
 The creation setting defaults off. Metapage u32 field at payload offset 28 uses
-bit 0 for this capability; all other bits remain unsupported. The writer reads
+bit 0 for mapped extents and bit 1 for PD03 positions. Only 0, 1, and 3 are
+supported; bit 1 requires bit 0. The writer reads
 this persisted flag for subsequent inserts, regardless of the session setting.
 REINDEX chooses the format using the setting active for that rebuild. Existing
 flag-zero indexes retain the legacy layout and remain readable by the new code.

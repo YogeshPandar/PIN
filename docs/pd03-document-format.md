@@ -60,10 +60,12 @@ iteration are checked on both formats. Codec tests cover selected block reads.
 
 The fixed cursor and metadata arrays, selected directory bytes, additional
 page image and byte scratch are charged against query scratch. A budget shortfall
-returns heap recheck. The native adapter currently prepares PD02 before acquiring
-the writer interlock, then reanalyzes and prepares PD03 inside that interlock if
-the persisted flag requires it. This preserves existing lock ordering and default
-index behavior but adds write CPU and lock hold time to experimental PD03 indexes.
+returns heap recheck. The native adapter prepares PD02 before acquiring the writer interlock, then
+converts the already normalized and sorted document to PD03 inside that interlock
+if the persisted flag requires it. It keeps PD02 when no term can use blocks.
+Input, output and conversion scratch are budgeted together. This preserves
+existing lock ordering and default index behavior, while still adding conversion
+CPU and lock hold time to experimental PD03 indexes.
 
 Native paired CPU, index size, build/WAL, MVCC/VACUUM/replay and broad query
 controls remain qualification gates. Metadata can consume pages and CPU; PB01's

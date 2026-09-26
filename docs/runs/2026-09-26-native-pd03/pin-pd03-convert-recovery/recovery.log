@@ -1,0 +1,10 @@
+2026-09-26 11:43:26.900 UTC [114741] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 11:43:26.900 UTC [114741] LOG:  listening on Unix socket "/tmp/pin-pd03-convert-socket/.s.PGSQL.55505"
+2026-09-26 11:43:26.904 UTC [114768] LOG:  database system was interrupted; last known up at 2026-09-26 11:43:26 UTC
+2026-09-26 11:43:26.909 UTC [114768] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-26 11:43:26.909 UTC [114768] LOG:  redo starts at 0/3A2BC50
+2026-09-26 11:43:26.910 UTC [114768] LOG:  invalid record length at 0/3A424E8: expected at least 24, got 0
+2026-09-26 11:43:26.910 UTC [114768] LOG:  redo done at 0/3A424C0 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-09-26 11:43:26.912 UTC [114758] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-26 11:43:26.913 UTC [114758] LOG:  checkpoint complete: wrote 24 buffers (0.1%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=10, longest=0.001 s, average=0.001 s; distance=90 kB, estimate=90 kB; lsn=0/3A424E8, redo lsn=0/3A424E8
+2026-09-26 11:43:26.917 UTC [114741] LOG:  database system is ready to accept connections

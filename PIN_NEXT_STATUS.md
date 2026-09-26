@@ -169,3 +169,19 @@ no native writer setting enables it yet. The next step is persisted capability
 selection and native inline/mapped readers that use block bounds and range reads.
 [Format](docs/pd03-document-format.md),
 [test evidence](docs/runs/2026-09-26-pd03-readers/README.md).
+
+## Native PD03 qualification
+
+Draft PR #30 now persists the blocked-position capability and uses a bounded
+selected-block phrase reader on inline and mapped documents. The native writer
+converts a prepared PD02 document without repeating analysis, and retains PD02
+when no term has a block candidate. PostgreSQL 18 lifecycle and replay checks
+pass on the bounded fixture. [Raw native evidence and medians](docs/runs/2026-09-26-native-pd03/README.md).
+
+PD03 is not ready for default use or merge. On the final 60K-token pair it
+reduces CPU for one negative phrase from 3.625 to 1.569 ms, but increases
+adjacent from 0.874 to 1.243 ms and repeated from 0.432 to 1.554 ms. Index
+bytes rise 12.4%. The comparable 16K-token run remains well behind GIN.
+The next architecture work is A1 packed canonical postings and A2 SQL BM25,
+followed by B1 primary packed storage. Per-query isolated positional gains do
+not satisfy the broader TIN-like goal.

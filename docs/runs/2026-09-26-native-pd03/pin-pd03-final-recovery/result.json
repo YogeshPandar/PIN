@@ -1,0 +1,8 @@
+{
+  "revision": "7d04b9bbedde12606775efad2512f712b6557e40",
+  "committed_survived": true,
+  "uncommitted_absent": true,
+  "vacuum_insert": true,
+  "reindex": true,
+  "cleaned": true
+}

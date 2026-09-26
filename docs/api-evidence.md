@@ -1499,3 +1499,15 @@ preparation explicitly budgets its additional scratch. No PostgreSQL, pgrx, WAL
 or locking call changes. The storage writer rejects PD03 before any allocation
 until the persisted capability and optimized native consumers exist. Format and
 integration gates are in docs/pd03-document-format.md.
+
+
+PD03 native integration (`214a6ea`): PostgreSQL 18 Generic WAL and index-locking
+contracts rechecked at https://www.postgresql.org/docs/18/generic-wal.html and
+https://www.postgresql.org/docs/18/index-locking.html. No new FFI, unsafe call,
+GenericXLog record type or buffer-lock sequence is introduced. Existing writer
+interlock chooses a persisted metapage capability before preparing/publishing
+PD03. Metadata values 0/1/3 are accepted; 2 and unknown flags fail validation.
+Selected readers use the existing structural barrier, checked owner/extent reads
+and bounded query scratch. The native adapter's experimental PD03 conversion occurs while the writer
+interlock is held; it consumes a prevalidated PD02 document and neither repeats
+analysis nor sorting. Write CPU and lock-hold effects still need paired measurement. Core tests and native evidence are in the dated PD03 run.

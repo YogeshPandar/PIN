@@ -1,0 +1,4 @@
+   Compiling pgrx-pg-sys v0.19.2
+   Compiling pin-pg v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-pg)
+    Checking pgrx v0.19.2
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 23.78s
