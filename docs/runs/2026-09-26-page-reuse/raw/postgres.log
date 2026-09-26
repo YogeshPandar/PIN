@@ -1,0 +1,14 @@
+2026-09-26 10:10:41.679 UTC [56793] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 10:10:41.679 UTC [56793] LOG:  listening on Unix socket "/tmp/pin-reuse-final-socket/.s.PGSQL.55498"
+2026-09-26 10:10:41.682 UTC [56799] LOG:  database system was shut down at 2026-09-26 10:10:41 UTC
+2026-09-26 10:10:41.684 UTC [56793] LOG:  database system is ready to accept connections
+2026-09-26 10:12:49.780 UTC [57406] WARNING:  there is no transaction in progress
+2026-09-26 10:12:56.574 UTC [57434] WARNING:  there is no transaction in progress
+2026-09-26 10:13:04.652 UTC [57439] WARNING:  there is no transaction in progress
+2026-09-26 10:14:03.208 UTC [56793] LOG:  received fast shutdown request
+2026-09-26 10:14:03.208 UTC [56793] LOG:  aborting any active transactions
+2026-09-26 10:14:03.211 UTC [56793] LOG:  background worker "logical replication launcher" (PID 56801) exited with exit code 1
+2026-09-26 10:14:03.212 UTC [56797] LOG:  shutting down
+2026-09-26 10:14:03.212 UTC [56797] LOG:  checkpoint starting: shutdown immediate
+2026-09-26 10:14:03.214 UTC [56797] LOG:  checkpoint complete: wrote 130 buffers (0.8%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 1 recycled; write=0.002 s, sync=0.001 s, total=0.002 s; sync files=122, longest=0.001 s, average=0.000 s; distance=18875 kB, estimate=18875 kB; lsn=0/29D4B08, redo lsn=0/29D4B08
+2026-09-26 10:14:03.220 UTC [56793] LOG:  database system is shut down

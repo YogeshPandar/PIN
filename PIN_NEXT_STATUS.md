@@ -100,3 +100,19 @@ The new cpu-clock profile still puts 30.92% of samples in memmove. A3 direct
 physical reads, budgeted reusable page buffers, B1 native storage migration,
 and SQL ranked/TIN feature parity remain unfinished. No production-ready or TIN
 performance claim follows from this synthetic phrase optimization.
+
+## A3 private page reuse
+
+The next reader iteration implements `PageStore::read_into`, exclusive image
+reload and one budgeted fragment image retained across candidates. This follows
+A3's adapter-first sequence in `pin_next.md`; it does not complete B1 physical
+position addressing. Native long-phrase CPU falls another 29–43% in the paired
+runs; memmove falls from 30.92% to 15.39% of sampled CPU. Long PIN still uses
+approximately 3.2–5.5x stored-vector GIN CPU. Core: 210 passed, 3 existing ignored;
+native lifecycle: 33 comparisons passed; Clippy clean.
+[Full measurements and limits](docs/runs/2026-09-26-page-reuse/README.md).
+
+The plan remains useful and incomplete: A1 packed canonical postings, A2 SQL
+BM25, B1 physical position directories and subsequent ranked/span execution are
+still substantial work. Recent bridge optimizations do not establish final
+production readiness or TIN parity.
