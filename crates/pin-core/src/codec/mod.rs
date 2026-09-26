@@ -4,6 +4,7 @@
 pub mod bytes;
 pub mod dictionary;
 pub mod offsets;
+pub mod position_blocks;
 pub mod positions;
 pub mod records;
 

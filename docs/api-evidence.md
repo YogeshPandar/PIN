@@ -1344,3 +1344,28 @@ lifecycle matrix and the stronger stored-vector GIN control.
 Design references (rechecked):
 https://planetscale.com/blog/anatomy-of-a-postgres-search-engine
 https://www.postgresql.org/docs/18/index-scanning.html
+
+## POSBLOCK01: independently seekable position experiment (2026-09-26)
+
+Scope: `pin-core::codec::position_blocks`, its oracle and in-memory benchmark.
+No PostgreSQL/pgrx/FFI/unsafe/WAL/native-format boundary changes. Existing Reader
+and Writer canonical varint, checked slice and integer contracts apply. The wire
+contract and integrity distinction are in `docs/position-blocks.md`.
+
+Official architecture reference re-read:
+https://planetscale.com/blog/anatomy-of-a-postgres-search-engine (2026-09-22).
+It supports separating membership and positional data; PB01's 128-position block
+and directory design are our experiment, not a claim about private TIN code.
+PostgreSQL 18 index locking was re-read:
+https://www.postgresql.org/docs/18/index-locking.html.
+Pinned PostgreSQL source remains commit
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`; existing scan/visibility obligations
+remain unchanged. There is no new PG function or binding to review here.
+
+Review: safe borrowed slices and caller buffers only; checked count/extent/order
+and bounded selected-block work. Tests compare every target around each generated
+position against a sorted-vector oracle, cover empty/extreme counts, truncation,
+output atomicity, mutated bytes and the selected/skipped corruption distinction.
+Full verification is `validate_all`, not `open`. Native integration is explicitly
+pending owner/lifetime/storage recovery qualification; kernel timing must not be
+reported as SQL performance.
