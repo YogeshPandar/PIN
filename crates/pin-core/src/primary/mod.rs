@@ -4,10 +4,15 @@
 mod arena;
 mod build_record;
 mod build_reduce;
+mod catalogue;
 mod root;
 pub use arena::PrimaryArena;
 pub use build_record::{MAX_SORT_RECORD_BYTES, TermSortRecord, decode_sort_record};
 pub use build_reduce::{BuildReducer, ReduceWork};
+pub use catalogue::{
+    CatalogueBuilder, CatalogueEntry, CatalogueFence, CataloguePage, EncodedCataloguePage,
+    GroupAddress,
+};
 pub use root::{PrimaryRoot, ROOT_BYTES};
 
 use crate::codec::bytes::{Reader, Writer};
