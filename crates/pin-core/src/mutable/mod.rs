@@ -235,8 +235,11 @@ fn load_posting<S: PageStore>(store: &mut S, block: u32, term: page::TermRef) ->
     let page = load_any(store, block)?;
     if page.kind() == PageKind::Dictionary {
         let entry = page.term(term)?;
-        let second = entry.inline_second.ok_or(Error::InvalidState)?;
-        if entry.head != block || entry.tail != block {
+        let second = entry
+            .inline_second
+            .or(entry.shadow_second)
+            .ok_or(Error::InvalidState)?;
+        if entry.inline_second.is_some() && (entry.head != block || entry.tail != block) {
             return Err(Error::InvalidState);
         }
         let mut virtual_page = Page::postings(block, term)?;

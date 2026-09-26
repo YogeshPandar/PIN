@@ -96,6 +96,7 @@ pub fn compact_with_mode<S: PageStore>(store: &mut S, mode: CompactMode) -> Resu
                 if let Some(second) = entry.inline_second {
                     let mut cache = None;
                     if super::reader::resolve(store, &mut cache, second)?.is_none() {
+                        super::grouped::invalidate_frontier(store, &mut meta)?;
                         let mut current = load(store, block, PageKind::Dictionary)?;
                         if current.term(entry.reference)?.inline_second != Some(second) {
                             return Err(Error::InvalidState);

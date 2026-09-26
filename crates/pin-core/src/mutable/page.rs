@@ -148,6 +148,7 @@ pub struct Term<'a> {
     pub head: u32,
     pub tail: u32,
     pub inline_second: Option<OwnerRef>,
+    pub shadow_second: Option<OwnerRef>,
 }
 
 /// Explicit publication and liveness changes; removal cannot republish an owner.
@@ -882,9 +883,8 @@ impl Page {
         if !block_valid(block) || block == self.block {
             return Err(Error::InvalidState);
         }
-        let at = usize::from(reference.offset) + DICTIONARY_ENTRY + term.term.len();
-        self.bytes[at..at + 16].fill(0);
-        self.put_u32(usize::from(reference.offset) + 28, 0)?;
+        // readers may still hold the old dictionary head; retain its witness.
+        self.put_u32(usize::from(reference.offset) + 28, 2)?;
         self.put_u32(usize::from(reference.offset) + 4, block)?;
         self.put_u32(usize::from(reference.offset) + 8, block)?;
         Ok(second)
@@ -1294,31 +1294,40 @@ impl<'a> Iterator for Terms<'a> {
             let tail = self.reader.u32()?;
             let first = OwnerRef::read(&mut self.reader)?;
             let inline = self.reader.u32()?;
-            if !posting_pair_valid(head, tail) || inline > u32::from(self.packed) {
+            if !posting_pair_valid(head, tail) || inline > if self.packed { 2 } else { 0 } {
                 return Err(corrupt(offset + 4));
             }
             let term = std::str::from_utf8(self.reader.take(len)?)
                 .map_err(|_| corrupt(offset + DICTIONARY_ENTRY))?;
-            let inline_second = if self.packed {
+            let (inline_second, shadow_second) = if self.packed {
                 let bytes = self.reader.take(16)?;
-                if inline == 1 {
+                if inline != 0 {
                     let mut reader = Reader::new(bytes);
                     let second = OwnerRef::read(&mut reader)?;
-                    if (head, tail) != (self.page, self.page)
-                        || (second.page, second.slot) <= (first.page, first.slot)
+                    if (second.page, second.slot) <= (first.page, first.slot)
                         || second.incarnation <= first.incarnation
+                        || (inline == 1 && (head, tail) != (self.page, self.page))
+                        || (inline == 2
+                            && (head == NO_BLOCK
+                                || tail == NO_BLOCK
+                                || head == self.page
+                                || tail == self.page))
                     {
                         return Err(corrupt(offset + DICTIONARY_ENTRY + len));
                     }
-                    Some(second)
+                    if inline == 1 {
+                        (Some(second), None)
+                    } else {
+                        (None, Some(second))
+                    }
                 } else {
                     if bytes != [0; 16] || head == self.page || tail == self.page {
                         return Err(corrupt(offset + DICTIONARY_ENTRY + len));
                     }
-                    None
+                    (None, None)
                 }
             } else {
-                None
+                (None, None)
             };
             Ok(Term {
                 reference: TermRef {
@@ -1330,6 +1339,7 @@ impl<'a> Iterator for Terms<'a> {
                 head,
                 tail,
                 inline_second,
+                shadow_second,
             })
         })();
         self.failed = result.is_err();

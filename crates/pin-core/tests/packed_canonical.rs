@@ -124,12 +124,23 @@ fn third_owner_promotes_and_dead_second_is_reusable() {
 fn grouped_build_reads_inline_second_and_promoted_suffix() {
     let mut store = MemoryStore {
         packed_postings: true,
+        frontier_anchors: true,
         ..MemoryStore::default()
     };
     mutable::initialize(&mut store).unwrap();
     insert(&mut store, 0, "alpha beta");
     insert(&mut store, 1, "alpha beta");
     grouped::rebuild(&mut store, &mut Sort::default(), 8 << 20).unwrap();
+    assert!(
+        store
+            .read(0)
+            .unwrap()
+            .grouped_state()
+            .unwrap()
+            .active
+            .unwrap()
+            .frontier_valid
+    );
     let query = Query::parse("alpha AND beta", QueryLimits::default()).unwrap();
     let mut first = BTreeSet::new();
     grouped::scan_query(&mut store, &query, 8 << 20, |root, _| {
@@ -139,6 +150,16 @@ fn grouped_build_reads_inline_second_and_promoted_suffix() {
     .unwrap();
     assert_eq!(first, BTreeSet::from([root(&store, 0), root(&store, 1)]));
     insert(&mut store, 2, "alpha beta");
+    assert!(
+        !store
+            .read(0)
+            .unwrap()
+            .grouped_state()
+            .unwrap()
+            .active
+            .unwrap()
+            .frontier_valid
+    );
     let mut after = BTreeSet::new();
     grouped::scan_query(&mut store, &query, 8 << 20, |root, _| {
         after.insert(root);

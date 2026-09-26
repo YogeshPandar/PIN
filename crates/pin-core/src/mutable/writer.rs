@@ -141,6 +141,7 @@ fn link_term<S: PageStore>(
         let term = dictionary.term(reference)?;
         let (head, tail) = (term.head, term.tail);
         if let Some(second) = term.inline_second {
+            super::grouped::invalidate_frontier(store, meta)?;
             let mut page = Page::postings(allocate(store)?, reference)?;
             if !page.append_posting(second)? || !page.append_posting(owner)? {
                 return Err(Error::InvalidState);

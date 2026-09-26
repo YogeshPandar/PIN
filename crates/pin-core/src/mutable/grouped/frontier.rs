@@ -24,6 +24,7 @@ pub(super) struct CapturedTerm {
     first: OwnerRef,
     head: u32,
     tail: u32,
+    shadow_promoted: bool,
 }
 
 impl CapturedTerm {
@@ -33,6 +34,7 @@ impl CapturedTerm {
             first: term.first,
             head: term.head,
             tail: term.tail,
+            shadow_promoted: term.shadow_second.is_some(),
         }
     }
 
@@ -147,6 +149,11 @@ impl Cursor {
             if anchor.last != term.first.incarnation.get() {
                 return Err(Error::InvalidState);
             }
+            self.block = term.head;
+            store.event(Stage::FrontierSeek)?;
+            return self.advance(store);
+        }
+        if anchor.head != term.head && term.shadow_promoted {
             self.block = term.head;
             store.event(Stage::FrontierSeek)?;
             return self.advance(store);
