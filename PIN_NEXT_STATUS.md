@@ -116,3 +116,18 @@ The plan remains useful and incomplete: A1 packed canonical postings, A2 SQL
 BM25, B1 physical position directories and subsequent ranked/span execution are
 still substantial work. Recent bridge optimizations do not establish final
 production readiness or TIN parity.
+
+## B1 document extent prototype (not qualified)
+
+The experimental `pin.enable_direct_documents` creation option adds a versioned
+physical map and selected positional reads. Fixed 3KB heads regressed size by
+49% on the 16K fixture; adaptive heads restore the legacy page count. Retaining
+tail scratch reduces reader overhead, but final mapped late-match CPU remains
+0.931 ms versus legacy 0.785 ms and stored GIN 0.133 ms in the paired run.
+Native lifecycle passes 44 comparisons. This is physical addressing groundwork,
+not the final packed layout, performance parity or permission to enable by default.
+[All iterations, failures and raw evidence](docs/runs/2026-09-26-document-extents/README.md).
+
+Next: profile the remaining virtual-reader overhead, measure a native longer
+fixture where physical skipping actually avoids pages, and qualify crash replay.
+Keep both the positive work-bound test and the negative two-page native result.
