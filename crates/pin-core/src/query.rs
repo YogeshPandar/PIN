@@ -399,12 +399,44 @@ impl Query {
     pub fn is_single_term(&self) -> bool {
         matches!(&self.nodes[self.root].kind, Kind::Term(_))
     }
-    pub fn single_term(&self) -> Option<&str> {
-        match &self.nodes[self.root].kind {
-            Kind::Term(term) => Some(term),
-            _ => None,
+
+    /// Writes normalized terms in source order when the complete expression is
+    /// a conjunction of exact terms, returning the number written.
+    ///
+    /// Parsing produces a flat postorder node list in which every operand is
+    /// reachable from the root. Therefore checking the node kinds is enough
+    /// to reject OR, NOT, phrase, prefix, and empty expressions without an
+    /// auxiliary stack or allocation.
+    pub fn exact_conjunction_terms<'a>(&'a self, output: &mut [&'a str]) -> Option<usize> {
+        if !matches!(self.nodes[self.root].kind, Kind::Term(_) | Kind::And(_, _))
+            || self
+                .nodes
+                .iter()
+                .any(|node| !matches!(node.kind, Kind::Term(_) | Kind::And(_, _)))
+        {
+            return None;
         }
+        let count = self
+            .nodes
+            .iter()
+            .filter(|node| matches!(node.kind, Kind::Term(_)))
+            .count();
+        if count > output.len() {
+            return None;
+        }
+        for (slot, term) in
+            output
+                .iter_mut()
+                .zip(self.nodes.iter().filter_map(|node| match &node.kind {
+                    Kind::Term(term) => Some(term.as_str()),
+                    _ => None,
+                }))
+        {
+            *slot = term;
+        }
+        Some(count)
     }
+
     pub const fn retained_bytes(&self) -> usize {
         self.retained_bytes
     }
@@ -452,5 +484,54 @@ impl Query {
             .map_err(|_| codec::Error::new(12, codec::ErrorKind::InvalidUtf8))?;
         reader.finish()?;
         Self::parse(text, limits)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Query, QueryLimits};
+
+    fn terms<'a>(query: &'a Query, output: &mut [&'a str]) -> Option<usize> {
+        query.exact_conjunction_terms(output)
+    }
+
+    #[test]
+    fn exact_conjunction_accepts_single_and_parenthesized_and_terms() {
+        let mut output = [""; 4];
+        let query = Query::parse("Alpha", QueryLimits::default()).unwrap();
+        assert_eq!(terms(&query, &mut output), Some(1));
+        assert_eq!(&output[..1], &["alpha"]);
+
+        let query =
+            Query::parse("(Alpha AND (BRAVO AND charlie))", QueryLimits::default()).unwrap();
+        assert_eq!(terms(&query, &mut output), Some(3));
+        assert_eq!(&output[..3], &["alpha", "bravo", "charlie"]);
+    }
+
+    #[test]
+    fn exact_conjunction_rejects_other_expression_kinds() {
+        for source in [
+            "alpha OR bravo",
+            "\"alpha bravo\"",
+            "alpha*",
+            "NOT alpha",
+            "(alpha AND bravo) OR charlie",
+            "alpha AND NOT bravo",
+        ] {
+            let query = Query::parse(source, QueryLimits::default()).unwrap();
+            let mut output = [""; 8];
+            assert_eq!(terms(&query, &mut output), None, "{source}");
+        }
+    }
+
+    #[test]
+    fn exact_conjunction_rejects_insufficient_output_capacity() {
+        {
+            let query = Query::parse("alpha AND bravo", QueryLimits::default()).unwrap();
+            let mut output = [""; 1];
+            assert_eq!(terms(&query, &mut output), None);
+        }
+        let query = Query::parse("alpha", QueryLimits::default()).unwrap();
+        assert_eq!(terms(&query, &mut []), None);
     }
 }
