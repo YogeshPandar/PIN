@@ -1273,8 +1273,10 @@ each candidate. The follow-up `validate_inner` callback records selected
 position views while it validates every term and every token once; the public
 `validate` API delegates to the same validation loop. The callback's selected
 views are used only after validation and expected token/term count checks
-succeed. This changes neither PD02 bytes nor the corruption rule. Native
-paired CPU and full-identity checks must establish whether it is worth keeping.
+succeed. This changes neither PD02 bytes nor the corruption rule. On the
+replayed fixture, full identities matched across PIN old, PIN one-pass, and
+GIN; backend CPU for `"bravo charlie"` fell from 27.53 to 22.47 ms. A native
+repeatable-read snapshot held its full result stream across committed writes.
 
 ### Rejected relation-size syscall experiment
 

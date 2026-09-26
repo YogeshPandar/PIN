@@ -146,6 +146,9 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/merged-baseline/strace-session.stderr
 dc187c1cba4b693ff8b891bff5fba4ecb162913622df26bcfe2d0eb54b3e5ece  docs/runs/2026-09-26-phrase-cpu/raw/merged-baseline/summary.json
 e76333aaac9269e8dff488955ecb3ecee441c06cc8016055f09745b5dc74f13b  docs/runs/2026-09-26-phrase-cpu/raw/merged-baseline/write-maintenance.json
+96c5c5d11cdf599ad2937c1760a70a9ef4c0db99b3399c6e45a6b93a9cd31719  docs/runs/2026-09-26-phrase-cpu/raw/onepass-lifecycle/psql.stderr
+5bf097702f35d5ec25f3720f18c896ed1bea912745b9159755a6d6da96ae7038  docs/runs/2026-09-26-phrase-cpu/raw/onepass-lifecycle/result.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/onepass-lifecycle/snapshot.stderr
 07099bb95746ada1e6ee7ea62dcafe16426378b0d253682fe8152c3df20ef340  docs/runs/2026-09-26-phrase-cpu/raw/phrase-bounded/bravo_charlie-plans.json
 14af7a6095988059c39b22b4cdcb346958baeeb961712fa75697fe508e3f57da  docs/runs/2026-09-26-phrase-cpu/raw/phrase-bounded/delta_echo-plans.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-bounded/psql.stderr
@@ -160,6 +163,11 @@ b7cfe035834c6ec1314b20607677755ffb8260166abfe27567f6ea624d4dadb8  docs/runs/2026
 937c46e2ecf00f1fd6fc641d0175c0af756b72fa44453fdb9c195e77642ad821  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/perf.stderr
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/psql.stderr
 4e76dbf16f9601e8ec86e28c6102529d13824fd9e39d00cb5d2d40b5993723d8  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/report.txt
+5f3557943c56d90cb24ee7fffaf5add1cf1722ec67d1a4fe47595f63ec16f44d  docs/runs/2026-09-26-phrase-cpu/raw/phrase-onepass/bravo_charlie-plans.json
+410ab957f0fe75179be4b06a577e209ee6c98bad39548230ffdb70bb57b795fe  docs/runs/2026-09-26-phrase-cpu/raw/phrase-onepass/delta_echo-plans.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-onepass/psql.stderr
+6e69ce0e49c360e372955ad549b463d0439a30ed47821ce80b9dff251c57f934  docs/runs/2026-09-26-phrase-cpu/raw/phrase-onepass/result.json
+8f983dc53fa218095ae8d96c1d9181ded03c6c3eeded700991bedba471406874  docs/runs/2026-09-26-phrase-cpu/raw/phrase-onepass/reversed-plans.json
 c538c6f061a3179e6e4270ff38a2c0e244433e87c6badee3aef900bc3775f094  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/bravo_charlie-plans.json
 eed5e27eab25040d39b826a3e6d809f9fc6c9369ae508f7b542924b465fdd1e0  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/delta_echo-plans.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/psql.stderr

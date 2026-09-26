@@ -56,7 +56,9 @@ heap visibility and falls back to heap predicate recheck for fragmented owners.
 On the rebuilt fixture, an initial paired run measured `"bravo charlie"` at
 27.53 ms PIN backend CPU with positional proof, 79.76 ms with the prior PIN
 recheck, and 218.95 ms GIN. Full delivered `id,ctid` streams matched. This is
-about 8x faster than GIN for this phrase case and does not carry over to broad
+about 8x faster than GIN for this first phrase path. A second pass that
+validates and selects indexed positions in one loop measured 22.47 ms versus
+218.76 ms GIN on the same phrase, about 9.7x. It does not carry over to broad
 rows or ranked top-k.
 
 ## Next architecture changes

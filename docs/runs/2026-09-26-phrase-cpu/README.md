@@ -11,17 +11,20 @@ shortcut, zero shared-buffer reads, and exact heap pages. The complete input,
 source identity, plans, row identity checks, samples, and syscall logs are in
 [`raw/`](raw/).
 
-| Rebuilt fixture, median backend CPU | Prior PIN | PIN positions | GIN |
-| --- | ---: | ---: | ---: |
-| `"bravo charlie"` | 79.76 ms | 27.53 ms | 218.95 ms |
-| `"delta echo"` | 79.22 ms | 28.84 ms | 218.07 ms |
-| `"charlie bravo"` | 80.67 ms | 26.88 ms | 220.04 ms |
+| Rebuilt fixture, median backend CPU | Prior PIN | First positions | One-pass positions | GIN |
+| --- | ---: | ---: | ---: | ---: |
+| `"bravo charlie"` | 79.76 ms | 27.53 ms | 22.47 ms | 218.76 ms |
+| `"delta echo"` | 79.22 ms | 28.84 ms | 22.53 ms | 218.19 ms |
+| `"charlie bravo"` | 80.67 ms | 26.88 ms | 21.86 ms | 218.95 ms |
 
-The position path was built from commit
+The first position path was built from commit
 `e176feeb58449d935a79a3607b15dc7549993a4e`. It removes heap text
 reanalysis for inline indexed phrase matches, while PostgreSQL still checks
-heap visibility. It is about 7.6 to 8.2 times faster than GIN for these three
-phrase COUNT cases. It does not improve ranked top-k or broad row retrieval.
+heap visibility. The one-pass position validator was built from commit
+`a3050fb8331ec16ae926f557fab3ad6bad9d9c06`; it records selected term
+positions during the complete corruption check instead of parsing them again.
+It measured about 9.7 to 10.0 times faster than GIN for these three phrase
+COUNT cases. It does not improve ranked top-k or broad row retrieval.
 The merged PR #26 baseline measured, after rebuild, 6.47 ms PIN versus 8.08 ms
 GIN for broad rows and 272.03 ms versus 273.17 ms for top-k using the same
 `ts_rank_cd` expression. The baseline's `phrase_count` median was 79.57 ms PIN
@@ -37,10 +40,12 @@ concurrency proof were therefore reverted. The intermediate binaries and
 samples remain in `raw/phrase-cache/` and `raw/phrase-bounded/` for audit.
 `strace` itself perturbs latency, so its output is used only for syscall counts.
 
-The lifecycle script performed 24 full identity comparisons across initial
+The initial lifecycle script performed 24 full identity comparisons across initial
 build, HOT update, indexed text update, self-visible uncommitted insertion,
 rollback, delete, VACUUM, and REINDEX. It included repeated words, Unicode,
 and a fragmented document. The pure `g4_query` suite passed 13 tests.
+The one-pass candidate passed 33 comparisons, adding a repeatable-read snapshot
+held across committed writes; its full old result stream remained unchanged.
 The final first-pass CPU-clock profile captured 3,795 samples with zero lost
 samples while 150 warm phrase queries ran. Flat samples included 13.99% in
 `phrase_matches`, 12.23% in posting cursor seek, 11.78% in complete document

@@ -36,18 +36,19 @@ def main() -> None:
                             'SET pin.enable_grouped_scan=on; SET pin.enable_exact_bitmap=on; '
                             'SET enable_indexscan=off; SET enable_seqscan=off; SET enable_bitmapscan=on;')
 
-            def check(stage: str) -> None:
+            def check(stage: str, active: Session | None = None) -> None:
+                reader = active or session
                 for source, gin in [('"alpha beta"', 'alpha <-> beta'),
                                     ('"echo echo"', 'echo <-> echo'),
                                     ('"éclair café"', 'éclair <-> café')]:
                     results = {}
                     for mode in ('positions', 'legacy', 'gin'):
-                        session.execute('SET pin.enable_phrase_positions=' +
-                                        ('on' if mode == 'positions' else 'off') + ';')
+                        reader.execute('SET pin.enable_phrase_positions=' +
+                                       ('on' if mode == 'positions' else 'off') + ';')
                         clause = (f"to_tsvector('simple',body) @@ to_tsquery('simple','{gin}')"
                                   if mode == 'gin' else
                                   f"body OPERATOR(pin.@@@) pin.parse_query('{source}')")
-                        results[mode] = session.execute(
+                        results[mode] = reader.execute(
                             f'SELECT id,ctid FROM ONLY {table} WHERE {clause} ORDER BY id,ctid;')
                     if len(set(results.values())) != 1:
                         raise AssertionError(f'{stage}: {source}: {results}')
@@ -69,6 +70,24 @@ def main() -> None:
             check('vacuum')
             session.execute(f'REINDEX INDEX {schema}.docs_pin;')
             check('reindex')
+            with Session(Path('/usr/lib/postgresql/18/bin/psql'),
+                         args.output / 'snapshot.stderr', 'pin_legacy') as snapshot:
+                snapshot.execute('SET pin.enable_count_fastpath=off; SET pin.enable_grouped_count=off; '
+                                 'SET pin.enable_grouped_scan=on; SET pin.enable_exact_bitmap=on; '
+                                 'SET enable_indexscan=off; SET enable_seqscan=off; '
+                                 'SET enable_bitmapscan=on;')
+                snapshot.execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;')
+                prior = len(record)
+                check('snapshot_before', snapshot)
+                before = [item['rows'] for item in record[prior:]]
+                session.execute(f"UPDATE {table} SET body='alpha beta' WHERE id=2;")
+                session.execute(f"INSERT INTO {table}(id,body) VALUES (7,'alpha beta');")
+                prior = len(record)
+                check('snapshot_after_write', snapshot)
+                if [item['rows'] for item in record[prior:]] != before:
+                    raise AssertionError('repeatable-read snapshot changed after writer commit')
+                snapshot.execute('ROLLBACK;')
+            check('committed_after_snapshot')
         finally:
             session.execute(f'DROP SCHEMA {schema} CASCADE;')
     (args.output / 'result.json').write_text(json.dumps(record, indent=2) + '\n')
