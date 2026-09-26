@@ -553,18 +553,19 @@ impl Manifest {
         self.payload_len
     }
 
-    /// Reads only leaf pages whose inclusive lexeme fences can overlap the query.
-    pub fn locate<S: PageStore>(
+    /// Selects overlapping catalogue fences without reading their pages. A
+    /// caller must validate each selected page against its returned fence.
+    pub fn locate_fences<S: PageStore>(
         &self,
         store: &mut S,
         segment: SegmentId,
         key: &[u8],
         prefix: bool,
-    ) -> Result<Vec<u32>> {
+    ) -> Result<Vec<ManifestPageFence>> {
         if key.is_empty() || key.len() > crate::mutable::document::MAX_TERM_BYTES {
             return Err(Error::InvalidParameters);
         }
-        let mut blocks = Vec::new();
+        let mut fences = Vec::new();
         let start = self.leaves.partition_point(|d| {
             d.segment < segment || (d.segment == segment && d.last.as_slice() < key)
         });
@@ -593,7 +594,7 @@ impl Manifest {
             if leaf.first()? != desc.first || leaf.last()? != desc.last {
                 return Err(Error::InvalidState);
             }
-            blocks
+            fences
                 .try_reserve(leaf.len())
                 .map_err(|_| Error::Allocation)?;
             let fence_start = leaf
@@ -609,32 +610,49 @@ impl Manifest {
                     break;
                 }
                 if overlaps(&fence.first_lexeme, &fence.last_lexeme, key, prefix) {
-                    let catalogue_page = store.read(fence.block)?;
-                    catalogue_page.validate(self.layout)?;
-                    if catalogue_page.block() != fence.block {
-                        return Err(Error::InvalidState);
-                    }
-                    let catalogue = CataloguePage::open(catalogue_page.primary_payload()?)?;
-                    if catalogue.block() != fence.block || catalogue.is_empty() {
-                        return Err(Error::InvalidState);
-                    }
-                    let mut scratch = [0u8; crate::mutable::document::MAX_TERM_BYTES];
-                    let (first, first_entry) = catalogue.entry(0, &mut scratch)?;
-                    if first != fence.first_lexeme
-                        || first_entry.term_ordinal != fence.first_ordinal
-                    {
-                        return Err(Error::InvalidState);
-                    }
-                    let (last, _) = catalogue.entry(
-                        u16::try_from(catalogue.len() - 1).map_err(|_| Error::InvalidState)?,
-                        &mut scratch,
-                    )?;
-                    if last != fence.last_lexeme {
-                        return Err(Error::InvalidState);
-                    }
-                    blocks.push(fence.block);
+                    fences.push(fence.clone());
                 }
             }
+        }
+        Ok(fences)
+    }
+
+    /// Reads selected catalogue pages and checks their physical fence contents.
+    pub fn locate<S: PageStore>(
+        &self,
+        store: &mut S,
+        segment: SegmentId,
+        key: &[u8],
+        prefix: bool,
+    ) -> Result<Vec<u32>> {
+        let fences = self.locate_fences(store, segment, key, prefix)?;
+        let mut blocks = Vec::new();
+        blocks
+            .try_reserve_exact(fences.len())
+            .map_err(|_| Error::Allocation)?;
+        for fence in fences {
+            let catalogue_page = store.read(fence.block)?;
+            catalogue_page.validate(self.layout)?;
+            if catalogue_page.block() != fence.block {
+                return Err(Error::InvalidState);
+            }
+            let catalogue = CataloguePage::open(catalogue_page.primary_payload()?)?;
+            if catalogue.block() != fence.block || catalogue.is_empty() {
+                return Err(Error::InvalidState);
+            }
+            let mut scratch = [0u8; crate::mutable::document::MAX_TERM_BYTES];
+            let (first, first_entry) = catalogue.entry(0, &mut scratch)?;
+            if first != fence.first_lexeme || first_entry.term_ordinal != fence.first_ordinal {
+                return Err(Error::InvalidState);
+            }
+            let (last, _) = catalogue.entry(
+                u16::try_from(catalogue.len() - 1).map_err(|_| Error::InvalidState)?,
+                &mut scratch,
+            )?;
+            if last != fence.last_lexeme {
+                return Err(Error::InvalidState);
+            }
+            blocks.push(fence.block);
         }
         Ok(blocks)
     }

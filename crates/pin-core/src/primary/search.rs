@@ -1,6 +1,4 @@
-use super::{
-    CataloguePage, Directory, MAX_DIRECTORY_BYTES, PrimaryRoot, read_manifest, read_offsets,
-};
+use super::{CataloguePage, Directory, MAX_DIRECTORY_BYTES, PrimaryRoot, read_manifest};
 use crate::error::{Error, Result};
 use crate::grouped::GroupKey;
 use crate::identity::{RootTid, SegmentId};
@@ -23,20 +21,32 @@ pub fn scan_term<S: PageStore>(
         return Ok(0);
     }
     let manifest = read_manifest(store, root)?;
-    let blocks = manifest.locate(store, segment, term, false)?;
+    let fences = manifest.locate_fences(store, segment, term, false)?;
     let mut count = 0u64;
     let mut prior_ordinal = None;
     let mut prior_base = None;
-    for block in blocks {
+    let mut posting_page = None;
+    for fence in fences {
         store.interrupt()?;
-        let page = store.read(block)?;
+        let page = store.read(fence.block)?;
         page.validate(root.layout)?;
         let catalogue = CataloguePage::open(page.primary_payload()?)?;
-        if catalogue.block() != block {
+        if catalogue.block() != fence.block || catalogue.is_empty() {
+            return Err(Error::InvalidState);
+        }
+        let mut scratch = [0u8; MAX_TERM_BYTES];
+        let (first, first_entry) = catalogue.entry(0, &mut scratch)?;
+        if first != fence.first_lexeme || first_entry.term_ordinal != fence.first_ordinal {
+            return Err(Error::InvalidState);
+        }
+        let (last, _) = catalogue.entry(
+            u16::try_from(catalogue.len() - 1).map_err(|_| Error::InvalidState)?,
+            &mut scratch,
+        )?;
+        if last != fence.last_lexeme {
             return Err(Error::InvalidState);
         }
         for row in catalogue.lookup_range(term)? {
-            let mut scratch = [0u8; MAX_TERM_BYTES];
             let (found, entry) = catalogue.entry(row, &mut scratch)?;
             if found != term
                 || prior_ordinal.is_some_and(|old| old != entry.term_ordinal)
@@ -64,7 +74,19 @@ pub fn scan_term<S: PageStore>(
                     let bit = pages.trailing_zeros() as u8;
                     pages &= pages - 1;
                     let page_number = word as u8 * 64 + bit;
-                    let mask = read_offsets(store, key, directory, page_number)?
+                    let mask = directory
+                        .offsets(page_number, |extent, output| {
+                            if posting_page.as_ref().is_none_or(
+                                |page: &crate::mutable::page::Page| page.block() != extent.block,
+                            ) {
+                                let page = store.read(extent.block)?;
+                                page.validate(root.layout)?;
+                                posting_page = Some(page);
+                            }
+                            let page = posting_page.as_ref().ok_or(Error::InvalidState)?;
+                            output.copy_from_slice(page.primary_extent(extent.offset, extent.len)?);
+                            Ok(())
+                        })?
                         .ok_or(Error::InvalidState)?;
                     let heap_block = key.base() | u32::from(page_number);
                     for (offset_word, mut offsets) in mask.into_iter().enumerate() {
