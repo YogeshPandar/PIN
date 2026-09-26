@@ -9,6 +9,7 @@ mod catalogue;
 mod manifest;
 mod root;
 mod search;
+mod search_and;
 pub use arena::PrimaryArena;
 pub use build_record::{MAX_SORT_RECORD_BYTES, TermSortRecord, decode_sort_record};
 pub use build_reduce::{BuildReducer, ReduceWork};
@@ -23,6 +24,7 @@ pub use manifest::{
 };
 pub use root::{PrimaryRoot, ROOT_BYTES};
 pub use search::scan_term;
+pub use search_and::scan_terms_and;
 
 use crate::codec::bytes::{Reader, Writer};
 use crate::error::{Error, Result};

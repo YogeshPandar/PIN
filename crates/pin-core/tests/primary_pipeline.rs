@@ -149,6 +149,7 @@ fn sorted_records_reduce_into_persisted_posting_directory_and_catalogue_pages() 
     for (term, block, offset) in [
         ("alpha", 2, 5),
         ("alpha", 10, 9),
+        ("beta", 2, 5),
         ("beta", 7, 3),
         ("beta", 263, 11),
         ("gamma", 13, 1),
@@ -371,6 +372,54 @@ fn sorted_records_reduce_into_persisted_posting_directory_and_catalogue_pages() 
         actual.sort_unstable();
         assert_eq!(actual, expected.into_iter().collect::<Vec<_>>());
     }
+
+    let term_roots = |term: &[u8]| {
+        oracle
+            .iter()
+            .filter(|((found, _, _), _)| found.as_bytes() == term)
+            .flat_map(|((_, base, page), offsets)| {
+                offsets.iter().map(move |offset| {
+                    RootTid::new(base + u32::from(*page), *offset, layout).unwrap()
+                })
+            })
+            .collect::<BTreeSet<_>>()
+    };
+    let alpha_roots = term_roots(b"alpha");
+    let beta_roots = term_roots(b"beta");
+    let expected_and = alpha_roots
+        .intersection(&beta_roots)
+        .copied()
+        .collect::<BTreeSet<_>>();
+    let mut actual_and = Vec::new();
+    let count = pin_core::primary::scan_terms_and(
+        &mut store,
+        root,
+        segment,
+        &[b"beta".as_slice(), b"alpha", b"beta"],
+        |tid| {
+            actual_and.push(tid);
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(count as usize, actual_and.len());
+    actual_and.sort_unstable();
+    assert_eq!(actual_and, expected_and.into_iter().collect::<Vec<_>>());
+
+    let mut no_match = Vec::new();
+    let count = pin_core::primary::scan_terms_and(
+        &mut store,
+        root,
+        segment,
+        &[b"alpha".as_slice(), b"gamma"],
+        |tid| {
+            no_match.push(tid);
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(count, 0);
+    assert!(no_match.is_empty());
 }
 
 fn encode_record(term: &str, root: RootTid) -> Vec<u8> {
