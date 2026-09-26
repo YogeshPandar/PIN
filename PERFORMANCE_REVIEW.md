@@ -16,6 +16,16 @@ backend on-CPU measurements, write-delta and insert costs, sampled call stacks,
 and the complete raw profiler archive.
 The historical measurements below remain tied to their stated code head.
 
+**Update, 25 September:** The [PR 25 rework run](docs/runs/2026-09-25-pr25-rework/README.md)
+measured the experimental grouped delta, inline sparse postings, and batched
+dirty-page visibility path. Fresh broad counts reached about 9% of GIN's
+backend CPU on a 20,000-row fixture, but updated/deleted broad counts still
+used 23% to 28% of GIN's CPU. The final PIN index occupied 44.7 MB fresh and
+79.5 MB after a long delta versus GIN's 0.78 MB and 1.39 MB. Page inspection
+found that thousands of mostly empty per-term posting pages and free pages
+dominated physical size. These results do not establish the 10x target across
+maintenance states or other query shapes.
+
 ## What the benchmark actually says
 
 The latest comparison uses one 20,000-row synthetic `pin_g6_bench` table,

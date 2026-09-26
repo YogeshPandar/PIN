@@ -15,6 +15,9 @@ static ENABLE_STORAGE: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_SCAN: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_FRONTIER_ANCHORS: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_OWNER_FRONTIER: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_DELTA_SEAL: GucSetting<bool> = GucSetting::<bool>::new(false);
+
+const DELTA_SEAL_OWNERS: u64 = 512;
 
 const _: () = assert!(core::mem::size_of::<SortRecord>() == 32);
 const _: () = assert!(core::mem::align_of::<SortRecord>() == 1);
@@ -34,6 +37,14 @@ pub(crate) fn initialize() {
         c"Use one-pass owner payloads for dense grouped write frontiers.",
         c"Requires grouped scans. Off retains term-addressed canonical frontier execution.",
         &ENABLE_OWNER_FRONTIER,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_bool_guc(
+        c"pin.enable_grouped_delta_seal",
+        c"Seal bounded write suffixes into experimental immutable grouped segments.",
+        c"Requires grouped storage. Off retains the historical mutable frontier and does not create PG10 metadata.",
+        &ENABLE_DELTA_SEAL,
         GucContext::Suset,
         GucFlags::default(),
     );
@@ -65,6 +76,17 @@ pub(crate) fn owner_frontier_enabled() -> bool {
 
 pub(crate) fn storage_enabled() -> bool {
     ENABLE_STORAGE.get()
+}
+
+pub(crate) fn delta_seal_enabled() -> bool {
+    storage_enabled() && ENABLE_DELTA_SEAL.get()
+}
+
+pub(crate) fn delta_due<S: PageStore>(store: &mut S) -> Result<bool> {
+    Ok(!matches!(
+        grouped::delta_maintenance(store, DELTA_SEAL_OWNERS)?,
+        grouped::DeltaMaintenance::None
+    ))
 }
 
 // this state never escapes one guarded maintenance callback or calls postgres in drop.
@@ -152,6 +174,36 @@ pub(crate) fn rebuild<S: PageStore>(store: &mut S) -> Result<BuildStats> {
         stats.frontier_terms,
     );
     Ok(stats)
+}
+
+// the caller holds exclusive structure then writer barriers through publication.
+pub(crate) fn maintain_delta<S: PageStore>(store: &mut S) -> Result<BuildStats> {
+    if !delta_seal_enabled() {
+        return Ok(BuildStats::default());
+    }
+    match grouped::delta_maintenance(store, DELTA_SEAL_OWNERS)? {
+        grouped::DeltaMaintenance::None => Ok(BuildStats::default()),
+        grouped::DeltaMaintenance::Rebuild => rebuild(store),
+        grouped::DeltaMaintenance::Seal => {
+            let memory = grouped::delta_build_memory(store.layout());
+            let Some(mut sort) = PgSort::begin(memory) else {
+                pgrx::pg_sys::debug1!("Pin grouped delta skipped: maintenance memory is too small");
+                return Ok(BuildStats::default());
+            };
+            let result = grouped::seal_delta(store, &mut sort, memory);
+            let spilled = sort.close();
+            let stats = result?;
+            pgrx::pg_sys::debug1!(
+                "Pin grouped delta: documents={} groups={} written_pages={} reclaimed_pages={} sort_spilled={}",
+                stats.documents,
+                stats.groups,
+                stats.written_pages,
+                stats.reclaimed_pages,
+                spilled,
+            );
+            Ok(stats)
+        }
+    }
 }
 
 // the host retains the structural read barrier and the existing batched bitmap sink.

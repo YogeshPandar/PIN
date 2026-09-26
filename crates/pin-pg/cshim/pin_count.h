@@ -12,6 +12,8 @@ extern void pin_count_owner_unlock(void *context);
 extern bool pin_count_generation_try_lock(void *context);
 extern void pin_count_generation_unlock(void *context);
 extern bool pin_count_fetch_visible(void *context, uint32 block, uint16 offset);
+extern uint64 pin_count_fetch_visible_page(void *context, uint32 block,
+                                           const uint64 *offsets, uint32 words);
 extern bool pin_count_grouped_enabled(void);
 extern bool pin_count_grouped_eligible(const uint8 *query, Size length);
 extern bool pin_count_grouped_execute(Relation index, void *context,

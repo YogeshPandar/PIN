@@ -179,6 +179,23 @@ impl<'a> Iterator for DocumentTerms<'a> {
 
 impl std::iter::FusedIterator for DocumentTerms<'_> {}
 
+/// validates one stored payload and returns its zero-copy term iterator.
+pub(crate) fn validated_terms(
+    bytes: &[u8],
+    expected_tokens: u32,
+    expected_terms: u32,
+    memory_bytes: usize,
+) -> Result<DocumentTerms<'_>> {
+    let (tokens, terms) = validate(bytes, memory_bytes)?;
+    if tokens != expected_tokens || terms != expected_terms {
+        return Err(Error::InvalidDocument);
+    }
+    Ok(DocumentTerms {
+        reader: Reader::new(&bytes[HEADER..]),
+        remaining: terms,
+    })
+}
+
 /// query-constant ordering for exact boolean term membership.
 pub(crate) struct TermMembership<'a, 'b> {
     names: &'a [Option<&'b str>],

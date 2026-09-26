@@ -14,12 +14,19 @@ use pin_core::query::{Query, QueryLimits};
 use std::ffi::c_void;
 
 static ENABLE_GROUPED_COUNT: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_PAGE_VISIBILITY: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 unsafe extern "C-unwind" {
     fn pin_count_generation_try_lock(context: *mut c_void) -> bool;
     fn pin_count_generation_unlock(context: *mut c_void);
     fn pin_count_all_visible(context: *mut c_void, block: u32) -> bool;
     fn pin_count_fetch_visible(context: *mut c_void, block: u32, offset: u16) -> bool;
+    fn pin_count_fetch_visible_page(
+        context: *mut c_void,
+        block: u32,
+        offsets: *const u64,
+        words: u32,
+    ) -> u64;
     fn pin_count_clear(context: *mut c_void);
 }
 
@@ -29,6 +36,14 @@ pub(crate) fn initialize() {
         c"Enable experimental grouped page-popcount counts.",
         c"Requires count fastpath; writer contention retains the core aggregate.",
         &ENABLE_GROUPED_COUNT,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_bool_guc(
+        c"pin.enable_grouped_page_visibility",
+        c"Batch dirty-page HOT visibility checks for grouped counts.",
+        c"Experimental heapam-only page lookup; requires grouped count. Off retains per-root table AM fetches.",
+        &ENABLE_PAGE_VISIBILITY,
         GucContext::Suset,
         GucFlags::default(),
     );
@@ -153,6 +168,19 @@ impl ExactSink for PageCounter {
         self.note(9, count)?;
         if self.all_visible(block)? {
             return self.note(4, count);
+        }
+        if ENABLE_PAGE_VISIBILITY.get() {
+            let context = self.context;
+            // safety: the exact mask contains eight initialized words for one
+            // protected heap page; C consumes it before this stack borrow ends.
+            let visible = unsafe {
+                native::call(|| pin_count_fetch_visible_page(context, block, offsets.as_ptr(), 8))
+            };
+            if visible > count {
+                return Err(Error::InvalidState);
+            }
+            self.note(5, count)?;
+            return self.note(6, visible);
         }
         for (word, &value) in offsets.iter().enumerate() {
             let mut pending = value;

@@ -2,18 +2,20 @@
 //! publication and retirement use the existing atomic page-store contract.
 
 use super::super::page::{
-    CATALOG_ENTRIES, CatalogEntry, GROUP_DATA_BYTES, GroupJournal, GroupPageKind, GroupSnapshot,
-    GroupState, MAX_CATALOG_LEVEL, NO_BLOCK, OwnerRef, Page, PageKind, RewritePhase,
+    CATALOG_ENTRIES, CatalogEntry, GROUP_DATA_BYTES, GROUP_DELTA_SEGMENTS, GROUP_RETIRED_SEGMENTS,
+    GroupDelta, GroupJournal, GroupPageKind, GroupRetired, GroupSnapshot, GroupState,
+    MAX_CATALOG_LEVEL, NO_BLOCK, OwnerRef, Page, PageKind, RewritePhase,
 };
 use super::super::{PageStore, Stage, allocate, load, posting_next};
 use crate::error::{Error, Result};
-use crate::grouped::{Bitmap, BitmapKind, GroupKey};
+use crate::grouped::{Bitmap, BitmapKind, GroupKey, PageOffsets, encode_bitmap};
 use crate::identity::{Generation, HeapLayout, SegmentId};
 use pin_kernels::grouped::PageMask;
 
 pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
 pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
 const LEVELS: usize = MAX_CATALOG_LEVEL as usize + 1;
+const INLINE_POSTINGS: usize = 18;
 pub(super) const CATALOG_MEMORY: usize =
     LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
 
@@ -25,12 +27,70 @@ pub(super) struct Value {
     pub members: u32,
     pub member_bytes: u32,
     pub count: u32,
+    pub(super) inline: Option<[u8; INLINE_POSTINGS * 3]>,
 }
 
 impl Value {
+    fn inline_bytes(self) -> [u8; INLINE_POSTINGS * 3] {
+        if let Some(bytes) = self.inline {
+            return bytes;
+        }
+        let mut bytes = [0; INLINE_POSTINGS * 3];
+        for (index, block) in self.blocks.iter().enumerate() {
+            bytes[index * 4..index * 4 + 4].copy_from_slice(&block.to_le_bytes());
+        }
+        bytes[12..16].copy_from_slice(&self.members.to_le_bytes());
+        bytes[16..20].copy_from_slice(&self.member_bytes.to_le_bytes());
+        bytes
+    }
+
+    fn inline_pages(self, max_offset: u16) -> Result<([PageOffsets; INLINE_POSTINGS], usize)> {
+        let count = usize::try_from(self.count).map_err(|_| Error::InvalidState)?;
+        if self.len != 0 || count == 0 || count > self.inline.map_or(6, |_| INLINE_POSTINGS) {
+            return Err(Error::InvalidState);
+        }
+        let bytes = self.inline_bytes();
+        if bytes[count * 3..].iter().any(|&byte| byte != 0) {
+            return Err(Error::InvalidState);
+        }
+        let mut pages: [PageOffsets; INLINE_POSTINGS] = core::array::from_fn(|_| PageOffsets {
+            page: 0,
+            offsets: [0; 8],
+        });
+        let mut used = 0usize;
+        let mut previous = None;
+        let mut mask = [0u64; 4];
+        for chunk in bytes[..count * 3].as_chunks::<3>().0 {
+            let coordinate =
+                u32::from(chunk[0]) | (u32::from(chunk[1]) << 8) | (u32::from(chunk[2]) << 16);
+            let page = (coordinate >> 9) as u8;
+            let offset = (coordinate & 511) as u16 + 1;
+            if offset > max_offset || previous.is_some_and(|old| old >= coordinate) {
+                return Err(Error::InvalidState);
+            }
+            previous = Some(coordinate);
+            mask[usize::from(page) / 64] |= 1 << (page % 64);
+            if used == 0 || pages[used - 1].page != page {
+                pages[used].page = page;
+                used += 1;
+            }
+            let bit = usize::from(offset - 1);
+            pages[used - 1].offsets[bit / 64] |= 1 << (bit % 64);
+        }
+        if self.inline.is_none() && mask != self.pages {
+            return Err(Error::InvalidState);
+        }
+        Ok((pages, used))
+    }
+
     pub fn entry(self, key: [u64; 2]) -> CatalogEntry {
         let mut value = [0; 64];
         value[..4].copy_from_slice(&self.len.to_le_bytes());
+        if let Some(inline) = self.inline {
+            value[4..58].copy_from_slice(&inline);
+            value[60..64].copy_from_slice(&self.count.to_le_bytes());
+            return CatalogEntry { key, value };
+        }
         for (index, block) in self.blocks.iter().enumerate() {
             value[4 + index * 4..8 + index * 4].copy_from_slice(&block.to_le_bytes());
         }
@@ -45,6 +105,32 @@ impl Value {
 
     pub fn read(entry: CatalogEntry) -> Result<Self> {
         use crate::codec::bytes::Reader;
+        if entry.value[..4] == [0; 4] && entry.value[60..64] != [0; 4] {
+            if entry.key[0] == 0 || entry.value[58..60] != [0; 2] {
+                return Err(Error::InvalidState);
+            }
+            let mut inline = [0; INLINE_POSTINGS * 3];
+            inline.copy_from_slice(&entry.value[4..58]);
+            let mut value = Self {
+                len: 0,
+                blocks: [NO_BLOCK; 3],
+                pages: [0; 4],
+                members: NO_BLOCK,
+                member_bytes: 0,
+                count: u32::from_le_bytes([
+                    entry.value[60],
+                    entry.value[61],
+                    entry.value[62],
+                    entry.value[63],
+                ]),
+                inline: Some(inline),
+            };
+            let (pages, used) = value.inline_pages(512)?;
+            for page in &pages[..used] {
+                value.pages[usize::from(page.page) / 64] |= 1 << (page.page % 64);
+            }
+            return Ok(value);
+        }
         let mut reader = Reader::new(&entry.value);
         let len = reader.u32()?;
         let blocks = [reader.u32()?, reader.u32()?, reader.u32()?];
@@ -52,7 +138,26 @@ impl Value {
         let members = reader.u32()?;
         let member_bytes = reader.u32()?;
         let count = reader.u32()?;
-        if reader.u32()? != 0 || !(72..=BITMAP_BYTES as u32).contains(&len) {
+        if reader.u32()? != 0 {
+            return Err(Error::InvalidState);
+        }
+        if len == 0 {
+            let value = Self {
+                len,
+                blocks,
+                pages,
+                members,
+                member_bytes,
+                count,
+                inline: None,
+            };
+            if entry.key[0] == 0 {
+                return Err(Error::InvalidState);
+            }
+            value.inline_pages(512)?;
+            return Ok(value);
+        }
+        if !(72..=BITMAP_BYTES as u32).contains(&len) {
             return Err(Error::InvalidState);
         }
         let used = (len as usize).div_ceil(GROUP_DATA_BYTES);
@@ -88,8 +193,62 @@ impl Value {
             members,
             member_bytes,
             count,
+            inline: None,
         })
     }
+}
+
+/// embeds sparse postings in the catalog leaf, avoiding one WAL page per term.
+pub(super) fn inline_postings(
+    key: [u64; 2],
+    pages: &[PageOffsets],
+    layout: HeapLayout,
+) -> Result<Option<CatalogEntry>> {
+    if key[0] == 0 || pages.is_empty() {
+        return Err(Error::InvalidState);
+    }
+    let mut bytes = [0u8; INLINE_POSTINGS * 3];
+    let mut mask = [0u64; 4];
+    let mut count = 0usize;
+    let mut previous_page = None;
+    for page in pages {
+        if previous_page.is_some_and(|old| old >= page.page) {
+            return Err(Error::InvalidState);
+        }
+        previous_page = Some(page.page);
+        mask[usize::from(page.page) / 64] |= 1 << (page.page % 64);
+        for (word_index, &word) in page.offsets.iter().enumerate() {
+            let mut remaining = word;
+            while remaining != 0 {
+                let bit = remaining.trailing_zeros() as usize;
+                let offset = word_index * 64 + bit + 1;
+                if offset > usize::from(layout.max_offset()) {
+                    return Err(Error::InvalidState);
+                }
+                if count == INLINE_POSTINGS {
+                    return Ok(None);
+                }
+                let coordinate = (u32::from(page.page) << 9) | (offset as u32 - 1);
+                bytes[count * 3..count * 3 + 3].copy_from_slice(&coordinate.to_le_bytes()[..3]);
+                count += 1;
+                remaining &= remaining - 1;
+            }
+        }
+    }
+    if count == 0 {
+        return Err(Error::InvalidState);
+    }
+    let value = Value {
+        len: 0,
+        blocks: [NO_BLOCK; 3],
+        pages: mask,
+        members: NO_BLOCK,
+        member_bytes: 0,
+        count: count as u32,
+        inline: Some(bytes),
+    };
+    value.inline_pages(layout.max_offset())?;
+    Ok(Some(value.entry(key)))
 }
 
 pub(super) fn key(snapshot: GroupSnapshot, base: u32, layout: HeapLayout) -> Result<GroupKey> {
@@ -265,6 +424,17 @@ pub(super) fn read_bitmap_view<'a, S: PageStore>(
     output: &'a mut [u8],
 ) -> Result<(Value, Bitmap<'a>)> {
     let value = Value::read(entry)?;
+    if value.len == 0 {
+        let (pages, count) = value.inline_pages(store.layout().max_offset())?;
+        let len = encode_bitmap(
+            key(snapshot, entry.key[1] as u32, store.layout())?,
+            BitmapKind::Posting,
+            &pages[..count],
+            output,
+        )?;
+        let view = Bitmap::open(&output[..len])?;
+        return Ok((value, view));
+    }
     let output = output
         .get_mut(..value.len as usize)
         .ok_or(Error::Limit("group bitmap scratch"))?;
@@ -297,7 +467,11 @@ pub(super) fn read_bitmap_view<'a, S: PageStore>(
     Ok((value, view))
 }
 
-pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
+fn verify_build<S: PageStore>(
+    store: &mut S,
+    state: GroupState,
+    snapshot: GroupSnapshot,
+) -> Result<u32> {
     if snapshot.frontier_root.is_none() && snapshot.root != snapshot.tail {
         return Err(Error::InvalidState);
     }
@@ -314,8 +488,6 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
             page.group_node_info()?;
         }
     }
-    let mut meta = load(store, 0, PageKind::Meta)?;
-    let state = meta.grouped_state()?;
     let journal = state.journal.ok_or(Error::InvalidState)?;
     if journal.id != snapshot.id
         || journal.phase != RewritePhase::Building
@@ -324,19 +496,97 @@ pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> R
     {
         return Err(Error::InvalidState);
     }
-    let retired = state
-        .active
-        .filter(|old| old.head != NO_BLOCK)
-        .map(|old| GroupJournal {
-            id: old.id,
-            head: old.head,
-            tail: old.tail,
-            phase: RewritePhase::Retiring,
-        });
+    Ok(written)
+}
+
+fn retired(snapshot: GroupSnapshot) -> Option<GroupRetired> {
+    (snapshot.head != NO_BLOCK).then_some(GroupRetired {
+        id: snapshot.id,
+        head: snapshot.head,
+        tail: snapshot.tail,
+    })
+}
+
+pub(super) fn publish<S: PageStore>(store: &mut S, snapshot: GroupSnapshot) -> Result<(u32, u32)> {
+    let mut meta = load(store, 0, PageKind::Meta)?;
+    let state = meta.grouped_state()?;
+    let written = verify_build(store, state, snapshot)?;
+    if state.retired.iter().any(Option::is_some) {
+        return Err(Error::InvalidState);
+    }
+    let mut retiring = [None; GROUP_RETIRED_SEGMENTS];
+    let mut used = 0usize;
+    for old in state.active.into_iter().chain(
+        state
+            .deltas
+            .into_iter()
+            .flatten()
+            .map(|delta| delta.snapshot),
+    ) {
+        if let Some(old) = retired(old) {
+            let slot = retiring
+                .get_mut(used)
+                .ok_or(Error::Limit("group retire queue"))?;
+            *slot = Some(old);
+            used += 1;
+        }
+    }
     meta.set_grouped_state(GroupState {
         active: Some(snapshot),
-        journal: retired,
+        journal: None,
+        deltas: [None; GROUP_DELTA_SEGMENTS],
+        retired: retiring,
     })?;
+    store.commit(&[&meta])?;
+    store.event(Stage::GroupPublished)?;
+    Ok((recover(store)?, written))
+}
+
+pub(super) fn publish_delta<S: PageStore>(
+    store: &mut S,
+    snapshot: GroupSnapshot,
+    before: Option<OwnerRef>,
+    level: u8,
+    replace_from: usize,
+) -> Result<(u32, u32)> {
+    if snapshot.frontier_root.is_some()
+        || snapshot.frontier_valid
+        || usize::from(level) >= GROUP_DELTA_SEGMENTS
+    {
+        return Err(Error::InvalidState);
+    }
+    let mut meta = load(store, 0, PageKind::Meta)?;
+    let mut state = meta.grouped_state()?;
+    let written = verify_build(store, state, snapshot)?;
+    let count = state.delta_count();
+    if state.active.is_none()
+        || state.retired.iter().any(Option::is_some)
+        || replace_from > count
+        || (replace_from == count && state.latest().and_then(|latest| latest.after) != before)
+        || (replace_from < count
+            && state.deltas[replace_from].is_none_or(|delta| delta.before != before))
+    {
+        return Err(Error::InvalidState);
+    }
+    let mut retiring = [None; GROUP_RETIRED_SEGMENTS];
+    let mut retired_count = 0usize;
+    for delta in state.deltas[replace_from..count].iter().flatten() {
+        if let Some(old) = retired(delta.snapshot) {
+            retiring[retired_count] = Some(old);
+            retired_count += 1;
+        }
+    }
+    for slot in &mut state.deltas[replace_from..] {
+        *slot = None;
+    }
+    state.deltas[replace_from] = Some(GroupDelta {
+        snapshot,
+        before,
+        level,
+    });
+    state.journal = None;
+    state.retired = retiring;
+    meta.set_grouped_state(state)?;
     store.commit(&[&meta])?;
     store.event(Stage::GroupPublished)?;
     Ok((recover(store)?, written))
@@ -366,58 +616,105 @@ fn inspect<S: PageStore>(store: &mut S, id: SegmentId, head: u32, tail: u32) -> 
     }
 }
 
-/// reclaims only journal-owned output; publication requires prior reader quiescence.
+fn shift_retired(state: &mut GroupState, index: usize) {
+    for slot in index..GROUP_RETIRED_SEGMENTS - 1 {
+        state.retired[slot] = state.retired[slot + 1];
+    }
+    state.retired[GROUP_RETIRED_SEGMENTS - 1] = None;
+}
+
+/// reclaims only unpublished or retired grouped chains under reader quiescence.
 pub(super) fn recover<S: PageStore>(store: &mut S) -> Result<u32> {
-    let mut meta = load(store, 0, PageKind::Meta)?;
-    let mut state = meta.grouped_state()?;
-    let Some(journal) = state.journal else {
-        return Ok(0);
-    };
-    inspect(store, journal.id, journal.head, journal.tail)?;
-    if state.active.is_some_and(|active| {
-        active.id == journal.id || active.tail == journal.tail && journal.tail != NO_BLOCK
-    }) {
-        return Err(Error::InvalidState);
-    }
-    let mut reclaimed = 0;
-    let mut head = journal.head;
-    while head != NO_BLOCK {
-        let first = load(store, head, PageKind::Grouped)?;
-        let mut next = first.next()?;
-        let free = Page::free(head, meta.free_head()?)?;
-        if head == journal.tail {
-            next = NO_BLOCK;
-            state.journal = None;
-            meta.set_free_head(head)?;
-            meta.set_grouped_state(state)?;
-            store.commit(&[&meta, &free])?;
-            reclaimed += 1;
-        } else {
-            let second = load(store, next, PageKind::Grouped)?;
-            let second_free = Page::free(next, head)?;
-            next = if second.block() == journal.tail {
-                NO_BLOCK
-            } else {
-                second.next()?
-            };
-            state.journal = (next != NO_BLOCK).then_some(GroupJournal {
-                head: next,
-                ..journal
-            });
-            meta.set_free_head(second.block())?;
-            meta.set_grouped_state(state)?;
-            store.commit(&[&meta, &free, &second_free])?;
-            reclaimed += 2;
+    let mut reclaimed = 0u32;
+    loop {
+        let mut meta = load(store, 0, PageKind::Meta)?;
+        let mut state = meta.grouped_state()?;
+        let Some(journal) = state.journal else {
+            break;
+        };
+        inspect(store, journal.id, journal.head, journal.tail)?;
+        if state.active.is_some_and(|active| active.id == journal.id)
+            || state
+                .deltas
+                .iter()
+                .flatten()
+                .any(|delta| delta.snapshot.id == journal.id)
+            || state
+                .retired
+                .iter()
+                .flatten()
+                .any(|retired| retired.id == journal.id)
+        {
+            return Err(Error::InvalidState);
         }
-        store.event(Stage::GroupReclaimed)?;
-        head = next;
-    }
-    if state.journal.is_some() {
-        state.journal = None;
+        if journal.head == NO_BLOCK {
+            state.journal = None;
+            meta.set_grouped_state(state)?;
+            store.commit(&[&meta])?;
+            continue;
+        }
+        let page = load(store, journal.head, PageKind::Grouped)?;
+        let next = if journal.head == journal.tail {
+            NO_BLOCK
+        } else {
+            let next = page.next()?;
+            if next == NO_BLOCK {
+                return Err(Error::InvalidState);
+            }
+            next
+        };
+        let free = Page::free(journal.head, meta.free_head()?)?;
+        meta.set_free_head(journal.head)?;
+        state.journal = (next != NO_BLOCK).then_some(GroupJournal {
+            head: next,
+            ..journal
+        });
         meta.set_grouped_state(state)?;
-        store.commit(&[&meta])?;
+        store.commit(&[&meta, &free])?;
+        store.event(Stage::GroupReclaimed)?;
+        reclaimed = reclaimed
+            .checked_add(1)
+            .ok_or(Error::Limit("group recovery pages"))?;
     }
-    Ok(reclaimed)
+    loop {
+        let mut meta = load(store, 0, PageKind::Meta)?;
+        let mut state = meta.grouped_state()?;
+        let Some((index, retiring)) = state
+            .retired
+            .iter()
+            .enumerate()
+            .find_map(|(index, entry)| entry.map(|entry| (index, entry)))
+        else {
+            return Ok(reclaimed);
+        };
+        inspect(store, retiring.id, retiring.head, retiring.tail)?;
+        let page = load(store, retiring.head, PageKind::Grouped)?;
+        let next = if retiring.head == retiring.tail {
+            NO_BLOCK
+        } else {
+            let next = page.next()?;
+            if next == NO_BLOCK {
+                return Err(Error::InvalidState);
+            }
+            next
+        };
+        let free = Page::free(retiring.head, meta.free_head()?)?;
+        meta.set_free_head(retiring.head)?;
+        if next == NO_BLOCK {
+            shift_retired(&mut state, index);
+        } else {
+            state.retired[index] = Some(GroupRetired {
+                head: next,
+                ..retiring
+            });
+        }
+        meta.set_grouped_state(state)?;
+        store.commit(&[&meta, &free])?;
+        store.event(Stage::GroupReclaimed)?;
+        reclaimed = reclaimed
+            .checked_add(1)
+            .ok_or(Error::Limit("group recovery pages"))?;
+    }
 }
 
 pub(super) struct CatalogBuilder {
@@ -692,5 +989,94 @@ impl Cursor {
     ) -> Result<Option<CatalogEntry>> {
         self.slot += 1;
         self.current(store, snapshot)
+    }
+}
+
+#[cfg(test)]
+mod inline_tests {
+    use super::*;
+
+    #[test]
+    fn sparse_delta_round_trip_and_corruption() {
+        let layout = HeapLayout::new(512).unwrap();
+        let key = [1, 0];
+        let mut pages = [
+            PageOffsets {
+                page: 1,
+                offsets: [0; 8],
+            },
+            PageOffsets {
+                page: 255,
+                offsets: [0; 8],
+            },
+        ];
+        pages[0].offsets[0] = (1 << 2) | (1 << 4);
+        pages[1].offsets[7] = 1 << 63;
+        let entry = inline_postings(key, &pages, layout).unwrap().unwrap();
+        let value = Value::read(entry).unwrap();
+        let (decoded, count) = value.inline_pages(layout.max_offset()).unwrap();
+        assert_eq!(count, pages.len());
+        for (actual, expected) in decoded[..count].iter().zip(&pages) {
+            assert_eq!(actual.page, expected.page);
+            assert_eq!(actual.offsets, expected.offsets);
+        }
+
+        let group = GroupKey::new(
+            Generation::new(1).unwrap(),
+            SegmentId::new(2).unwrap(),
+            0,
+            layout,
+        )
+        .unwrap();
+        let mut expected = [0; BITMAP_BYTES];
+        let mut actual = [0; BITMAP_BYTES];
+        let expected_len =
+            encode_bitmap(group, BitmapKind::Posting, &pages, &mut expected).unwrap();
+        let actual_len =
+            encode_bitmap(group, BitmapKind::Posting, &decoded[..count], &mut actual).unwrap();
+        assert_eq!(&expected[..expected_len], &actual[..actual_len]);
+
+        let mut corrupt = entry;
+        corrupt.value[58] = 1;
+        assert!(Value::read(corrupt).is_err());
+
+        let mut legacy_bytes = [0u8; 20];
+        legacy_bytes[..9].copy_from_slice(&value.inline.unwrap()[..9]);
+        let legacy = Value {
+            len: 0,
+            blocks: core::array::from_fn(|index| {
+                let start = index * 4;
+                u32::from_le_bytes([
+                    legacy_bytes[start],
+                    legacy_bytes[start + 1],
+                    legacy_bytes[start + 2],
+                    legacy_bytes[start + 3],
+                ])
+            }),
+            pages: value.pages,
+            members: u32::from_le_bytes([
+                legacy_bytes[12],
+                legacy_bytes[13],
+                legacy_bytes[14],
+                legacy_bytes[15],
+            ]),
+            member_bytes: u32::from_le_bytes([
+                legacy_bytes[16],
+                legacy_bytes[17],
+                legacy_bytes[18],
+                legacy_bytes[19],
+            ]),
+            count: 3,
+            inline: None,
+        };
+        assert!(Value::read(legacy.entry(key)).is_ok());
+        let mut many = [PageOffsets {
+            page: 1,
+            offsets: [0; 8],
+        }];
+        many[0].offsets[0] = (1 << 18) - 1;
+        assert!(inline_postings(key, &many, layout).unwrap().is_some());
+        many[0].offsets[0] = (1 << 19) - 1;
+        assert!(inline_postings(key, &many, layout).unwrap().is_none());
     }
 }

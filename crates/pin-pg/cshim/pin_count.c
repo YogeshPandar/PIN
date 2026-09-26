@@ -19,6 +19,7 @@
 #include "miscadmin.h"
 #include "nodes/extensible.h"
 #include "nodes/makefuncs.h"
+#include "port/pg_bitutils.h"
 #include "optimizer/cost.h"
 #include "optimizer/optimizer.h"
 #include "optimizer/pathnode.h"
@@ -73,6 +74,7 @@ typedef struct PinCountState
     MemoryContext scratch;
     Buffer owner_buffer;
     Buffer vm_buffer;
+    Buffer batch_buffer;
     AttrNumber attribute;
     int eflags;
     Snapshot snapshot;
@@ -336,6 +338,7 @@ pin_count_state(CustomScan *scan)
     state->css.methods = &pin_count_exec_methods;
     state->owner_buffer = InvalidBuffer;
     state->vm_buffer = InvalidBuffer;
+    state->batch_buffer = InvalidBuffer;
     return (Node *) state;
 }
 
@@ -476,6 +479,9 @@ pin_count_release(PinCountState *state)
     if (BufferIsValid(state->vm_buffer))
         ReleaseBuffer(state->vm_buffer);
     state->vm_buffer = InvalidBuffer;
+    if (BufferIsValid(state->batch_buffer))
+        ReleaseBuffer(state->batch_buffer);
+    state->batch_buffer = InvalidBuffer;
     if (state->heap_slot != NULL)
         ExecDropSingleTupleTableSlot(state->heap_slot);
     state->heap_slot = NULL;
@@ -606,6 +612,49 @@ pin_count_fetch_visible(void *context, uint32 block, uint16 offset)
     return found;
 }
 
+/* mirror heapam_index_fetch_tuple's HOT lookup while holding one page lock. */
+uint64
+pin_count_fetch_visible_page(void *context, uint32 block,
+                             const uint64 *offsets, uint32 words)
+{
+    PinCountState *state = context;
+    Buffer previous;
+    uint64 visible = 0;
+    uint32 word;
+
+    if (!state->generation_locked || state->heap == NULL ||
+        state->snapshot == NULL || !IsMVCCSnapshot(state->snapshot) ||
+        block == InvalidBlockNumber || offsets == NULL || words != 8)
+        elog(ERROR, "invalid PinCount protected page fetch");
+    CHECK_FOR_INTERRUPTS();
+    previous = state->batch_buffer;
+    state->batch_buffer = ReleaseAndReadBuffer(state->batch_buffer, state->heap, block);
+    if (previous != state->batch_buffer)
+        heap_page_prune_opt(state->heap, state->batch_buffer);
+    LockBuffer(state->batch_buffer, BUFFER_LOCK_SHARE);
+    for (word = 0; word < words; word++)
+    {
+        uint64 pending = offsets[word];
+        while (pending != 0)
+        {
+            unsigned bit = pg_rightmost_one_pos64(pending);
+            OffsetNumber offset = (OffsetNumber) (word * 64 + bit + 1);
+            ItemPointerData tid;
+            HeapTupleData tuple = {0};
+
+            if (offset > MaxHeapTuplesPerPage)
+                elog(ERROR, "invalid PinCount heap offset mask");
+            ItemPointerSet(&tid, block, offset);
+            if (heap_hot_search_buffer(&tid, state->heap, state->batch_buffer,
+                                       state->snapshot, &tuple, NULL, true))
+                visible++;
+            pending &= pending - 1;
+        }
+    }
+    LockBuffer(state->batch_buffer, BUFFER_LOCK_UNLOCK);
+    return visible;
+}
+
 bool
 pin_count_all_visible(void *context, uint32 block)
 {
@@ -729,6 +778,7 @@ pin_count_worker_open(PinCountState *state, PinCountParallelShared *shared)
     memset(state, 0, sizeof(*state));
     state->owner_buffer = InvalidBuffer;
     state->vm_buffer = InvalidBuffer;
+    state->batch_buffer = InvalidBuffer;
     state->attribute = shared->attribute;
     state->snapshot = GetActiveSnapshot();
     if (state->snapshot == NULL || !IsMVCCSnapshot(state->snapshot))

@@ -185,6 +185,7 @@ unsafe extern "C-unwind" fn build_tuple(
             matching::PREPARE_MEMORY,
             std::ptr::null_mut(),
         )
+        .0
     } {
         state.documents = matching::stored(
             state
@@ -205,11 +206,11 @@ unsafe fn insert_value(
     tid: pg_sys::ItemPointer,
     memory_bytes: usize,
     parallel_writer: *mut c_void,
-) -> bool {
+) -> (bool, bool) {
     storage::interrupt();
     // safety: core supplies initialized one-element key and null arrays.
     if unsafe { *nulls } {
-        return false;
+        return (false, false);
     }
     // safety: the opclass enforces text; pgrx detoasts it in the current context.
     // the borrowed text is consumed before any context reset and never retained.
@@ -226,14 +227,22 @@ unsafe fn insert_value(
         unsafe { native::call(|| native::pin_parallel_build_writer_lock(parallel_writer)) };
     }
     // safety: the relation and prepared document stay live through this synchronous insert.
-    let result =
-        unsafe { storage::with_writer(index, |store| mutable::insert(store, root, &document)) };
+    let result = unsafe {
+        storage::with_writer(index, |store| {
+            mutable::insert(store, root, &document)?;
+            if parallel_writer.is_null() && crate::grouped::delta_seal_enabled() {
+                crate::grouped::delta_due(store)
+            } else {
+                Ok(false)
+            }
+        })
+    };
     if !parallel_writer.is_null() {
         // safety: this participant acquired the DSM lock immediately above.
         unsafe { native::call(|| native::pin_parallel_build_writer_unlock(parallel_writer)) };
     }
-    matching::stored(result);
-    true
+    let delta_due = matching::stored(result);
+    (true, delta_due)
 }
 
 /// Inserts one tuple from a PostgreSQL parallel build participant.
@@ -266,7 +275,7 @@ pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
         matching::stored::<()>(Err(Error::InvalidState));
     }
     // safety: C forwards callback arguments and an opaque DSM LWLock pointer.
-    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes, writer_lock) }
+    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes, writer_lock).0 }
 }
 
 #[pg_guard]
@@ -293,7 +302,7 @@ unsafe extern "C-unwind" fn insert(
     // safety: core retains both relations and IndexInfo; C checks persistence/layout.
     unsafe { native::call(|| native::pin_storage_check(index, heap, info)) };
     // safety: evaluated key arrays and the root belong to this guarded insertion.
-    unsafe {
+    let (inserted, delta_due) = unsafe {
         insert_value(
             index,
             heap,
@@ -304,6 +313,14 @@ unsafe extern "C-unwind" fn insert(
             std::ptr::null_mut(),
         )
     };
+    if inserted && delta_due {
+        // safety: insertion released the writer lock; maintenance takes structure then writer.
+        matching::stored(unsafe {
+            crate::storage_impl::with_maintenance(index, |store| {
+                crate::grouped::maintain_delta(store)
+            })
+        });
+    }
     false
 }
 

@@ -1181,3 +1181,49 @@ Final observed local test counts, failed experiments and source hashes are in th
 [run record](runs/2026-09-25-grouped-count/README.md). That record explicitly
 separates native tests scheduled from tests actually executed. No 10x or TIN-parity
 claim follows from this implementation.
+
+## 2026-09-25 grouped sparse catalog and delta review
+
+PostgreSQL 18.6 index AM, page, extension search-path, and WAL authority remains
+the pinned source commit `724edf9bde9d356724ad384a2e196edc3c9f80f7`
+listed above. The relevant reviewed contracts are
+[`index-functions`](https://www.postgresql.org/docs/18/index-functions.html),
+[`storage-page-layout`](https://www.postgresql.org/docs/18/storage-page-layout.html),
+[`generic-wal`](https://www.postgresql.org/docs/18/generic-wal.html), and
+[`runtime-config-client`](https://www.postgresql.org/docs/18/runtime-config-client.html).
+Catalog entries and grouped pages remain private PIN payloads inside PostgreSQL
+index pages. The host still owns buffer locks, generic WAL publication, index
+scan rechecks, heap visibility, and VACUUM ordering. The new 18-posting inline
+encoding changes no PostgreSQL pointer or FFI boundary. It packs sorted
+heap-page/offset coordinates into 54 catalog bytes; decoding validates order,
+page mask, offset domain, and zero padding before constructing the existing
+checked bitmap view. It writes no separate posting page for these entries.
+Large postings retain the previous page-backed format. Inline values use
+`len = 0`, which older PIN binaries reject during read. An index using the new
+format requires `REINDEX` with grouped storage disabled before binary downgrade.
+The experimental grouped storage and delta seal GUCs remain default off.
+
+Rust 1.98.1 `Result`, checked integer, slice bounds, and array contracts remain
+those in the pinned Rust source ledger above. Cargo.lock and the pgrx 0.19.2
+bindings are unchanged. The new codec uses safe Rust and fixed-size scratch.
+Local pure tests cover sparse round trip, bitmap equivalence, corrupt page masks,
+and overflow to the old format. PostgreSQL 18.6 native lifecycle and paired
+performance qualification are required before enabling the format by default.
+
+### Grouped dirty-page visibility batch
+
+Exact PostgreSQL 18.6 authority is
+[`heapam_handler.c`, `heapam_index_fetch_tuple`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/heap/heapam_handler.c#L2315-L2469),
+[`heapam.h`, HOT/prune prototypes](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/access/heapam.h#L1608-L1722),
+and [`pg_bitutils.h`, set-bit iteration](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/port/pg_bitutils.h#L140-L169).
+The supported heap AM and MVCC snapshot checks already precede the grouped
+COUNT path. The new opt-in bridge consumes one validated eight-word offset mask
+while the owner generation guard remains held, uses PostgreSQL's buffer manager,
+prunes only on a buffer switch, takes one shared content lock, and calls the
+same `heap_hot_search_buffer` routine as the heap AM for each root. It retains
+the buffer pin in backend-local state until the next page or cleanup. It reads
+no text datum and does not copy a heap tuple into a slot. The fallback keeps
+`table_index_fetch_tuple`. The new GUC is superuser-only and default off.
+Native old-snapshot, HOT, VACUUM, abort, crash, and paired CPU tests are required
+before this bridge can be enabled by default. An independent FFI/locking review
+remains open.
