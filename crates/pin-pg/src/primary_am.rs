@@ -11,7 +11,7 @@ use pin_core::candidate::CandidatePlan;
 use pin_core::error::Error;
 use pin_core::identity::{RootTid, SegmentId};
 use pin_core::mutable::PageStore;
-use pin_core::primary::scan_term;
+use pin_core::primary::{scan_term, scan_terms_and};
 
 #[pg_extern(sql = r#"
 CREATE FUNCTION pin.pin2_handler(internal)
@@ -240,6 +240,21 @@ unsafe extern "C-unwind" fn bitmap(
             page.validate(store.layout())?;
             let root = page.primary_root()?;
             let segment = SegmentId::new(1).map_err(|_| Error::InvalidState)?;
+            if let Some((count, false)) = exact_shape
+                && count <= 32
+            {
+                let mut term_bytes = [&[][..]; 32];
+                for (target, term) in term_bytes.iter_mut().zip(&exact_terms[..count]) {
+                    *target = term.as_bytes();
+                }
+                match scan_terms_and(store, root, segment, &term_bytes[..count], |tid| {
+                    sink.push(tid, false)
+                }) {
+                    Ok(found) => return Ok(found),
+                    Err(Error::Limit("AND group addresses")) => {}
+                    Err(error) => return Err(error),
+                }
+            }
             if let Some((count, union)) = exact_shape
                 && let Some(found) = exact_boolean(
                     store,
