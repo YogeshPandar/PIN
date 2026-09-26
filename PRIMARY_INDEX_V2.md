@@ -127,7 +127,9 @@ kind carries directories and payloads through the existing `PageStore` and
 generic WAL adapter. The selected-page reader fetches only referenced blocks
 and decodes only the selected extent. The new PostgreSQL buffer adapter copies
 only that extent under a shared content lock after checking the PostgreSQL and
-private page headers. There is no v2 metapage,
+private page headers. PostgreSQL still reads and caches whole 8 KB pages; this
+optimization reduces the copy into Rust, not the physical page size. There is
+no v2 metapage,
 manifest, liveness, writer, or SQL integration, and no existing index is changed
 by this branch. The caller must pass an expected group identity; this catches
 cross-directory misuse but is not a substitute for manifest ownership checks.
