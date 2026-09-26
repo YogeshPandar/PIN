@@ -4,11 +4,13 @@
 mod arena;
 mod build_record;
 mod build_reduce;
+mod build_writer;
 mod catalogue;
 mod root;
 pub use arena::PrimaryArena;
 pub use build_record::{MAX_SORT_RECORD_BYTES, TermSortRecord, decode_sort_record};
 pub use build_reduce::{BuildReducer, ReduceWork};
+pub use build_writer::PrimaryBuildWriter;
 pub use catalogue::{
     CatalogueBuilder, CatalogueEntry, CatalogueFence, CataloguePage, EncodedCataloguePage,
     GroupAddress,
