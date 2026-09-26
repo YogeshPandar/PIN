@@ -13,7 +13,9 @@ pub use grouped::{
 
 #[path = "page_directory.rs"]
 mod directories;
-pub use directories::{DIRECT_PREFIX_BYTES, DocumentDirectory, MAX_DIRECT_FRAGMENTS};
+pub use directories::{
+    DIRECT_PREFIX_BYTES, DocumentDirectory, MAX_DIRECT_FRAGMENTS, direct_document_layout,
+};
 
 use super::document::{MAX_DOCUMENT_BYTES, MAX_DOCUMENT_TOKENS, MAX_TERM_BYTES};
 use crate::analysis::PROFILE_ID;

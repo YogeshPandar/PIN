@@ -30,7 +30,7 @@ def main() -> None:
             session.execute(f"INSERT INTO {table}(id,body) VALUES "
                             "(1,'alpha beta gamma'),(2,'beta alpha gamma'),"
                             "(3,'alpha beta'),(4,'echo echo delta'),"
-                            "(5,'Éclair café'),(6,repeat('echo ',10000)),(7,repeat('middle ',12000)||'zulu omega');")
+                            "(5,'Éclair café'),(6,repeat('echo ',10000)),(99,repeat('middle ',12000)||'zulu omega');")
             session.execute('SET pin.enable_grouped_storage=on; SET pin.enable_grouped_delta_seal=on;')
             session.execute(f'CREATE INDEX docs_pin ON {table} USING pin(body);')
             session.execute(f"CREATE INDEX docs_gin ON {table} USING gin(to_tsvector('simple',body));")

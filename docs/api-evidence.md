@@ -1447,7 +1447,7 @@ metapage capability only, not the interpretation of an existing index.
 
 Format and downgrade obligations are in docs/direct-document-extents.md.
 Metapage reserved field 28 becomes a checked capability bitmap (only bit 0), so
-old readers reject new indexes at metadata validation. Kind 11 owns a fixed
+old readers reject new indexes at metadata validation. Kind 11 owns a versioned
 prefix and bounded physical map. Old kind 5 and old metadata remain supported.
 Owner reservation precedes all payload writes; final owner publication still
 follows complete payload and dictionary preparation. Free-list removal and page
@@ -1461,3 +1461,11 @@ terms. Query scratch includes the additional page and range/name arrays. Tests
 must cover interrupted publication/removal, reuse, layout crossings, and the
 physical work bound; native committed/uncommitted replay and measured write/size
 costs are required before merging the optional format.
+
+
+DOCEXTENT01 adaptive iteration: only pure serialized layout arithmetic changes.
+The PostgreSQL page, buffer-lock, and GenericXLog contracts above remain unchanged.
+Layout version 1 fills available head space; version 0 retains the original 3072
+byte prefix. All allowed document lengths are checked against capacity, exact
+fragment counts and the maximum map bound. Zero-tail and truncated pages have
+explicit tests. Native performance and recovery qualification remain pending.

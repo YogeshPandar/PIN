@@ -1,8 +1,6 @@
 //! selected PD02 streams fetched through a checked physical extent map.
 use super::document::{MAX_DOCUMENT_BYTES, MAX_TERM_BYTES};
-use super::page::{
-    DIRECT_PREFIX_BYTES, DocumentDirectory, FRAGMENT_BYTES, NO_BLOCK, Owner, Page, PageKind,
-};
+use super::page::{DocumentDirectory, FRAGMENT_BYTES, NO_BLOCK, Owner, Page, PageKind};
 use super::{PageStore, load, load_into};
 use crate::analysis::PROFILE_ID;
 use crate::codec::bytes::Reader;
@@ -23,11 +21,11 @@ impl<S: PageStore> Input<'_, S> {
             return Err(Error::InvalidDocument);
         }
         while !output.is_empty() {
-            let (start, source) = if offset < DIRECT_PREFIX_BYTES {
+            let (start, source) = if offset < self.directory.prefix.len() {
                 (0, self.directory.prefix)
             } else {
-                let index = (offset - DIRECT_PREFIX_BYTES) / FRAGMENT_BYTES;
-                let start = DIRECT_PREFIX_BYTES + index * FRAGMENT_BYTES;
+                let index = (offset - self.directory.prefix.len()) / FRAGMENT_BYTES;
+                let start = self.directory.prefix.len() + index * FRAGMENT_BYTES;
                 let block = self.directory.block(index)?;
                 if self.cache.as_ref().is_none_or(|page| page.block() != block) {
                     if let Some(page) = self.cache.as_mut() {

@@ -4,8 +4,8 @@
 
 use super::document::PreparedDocument;
 use super::page::{
-    DIRECT_PREFIX_BYTES, FRAGMENT_BYTES, INLINE_BYTES, MAX_DIRECT_FRAGMENTS, NO_BLOCK, OwnerChange,
-    OwnerRef, Page, PageKind,
+    FRAGMENT_BYTES, INLINE_BYTES, MAX_DIRECT_FRAGMENTS, NO_BLOCK, OwnerChange, OwnerRef, Page,
+    PageKind, direct_document_layout,
 };
 use super::{PageStore, Stage, allocate, find_term, load, load_posting};
 use crate::error::{Error, Result};
@@ -40,7 +40,7 @@ pub fn insert<S: PageStore>(
     let mut data_head = NO_BLOCK;
     if document.bytes().len() > INLINE_BYTES {
         let prefix = if meta.direct_documents()? {
-            DIRECT_PREFIX_BYTES
+            direct_document_layout(document.bytes().len())?.0
         } else {
             0
         };

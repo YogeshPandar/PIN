@@ -266,7 +266,8 @@ fn every_directory_vacuum_boundary_is_idempotent() {
 #[test]
 fn directory_codec_covers_maximum_extent_count_and_truncation() {
     use pin_core::identity::Incarnation;
-    use pin_core::mutable::page::{DIRECT_PREFIX_BYTES, MAX_DIRECT_FRAGMENTS, OwnerRef};
+    use pin_core::mutable::document::MAX_DOCUMENT_BYTES;
+    use pin_core::mutable::page::{MAX_DIRECT_FRAGMENTS, OwnerRef, direct_document_layout};
     let owner = OwnerRef {
         page: 1,
         slot: 0,
@@ -278,7 +279,7 @@ fn directory_codec_covers_maximum_extent_count_and_truncation() {
         owner,
         pin_core::mutable::document::MAX_DOCUMENT_BYTES,
         &blocks,
-        &vec![0; DIRECT_PREFIX_BYTES],
+        &vec![0; direct_document_layout(MAX_DOCUMENT_BYTES).unwrap().0],
     )
     .unwrap();
     let directory = page.document_directory_data().unwrap();
@@ -305,7 +306,7 @@ fn directory_codec_covers_maximum_extent_count_and_truncation() {
             owner,
             pin_core::mutable::document::MAX_DOCUMENT_BYTES,
             &wrong,
-            &vec![0; DIRECT_PREFIX_BYTES]
+            &vec![0; direct_document_layout(MAX_DOCUMENT_BYTES).unwrap().0]
         )
         .is_err()
     );
@@ -313,7 +314,7 @@ fn directory_codec_covers_maximum_extent_count_and_truncation() {
 
 #[test]
 fn selected_headers_cross_prefix_and_tail_boundaries_without_changing_phrases() {
-    for count in (3034..3043).chain(11166..11175) {
+    for count in (8064..8090).chain(16190..16222) {
         let mut store = MemoryStore {
             direct_documents: true,
             ..Default::default()
@@ -367,4 +368,71 @@ fn selected_extents_fit_a_budget_smaller_than_the_complete_document() {
             vec![(tid, !direct)]
         );
     }
+}
+
+#[test]
+fn adaptive_directory_layout_covers_all_document_lengths() {
+    use pin_core::mutable::document::MAX_DOCUMENT_BYTES;
+    use pin_core::mutable::page::{
+        CAPACITY, FRAGMENT_BYTES, INLINE_BYTES, MAX_DIRECT_FRAGMENTS, direct_document_layout,
+    };
+    for total in INLINE_BYTES + 1..=MAX_DOCUMENT_BYTES {
+        let (prefix, count) = direct_document_layout(total).unwrap();
+        assert!(prefix <= total);
+        assert!(48 + count * 4 + prefix <= CAPACITY);
+        assert_eq!(count, (total - prefix).div_ceil(FRAGMENT_BYTES));
+        assert!(count <= MAX_DIRECT_FRAGMENTS);
+        if count > 0 {
+            assert_eq!(48 + count * 4 + prefix, CAPACITY);
+        }
+    }
+}
+
+#[test]
+fn directory_can_hold_a_document_without_tail_pages() {
+    use pin_core::identity::Incarnation;
+    use pin_core::mutable::page::{INLINE_BYTES, NO_BLOCK, OwnerRef, direct_document_layout};
+    let owner = OwnerRef {
+        page: 1,
+        slot: 0,
+        incarnation: Incarnation::new(1).unwrap(),
+    };
+    let total = INLINE_BYTES + 1;
+    let (prefix, count) = direct_document_layout(total).unwrap();
+    assert_eq!((prefix, count), (total, 0));
+    let page = Page::document_directory(2, owner, total, &[], &vec![0; prefix]).unwrap();
+    assert_eq!(page.next().unwrap(), NO_BLOCK);
+    assert_eq!(page.document_directory_data().unwrap().fragments(), 0);
+}
+
+#[test]
+fn fixed_prefix_version_remains_readable_and_unknown_versions_fail() {
+    use pin_core::identity::Incarnation;
+    use pin_core::mutable::page::{DIRECT_PREFIX_BYTES, OwnerRef, direct_document_layout};
+    let owner = OwnerRef {
+        page: 1,
+        slot: 0,
+        incarnation: Incarnation::new(1).unwrap(),
+    };
+    let total = 10_000;
+    let prefix = direct_document_layout(total).unwrap().0;
+    let current = Page::document_directory(2, owner, total, &[3], &vec![0; prefix]).unwrap();
+    let mut old = current.bytes()[..52 + DIRECT_PREFIX_BYTES].to_vec();
+    old[40..44].copy_from_slice(&(DIRECT_PREFIX_BYTES as u32).to_le_bytes());
+    old[44..48].copy_from_slice(&0u32.to_le_bytes());
+    let page = Page::read_with(2, |out| {
+        out[..old.len()].copy_from_slice(&old);
+        Ok(old.len())
+    })
+    .unwrap();
+    let directory = page.document_directory_data().unwrap();
+    assert_eq!(directory.prefix.len(), DIRECT_PREFIX_BYTES);
+    assert_eq!(directory.block(0).unwrap(), 3);
+    old[44..48].copy_from_slice(&2u32.to_le_bytes());
+    let page = Page::read_with(2, |out| {
+        out[..old.len()].copy_from_slice(&old);
+        Ok(old.len())
+    })
+    .unwrap();
+    assert!(page.document_directory_data().is_err());
 }

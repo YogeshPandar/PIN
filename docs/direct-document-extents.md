@@ -35,22 +35,27 @@ document directory. Integers are little endian, with no serialized native struct
 | 16 | 16 | OwnerRef, including incarnation |
 | 32 | 4 | Complete PD02 byte length |
 | 36 | 4 | Tail fragment count |
-| 40 | 4 | Prefix length, exactly 3072 |
-| 44 | 4 | Reserved, zero |
+| 40 | 4 | Prefix length, computed from available page space |
+| 44 | 4 | Directory layout version, 1 |
 | 48 | 4 x count | Physical tail blocks, in logical document order |
-| after map | 3072 | First PD02 bytes |
+| after map | prefix length | First PD02 bytes |
 
 Tail pages retain kind 5 and the existing owner/offset/payload format. Their
-logical offsets are `3072 + index * FRAGMENT_BYTES`. Every non-final tail payload
+logical offsets are `prefix_length + index * FRAGMENT_BYTES`. Every non-final tail payload
 has FRAGMENT_BYTES bytes; the final one has the exact remainder. Links must agree
 with the map and the last next pointer is NO_BLOCK. The maximum count derives
 from the existing 8 MiB document bound; a compile-time assertion proves the whole
 map plus prefix fits one standard page payload. There is no multi-level directory
 or unbounded allocation.
 
-The head replaces the old first fragment. Its shorter prefix can increase the
-number of physical pages by one. This is a measured storage/write trade-off and
-must not be represented as free acceleration or compression.
+The writer chooses `count = ceil(max(total - 8120, 0) / 8128)` and
+`prefix = min(total, 8120 - 4 * count)` for this 8 KiB page format. Each tail
+adds 8132 payload bytes and costs four bytes in the head map. A directory can
+have zero tails, with next = NO_BLOCK. Version 0 remains readable with its fixed
+3072-byte prefix; unknown versions are rejected. The adaptive version fills the
+head when tails exist, avoiding the prototype's unnecessary third page for the
+16 KiB benchmark documents. Metadata still consumes space, so page counts can
+exceed the legacy layout near boundaries; acceleration requires measurement.
 
 ## Publication, recovery and readers
 

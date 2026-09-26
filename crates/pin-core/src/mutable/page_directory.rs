@@ -8,6 +8,17 @@ const DIRECTORY_HEADER: usize = 48;
 const _: () =
     assert!(DIRECTORY_HEADER + MAX_DIRECT_FRAGMENTS * 4 + DIRECT_PREFIX_BYTES <= CAPACITY);
 
+/// Returns the prefix and tail count that fill the directory page.
+pub fn direct_document_layout(total: usize) -> Result<(usize, usize)> {
+    if !(INLINE_BYTES + 1..=MAX_DOCUMENT_BYTES).contains(&total) {
+        return Err(corrupt(DIRECTORY_HEADER));
+    }
+    let available = CAPACITY - DIRECTORY_HEADER;
+    let count = total.saturating_sub(available).div_ceil(FRAGMENT_BYTES - 4);
+    let prefix = total.min(available - count * 4);
+    Ok((prefix, count))
+}
+
 #[derive(Clone, Copy)]
 pub struct DocumentDirectory<'a> {
     pub owner: OwnerRef,
@@ -49,9 +60,9 @@ impl Page {
         blocks: &[u32],
         prefix: &[u8],
     ) -> Result<Self> {
-        if !(INLINE_BYTES + 1..=MAX_DOCUMENT_BYTES).contains(&total)
-            || prefix.len() != DIRECT_PREFIX_BYTES
-            || blocks.len() != (total - DIRECT_PREFIX_BYTES).div_ceil(FRAGMENT_BYTES)
+        let (prefix_len, count) = direct_document_layout(total)?;
+        if prefix.len() != prefix_len
+            || blocks.len() != count
             || blocks.len() > MAX_DIRECT_FRAGMENTS
             || blocks
                 .iter()
@@ -69,12 +80,12 @@ impl Page {
         writer.u32(total as u32)?;
         writer.u32(blocks.len() as u32)?;
         writer.u32(prefix.len() as u32)?;
-        writer.u32(0)?;
+        writer.u32(1)?;
         for &value in blocks {
             writer.u32(value)?;
         }
         writer.put(prefix)?;
-        page.set_next(blocks[0])?;
+        page.set_next(blocks.first().copied().unwrap_or(NO_BLOCK))?;
         Ok(page)
     }
 
@@ -85,12 +96,16 @@ impl Page {
         let total = reader.u32()? as usize;
         let count = reader.u32()? as usize;
         let prefix_len = reader.u32()? as usize;
-        if reader.u32()? != 0
-            || !(INLINE_BYTES + 1..=MAX_DOCUMENT_BYTES).contains(&total)
-            || prefix_len != DIRECT_PREFIX_BYTES
-            || count > MAX_DIRECT_FRAGMENTS
-            || count != (total - DIRECT_PREFIX_BYTES).div_ceil(FRAGMENT_BYTES)
-        {
+        let version = reader.u32()?;
+        let expected = match version {
+            0 if (INLINE_BYTES + 1..=MAX_DOCUMENT_BYTES).contains(&total) => (
+                DIRECT_PREFIX_BYTES,
+                (total - DIRECT_PREFIX_BYTES).div_ceil(FRAGMENT_BYTES),
+            ),
+            1 => direct_document_layout(total)?,
+            _ => return Err(corrupt(44)),
+        };
+        if (prefix_len, count) != expected || count > MAX_DIRECT_FRAGMENTS {
             return Err(corrupt(DIRECTORY_HEADER));
         }
         let entries = reader.take(count * 4)?;
@@ -108,7 +123,13 @@ impl Page {
                 return Err(corrupt(DIRECTORY_HEADER + index * 4));
             }
         }
-        if self.next()? != directory.block(0)? {
+        if self.next()?
+            != if count == 0 {
+                NO_BLOCK
+            } else {
+                directory.block(0)?
+            }
+        {
             return Err(corrupt(12));
         }
         Ok(directory)
