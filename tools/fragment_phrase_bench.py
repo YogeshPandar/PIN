@@ -18,6 +18,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--disposable', action='store_true', required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--direct-documents', action='store_true')
+    parser.add_argument('--late-terms', action='store_true', help='place requested rare terms after the dense stream in lexical order')
     parser.add_argument('--rows', type=int, default=256)
     parser.add_argument('--tokens', type=int, default=10000)
     parser.add_argument('--stored-control', action='store_true', help='time positions against GIN on a stored tsvector')
@@ -36,6 +38,9 @@ def main():
         def execute(sql):
             statements.append(sql)
             return s.execute(sql.rstrip(';') + ';')
+        if args.direct_documents:
+            execute('SET pin.enable_direct_documents=on;')
+        first, second = ('omega', 'zulu') if args.late_terms else ('alpha', 'beta')
         pid = int(execute('SELECT pg_backend_pid();'))
         revision = execute('SELECT pin.build_revision();')
         server = execute('SELECT version();')
@@ -44,18 +49,27 @@ def main():
         execute(f'CREATE TABLE {table}(id int PRIMARY KEY, body text) WITH (autovacuum_enabled=false);')
         try:
             execute(f"INSERT INTO {table} SELECT i, repeat('echo ',{args.tokens}) || CASE WHEN i%2=0 "
-                    f"THEN 'alpha beta' ELSE 'beta alpha' END FROM generate_series(1,{args.rows}) i;")
+                    f"THEN '{first} {second}' ELSE '{second} {first}' END FROM generate_series(1,{args.rows}) i;")
             if args.stored_control:
                 execute(f"ALTER TABLE {table} ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (to_tsvector('simple',body)) STORED;")
                 execute(f'CREATE INDEX ON {table} USING gin(search_vector);')
+            build_lsn = execute('SELECT pg_current_wal_insert_lsn();')
+            build_before = cpu_read(pid)
+            build_start = time.perf_counter_ns()
             execute(f'CREATE INDEX ON {table} USING pin(body);')
+            build_elapsed = (time.perf_counter_ns() - build_start) / 1e6
+            build_after = cpu_read(pid)
+            build = dict(before=build_before, after=build_after, cpu=cpu_delta(build_before, build_after, 1),
+                         elapsed_ms=build_elapsed, wal_bytes=int(execute(
+                             f"SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'{build_lsn}');")))
             execute(f"CREATE INDEX ON {table} USING gin(to_tsvector('simple',body));")
             execute(f'VACUUM (ANALYZE, INDEX_CLEANUP ON, PARALLEL 0) {table};')
+            (args.output / 'index_sizes.txt').write_text(execute(f"SELECT c.relname,a.amname,pg_relation_size(c.oid) FROM pg_index i JOIN pg_class c ON c.oid=i.indexrelid JOIN pg_am a ON a.oid=c.relam WHERE i.indrelid='{table}'::regclass ORDER BY c.relname;") + '\n')
             execute('SET pin.enable_count_fastpath=off; SET pin.enable_grouped_count=off;')
             execute('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;')
-            for name, source, gin in [('adjacent', '"alpha beta"', 'alpha <-> beta'),
+            for name, source, gin in [('adjacent', f'"{first} {second}"', f'{first} <-> {second}'),
                                       ('repeated', '"echo echo"', 'echo <-> echo'),
-                                      ('nonadjacent', '"alpha echo"', 'alpha <-> echo')]:
+                                      ('nonadjacent', f'"{first} echo"', f'{first} <-> echo')]:
                 def query(mode, projection='count(*)'):
                     clause = (f"to_tsvector('simple',body) @@ to_tsquery('simple','{gin}')" if mode == 'gin'
                               else f"search_vector @@ to_tsquery('simple','{gin}')" if mode == 'gin_stored'
@@ -111,7 +125,7 @@ def main():
             summary.append(dict(case=name, mode=mode, median_cpu_us=statistics.median(
                 x['cpu']['cpu_us_per_query'] for x in selected)))
     (args.output / 'result.json').write_text(json.dumps(dict(
-        revision=revision, server=server, platform=platform.platform(),
+        revision=revision, server=server, platform=platform.platform(), build=build, direct_documents=args.direct_documents, late_terms=args.late_terms,
         cpu=subprocess.run(['lscpu'], capture_output=True, text=True, check=True).stdout, rows=args.rows, repeated_tokens=args.tokens, stored_control=args.stored_control, samples=samples, summary=summary, checks=checks), indent=2)+'\n')
     (args.output / 'plans.json').write_text(json.dumps(plans, indent=2)+'\n')
     print(json.dumps(summary, indent=2))

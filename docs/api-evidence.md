@@ -1431,3 +1431,33 @@ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
 assert stable buffer address, exercise failures/recovery and preserve zero tails.
 The in-memory query adapter also exercises read_into, not just its default.
 Native tests and measurements must qualify the implementation before retention.
+
+## DOCEXTENT01: opt-in document extent directory
+
+Contracts reviewed: PostgreSQL 18 generic WAL documentation and immutable
+`724edf9bde9d356724ad384a2e196edc3c9f80f7` generic_xlog.c:
+https://www.postgresql.org/docs/18/generic-wal.html and
+https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/transam/generic_xlog.c.
+The existing adapter exclusively locks and registers pages in block order,
+modifies registered private images, and finishes one generic record per batch.
+New payload-head creation uses that same adapter, at most two pages per batch.
+No direct shared-buffer mutation, new unsafe call, resource pin or WAL API occurs.
+Existing pgrx boolean GUC registration is reused; the setting controls initial
+metapage capability only, not the interpretation of an existing index.
+
+Format and downgrade obligations are in docs/direct-document-extents.md.
+Metapage reserved field 28 becomes a checked capability bitmap (only bit 0), so
+old readers reject new indexes at metadata validation. Kind 11 owns a fixed
+prefix and bounded physical map. Old kind 5 and old metadata remain supported.
+Owner reservation precedes all payload writes; final owner publication still
+follows complete payload and dictionary preparation. Free-list removal and page
+assignment remain atomic. The structural reader barrier and heap MVCC contract
+are unchanged. VACUUM and allocation-orphan checks know every new reference.
+
+Review obligations: full consumers validate every mapped tail; selected consumers
+validate consumed identities/offsets/lengths/links and do not certify skipped
+bytes. The same phrase kernel handles selected counted streams and repeated
+terms. Query scratch includes the additional page and range/name arrays. Tests
+must cover interrupted publication/removal, reuse, layout crossings, and the
+physical work bound; native committed/uncommitted replay and measured write/size
+costs are required before merging the optional format.

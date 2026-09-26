@@ -103,6 +103,30 @@ pub fn matches(
     }
 }
 
+// selected counted streams share the same positional witness and corruption policy.
+pub(super) fn matches_positions(payloads: &[&[u8]], tokens: u32) -> Result<bool> {
+    if payloads.is_empty() || payloads.len() > 64 || tokens > MAX_DOCUMENT_TOKENS {
+        return Err(Error::InvalidDocument);
+    }
+    let mut streams = [None; 64];
+    for (index, payload) in payloads.iter().enumerate() {
+        let mut reader = Reader::new(payload);
+        let count = reader.u32()?;
+        if count == 0 || count > tokens || count as usize > reader.remaining() {
+            return Err(Error::InvalidDocument);
+        }
+        streams[index] = Some(Stream {
+            reader,
+            remaining: count,
+            previous: 0,
+            first: true,
+            tokens,
+            complete: true,
+        });
+    }
+    witness(&mut streams[..payloads.len()], usize::MAX)
+}
+
 fn evaluate(
     bytes: &[u8],
     total: usize,

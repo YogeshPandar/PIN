@@ -3,7 +3,10 @@
 //! admits a document to scans; transaction visibility remains the host's job.
 
 use super::document::PreparedDocument;
-use super::page::{FRAGMENT_BYTES, INLINE_BYTES, NO_BLOCK, OwnerChange, OwnerRef, Page, PageKind};
+use super::page::{
+    DIRECT_PREFIX_BYTES, FRAGMENT_BYTES, INLINE_BYTES, MAX_DIRECT_FRAGMENTS, NO_BLOCK, OwnerChange,
+    OwnerRef, Page, PageKind,
+};
 use super::{PageStore, Stage, allocate, find_term, load, load_posting};
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
@@ -13,7 +16,10 @@ pub fn initialize<S: PageStore>(store: &mut S) -> Result<()> {
     if store.blocks()? != 0 || allocate(store)? != 0 {
         return Err(Error::InvalidState);
     }
-    let meta = Page::metadata(store.layout())?;
+    let mut meta = Page::metadata(store.layout())?;
+    if store.direct_documents() {
+        meta.enable_direct_documents()?;
+    }
     store.commit(&[&meta])
 }
 
@@ -33,9 +39,15 @@ pub fn insert<S: PageStore>(
     store.event(Stage::OwnerReserved)?;
     let mut data_head = NO_BLOCK;
     if document.bytes().len() > INLINE_BYTES {
-        let count = document.bytes().len().div_ceil(FRAGMENT_BYTES);
+        let prefix = if meta.direct_documents()? {
+            DIRECT_PREFIX_BYTES
+        } else {
+            0
+        };
+        let count = (document.bytes().len() - prefix).div_ceil(FRAGMENT_BYTES);
+        let mut directory = [NO_BLOCK; MAX_DIRECT_FRAGMENTS];
         for index in (0..count).rev() {
-            let offset = index * FRAGMENT_BYTES;
+            let offset = prefix + index * FRAGMENT_BYTES;
             let end = (offset + FRAGMENT_BYTES).min(document.bytes().len());
             let free = meta.free_head()?;
             let block = if free == NO_BLOCK {
@@ -56,6 +68,33 @@ pub fn insert<S: PageStore>(
                 store.commit(&[&page])?;
             } else {
                 // removal from the free list and new ownership are one WAL batch.
+                store.commit(&[&meta, &page])?;
+            }
+            data_head = block;
+            if prefix != 0 {
+                directory[index] = block;
+            }
+            store.event(Stage::FragmentStored)?;
+        }
+        if prefix != 0 {
+            let free = meta.free_head()?;
+            let block = if free == NO_BLOCK {
+                allocate(store)?
+            } else {
+                let page = load(store, free, PageKind::Free)?;
+                meta.set_free_head(page.next()?)?;
+                free
+            };
+            let page = Page::document_directory(
+                block,
+                owner,
+                document.bytes().len(),
+                &directory[..count],
+                &document.bytes()[..prefix],
+            )?;
+            if free == NO_BLOCK {
+                store.commit(&[&page])?;
+            } else {
                 store.commit(&[&meta, &page])?;
             }
             data_head = block;

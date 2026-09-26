@@ -12,6 +12,7 @@ from g9_profile import Session
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--direct-documents', action='store_true')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
@@ -20,6 +21,8 @@ def main() -> None:
     record = []
     with Session(Path('/usr/lib/postgresql/18/bin/psql'), args.output / 'psql.stderr',
                  'pin_legacy') as session:
+        if args.direct_documents:
+            session.execute('SET pin.enable_direct_documents=on;')
         session.execute(f'CREATE SCHEMA {schema};')
         try:
             session.execute(f'CREATE TABLE {table}(id int PRIMARY KEY, body text, note int DEFAULT 0) '
@@ -27,7 +30,7 @@ def main() -> None:
             session.execute(f"INSERT INTO {table}(id,body) VALUES "
                             "(1,'alpha beta gamma'),(2,'beta alpha gamma'),"
                             "(3,'alpha beta'),(4,'echo echo delta'),"
-                            "(5,'Éclair café'),(6,repeat('echo ',10000));")
+                            "(5,'Éclair café'),(6,repeat('echo ',10000)),(7,repeat('middle ',12000)||'zulu omega');")
             session.execute('SET pin.enable_grouped_storage=on; SET pin.enable_grouped_delta_seal=on;')
             session.execute(f'CREATE INDEX docs_pin ON {table} USING pin(body);')
             session.execute(f"CREATE INDEX docs_gin ON {table} USING gin(to_tsvector('simple',body));")
@@ -40,7 +43,8 @@ def main() -> None:
                 reader = active or session
                 for source, gin in [('"alpha beta"', 'alpha <-> beta'),
                                     ('"echo echo"', 'echo <-> echo'),
-                                    ('"éclair café"', 'éclair <-> café')]:
+                                    ('"éclair café"', 'éclair <-> café'),
+                                    ('"zulu omega"', 'zulu <-> omega')]:
                     results = {}
                     for mode in ('positions', 'legacy', 'gin'):
                         reader.execute('SET pin.enable_phrase_positions=' +

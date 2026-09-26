@@ -7,7 +7,10 @@
 use super::document;
 use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef};
 use super::reader::resolve;
-use super::{PageStore, find_term, load, load_into, load_posting, posting_next, scan};
+use super::{
+    PageStore, find_term, load, load_into, load_payload, load_payload_into, load_posting,
+    posting_next, scan,
+};
 use crate::budget::MemoryBudget;
 use crate::candidate::CandidatePlan;
 use crate::error::{Error, Result};
@@ -748,15 +751,20 @@ fn resolve_phrase<S: PageStore>(
     let Some(memory_bytes) = memory_bytes.checked_sub(std::mem::size_of::<Page>()) else {
         return Ok(Some((owner.root, true)));
     };
-    if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
+    if bytes.capacity() > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
     if let Some(page) = fragment_cache.as_mut() {
-        load_into(store, owner.data_head, PageKind::Fragment, page)?;
+        load_payload_into(store, owner.data_head, page)?;
     } else {
-        *fragment_cache = Some(load(store, owner.data_head, PageKind::Fragment)?);
+        *fragment_cache = Some(load_payload(store, owner.data_head)?);
     }
     let first = fragment_cache.as_mut().ok_or(Error::InvalidState)?;
+    if first.kind() == PageKind::DocumentDirectory
+        && first.document_directory_data()?.total != total
+    {
+        return Err(Error::InvalidState);
+    }
     let (identity, start, payload) = first.fragment_data()?;
     if identity != reference || start != 0 || payload.len() > total {
         return Err(Error::InvalidState);
@@ -765,6 +773,16 @@ fn resolve_phrase<S: PageStore>(
         super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
     {
         return Ok(matched.then_some((owner.root, false)));
+    }
+    if first.kind() == PageKind::DocumentDirectory {
+        return match super::document_seek::matches(store, first, owner, terms, memory_bytes, bytes)?
+        {
+            Some(matched) => Ok(matched.then_some((owner.root, false))),
+            None => Ok(Some((owner.root, true))),
+        };
+    }
+    if total > memory_bytes {
+        return Ok(Some((owner.root, true)));
     }
     bytes.clear();
     if bytes.try_reserve_exact(total).is_err() || bytes.capacity() > memory_bytes {
