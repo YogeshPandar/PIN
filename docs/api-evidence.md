@@ -1671,3 +1671,20 @@ two-term singleton conjunction has zero such reads. No PostgreSQL, pgrx, WAL,
 unsafe, or SQL boundary changes. Focused malformed-descriptor and independent
 result/read-count oracles pass. This is not yet a backend CPU result because the
 SQL builder and reader do not use v2.
+
+## Primary v2 immutable lexeme catalogue (2026-09-26)
+
+The first direct-build catalogue codec stores sorted `(normalized lexeme,
+256-page group base)` rows and a stable term ordinal shared by all groups of
+one lexeme. It front-compresses lexemes with a restart key every 16 rows, caps
+one catalogue payload at the existing 8,152-byte Primary page limit, and
+returns first/last lexeme fences for a later sparse page index. A term can span
+catalogue pages. Exact and prefix lookups binary-search restart keys within a
+validated page, then decode only the relevant restart span and following rows.
+The builder returns a full page on rollover and requires the caller to assign a
+new physical block and retry the unconsumed row. Pure tests cover ordering,
+repeated lexemes across pages, extent validation, corruption, and rollover;
+four focused tests and `pin-core` Clippy pass. The catalogue is not yet
+connected to PostgreSQL or a published manifest. The caller must validate
+the decoded directory against the expected relation, segment, and group
+identity before using any posting extent.
