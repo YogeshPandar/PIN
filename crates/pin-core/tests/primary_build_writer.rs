@@ -239,3 +239,42 @@ fn alternates_posting_and_directory_pages_with_single_outstanding_extension() {
     assert_eq!(addresses.len(), 4);
     assert!(store.outstanding.is_none());
 }
+
+#[test]
+fn posting_arena_rollover_commits_directory_before_next_extension() {
+    let (relation, segment) = identity();
+    let mut store = SerialExtendStore::default();
+    pin_core::primary::initialize(&mut store, relation).unwrap();
+    let mut writer = PrimaryBuildWriter::new(&mut store, relation, segment).unwrap();
+    let offsets: Vec<u16> = (1..=20).collect();
+    let mut addresses = Vec::new();
+    for page in 0..250u8 {
+        writer
+            .push("common", 0, page, &offsets, |_, _, key, id, extent| {
+                addresses.push((key, id, extent));
+                Ok(())
+            })
+            .unwrap();
+    }
+    writer
+        .finish(|_, _, key, id, extent| {
+            addresses.push((key, id, extent));
+            Ok(())
+        })
+        .unwrap();
+    assert_eq!(addresses.len(), 1);
+    let (key, id, extent) = addresses[0];
+    let page = store.read(extent.block).unwrap();
+    let directory =
+        Directory::open(page.primary_extent(extent.offset, extent.len).unwrap()).unwrap();
+    assert_eq!(directory.key(), key);
+    assert_eq!(directory.term(), id);
+    let posting_blocks: std::collections::BTreeSet<_> = (0..250u8)
+        .map(|page| directory.page(page).unwrap().unwrap().extent.block)
+        .collect();
+    assert!(
+        posting_blocks.len() >= 2,
+        "fixture must cross a posting page boundary"
+    );
+    assert!(store.outstanding.is_none());
+}

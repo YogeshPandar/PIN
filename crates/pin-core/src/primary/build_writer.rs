@@ -203,6 +203,9 @@ impl<'a, S: PageStore> PrimaryBuildWriter<'a, S> {
         }
         self.flush_posting_page()?;
         self.flush_queued_directories(emit)?;
+        // The directory arena reserved an extension. Commit it before the
+        // next posting arena extends the same PostgreSQL relation.
+        self.flush_directory_page(emit)?;
         self.start_posting_arena()?;
         self.posting_arena
             .as_mut()
