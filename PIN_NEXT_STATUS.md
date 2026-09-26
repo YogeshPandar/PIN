@@ -158,3 +158,14 @@ payload fetch for a past-end target. Eight codec tests and all-target Clippy pas
 [Contract and native integration requirements](docs/addressable-position-reader.md).
 This is an implemented interface, not native PB01 storage or a measured SQL
 speedup. Native document format, all consumers and lifecycle integration remain.
+
+## PD03 encoder and complete consumers
+
+The experimental document encoder now supports tagged PB01 streams for terms
+with at least 256 occurrences, retaining counted deltas for smaller terms.
+Complete validation, iteration, phrase consumers and grouped membership readers
+support both PD02 and PD03. Storage insertion rejects PD03 before allocation;
+no native writer setting enables it yet. The next step is persisted capability
+selection and native inline/mapped readers that use block bounds and range reads.
+[Format](docs/pd03-document-format.md),
+[test evidence](docs/runs/2026-09-26-pd03-readers/README.md).
