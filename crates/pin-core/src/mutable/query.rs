@@ -727,26 +727,38 @@ fn resolve_phrase<S: PageStore>(
         return Ok(None);
     }
     if !owner.inline.is_empty() {
-        return Ok(document::SelectedPositions::read(
+        return Ok(super::phrase_prefix::matches(
             owner.inline,
+            owner.inline.len(),
             owner.tokens,
             owner.terms,
             terms,
         )?
-        .phrase_matches()?
+        .ok_or(Error::InvalidState)?
         .then_some((owner.root, false)));
     }
     let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
     if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
+    let first = load(store, owner.data_head, PageKind::Fragment)?;
+    let (identity, start, payload) = first.fragment_data()?;
+    if identity != reference || start != 0 || payload.len() > total {
+        return Err(Error::InvalidState);
+    }
+    if let Some(matched) =
+        super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
+    {
+        return Ok(matched.then_some((owner.root, false)));
+    }
     bytes.clear();
     if bytes.try_reserve_exact(total).is_err() || bytes.capacity() > memory_bytes {
         *bytes = Vec::new();
         return Ok(Some((owner.root, true)));
     }
-    let mut block = owner.data_head;
-    let mut offset = 0usize;
+    bytes.extend_from_slice(payload);
+    let mut block = first.next()?;
+    let mut offset = payload.len();
     let mut remaining = store.blocks()?;
     while block != NO_BLOCK {
         remaining = remaining.checked_sub(1).ok_or(Error::InvalidState)?;
@@ -770,8 +782,8 @@ fn resolve_phrase<S: PageStore>(
         return Err(Error::InvalidState);
     }
     Ok(
-        document::SelectedPositions::read(bytes, owner.tokens, owner.terms, terms)?
-            .phrase_matches()?
+        super::phrase_prefix::matches(bytes, total, owner.tokens, owner.terms, terms)?
+            .ok_or(Error::InvalidState)?
             .then_some((owner.root, false)),
     )
 }

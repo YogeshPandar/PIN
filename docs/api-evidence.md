@@ -1323,3 +1323,24 @@ repeated terms, reversed/nonadjacent terms, selected/unselected corruption and
 budget fallback. Native lifecycle and CPU results are recorded with the run.
 This work is an A3 bridge from `pin_next.md`, not the new primary format, ranked
 SQL execution, or a claim of TIN parity.
+
+## PREFIX01: bounded phrase witnesses
+
+This pure reader uses the existing owned-page and structural-barrier contracts
+from SELPOS01. PostgreSQL 18 index scanning was re-read before this change:
+removing predicate rechecks after an exact proof does not remove heap MVCC or
+bitmap lossification obligations. No PostgreSQL, pgrx, Cargo, unsafe, WAL, or
+storage format boundary changes occur. Rust checked slice/checked-add and the
+existing canonical Reader::var_u32 contracts bound all prefix reads.
+
+The reader validates consumed data and can stop before unneeded stream/fragment
+tails. This observable corruption-policy change is documented in G4. A checked
+witness proves predicate existence; it is not proof of complete index integrity.
+The independent text oracle tests every byte prefix of generated documents;
+physical-work tests prove one fragment read for early witnesses and multiple
+reads for late terms. Required native qualification covers the existing phrase
+lifecycle matrix and the stronger stored-vector GIN control.
+
+Design references (rechecked):
+https://planetscale.com/blog/anatomy-of-a-postgres-search-engine
+https://www.postgresql.org/docs/18/index-scanning.html

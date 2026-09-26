@@ -212,9 +212,9 @@ fn fragmented_phrase_order_and_repetition_match_text_oracle() {
 
 #[test]
 fn fragmented_phrase_rejects_broken_chains() {
-    let text = "echo ".repeat(10_000);
+    let text = format!("{}zulu zulu", "echo ".repeat(10_000));
     let original = seeded(&[&text]);
-    let query = Query::parse("\"echo echo\"", QueryLimits::default()).unwrap();
+    let query = Query::parse("\"zulu zulu\"", QueryLimits::default()).unwrap();
     let mut probe = original.clone();
     let block = (0..probe.blocks().unwrap())
         .find(|block| {
@@ -430,6 +430,7 @@ struct CountStore {
     inner: MemoryStore,
     owner_reads: usize,
     dictionary_reads: usize,
+    fragment_reads: usize,
     cancel: bool,
 }
 
@@ -442,6 +443,7 @@ impl PageStore for CountStore {
     }
     fn read(&mut self, block: u32) -> Result<Page> {
         let page = self.inner.read(block)?;
+        self.fragment_reads += usize::from(page.kind() == PageKind::Fragment);
         self.owner_reads += usize::from(page.kind() == PageKind::Owners);
         self.dictionary_reads += usize::from(page.kind() == PageKind::Dictionary);
         Ok(page)
@@ -474,6 +476,7 @@ fn filtering_avoids_owner_page_reads_for_rejected_postings() {
         inner,
         owner_reads: 0,
         dictionary_reads: 0,
+        fragment_reads: 0,
         cancel: false,
     };
     let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
@@ -507,6 +510,7 @@ fn repeated_terms_share_dictionary_lookup_but_keep_independent_cursors() {
         inner: seeded(&["a", "a b", "b", "a c", "c"]),
         owner_reads: 0,
         dictionary_reads: 0,
+        fragment_reads: 0,
         cancel: false,
     };
     let expected = vec![root(0), root(1), root(3)];
@@ -593,4 +597,100 @@ fn selected_position_reader_skips_unused_deltas_but_checks_consumed_data() {
         )
         .is_err()
     );
+}
+
+#[test]
+fn phrase_witness_reads_one_fragment_without_loading_document_tail() {
+    let text = format!("alpha beta {}zulu zulu", "echo ".repeat(20_000));
+    let mut store = CountStore {
+        inner: seeded(&[&text]),
+        owner_reads: 0,
+        dictionary_reads: 0,
+        fragment_reads: 0,
+        cancel: false,
+    };
+    for source in ["\"alpha beta\"", "\"echo echo\""] {
+        store.fragment_reads = 0;
+        let query = Query::parse(source, QueryLimits::default()).unwrap();
+        let mut rows = Vec::new();
+        mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |tid, recheck| {
+            rows.push((tid, recheck));
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(rows, vec![(root(0), false)]);
+        assert_eq!(store.fragment_reads, 1);
+    }
+    store.fragment_reads = 0;
+    let query = Query::parse("\"zulu zulu\"", QueryLimits::default()).unwrap();
+    assert_eq!(
+        mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |_, recheck| {
+            assert!(!recheck);
+            Ok(())
+        })
+        .unwrap(),
+        1
+    );
+    assert!(store.fragment_reads > 1);
+}
+
+#[test]
+fn every_prefix_proof_agrees_with_independent_text_oracle() {
+    for seed in 0..24 {
+        let words = ["alpha", "beta", "echo", "zulu"];
+        let text = (0..40)
+            .map(|i| words[((i * i + seed * i + seed * seed) % 7) % 4])
+            .collect::<Vec<_>>()
+            .join(" ");
+        let doc = prepared(&text);
+        let analyzed = Analyzed::analyze(&text, AnalysisLimits::default()).unwrap();
+        for source in [
+            "\"alpha beta\"",
+            "\"beta alpha\"",
+            "\"echo echo\"",
+            "\"zulu alpha echo\"",
+            "\"missing zulu\"",
+        ] {
+            let query = Query::parse(source, QueryLimits::default()).unwrap();
+            let expected = oracle::matches(&analyzed, &query, 1 << 20, 1 << 20).unwrap();
+            let wanted = source
+                .trim_matches('"')
+                .split_whitespace()
+                .map(str::to_string)
+                .collect::<Vec<_>>();
+            for end in 0..=doc.bytes().len() {
+                let proof = mutable::phrase_prefix::matches(
+                    &doc.bytes()[..end],
+                    doc.bytes().len(),
+                    doc.token_count(),
+                    doc.term_count(),
+                    &wanted,
+                )
+                .unwrap();
+                if let Some(actual) = proof {
+                    assert_eq!(actual, expected, "{seed}/{source}/{end}");
+                }
+                if end == doc.bytes().len() {
+                    assert_eq!(proof, Some(expected));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn prefix_witness_rejects_consumed_corruption_and_leaves_unused_tail_to_verifier() {
+    use pin_core::mutable::document::validate;
+    let doc = prepared("echo echo echo");
+    let wanted = vec!["echo".to_string(), "echo".to_string()];
+    let mut bytes = doc.bytes().to_vec();
+    let last = bytes.len() - 1;
+    bytes[last] = 0;
+    assert!(validate(&bytes, 1 << 20).is_err());
+    assert_eq!(
+        mutable::phrase_prefix::matches(&bytes, bytes.len(), 3, 1, &wanted).unwrap(),
+        Some(true)
+    );
+    bytes[last - 1] = 0;
+    assert!(mutable::phrase_prefix::matches(&bytes, bytes.len(), 3, 1, &wanted).is_err());
 }

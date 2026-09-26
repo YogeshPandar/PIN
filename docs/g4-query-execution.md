@@ -188,3 +188,24 @@ the remaining query budget. Oversized documents retain heap predicate recheck.
 This per-document fallback can occur after previous exact results. I/O and
 corruption errors do not trigger fallback. Buffer capacity is reused between
 candidates, and fragment copies append without first zero-filling the payload.
+
+### Prefix witnesses and physical tail avoidance
+
+The next iteration adds `phrase_prefix::matches`: a bounded three-way result
+(exact true, exact false, or more bytes needed). It validates the document header,
+consumed directory entries, and every consumed positional delta. It chooses the
+shortest available occurrence stream and stops at the first phrase witness.
+Independent cursors still represent repeated phrase terms.
+
+For fragments, query execution first reads and checks the owner identity and zero
+byte offset of the first fragment. A decidable prefix avoids loading/copying the
+remaining fragments or allocating a document-sized buffer. Otherwise the reader
+assembles the complete payload once using the existing bound and chain checks.
+It does not retry the parser after every fragment, avoiding quadratic rescans.
+
+This intentionally extends the query corruption policy: even unused tails of a
+selected stream and unvisited directory/fragment tails need not be checked after
+a proof. Consumed noncanonical/overflowing/out-of-range deltas still error. The
+full validator and complete chain traversal remain necessary for integrity
+certification. Publication/liveness/incarnation checks and PostgreSQL heap MVCC
+are unchanged. No new storage format or host pointer boundary is introduced.
