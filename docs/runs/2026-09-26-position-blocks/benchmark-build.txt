@@ -1,0 +1,2 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.08s
+     Running `target/release/examples/position_seek_bench`

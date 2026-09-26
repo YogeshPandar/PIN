@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/reing/.cargo/bin/cargo",
+    "run",
+    "--release",
+    "-p",
+    "pin-core",
+    "--example",
+    "position_seek_bench"
+  ],
+  "exit": 0,
+  "elapsed_s": 2.677857517999655,
+  "user_s": 2.61165,
+  "system_s": 0.048242,
+  "max_rss_kib": 35196,
+  "minor_faults": 17252,
+  "major_faults": 0,
+  "voluntary_context_switches": 47,
+  "involuntary_context_switches": 113,
+  "scope": "entire cargo run and benchmark process; per-seek CSV uses monotonic wall time"
+}

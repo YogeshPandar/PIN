@@ -74,3 +74,14 @@ faster. Short-document PIN CPU is about 1.2–1.7x GIN in this fixture.
 [Full results and raw profiles](docs/runs/2026-09-26-prefix-witness/README.md)
 record the exact builds and limits. [TIN reuse](docs/tin-reuse.md) records what
 is public and why Lead's scanning engine is unsuitable as a performance base.
+
+## Seekable position block experiment
+
+PB01 now provides independent position-block restart points and bounded seek
+work in pure Rust. [Format and native integration gates](docs/position-blocks.md)
+and [raw kernel measurements](docs/runs/2026-09-26-position-blocks/README.md)
+are tracked. Late seeks skip most decoding, while early witnesses regress;
+retaining the prefix path is necessary. Core validation: 206 passed, 3 existing
+ignored, Clippy clean. This codec is not wired into PD02 or SQL. A3 direct
+physical reads and B1 native format/writer/maintenance migration remain open;
+no new native performance gain or TIN parity is claimed for this experiment.
