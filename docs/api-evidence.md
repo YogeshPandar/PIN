@@ -1420,8 +1420,10 @@ private state rather than use partially overwritten data.
 PageStore::read_into has a compatibility default. PgStore implements actual
 in-place copying through the existing guarded C call. Phrase owner caches,
 fragment traversal, and the conservative owner cache reuse their existing image.
-No new heap allocation or retained cache entry is added; fragment traversal
-reuses the first fragment image after copying its consumed payload. This removes
+No new heap allocation is added. A single fragment image is retained across
+documents and charged against the remaining query budget before use; smaller
+budgets retain heap recheck. Traversal reloads this image only after copying its
+consumed payload. This removes
 return-value transfers, not the PostgreSQL-to-private copy or PD02 assembly.
 
 Review: the same live relation and full-CAPACITY exclusive extent prove the

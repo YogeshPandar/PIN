@@ -652,6 +652,7 @@ pub fn scan_query_with_options<S: PageStore>(
     };
     plan.open(store)?;
     let mut payload = Vec::new();
+    let mut fragment_cache = None;
     let mut previous = None;
     let mut cache: Option<Page> = None;
     let mut count = 0u64;
@@ -670,6 +671,7 @@ pub fn scan_query_with_options<S: PageStore>(
                 terms,
                 plan.scratch_bytes,
                 &mut payload,
+                &mut fragment_cache,
             )? {
                 emit(root, needs_recheck)?;
                 count = count
@@ -710,6 +712,7 @@ fn resolve_phrase<S: PageStore>(
     terms: &[String],
     memory_bytes: usize,
     bytes: &mut Vec<u8>,
+    fragment_cache: &mut Option<Page>,
 ) -> Result<Option<(RootTid, bool)>> {
     let reload = match cache.as_ref() {
         Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
@@ -742,10 +745,18 @@ fn resolve_phrase<S: PageStore>(
         .then_some((owner.root, false)));
     }
     let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
+    let Some(memory_bytes) = memory_bytes.checked_sub(std::mem::size_of::<Page>()) else {
+        return Ok(Some((owner.root, true)));
+    };
     if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
-    let mut first = load(store, owner.data_head, PageKind::Fragment)?;
+    if let Some(page) = fragment_cache.as_mut() {
+        load_into(store, owner.data_head, PageKind::Fragment, page)?;
+    } else {
+        *fragment_cache = Some(load(store, owner.data_head, PageKind::Fragment)?);
+    }
+    let first = fragment_cache.as_mut().ok_or(Error::InvalidState)?;
     let (identity, start, payload) = first.fragment_data()?;
     if identity != reference || start != 0 || payload.len() > total {
         return Err(Error::InvalidState);
@@ -769,7 +780,7 @@ fn resolve_phrase<S: PageStore>(
         if offset == total {
             return Err(Error::InvalidState);
         }
-        load_into(store, block, PageKind::Fragment, &mut first)?;
+        load_into(store, block, PageKind::Fragment, first)?;
         let (reference, current, payload) = first.fragment_data()?;
         let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
         let end = current
