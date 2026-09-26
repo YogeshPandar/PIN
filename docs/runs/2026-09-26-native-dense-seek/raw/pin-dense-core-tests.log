@@ -1,0 +1,375 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.24s
+     Running unittests src/lib.rs (target/debug/deps/pin_core-449b03fe9b75d510)
+
+running 16 tests
+test budget::tests::addition_and_multiplication_do_not_wrap ... ok
+test budget::tests::failed_operations_are_atomic ... ok
+test identity::tests::generations_do_not_wrap ... ok
+test identity::tests::coordinate_boundaries ... ok
+test identity::tests::slot_reuse_and_rewrites_change_identity ... ok
+test memory::tests::scratch_release_returns_capacity_without_resetting_peak ... ok
+test mutable::grouped::anchors::tests::anchor_records_round_trip_and_reject_corruption ... ok
+test mutable::grouped::storage::inline_tests::sparse_delta_round_trip_and_corruption ... ok
+test mutable::phrase_prefix::dense_seek_tests::dense_seek_preserves_occurrence_budget_and_target_boundaries ... ok
+test mutable::phrase_prefix::dense_seek_tests::dense_seek_rejects_consumed_bad_deltas_and_token_overflow ... ok
+test normalize::conformance::unicode16_nfc_conformance ... ignored, requires hash-verified PIN_UNICODE_DATA; mandatory in G1 CI
+test mutable::query::tests::direct_roots_do_not_allocate_continuations ... ok
+test recheck::tests::exhausted_work_stops_comparisons_but_still_validates_the_tail ... ok
+test grouped::bitmap::decode_tests::word_decoding_covers_every_width_and_unaligned_record ... ok
+test grouped::query::demand_tests::backward_masks_equal_the_page_by_page_dependency_oracle ... ok
+test normalize::tests::nfc_matches_independent_iterator_for_every_scalar ... ok
+
+test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+     Running tests/direct_tid.rs (target/debug/deps/direct_tid-23ed5dda41ee7cef)
+
+running 6 tests
+test direct_codec_roundtrip_tombstones_and_truncation ... ok
+test every_direct_compaction_transition_recovers_without_losing_documents ... ok
+test every_interrupted_bulk_delete_resumes_before_heap_reuse ... ok
+test selective_and_seeks_across_direct_page_ranges ... ok
+test sealed_term_scans_eliminate_per_document_owner_page_resolution ... ok
+test boolean_scans_mix_direct_and_mutable_then_reuse_heap_coordinates ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.83s
+
+     Running tests/g1_codecs.rs (target/debug/deps/g1_codecs-29857e0af8d9eda0)
+
+running 4 tests
+test byte_extents_fail_without_advancing ... ok
+test position_golden_preserves_zero_gaps_and_extremes ... ok
+test varint_golden_boundaries_and_atomic_errors ... ok
+test deterministic_varint_roundtrips ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/g1_formats.rs (target/debug/deps/g1_formats-190b550c7f2fbbb5)
+
+running 8 tests
+test deterministic_malformed_payloads_never_panic ... ok
+test manifest_validates_unique_sorted_sources_and_reserved_bytes ... ok
+test dictionary_exact_lookup_prefix_bounds_and_untrusted_offsets ... ok
+test document_records_preserve_incarnation_and_reject_invalid_states ... ok
+test prefix_intervals_match_a_linear_byte_order_oracle ... ok
+test offset_golden_tails_and_truncations ... ok
+test values_distinguish_null_empty_and_exact_unicode_bytes ... ok
+test mixed_container_operations_match_independent_sets ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.01s
+
+     Running tests/g1_index.rs (target/debug/deps/g1_index-649fa7cf8cf632ad)
+
+running 5 tests
+test publication_profile_and_incarnation_invariants_are_enforced ... ok
+test resource_errors_are_explicit_and_search_errors_are_fused ... ok
+test postings_match_independent_document_oracle ... ok
+test repeated_phrase_terms_are_verified_without_materializing_positions ... ok
+test seeded_corpora_cover_boolean_phrase_prefix_and_root_ordering ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running tests/g1_rank.rs (target/debug/deps/g1_rank-ac7bc84f42fb7a2e)
+
+running 5 tests
+test epoch_coherence_foreign_generations_and_budget_excess_are_rejected ... ok
+test eligibility_precedes_heap_admission_and_ties_are_root_ordered ... ok
+test duplicate_terms_phrases_prefixes_and_negation_have_explicit_scoring ... ok
+test finite_kernel_inputs_and_extreme_arithmetic_fail_closed ... ok
+test exhaustive_scores_and_topk_match_independent_formula_and_sort ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/g1_semantics.rs (target/debug/deps/g1_semantics-b32b198f67054898)
+
+running 5 tests
+test boolean_precedence_matches_complete_truth_tables ... ok
+test invalid_syntax_and_complexity_fail_explicitly ... ok
+test phrase_repetition_negation_empty_and_null_are_distinct ... ok
+test query_wire_roundtrip_revalidates_versions_bounds_and_utf8 ... ok
+test unicode_profile_has_frozen_normalization_and_simple_folding ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/g1_unicode.rs (target/debug/deps/g1_unicode-71b4ea8af3f923e6)
+
+running 5 tests
+test unicode16_simple_default_casefold_conformance ... ignored, requires hash-verified PIN_UNICODE_DATA; mandatory in G1 CI
+test unicode16_word_boundary_conformance ... ignored, requires hash-verified PIN_UNICODE_DATA; mandatory in G1 CI
+test normalization_handles_blocking_hangul_leading_marks_and_long_sequences ... ok
+test ascii_fast_path_equals_general_profile_for_every_pair ... ok
+test seeded_unicode_sequences_match_independent_normalization ... ok
+
+test result: ok. 3 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.73s
+
+     Running tests/g2_candidates.rs (target/debug/deps/g2_candidates-5bfc19f0c3668401)
+
+running 3 tests
+test negation_includes_empty_documents_and_budget_never_truncates ... ok
+test conjunction_selects_cover_and_disjunction_deduplicates ... ok
+test every_reference_match_is_covered ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/g2_mutable.rs (target/debug/deps/g2_mutable-1a33995b299a8038)
+
+running 8 tests
+test document_validation_rejects_cross_term_position_reuse_and_trailing_bytes ... ok
+test inline_payloads_pack_without_moving_owner_identities ... ok
+test old_terms_cannot_resurrect_when_the_same_heap_slot_is_reused ... ok
+test referenced_zero_pages_fail_closed_instead_of_entering_the_free_list ... ok
+test vacuum_interruptions_are_idempotent_and_freed_payload_pages_are_reused ... ok
+test every_insertion_boundary_recovers_without_half_published_matches ... ok
+test exact_term_comparison_survives_hash_collisions_and_dictionary_overflow ... ok
+test lossy_candidates_plus_recheck_equal_the_independent_oracle ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.48s
+
+     Running tests/g3_compaction.rs (target/debug/deps/g3_compaction-dd760831c46ae081)
+
+running 10 tests
+test corrupted_journal_cannot_reclaim_the_active_chain ... ok
+test compaction_preserves_terms_sharing_one_dictionary_page ... ok
+test sealed_codec_rejects_invalid_order_counts_trailing_bytes_and_old_version ... ok
+test sealed_pages_round_trip_without_a_page_sized_reference_array ... ok
+test u64_varints_cover_boundaries_and_preserve_failed_cursors ... ok
+test cyclic_posting_chains_fail_instead_of_spinning ... ok
+test vacuum_and_reused_heap_slots_cannot_resurrect_sealed_postings ... ok
+test wal_batch_failures_before_and_after_persistence_are_atomic ... ok
+test multi_page_segments_recycle_blocks_and_accept_a_mutable_tail ... ok
+test every_durable_compaction_boundary_preserves_coverage_and_recovers ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.22s
+
+     Running tests/g4_interleaving.rs (target/debug/deps/g4_interleaving-682f2b489a2c7cb8)
+
+running 3 tests
+test refresh_does_not_hide_a_genuinely_missing_owner_slot ... ok
+test owner_cache_refreshes_once_when_a_later_posting_outgrows_its_copy ... ok
+test captured_tail_stops_before_pages_appended_after_open ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.76s
+
+     Running tests/g4_query.rs (target/debug/deps/g4_query-0abf392081c54d06)
+
+running 20 tests
+test cursor_budget_falls_back_before_emission_without_truncating_matches ... ok
+test equal_owner_coordinates_with_foreign_incarnations_are_rejected ... ok
+test deep_queries_use_bounded_explicit_continuations_not_recursive_calls ... ok
+test fragmented_phrase_document_uses_index_positions ... ok
+test every_prefix_proof_agrees_with_independent_text_oracle ... ok
+test fragmented_phrase_rejects_broken_chains ... ok
+test incomplete_prefix_probe_has_a_work_bound_without_limiting_full_evaluation ... ok
+test inline_position_phrase_proofs_match_independent_text_oracle ... ok
+test intersections_use_owner_identity_not_reused_heap_coordinates ... ok
+test mutable_owner_reordering_is_rejected ... ok
+test independent_oracle_matches_are_always_covered ... ok
+test phrases_intersect_terms_but_do_not_claim_position_or_multiplicity_checks ... ok
+test positive_boolean_candidates_equal_the_oracle_without_shared_cursor_skips ... ok
+test prefix_witness_rejects_consumed_corruption_and_leaves_unused_tail_to_verifier ... ok
+test repeated_terms_share_dictionary_lookup_but_keep_independent_cursors ... ok
+test phrase_witness_reads_one_fragment_without_loading_document_tail ... ok
+test selected_position_reader_skips_unused_deltas_but_checks_consumed_data ... ok
+test fragmented_phrase_order_and_repetition_match_text_oracle ... ok
+test filtering_avoids_owner_page_reads_for_rejected_postings ... ok
+test sealed_pages_mutable_tails_and_vacuum_preserve_boolean_results ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.07s
+
+     Running tests/g5_count.rs (target/debug/deps/g5_count-169af31c40e57a64)
+
+running 5 tests
+test count_shape_gate_accepts_only_exact_terms ... ok
+test cancellation_never_returns_partial_accounting ... ok
+test vacuumed_incarnations_never_certify_reused_coordinates ... ok
+test every_query_uses_a_duplicate_free_cover ... ok
+test only_sealed_single_term_membership_is_certifiable ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.17s
+
+     Running tests/g6_offsets.rs (target/debug/deps/g6_offsets-2f3d566458d65a4e)
+
+running 3 tests
+test opt_in_kernels_preserve_default_results_and_domain_guards ... ok
+test every_small_set_preserves_lengths_encodings_and_ties ... ok
+test every_domain_and_cross_word_run_matches_offset_reference ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.45s
+
+     Running tests/g6_recheck.rs (target/debug/deps/g6_recheck-9852e6b110b6d0e0)
+
+running 9 tests
+test ascii_needs_no_private_buffer_budget_and_unicode_stays_budgeted ... ok
+test input_and_normalized_limits_match_the_reference ... ok
+test repeated_calls_and_query_bindings_do_not_retain_document_state ... ok
+test unicode_normalization_is_not_replaced_by_ascii_folding ... ok
+test unsupported_query_shapes_keep_the_oracle ... ok
+test work_accounting_matches_the_oracle_for_first_last_absent_and_empty ... ok
+test early_hits_do_not_hide_invalid_tails_or_analysis_errors ... ok
+test all_ascii_byte_pairs_preserve_word_boundaries_and_folding ... ok
+test deterministic_mixed_documents_match_the_reference ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.65s
+
+     Running tests/g7_compaction.rs (target/debug/deps/g7_compaction-621d4c3c9f013793)
+
+running 7 tests
+test corrupted_sealed_chain_is_rejected_before_publication ... ok
+test every_event_failure_recovers_and_interrupted_retirement_keeps_the_prefix ... ok
+test dead_prefix_and_suffix_owners_match_copying_and_never_resurrect ... ok
+test failures_before_and_after_every_wal_batch_keep_reachable_pages_owned ... ok
+test hash_collisions_keep_independent_prefixes_on_one_dictionary_page ... ok
+test retention_preserves_payloads_and_matches_the_copying_reference ... ok
+test repeated_small_appends_coalesce_the_sealed_tail ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.94s
+
+     Running tests/g7_work.rs (target/debug/deps/g7_work-2af3e5f169c19f64)
+
+running 6 tests
+test empty_and_missing_queries_produce_no_work ... ok
+test malformed_shared_words_fail_before_work ... ok
+test work_is_bounded_and_restart_does_not_reuse_completion ... ok
+test removed_owners_do_not_reappear_after_a_claim ... ok
+test competing_claims_cover_each_owner_once ... ok
+test only_exact_sealed_terms_offer_a_vm_candidate ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.32s
+
+     Running tests/g9_grouped.rs (target/debug/deps/g9_grouped-f6590380e1da8404)
+
+running 17 tests
+test bad_programs_and_cancellation_do_not_report_success ... ok
+test duplicate_coordinate_is_rejected_before_overwriting_output ... ok
+test empty_universe_and_missing_terms_never_invent_offsets ... ok
+test final_heap_group_and_every_offset_domain_round_trip ... ok
+test difference_retains_left_offsets_when_both_terms_share_a_page ... ok
+test dense_group_directory_and_borrowed_unaligned_records_round_trip ... ok
+test logical_bitmap_has_a_fixed_little_endian_golden_image ... ok
+test malformed_headers_directories_and_truncations_fail_closed ... ok
+test nested_pruning_avoids_dead_subtrees_and_unreferenced_nodes ... ok
+test page_pruning_does_not_decode_a_rejected_payload ... ok
+test query_work_scales_with_surviving_pages_not_common_term_length ... ok
+test reused_tid_cannot_create_a_cross_generation_and_match ... ok
+test sealing_checks_incarnations_before_discarding_owner_identity ... ok
+test shared_retirement_is_clear_only_idempotent_and_replayable ... ok
+test offset_word_decoder_matches_bit_oracle_at_every_width_and_tail ... ok
+test nested_boolean_programs_match_independent_incarnation_sets ... ok
+test arbitrary_byte_mutations_never_panic_or_escape_the_domain ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.82s
+
+     Running tests/g9_merge.rs (target/debug/deps/g9_merge-d06781cc17734369)
+
+running 6 tests
+test absent_terms_empty_sources_and_capacity_failures_are_explicit ... ok
+test conflicting_live_incarnations_and_reused_segment_ids_are_rejected ... ok
+test logical_merge_preserves_full_boolean_results_and_duplicate_coverage ... ok
+test malformed_or_foreign_term_fails_before_target_mutation ... ok
+test retired_generation_is_filtered_before_union_not_after ... ok
+test cancellation_reaches_long_retired_runs_and_aborts_private_outputs ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+
+     Running tests/g9_storage.rs (target/debug/deps/g9_storage-7ead65eb7a469b50)
+
+running 21 tests
+test build_memory_floor_is_checked_before_sort_or_storage_changes ... ok
+test conflicting_live_incarnations_never_publish_a_new_snapshot ... ok
+test complete_generation_boolean_matches_equal_the_independent_owner_oracle ... ok
+test boolean_group_bounds_preserve_holes_negation_and_last_heap_group ... ok
+test broad_scan_reuses_liveness_catalog_leaves ... ok
+test exact_sink_declines_before_output_and_propagates_consumer_errors ... ok
+test finished_sort_error_keeps_previous_snapshot_and_has_no_journal ... ok
+test grouped_scan_event_proves_selection_and_fallback_has_no_partial_output ... ok
+test legacy_metadata_and_small_budget_fallback_remain_readable ... ok
+test maintenance_cutoff_skips_unchanged_and_retired_only_snapshots ... ok
+test exact_page_sink_preserves_scalar_rare_and_page_dense_membership ... ok
+test multi_leaf_catalog_iteration_and_seek_keep_group_boundaries ... ok
+test new_writes_are_searchable_before_another_snapshot ... ok
+test multi_page_liveness_keeps_directory_widths_and_retirement_is_idempotent ... ok
+test sparse_path_uses_no_group_pages_or_extra_reads_and_covers_new_writes ... ok
+test sparse_policy_covers_mutable_sealed_direct_and_retired_postings ... ok
+test exact_page_count_does_not_mix_generations_across_long_frontier_and_reuse ... ok
+test sparse_policy_stops_at_its_explicit_posting_bound ... ok
+test vacuum_clears_old_incarnations_before_slot_reuse ... ok
+test selective_and_seeks_past_common_groups_in_both_operand_orders ... ok
+test every_atomic_publication_and_retirement_boundary_is_restartable ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.99s
+
+     Running tests/issue14_anchors.rs (target/debug/deps/issue14_anchors-cab44bed9cba57de)
+
+running 11 tests
+test empty_snapshots_empty_documents_dead_terms_and_legacy_upgrades_are_readable ... ok
+test invalidation_commit_failure_preserves_the_safe_side_of_publication ... ok
+test compaction_invalidates_before_every_rewrite_and_recovery_boundary ... ok
+test mixed_boolean_oracle_covers_inline_anchors_new_terms_and_multi_page_suffixes ... ok
+test full_anchor_leaves_and_multi_level_lookups_do_not_require_root_at_journal_tail ... ok
+test legacy_fallback_and_cancellation_remain_correct_with_anchored_storage ... ok
+test unknown_metadata_versions_flags_and_missing_anchor_roots_fail_closed ... ok
+test unpublished_writes_and_reused_tids_never_create_false_conjunctions ... ok
+test publication_failures_reclaim_both_catalogs_without_losing_committed_matches ... ok
+test seek_event_proves_selection_and_errors_do_not_report_partial_success ... ok
+test related_write_work_skips_history_after_an_unrelated_incarnation_gap ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.73s
+
+     Running tests/issue14_frontier.rs (target/debug/deps/issue14_frontier-8baf5fe1e28c53ef)
+
+running 12 tests
+test different_incarnations_of_one_tid_never_form_a_conjunction ... ok
+test cancellation_aborts_instead_of_returning_a_partial_success ... ok
+test boolean_oracle_covers_new_terms_negation_empty_documents_and_tail_suffixes ... ok
+test small_budget_and_unsupported_syntax_preserve_the_reference_fallback ... ok
+test owner_frontier_budget_falls_back_before_emission ... ok
+test owner_frontier_stops_at_the_captured_allocation_fence ... ok
+test unpublished_owner_is_excluded_at_every_insert_failure_boundary ... ok
+test unchanged_sealed_and_direct_tails_and_new_mutable_pages_share_the_fence ... ok
+test dense_multi_term_delta_uses_one_owner_frontier_pass ... ok
+test suffix_spanning_multiple_pages_never_jumps_over_earlier_new_matches ... ok
+test unrelated_long_delta_keeps_term_addressed_frontier ... ok
+test unrelated_writes_do_not_create_boolean_candidates_or_owner_reads ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.22s
+
+     Running tests/issue14_phrase.rs (target/debug/deps/issue14_phrase-312ea883db48d172)
+
+running 6 tests
+test ascii_phrase_needs_no_owned_document_allocation ... ok
+test bounded_window_wraps_at_64_terms_and_longer_phrases_keep_the_oracle ... ok
+test input_and_normalized_byte_limits_match_analysis ... ok
+test punctuation_and_unicode_keep_the_existing_analysis_profile ... ok
+test early_matches_and_work_errors_do_not_hide_invalid_tails ... ok
+test every_short_binary_document_matches_the_independent_window_oracle ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+
+     Running tests/position_blocks.rs (target/debug/deps/position_blocks-e9832c2dfd3733c3)
+
+running 5 tests
+test consumed_block_corruption_is_rejected_skipped_blocks_require_full_validation ... ok
+test extremes_empty_and_output_errors ... ok
+test selected_block_checks_tail_even_after_early_match ... ok
+test malformed_directory_and_payload_never_panic ... ok
+test seek_matches_independent_sorted_vector_oracle ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.30s
+
+     Running tests/publication_model.rs (target/debug/deps/publication_model-b8a4f8a324473ca2)
+
+running 5 tests
+test publication_requires_both_fragments ... ok
+test idempotent_operations_do_not_count_as_coverage ... ok
+test active_only_vacuum_has_a_counterexample ... ok
+test checked_model_explores_every_reachable_state ... ok
+test stale_merge_copy_has_a_counterexample ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests pin_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

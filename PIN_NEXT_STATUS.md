@@ -85,3 +85,18 @@ retaining the prefix path is necessary. Core validation: 206 passed, 3 existing
 ignored, Clippy clean. This codec is not wired into PD02 or SQL. A3 direct
 physical reads and B1 native format/writer/maintenance migration remain open;
 no new native performance gain or TIN parity is claimed for this experiment.
+
+## Native dense-position iteration after PR #28
+
+PR #28 is merged on main. The next native branch combines page-return inlining
+with bounded 32-occurrence canonical delta-run skips. The long negative phrase
+measured 1.55–2.23 ms backend CPU versus baseline 10.15–17.73 ms across two runs.
+Matching phrases improve more modestly; VM variation and GIN controls are kept
+in the [full results](docs/runs/2026-09-26-native-dense-seek/README.md). Long PIN
+still costs roughly 3.7–7.6x stored-vector GIN CPU. The short repeated phrase is
+approximately tied, not a demonstrated general win. Native lifecycle: 33 passed.
+
+The new cpu-clock profile still puts 30.92% of samples in memmove. A3 direct
+physical reads, budgeted reusable page buffers, B1 native storage migration,
+and SQL ranked/TIN feature parity remain unfinished. No production-ready or TIN
+performance claim follows from this synthetic phrase optimization.

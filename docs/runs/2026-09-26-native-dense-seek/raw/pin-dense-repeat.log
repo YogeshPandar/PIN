@@ -1,0 +1,32 @@
+[
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "median_cpu_us": 870.4205850000001
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin_stored",
+    "median_cpu_us": 211.325965
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "median_cpu_us": 874.929225
+  },
+  {
+    "case": "repeated",
+    "mode": "gin_stored",
+    "median_cpu_us": 234.31457
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "median_cpu_us": 2229.388275
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin_stored",
+    "median_cpu_us": 351.85805500000004
+  }
+]

@@ -1,0 +1,160 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.71s
+     Running unittests src/lib.rs (target/debug/deps/pin_core-449b03fe9b75d510)
+
+running 2 tests
+test mutable::phrase_prefix::dense_seek_tests::dense_seek_preserves_occurrence_budget_and_target_boundaries ... ok
+test mutable::phrase_prefix::dense_seek_tests::dense_seek_rejects_consumed_bad_deltas_and_token_overflow ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+
+     Running tests/direct_tid.rs (target/debug/deps/direct_tid-23ed5dda41ee7cef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/g1_codecs.rs (target/debug/deps/g1_codecs-29857e0af8d9eda0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/g1_formats.rs (target/debug/deps/g1_formats-190b550c7f2fbbb5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/g1_index.rs (target/debug/deps/g1_index-649fa7cf8cf632ad)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/g1_rank.rs (target/debug/deps/g1_rank-ac7bc84f42fb7a2e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/g1_semantics.rs (target/debug/deps/g1_semantics-b32b198f67054898)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/g1_unicode.rs (target/debug/deps/g1_unicode-71b4ea8af3f923e6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/g2_candidates.rs (target/debug/deps/g2_candidates-5bfc19f0c3668401)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/g2_mutable.rs (target/debug/deps/g2_mutable-1a33995b299a8038)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/g3_compaction.rs (target/debug/deps/g3_compaction-dd760831c46ae081)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/g4_interleaving.rs (target/debug/deps/g4_interleaving-682f2b489a2c7cb8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/g4_query.rs (target/debug/deps/g4_query-0abf392081c54d06)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/g5_count.rs (target/debug/deps/g5_count-169af31c40e57a64)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/g6_offsets.rs (target/debug/deps/g6_offsets-2f3d566458d65a4e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/g6_recheck.rs (target/debug/deps/g6_recheck-9852e6b110b6d0e0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/g7_compaction.rs (target/debug/deps/g7_compaction-621d4c3c9f013793)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/g7_work.rs (target/debug/deps/g7_work-2af3e5f169c19f64)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/g9_grouped.rs (target/debug/deps/g9_grouped-f6590380e1da8404)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.00s
+
+     Running tests/g9_merge.rs (target/debug/deps/g9_merge-d06781cc17734369)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/g9_storage.rs (target/debug/deps/g9_storage-7ead65eb7a469b50)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 21 filtered out; finished in 0.00s
+
+     Running tests/issue14_anchors.rs (target/debug/deps/issue14_anchors-cab44bed9cba57de)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/issue14_frontier.rs (target/debug/deps/issue14_frontier-8baf5fe1e28c53ef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/issue14_phrase.rs (target/debug/deps/issue14_phrase-312ea883db48d172)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/position_blocks.rs (target/debug/deps/position_blocks-e9832c2dfd3733c3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/publication_model.rs (target/debug/deps/publication_model-b8a4f8a324473ca2)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+

@@ -237,3 +237,53 @@ fn advance(stream: &mut Stream<'_>, work: &mut usize) -> Result<Option<u32>> {
         .ok_or(Error::Limit("prefix position work"))?;
     stream.next()
 }
+
+#[cfg(test)]
+mod dense_seek_tests {
+    use super::*;
+
+    fn stream(bytes: &[u8], tokens: u32) -> Stream<'_> {
+        Stream {
+            reader: Reader::new(bytes),
+            remaining: 64,
+            previous: 0,
+            first: false,
+            tokens,
+            complete: true,
+        }
+    }
+
+    #[test]
+    fn dense_seek_preserves_occurrence_budget_and_target_boundaries() {
+        let bytes = [1; 64];
+        for target in [1, 31, 32, 33, 63, 64, 65] {
+            let mut cursor = stream(&bytes, 65);
+            let mut work = 128;
+            assert_eq!(
+                cursor.seek_ge(target, &mut work).unwrap(),
+                (target <= 64).then_some(target)
+            );
+            assert_eq!(work, 128 - target.min(65) as usize);
+        }
+        let mut cursor = stream(&bytes, 65);
+        let mut work = 31;
+        assert_eq!(
+            cursor.seek_ge(64, &mut work),
+            Err(Error::Limit("prefix position work"))
+        );
+        assert_eq!(cursor.remaining, 33);
+    }
+
+    #[test]
+    fn dense_seek_rejects_consumed_bad_deltas_and_token_overflow() {
+        for index in 0..64 {
+            let mut bytes = [1; 64];
+            bytes[index] = 0;
+            assert!(stream(&bytes, 65).seek_ge(65, &mut 128).is_err());
+            bytes[index] = 128;
+            assert!(stream(&bytes, 65).seek_ge(65, &mut 128).is_err());
+        }
+        assert!(stream(&[1; 64], 32).seek_ge(64, &mut 128).is_err());
+        assert!(stream(&[1; 65], 66).seek_ge(65, &mut 128).is_err());
+    }
+}

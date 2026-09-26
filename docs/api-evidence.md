@@ -1369,3 +1369,30 @@ output atomicity, mutated bytes and the selected/skipped corruption distinction.
 Full verification is `validate_all`, not `open`. Native integration is explicitly
 pending owner/lifetime/storage recovery qualification; kernel timing must not be
 reported as SQL performance.
+
+## PAGECOPY01 / DENSESEEK01: native page moves and dense positional seeks
+
+Date: 26 September 2026. Official Rust codegen inline contract re-read:
+https://doc.rust-lang.org/reference/attributes/codegen.html#the-inline-attribute.
+The hint can increase code size or be ignored; the measured native build, not
+an assumption about LLVM, decides whether it stays. Three private page return
+wrappers receive `inline(always)`. No layout, FFI, buffer lock, or lifetime change
+is introduced. Rust slice/checked arithmetic contracts remain those pinned in
+this ledger to `48a229ceaefd4985c50990b14116b6d856af0985`.
+
+Dense seek advances 32 occurrences only when all 32 bytes are canonical delta 1,
+the stream has already consumed its first absolute position, all occurrences are
+within the declared count/budget, and their final position is below the target.
+The final position must be below the token count. Reader consumption is committed
+only after the equality proof. Exhausted complete streams still require exact
+byte consumption. Skipped occurrences are charged individually, preserving the
+256-occurrence incomplete-prefix probe cap. Other data uses the scalar reader.
+
+The generated document oracle and explicit 31/32/33 boundaries, truncated budgets,
+zero/noncanonical deltas, token overflow and trailing payload tests qualify this
+change. It preserves the prior consumed-versus-unread corruption contract. This
+is not an arbitrary block seek: sparse streams still require sequential work.
+No TIN implementation is copied. TIN's public separation of positional data from
+membership remains the architectural reference for the pending physical layout.
+Native measurements and PostgreSQL lifecycle results belong with their exact
+module revision in `docs/runs/2026-09-26-native-dense-seek/`.
