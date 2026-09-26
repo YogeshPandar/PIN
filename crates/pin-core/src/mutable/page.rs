@@ -45,6 +45,7 @@ pub enum PageKind {
     DirectPostings,
     Grouped,
     Primary,
+    PrimaryMeta,
     Fragment,
     Free,
 }
@@ -231,6 +232,7 @@ impl Page {
                 9 => PageKind::DirectPostings,
                 10 => PageKind::Grouped,
                 11 => PageKind::Primary,
+                12 => PageKind::PrimaryMeta,
                 _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
             };
             let flags = reader.u8()?;
@@ -251,7 +253,9 @@ impl Page {
     }
 
     fn new(block: u32, kind: PageKind) -> Result<Self> {
-        if block == NO_BLOCK || (block == 0) != (kind == PageKind::Meta) {
+        if block == NO_BLOCK
+            || (block == 0) != matches!(kind, PageKind::Meta | PageKind::PrimaryMeta)
+        {
             return Err(corrupt(8));
         }
         let tag = match kind {
@@ -264,6 +268,7 @@ impl Page {
             PageKind::DirectPostings => 9,
             PageKind::Grouped => 10,
             PageKind::Primary => 11,
+            PageKind::PrimaryMeta => 12,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -330,6 +335,22 @@ impl Page {
         page.len = HEADER + payload.len();
         page.bytes[HEADER..page.len].copy_from_slice(payload);
         Ok(page)
+    }
+
+    pub fn primary_metadata(root: crate::primary::PrimaryRoot) -> Result<Self> {
+        let mut page = Self::new(0, PageKind::PrimaryMeta)?;
+        let bytes = root.encode()?;
+        page.len = HEADER + bytes.len();
+        page.bytes[HEADER..page.len].copy_from_slice(&bytes);
+        Ok(page)
+    }
+
+    pub fn primary_root(&self) -> Result<crate::primary::PrimaryRoot> {
+        self.require(PageKind::PrimaryMeta)?;
+        if self.next()? != NO_BLOCK {
+            return Err(corrupt(12));
+        }
+        crate::primary::PrimaryRoot::open(&self.bytes[HEADER..self.len])
     }
 
     pub fn primary_payload(&self) -> Result<&[u8]> {
@@ -440,7 +461,7 @@ impl Page {
             return Ok(());
         }
         self.check_next()?;
-        if (self.block == 0) != (self.kind == PageKind::Meta) {
+        if (self.block == 0) != matches!(self.kind, PageKind::Meta | PageKind::PrimaryMeta) {
             return Err(corrupt(8));
         }
         match self.kind {
@@ -470,6 +491,11 @@ impl Page {
             PageKind::Grouped => self.validate_grouped(layout)?,
             PageKind::Primary => {
                 self.primary_payload()?;
+            }
+            PageKind::PrimaryMeta => {
+                if self.primary_root()?.layout != layout {
+                    return Err(corrupt(28));
+                }
             }
             PageKind::Owners => {
                 let count = self.owner_count()?;

@@ -1,12 +1,43 @@
 //! candidate primary format with independently addressable heap-page membership.
 //! this codec does not establish publication, liveness, or sql visibility.
 
+mod root;
+pub use root::{PrimaryRoot, ROOT_BYTES};
+
 use crate::codec::bytes::{Reader, Writer};
 use crate::error::{Error, Result};
 use crate::grouped::GroupKey;
+use crate::identity::Generation;
 use crate::mutable::PageStore;
 use crate::mutable::page::{CAPACITY, NO_BLOCK};
 use pin_kernels::grouped::OffsetMask;
+
+/// initializes an otherwise empty physical index relation with a v2 root.
+pub fn initialize<S: PageStore>(store: &mut S, relation: Generation) -> Result<PrimaryRoot> {
+    store.interrupt()?;
+    if store.blocks()? != 0 || store.extend()? != 0 {
+        return Err(Error::InvalidState);
+    }
+    let root = PrimaryRoot::empty(relation, store.layout());
+    let page = crate::mutable::page::Page::primary_metadata(root)?;
+    store.commit(&[&page])?;
+    Ok(root)
+}
+
+/// reads the v2 root before a manifest or directory can be trusted.
+pub fn read_root<S: PageStore>(store: &mut S, relation: Generation) -> Result<PrimaryRoot> {
+    store.interrupt()?;
+    if store.blocks()? == 0 {
+        return Err(Error::InvalidState);
+    }
+    let page = store.read(0)?;
+    page.validate(store.layout())?;
+    let root = page.primary_root()?;
+    if root.relation != relation {
+        return Err(Error::InvalidState);
+    }
+    Ok(root)
+}
 
 const MAGIC: &[u8; 4] = b"PNP2";
 const VERSION: u16 = 1;

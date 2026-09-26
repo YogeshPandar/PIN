@@ -1560,3 +1560,21 @@ Review status: focused independent hand-set oracle checks page and offset
 results, read counts, identity rejection, and early stop. `pin-core` tests and
 Clippy qualify the pure functions. Native execution and paired CPU still remain
 open because the access method does not invoke these consumers.
+
+## Primary v2 root page (2026-09-26)
+
+Contracts rechecked: PostgreSQL 18 [generic WAL](https://www.postgresql.org/docs/18/generic-wal.html)
+and [standard page layout](https://www.postgresql.org/docs/18/storage-page-layout.html).
+The existing `PgStore::extend` reserves block zero on an empty physical index;
+the existing `commit` path writes a full standard page image in generic WAL.
+No new C or unsafe code is introduced. A distinct private tag 12 and 48-byte
+`PNR2` root payload prevent a v1 metapage from being misread as v2. The root
+records relation generation, heap layout, publication epoch, and either an
+empty manifest marker or a nonzero manifest block and segment count. Its
+manifest pointer is an incomplete format field until the manifest body,
+publication ordering, and reader retention are implemented.
+
+Review status: pure round-trip and corrupted-version tests, wrong relation
+generation rejection, layout mismatch, duplicate initialization rejection,
+and PG18 compilation are local gates. Native WAL/restart and concurrent
+publication remain unrun. The v2 SQL access method remains disabled.
