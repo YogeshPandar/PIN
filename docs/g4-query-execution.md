@@ -209,3 +209,9 @@ a proof. Consumed noncanonical/overflowing/out-of-range deltas still error. The
 full validator and complete chain traversal remain necessary for integrity
 certification. Publication/liveness/incarnation checks and PostgreSQL heap MVCC
 are unchanged. No new storage format or host pointer boundary is introduced.
+
+An incomplete selected stream permits at most 256 cursor advances in the prefix
+probe before requesting the full reader. This bounds duplicate decoding for late
+or absent witnesses. If every selected stream is already complete, evaluation
+finishes in the prefix and never fetches an unrelated tail merely because the
+probe budget was reached. Full evaluation has the ordinary document/query bounds.

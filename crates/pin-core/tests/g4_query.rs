@@ -694,3 +694,48 @@ fn prefix_witness_rejects_consumed_corruption_and_leaves_unused_tail_to_verifier
     bytes[last - 1] = 0;
     assert!(mutable::phrase_prefix::matches(&bytes, bytes.len(), 3, 1, &wanted).is_err());
 }
+
+#[test]
+fn incomplete_prefix_probe_has_a_work_bound_without_limiting_full_evaluation() {
+    let doc = prepared(&format!("{}alpha beta", "echo ".repeat(10_000)));
+    let query = vec!["alpha".to_string(), "echo".to_string()];
+    assert_eq!(
+        mutable::phrase_prefix::matches(
+            &doc.bytes()[..8000],
+            doc.bytes().len(),
+            doc.token_count(),
+            doc.term_count(),
+            &query
+        )
+        .unwrap(),
+        None
+    );
+    assert_eq!(
+        mutable::phrase_prefix::matches(
+            doc.bytes(),
+            doc.bytes().len(),
+            doc.token_count(),
+            doc.term_count(),
+            &query
+        )
+        .unwrap(),
+        Some(false)
+    );
+    let doc = prepared(&format!(
+        "{}alpha {}",
+        "echo ".repeat(600),
+        "zulu ".repeat(10_000)
+    ));
+    let query = vec!["echo".to_string(), "alpha".to_string()];
+    assert_eq!(
+        mutable::phrase_prefix::matches(
+            &doc.bytes()[..8000],
+            doc.bytes().len(),
+            doc.token_count(),
+            doc.term_count(),
+            &query
+        )
+        .unwrap(),
+        Some(true)
+    );
+}

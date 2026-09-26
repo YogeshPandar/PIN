@@ -65,6 +65,7 @@ pub fn matches(
         Err(Error::Codec(error)) if error.kind == ErrorKind::Truncated && bytes.len() < total => {
             Ok(None)
         }
+        Err(Error::Limit("prefix position work")) if bytes.len() < total => Ok(None),
         result => result.map(Some),
     }
 }
@@ -130,7 +131,13 @@ fn evaluate(
             }
         }
         if streams[..wanted.len()].iter().all(Option::is_some) {
-            return witness(&mut streams[..wanted.len()]);
+            let complete = streams[..wanted.len()]
+                .iter()
+                .all(|stream| stream.is_some_and(|stream| stream.complete));
+            return witness(
+                &mut streams[..wanted.len()],
+                if complete { usize::MAX } else { 256 },
+            );
         }
         offset = end;
     }
@@ -140,7 +147,7 @@ fn evaluate(
     Ok(false)
 }
 
-fn witness(streams: &mut [Option<Stream<'_>>]) -> Result<bool> {
+fn witness(streams: &mut [Option<Stream<'_>>], mut work: usize) -> Result<bool> {
     let anchor = streams
         .iter()
         .enumerate()
@@ -148,11 +155,10 @@ fn witness(streams: &mut [Option<Stream<'_>>]) -> Result<bool> {
         .map(|(index, _)| index)
         .ok_or(Error::InvalidState)?;
     let mut current = [None; 64];
-    while let Some(position) = streams[anchor]
-        .as_mut()
-        .ok_or(Error::InvalidState)?
-        .next()?
-    {
+    while let Some(position) = advance(
+        streams[anchor].as_mut().ok_or(Error::InvalidState)?,
+        &mut work,
+    )? {
         let Some(start) = position.checked_sub(anchor as u32) else {
             continue;
         };
@@ -168,7 +174,7 @@ fn witness(streams: &mut [Option<Stream<'_>>]) -> Result<bool> {
             loop {
                 let value = match current[index] {
                     Some(value) => Some(value),
-                    None => stream.next()?,
+                    None => advance(stream, &mut work)?,
                 };
                 current[index] = value;
                 match value {
@@ -190,4 +196,11 @@ fn witness(streams: &mut [Option<Stream<'_>>]) -> Result<bool> {
         }
     }
     Ok(false)
+}
+
+fn advance(stream: &mut Stream<'_>, work: &mut usize) -> Result<Option<u32>> {
+    *work = work
+        .checked_sub(1)
+        .ok_or(Error::Limit("prefix position work"))?;
+    stream.next()
 }
