@@ -1,0 +1,1370 @@
+[
+  {
+    "case": "adjacent",
+    "mode": "legacy",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 378771843,
+      "runqueue_ns": 295277
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 477918896,
+      "runqueue_ns": 307540
+    },
+    "cpu": {
+      "cpu_ns": 99147053,
+      "runqueue_ns": 12263,
+      "cpu_us_per_query": 8262.254416666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.473993,
+      8.747102,
+      8.538241,
+      8.79555,
+      8.421505,
+      8.414257,
+      8.290611,
+      8.243567,
+      8.18876,
+      8.139653,
+      8.611551,
+      8.495685
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 480644160,
+      "runqueue_ns": 307540
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 495979994,
+      "runqueue_ns": 307540
+    },
+    "cpu": {
+      "cpu_ns": 15335834,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1277.9861666666668,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.440999,
+      1.387966,
+      1.349924,
+      1.382292,
+      1.339066,
+      1.360885,
+      1.341791,
+      1.327827,
+      1.335738,
+      1.446743,
+      1.397596,
+      1.356569
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 562853031,
+      "runqueue_ns": 315005
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 965231906,
+      "runqueue_ns": 321470
+    },
+    "cpu": {
+      "cpu_ns": 402378875,
+      "runqueue_ns": 6465,
+      "cpu_us_per_query": 33531.57291666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.503444,
+      33.402115,
+      33.566498,
+      33.486737,
+      33.671189,
+      33.572692,
+      33.798554,
+      35.861985,
+      33.714973,
+      33.323184,
+      33.561858,
+      33.596906
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1031665027,
+      "runqueue_ns": 321470
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1431396293,
+      "runqueue_ns": 330772
+    },
+    "cpu": {
+      "cpu_ns": 399731266,
+      "runqueue_ns": 9302,
+      "cpu_us_per_query": 33310.93883333333,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.426403,
+      35.375599,
+      33.32365,
+      33.385341,
+      33.238029,
+      33.391195,
+      33.478899,
+      33.240061,
+      33.161067,
+      33.450077,
+      33.18207,
+      33.186944
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1434339707,
+      "runqueue_ns": 330772
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1449686342,
+      "runqueue_ns": 335360
+    },
+    "cpu": {
+      "cpu_ns": 15346635,
+      "runqueue_ns": 4588,
+      "cpu_us_per_query": 1278.88625,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.411906,
+      1.349835,
+      1.339326,
+      1.340288,
+      1.343331,
+      1.385459,
+      1.354059,
+      1.34456,
+      1.35938,
+      1.325672,
+      1.420193,
+      1.336278
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "legacy",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1465961334,
+      "runqueue_ns": 335360
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1562833970,
+      "runqueue_ns": 343625
+    },
+    "cpu": {
+      "cpu_ns": 96872636,
+      "runqueue_ns": 8265,
+      "cpu_us_per_query": 8072.719666666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.320025,
+      8.388884,
+      8.401775,
+      8.192776,
+      8.045099,
+      8.102908,
+      8.290979,
+      8.158537,
+      8.173523,
+      8.0927,
+      8.223363,
+      8.101355
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "legacy",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1579028081,
+      "runqueue_ns": 343625
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1675618235,
+      "runqueue_ns": 343625
+    },
+    "cpu": {
+      "cpu_ns": 96590154,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 8049.1795,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.487934,
+      8.224655,
+      8.19485,
+      8.12328,
+      8.190542,
+      8.239115,
+      8.170943,
+      8.032557,
+      8.284228,
+      8.09123,
+      8.100323,
+      8.120801
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1678384664,
+      "runqueue_ns": 343625
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1694067814,
+      "runqueue_ns": 343625
+    },
+    "cpu": {
+      "cpu_ns": 15683150,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1306.9291666666668,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.474344,
+      1.480646,
+      1.458704,
+      1.412727,
+      1.36853,
+      1.357434,
+      1.374708,
+      1.354267,
+      1.387019,
+      1.431906,
+      1.407657,
+      1.358094
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 1762098350,
+      "runqueue_ns": 343625
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2164431013,
+      "runqueue_ns": 350531
+    },
+    "cpu": {
+      "cpu_ns": 402332663,
+      "runqueue_ns": 6906,
+      "cpu_us_per_query": 33527.72191666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.729829,
+      33.927124,
+      33.879264,
+      33.671544,
+      33.552469,
+      33.741082,
+      33.60547,
+      33.453829,
+      33.661946,
+      33.338,
+      33.966113,
+      33.974096
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "gin",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2232024838,
+      "runqueue_ns": 357806
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2633430225,
+      "runqueue_ns": 377718
+    },
+    "cpu": {
+      "cpu_ns": 401405387,
+      "runqueue_ns": 19912,
+      "cpu_us_per_query": 33450.44891666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.682646,
+      33.743376,
+      33.423135,
+      33.859637,
+      33.473111,
+      33.615128,
+      33.552425,
+      33.847149,
+      33.863341,
+      33.707431,
+      33.590664,
+      33.410624
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "positions",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2636297324,
+      "runqueue_ns": 377718
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2652335559,
+      "runqueue_ns": 377718
+    },
+    "cpu": {
+      "cpu_ns": 16038235,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1336.5195833333332,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.461211,
+      1.541654,
+      1.446212,
+      1.436204,
+      1.414936,
+      1.486007,
+      1.479865,
+      1.431708,
+      1.439103,
+      1.390508,
+      1.409492,
+      1.378642
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "adjacent",
+    "mode": "legacy",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2668620899,
+      "runqueue_ns": 377718
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2766784363,
+      "runqueue_ns": 377718
+    },
+    "cpu": {
+      "cpu_ns": 98163464,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 8180.288666666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.440456,
+      8.271849,
+      8.078141,
+      8.335273,
+      8.522785,
+      8.431597,
+      8.6865,
+      8.224673,
+      8.434808,
+      8.426603,
+      8.036981,
+      8.062389
+    ],
+    "answer": "1024"
+  },
+  {
+    "case": "repeated",
+    "mode": "legacy",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2885201426,
+      "runqueue_ns": 395699
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2978005234,
+      "runqueue_ns": 395699
+    },
+    "cpu": {
+      "cpu_ns": 92803808,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 7733.650666666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      7.903178,
+      8.184772,
+      7.717718,
+      7.883108,
+      7.906298,
+      8.114424,
+      7.937047,
+      7.942812,
+      7.726727,
+      8.089433,
+      7.96367,
+      7.732623
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2981071038,
+      "runqueue_ns": 395699
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 2999546162,
+      "runqueue_ns": 395699
+    },
+    "cpu": {
+      "cpu_ns": 18475124,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1539.5936666666666,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.633033,
+      1.605173,
+      1.572153,
+      1.555527,
+      1.60522,
+      2.047979,
+      1.673333,
+      1.819932,
+      1.721241,
+      1.650579,
+      1.622133,
+      1.731348
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "gin",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3066687586,
+      "runqueue_ns": 395699
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3474324647,
+      "runqueue_ns": 425413
+    },
+    "cpu": {
+      "cpu_ns": 407637061,
+      "runqueue_ns": 29714,
+      "cpu_us_per_query": 33969.75508333334,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.587115,
+      33.664273,
+      33.776532,
+      33.634933,
+      34.008315,
+      33.808415,
+      33.560681,
+      34.963924,
+      33.779974,
+      33.715255,
+      38.332044,
+      33.970202
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "gin",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3542016818,
+      "runqueue_ns": 425413
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3943254986,
+      "runqueue_ns": 439282
+    },
+    "cpu": {
+      "cpu_ns": 401238168,
+      "runqueue_ns": 13869,
+      "cpu_us_per_query": 33436.514,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.979286,
+      33.747454,
+      33.77459,
+      33.611085,
+      33.382985,
+      33.5289,
+      33.667057,
+      33.72551,
+      33.557257,
+      33.576741,
+      33.831579,
+      33.760567
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3946557608,
+      "runqueue_ns": 439282
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3964655848,
+      "runqueue_ns": 457405
+    },
+    "cpu": {
+      "cpu_ns": 18098240,
+      "runqueue_ns": 18123,
+      "cpu_us_per_query": 1508.1866666666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.683179,
+      1.580378,
+      1.58241,
+      1.65261,
+      1.579222,
+      1.634144,
+      1.882238,
+      1.8495,
+      1.703625,
+      1.687757,
+      1.617504,
+      1.775768
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "legacy",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 3980838691,
+      "runqueue_ns": 457405
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4074683689,
+      "runqueue_ns": 484368
+    },
+    "cpu": {
+      "cpu_ns": 93844998,
+      "runqueue_ns": 26963,
+      "cpu_us_per_query": 7820.4165,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.0809,
+      8.232161,
+      8.459667,
+      8.083299,
+      7.951746,
+      7.903751,
+      8.151599,
+      7.850875,
+      7.824444,
+      7.864456,
+      7.982524,
+      7.864387
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "legacy",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4090260034,
+      "runqueue_ns": 487409
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4184134831,
+      "runqueue_ns": 493514
+    },
+    "cpu": {
+      "cpu_ns": 93874797,
+      "runqueue_ns": 6105,
+      "cpu_us_per_query": 7822.89975,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      7.881301,
+      8.645421,
+      8.077915,
+      7.95463,
+      7.788591,
+      8.031994,
+      7.812633,
+      7.885686,
+      7.925944,
+      8.351135,
+      7.786504,
+      7.986801
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4187253288,
+      "runqueue_ns": 493514
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4204957503,
+      "runqueue_ns": 493514
+    },
+    "cpu": {
+      "cpu_ns": 17704215,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1475.35125,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.653672,
+      1.612942,
+      1.604229,
+      1.617932,
+      1.694877,
+      1.677402,
+      1.605958,
+      1.585865,
+      1.601314,
+      1.632337,
+      1.623582,
+      1.571196
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "gin",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4271784872,
+      "runqueue_ns": 493514
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4672046443,
+      "runqueue_ns": 521604
+    },
+    "cpu": {
+      "cpu_ns": 400261571,
+      "runqueue_ns": 28090,
+      "cpu_us_per_query": 33355.13091666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      34.20644,
+      33.774414,
+      33.661912,
+      33.682695,
+      33.512157,
+      33.742245,
+      33.686114,
+      33.582775,
+      33.561796,
+      33.564361,
+      33.408888,
+      33.344685
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "gin",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 4739300158,
+      "runqueue_ns": 521604
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5140007847,
+      "runqueue_ns": 539167
+    },
+    "cpu": {
+      "cpu_ns": 400707689,
+      "runqueue_ns": 17563,
+      "cpu_us_per_query": 33392.30741666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.675195,
+      33.734221,
+      33.649291,
+      33.691787,
+      33.450874,
+      33.735245,
+      33.512804,
+      33.679099,
+      33.559326,
+      33.541033,
+      33.714904,
+      33.863669
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "positions",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5143320385,
+      "runqueue_ns": 539167
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5161256634,
+      "runqueue_ns": 544909
+    },
+    "cpu": {
+      "cpu_ns": 17936249,
+      "runqueue_ns": 5742,
+      "cpu_us_per_query": 1494.6874166666666,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.858884,
+      1.783345,
+      1.653674,
+      1.624887,
+      1.618913,
+      1.63442,
+      1.589398,
+      1.563239,
+      1.558184,
+      1.573179,
+      1.573124,
+      1.611145
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "repeated",
+    "mode": "legacy",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5176973309,
+      "runqueue_ns": 544909
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5270383853,
+      "runqueue_ns": 544909
+    },
+    "cpu": {
+      "cpu_ns": 93410544,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 7784.212,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      7.831497,
+      8.134193,
+      7.983413,
+      8.058149,
+      7.864613,
+      7.935347,
+      7.773091,
+      7.800226,
+      8.125641,
+      8.332036,
+      7.901051,
+      7.833061
+    ],
+    "answer": "2048"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "legacy",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5388168186,
+      "runqueue_ns": 553099
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5484231203,
+      "runqueue_ns": 560340
+    },
+    "cpu": {
+      "cpu_ns": 96063017,
+      "runqueue_ns": 7241,
+      "cpu_us_per_query": 8005.251416666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.094917,
+      8.431977,
+      8.068595,
+      8.195353,
+      8.121962,
+      8.399966,
+      8.150991,
+      8.009826,
+      7.944,
+      8.174255,
+      8.232753,
+      8.049095
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5488052131,
+      "runqueue_ns": 560340
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5509543775,
+      "runqueue_ns": 560340
+    },
+    "cpu": {
+      "cpu_ns": 21491644,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1790.9703333333332,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      2.00905,
+      1.962606,
+      1.892191,
+      1.880383,
+      1.875398,
+      1.971332,
+      1.95987,
+      1.973441,
+      1.867582,
+      1.92143,
+      1.852574,
+      1.843953
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin",
+    "block": 0,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5576175536,
+      "runqueue_ns": 560340
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 5987002238,
+      "runqueue_ns": 568431
+    },
+    "cpu": {
+      "cpu_ns": 410826702,
+      "runqueue_ns": 8091,
+      "cpu_us_per_query": 34235.5585,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.465216,
+      37.401874,
+      33.408078,
+      33.335759,
+      33.26118,
+      41.05748,
+      33.764635,
+      33.374351,
+      33.54396,
+      33.459606,
+      33.443925,
+      33.331687
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6053582075,
+      "runqueue_ns": 575869
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6453205918,
+      "runqueue_ns": 601353
+    },
+    "cpu": {
+      "cpu_ns": 399623843,
+      "runqueue_ns": 25484,
+      "cpu_us_per_query": 33301.98691666667,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.653011,
+      33.432098,
+      33.798183,
+      33.505766,
+      33.489294,
+      33.269406,
+      33.265047,
+      33.340105,
+      33.235474,
+      33.485821,
+      33.470627,
+      33.744392
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6457262875,
+      "runqueue_ns": 601353
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6478794439,
+      "runqueue_ns": 601353
+    },
+    "cpu": {
+      "cpu_ns": 21531564,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1794.297,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.983632,
+      1.956256,
+      1.906085,
+      1.897478,
+      1.858969,
+      1.863367,
+      1.840735,
+      1.910053,
+      1.902616,
+      1.898193,
+      1.897574,
+      1.877506
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "legacy",
+    "block": 1,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6495468517,
+      "runqueue_ns": 601353
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6592870385,
+      "runqueue_ns": 601353
+    },
+    "cpu": {
+      "cpu_ns": 97401868,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 8116.822333333333,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.329544,
+      8.072053,
+      8.486312,
+      8.130941,
+      8.176615,
+      8.160474,
+      8.457056,
+      8.360912,
+      8.165129,
+      8.154429,
+      8.406861,
+      8.194673
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "legacy",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6609050943,
+      "runqueue_ns": 601353
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6707209550,
+      "runqueue_ns": 601353
+    },
+    "cpu": {
+      "cpu_ns": 98158607,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 8179.883916666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.49817,
+      8.160294,
+      8.192817,
+      8.459731,
+      8.471869,
+      8.199634,
+      8.254783,
+      8.277794,
+      8.427019,
+      8.158973,
+      8.238799,
+      8.327168
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6711168654,
+      "runqueue_ns": 601353
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6732982157,
+      "runqueue_ns": 601353
+    },
+    "cpu": {
+      "cpu_ns": 21813503,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 1817.7919166666668,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      1.998594,
+      1.927959,
+      1.892372,
+      1.924224,
+      1.924432,
+      2.113097,
+      1.970277,
+      1.924814,
+      1.957855,
+      2.028632,
+      2.032805,
+      1.902926
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin",
+    "block": 2,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 6799862984,
+      "runqueue_ns": 612615
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7198636083,
+      "runqueue_ns": 625630
+    },
+    "cpu": {
+      "cpu_ns": 398773099,
+      "runqueue_ns": 13015,
+      "cpu_us_per_query": 33231.091583333335,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.398327,
+      33.423401,
+      33.325348,
+      33.278772,
+      33.349549,
+      33.255247,
+      33.244754,
+      33.380158,
+      33.292836,
+      33.830331,
+      33.699183,
+      33.989418
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "gin",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7265718159,
+      "runqueue_ns": 633306
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7666699138,
+      "runqueue_ns": 648739
+    },
+    "cpu": {
+      "cpu_ns": 400980979,
+      "runqueue_ns": 15433,
+      "cpu_us_per_query": 33415.08158333333,
+      "short_batch_warning": false
+    },
+    "latency_ms": [
+      33.47237,
+      33.490758,
+      33.878343,
+      33.383494,
+      33.393654,
+      33.55156,
+      33.353763,
+      33.933758,
+      33.586837,
+      33.386275,
+      33.909462,
+      34.048436
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "positions",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7670904556,
+      "runqueue_ns": 648739
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7692562512,
+      "runqueue_ns": 653630
+    },
+    "cpu": {
+      "cpu_ns": 21657956,
+      "runqueue_ns": 4891,
+      "cpu_us_per_query": 1804.8296666666668,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      2.012337,
+      1.956108,
+      1.961674,
+      1.927492,
+      1.916267,
+      1.954051,
+      1.947869,
+      1.928642,
+      1.885257,
+      1.868682,
+      1.907824,
+      2.047553
+    ],
+    "answer": "0"
+  },
+  {
+    "case": "nonadjacent",
+    "mode": "legacy",
+    "block": 3,
+    "before": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7709072507,
+      "runqueue_ns": 653630
+    },
+    "after": {
+      "pid": 15470,
+      "start": 167074,
+      "cpu_ns": 7807208566,
+      "runqueue_ns": 653630
+    },
+    "cpu": {
+      "cpu_ns": 98136059,
+      "runqueue_ns": 0,
+      "cpu_us_per_query": 8178.004916666667,
+      "short_batch_warning": true
+    },
+    "latency_ms": [
+      8.318579,
+      8.508484,
+      8.351512,
+      8.387215,
+      8.354231,
+      8.474693,
+      8.233122,
+      8.223549,
+      8.096611,
+      8.438672,
+      8.476238,
+      8.283322
+    ],
+    "answer": "0"
+  }
+]

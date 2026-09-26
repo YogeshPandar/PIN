@@ -1,0 +1,7 @@
+{
+  "sql": "SELECT count(*) FROM pin_selected_profile_docs WHERE body OPERATOR(pin.@@@) pin.parse_query('\"alpha beta\"');",
+  "queries": 5488,
+  "returncode": 0,
+  "revision": "66c6c1e86cb46d59b5544e15b0e63ab8f2b78a06",
+  "scope": "one warm serial PIN backend; profiling perturbs timings"
+}

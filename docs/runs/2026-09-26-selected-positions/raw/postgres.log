@@ -1,0 +1,17 @@
+2026-09-26 09:08:17.446 UTC [13924] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 09:08:17.446 UTC [13924] LOG:  listening on Unix socket "/tmp/pin-selected-socket/.s.PGSQL.55493"
+2026-09-26 09:08:17.448 UTC [13930] LOG:  database system was shut down at 2026-09-26 09:08:17 UTC
+2026-09-26 09:08:17.450 UTC [13924] LOG:  database system is ready to accept connections
+2026-09-26 09:12:19.257 UTC [13942] WARNING:  there is no transaction in progress
+2026-09-26 09:13:12.740 UTC [14679] WARNING:  there is no transaction in progress
+2026-09-26 09:13:17.548 UTC [13928] LOG:  checkpoint starting: time
+2026-09-26 09:13:29.672 UTC [13928] LOG:  checkpoint complete: wrote 121 buffers (0.7%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=12.124 s, sync=0.001 s, total=12.125 s; sync files=108, longest=0.001 s, average=0.001 s; distance=7045 kB, estimate=7045 kB; lsn=0/214DB20, redo lsn=0/1E472F0
+2026-09-26 09:15:04.773 UTC [15470] WARNING:  there is no transaction in progress
+2026-09-26 09:15:08.219 UTC [15511] WARNING:  there is no transaction in progress
+2026-09-26 09:17:45.167 UTC [13924] LOG:  received fast shutdown request
+2026-09-26 09:17:45.167 UTC [13924] LOG:  aborting any active transactions
+2026-09-26 09:17:45.168 UTC [13924] LOG:  background worker "logical replication launcher" (PID 13932) exited with exit code 1
+2026-09-26 09:17:45.168 UTC [13928] LOG:  shutting down
+2026-09-26 09:17:45.168 UTC [13928] LOG:  checkpoint starting: shutdown immediate
+2026-09-26 09:17:45.169 UTC [13928] LOG:  checkpoint complete: wrote 51 buffers (0.3%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 2 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=49, longest=0.001 s, average=0.000 s; distance=19386 kB, estimate=19386 kB; lsn=0/3135B50, redo lsn=0/3135B50
+2026-09-26 09:17:45.175 UTC [13924] LOG:  database system is shut down

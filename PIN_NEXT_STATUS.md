@@ -1,0 +1,64 @@
+# Implementation status against pin_next.md
+
+The specification in [pin_next.md](pin_next.md) is the destination, not a claim
+that PIN already implements it. The current iteration starts from merged PR #27
+and implements part of A3. CI is not on the local iteration critical path.
+
+## Implemented in this iteration
+
+- Selective PD02 positional views validate the term directory and decode only
+  requested term streams. Whole-document validation remains a separate API.
+- Fragmented documents can prove root-level phrases using index positions.
+- One bounded fragment buffer is reused for a scan. Its retained capacity and
+  the plan fit one query budget; oversized payloads preserve heap recheck.
+- Phrase execution chooses the shortest occurrence list as its anchor.
+- An explicit work assertion selects two positions from a 10,002-token document.
+- A standalone native benchmark preserves SQL, full identities, plans, settings,
+  raw backend CPU observations and warm per-request client timings.
+
+The new query reader intentionally no longer validates unused position deltas
+or global cross-term uniqueness. The full validator checks those properties.
+A successful query is not an integrity check. There is no new unsafe boundary,
+WAL format, custom visibility implementation or change to transaction semantics.
+The phrase feature remains opt-in through `pin.enable_phrase_positions`.
+
+## What this does not solve
+
+The PD02 bridge still copies fragmented payloads and walks their complete term
+directory. Selective decoding is not selective disk or buffer I/O. Nested
+phrase/Boolean expressions still use their existing conservative paths. SQL
+BM25, competitive top-k, fuzzy/wildcard/span parity, and the new primary storage
+format remain outstanding.
+
+| Workstream | Current status | Next concrete proof |
+| --- | --- | --- |
+| A0 work accounting | Selected-position counts and reproducible phrase CPU harness | Per-query source/byte/candidate/visibility counters across consumers |
+| A1 packed canonical storage | Not implemented | Eliminate dedicated pages for tiny lists without moving dictionary identities or losing captured-reader tails |
+| A2 SQL BM25 | Pure oracle exists; no native ranked scan | Exhaustive eligible-row score/order parity under one coherent statistics context |
+| A3 selected positions | Inline/fragmented bridge implemented | Directly address selected term extents; nested positional execution |
+| B1 primary layout | Design only | Typed codecs, format migration, direct build and complete maintenance recovery |
+| C1 count lifetime | Existing global protection retained | Retained-generation retirement and native reuse/interleaving qualification |
+
+Native BM25 needs separate correctness and measurement from `ts_rank_cd`.
+TIN's default scoring can omit dense terms; full scoring retains them. Omitting
+terms must be a named scoring policy, not a hidden optimization. The next ranked
+executor must establish its competitive threshold only from visible rows that
+pass security and residual predicates.
+
+## Why the remaining redesign matters
+
+`writer::link_term` still promotes the second occurrence to a dedicated posting
+page. Shared records should address that allocation pathology, but packing alone
+cannot remove PostgreSQL's heap/slot/projection work or supply ranked execution.
+GIN itself stores heap item pointers: CTID-native identity alone does not explain
+a speed advantage over GIN. Selected positions, avoided text reanalysis, different
+result consumers and safe score pruning are the mechanisms to qualify.
+
+The result record is [selected position qualification](docs/runs/2026-09-26-selected-positions/README.md).
+It uses a synthetic long-document fixture and separate short-document control;
+neither establishes production p99 or a direct comparison with the TIN service.
+
+References: [PostgreSQL GIN storage](https://www.postgresql.org/docs/18/gin.html#GIN-IMPLEMENTATION),
+[PostgreSQL scan contracts](https://www.postgresql.org/docs/18/index-scanning.html),
+[TIN architecture](https://planetscale.com/blog/introducing-tin),
+[TIN scoring](https://planetscale.com/docs/postgres/search/scoring).

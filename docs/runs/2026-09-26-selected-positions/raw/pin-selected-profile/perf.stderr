@@ -1,0 +1,2 @@
+[ perf record: Woken up 1 times to write data ]
+[ perf record: Captured and wrote 0.140 MB /tmp/pin-selected-profile/perf.data (1689 samples) ]

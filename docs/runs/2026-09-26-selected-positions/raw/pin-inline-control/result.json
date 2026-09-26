@@ -1,0 +1,1458 @@
+{
+  "revision": "66c6c1e86cb46d59b5544e15b0e63ab8f2b78a06",
+  "server": "PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit",
+  "platform": "Linux-7.0.0-1011-gcp-x86_64-with-glibc2.43",
+  "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           52 bits physical, 57 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  4\nOn-line CPU(s) list:                     0-3\nVendor ID:                               GenuineIntel\nModel name:                              INTEL(R) XEON(R) PLATINUM 8581C CPU @ 2.10GHz\nCPU family:                              6\nModel:                                   207\nThread(s) per core:                      2\nCore(s) per socket:                      2\nSocket(s):                               1\nStepping:                                2\nBogoMIPS:                                4200.00\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid tsc_known_freq pni pclmulqdq ssse3 fma cx16 pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch ssbd ibrs ibpb stibp ibrs_enhanced fsgsbase tsc_adjust bmi1 hle avx2 smep bmi2 erms invpcid rtm avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat avx512vbmi umip avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk amx_bf16 avx512_fp16 amx_tile amx_int8 arch_capabilities\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nL1d cache:                               96 KiB (2 instances)\nL1i cache:                               64 KiB (2 instances)\nL2 cache:                                4 MiB (2 instances)\nL3 cache:                                260 MiB (1 instance)\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-3\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Not affected\nVulnerability Spec store bypass:         Mitigation; Speculative Store Bypass disabled via prctl\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Enhanced / Automatic IBRS; IBPB conditional; PBRSB-eIBRS SW sequence; BHI BHI_DIS_S\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Not affected\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected\n",
+  "rows": 2048,
+  "repeated_tokens": 32,
+  "stored_control": false,
+  "samples": [
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 378771843,
+        "runqueue_ns": 295277
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 477918896,
+        "runqueue_ns": 307540
+      },
+      "cpu": {
+        "cpu_ns": 99147053,
+        "runqueue_ns": 12263,
+        "cpu_us_per_query": 8262.254416666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.473993,
+        8.747102,
+        8.538241,
+        8.79555,
+        8.421505,
+        8.414257,
+        8.290611,
+        8.243567,
+        8.18876,
+        8.139653,
+        8.611551,
+        8.495685
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 480644160,
+        "runqueue_ns": 307540
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 495979994,
+        "runqueue_ns": 307540
+      },
+      "cpu": {
+        "cpu_ns": 15335834,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1277.9861666666668,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.440999,
+        1.387966,
+        1.349924,
+        1.382292,
+        1.339066,
+        1.360885,
+        1.341791,
+        1.327827,
+        1.335738,
+        1.446743,
+        1.397596,
+        1.356569
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 562853031,
+        "runqueue_ns": 315005
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 965231906,
+        "runqueue_ns": 321470
+      },
+      "cpu": {
+        "cpu_ns": 402378875,
+        "runqueue_ns": 6465,
+        "cpu_us_per_query": 33531.57291666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.503444,
+        33.402115,
+        33.566498,
+        33.486737,
+        33.671189,
+        33.572692,
+        33.798554,
+        35.861985,
+        33.714973,
+        33.323184,
+        33.561858,
+        33.596906
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1031665027,
+        "runqueue_ns": 321470
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1431396293,
+        "runqueue_ns": 330772
+      },
+      "cpu": {
+        "cpu_ns": 399731266,
+        "runqueue_ns": 9302,
+        "cpu_us_per_query": 33310.93883333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.426403,
+        35.375599,
+        33.32365,
+        33.385341,
+        33.238029,
+        33.391195,
+        33.478899,
+        33.240061,
+        33.161067,
+        33.450077,
+        33.18207,
+        33.186944
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1434339707,
+        "runqueue_ns": 330772
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1449686342,
+        "runqueue_ns": 335360
+      },
+      "cpu": {
+        "cpu_ns": 15346635,
+        "runqueue_ns": 4588,
+        "cpu_us_per_query": 1278.88625,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.411906,
+        1.349835,
+        1.339326,
+        1.340288,
+        1.343331,
+        1.385459,
+        1.354059,
+        1.34456,
+        1.35938,
+        1.325672,
+        1.420193,
+        1.336278
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1465961334,
+        "runqueue_ns": 335360
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1562833970,
+        "runqueue_ns": 343625
+      },
+      "cpu": {
+        "cpu_ns": 96872636,
+        "runqueue_ns": 8265,
+        "cpu_us_per_query": 8072.719666666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.320025,
+        8.388884,
+        8.401775,
+        8.192776,
+        8.045099,
+        8.102908,
+        8.290979,
+        8.158537,
+        8.173523,
+        8.0927,
+        8.223363,
+        8.101355
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1579028081,
+        "runqueue_ns": 343625
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1675618235,
+        "runqueue_ns": 343625
+      },
+      "cpu": {
+        "cpu_ns": 96590154,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 8049.1795,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.487934,
+        8.224655,
+        8.19485,
+        8.12328,
+        8.190542,
+        8.239115,
+        8.170943,
+        8.032557,
+        8.284228,
+        8.09123,
+        8.100323,
+        8.120801
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1678384664,
+        "runqueue_ns": 343625
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1694067814,
+        "runqueue_ns": 343625
+      },
+      "cpu": {
+        "cpu_ns": 15683150,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1306.9291666666668,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.474344,
+        1.480646,
+        1.458704,
+        1.412727,
+        1.36853,
+        1.357434,
+        1.374708,
+        1.354267,
+        1.387019,
+        1.431906,
+        1.407657,
+        1.358094
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 1762098350,
+        "runqueue_ns": 343625
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2164431013,
+        "runqueue_ns": 350531
+      },
+      "cpu": {
+        "cpu_ns": 402332663,
+        "runqueue_ns": 6906,
+        "cpu_us_per_query": 33527.72191666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.729829,
+        33.927124,
+        33.879264,
+        33.671544,
+        33.552469,
+        33.741082,
+        33.60547,
+        33.453829,
+        33.661946,
+        33.338,
+        33.966113,
+        33.974096
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2232024838,
+        "runqueue_ns": 357806
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2633430225,
+        "runqueue_ns": 377718
+      },
+      "cpu": {
+        "cpu_ns": 401405387,
+        "runqueue_ns": 19912,
+        "cpu_us_per_query": 33450.44891666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.682646,
+        33.743376,
+        33.423135,
+        33.859637,
+        33.473111,
+        33.615128,
+        33.552425,
+        33.847149,
+        33.863341,
+        33.707431,
+        33.590664,
+        33.410624
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2636297324,
+        "runqueue_ns": 377718
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2652335559,
+        "runqueue_ns": 377718
+      },
+      "cpu": {
+        "cpu_ns": 16038235,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1336.5195833333332,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.461211,
+        1.541654,
+        1.446212,
+        1.436204,
+        1.414936,
+        1.486007,
+        1.479865,
+        1.431708,
+        1.439103,
+        1.390508,
+        1.409492,
+        1.378642
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2668620899,
+        "runqueue_ns": 377718
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2766784363,
+        "runqueue_ns": 377718
+      },
+      "cpu": {
+        "cpu_ns": 98163464,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 8180.288666666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.440456,
+        8.271849,
+        8.078141,
+        8.335273,
+        8.522785,
+        8.431597,
+        8.6865,
+        8.224673,
+        8.434808,
+        8.426603,
+        8.036981,
+        8.062389
+      ],
+      "answer": "1024"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2885201426,
+        "runqueue_ns": 395699
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2978005234,
+        "runqueue_ns": 395699
+      },
+      "cpu": {
+        "cpu_ns": 92803808,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 7733.650666666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        7.903178,
+        8.184772,
+        7.717718,
+        7.883108,
+        7.906298,
+        8.114424,
+        7.937047,
+        7.942812,
+        7.726727,
+        8.089433,
+        7.96367,
+        7.732623
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2981071038,
+        "runqueue_ns": 395699
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 2999546162,
+        "runqueue_ns": 395699
+      },
+      "cpu": {
+        "cpu_ns": 18475124,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1539.5936666666666,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.633033,
+        1.605173,
+        1.572153,
+        1.555527,
+        1.60522,
+        2.047979,
+        1.673333,
+        1.819932,
+        1.721241,
+        1.650579,
+        1.622133,
+        1.731348
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3066687586,
+        "runqueue_ns": 395699
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3474324647,
+        "runqueue_ns": 425413
+      },
+      "cpu": {
+        "cpu_ns": 407637061,
+        "runqueue_ns": 29714,
+        "cpu_us_per_query": 33969.75508333334,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.587115,
+        33.664273,
+        33.776532,
+        33.634933,
+        34.008315,
+        33.808415,
+        33.560681,
+        34.963924,
+        33.779974,
+        33.715255,
+        38.332044,
+        33.970202
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3542016818,
+        "runqueue_ns": 425413
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3943254986,
+        "runqueue_ns": 439282
+      },
+      "cpu": {
+        "cpu_ns": 401238168,
+        "runqueue_ns": 13869,
+        "cpu_us_per_query": 33436.514,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.979286,
+        33.747454,
+        33.77459,
+        33.611085,
+        33.382985,
+        33.5289,
+        33.667057,
+        33.72551,
+        33.557257,
+        33.576741,
+        33.831579,
+        33.760567
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3946557608,
+        "runqueue_ns": 439282
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3964655848,
+        "runqueue_ns": 457405
+      },
+      "cpu": {
+        "cpu_ns": 18098240,
+        "runqueue_ns": 18123,
+        "cpu_us_per_query": 1508.1866666666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.683179,
+        1.580378,
+        1.58241,
+        1.65261,
+        1.579222,
+        1.634144,
+        1.882238,
+        1.8495,
+        1.703625,
+        1.687757,
+        1.617504,
+        1.775768
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 3980838691,
+        "runqueue_ns": 457405
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4074683689,
+        "runqueue_ns": 484368
+      },
+      "cpu": {
+        "cpu_ns": 93844998,
+        "runqueue_ns": 26963,
+        "cpu_us_per_query": 7820.4165,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.0809,
+        8.232161,
+        8.459667,
+        8.083299,
+        7.951746,
+        7.903751,
+        8.151599,
+        7.850875,
+        7.824444,
+        7.864456,
+        7.982524,
+        7.864387
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4090260034,
+        "runqueue_ns": 487409
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4184134831,
+        "runqueue_ns": 493514
+      },
+      "cpu": {
+        "cpu_ns": 93874797,
+        "runqueue_ns": 6105,
+        "cpu_us_per_query": 7822.89975,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        7.881301,
+        8.645421,
+        8.077915,
+        7.95463,
+        7.788591,
+        8.031994,
+        7.812633,
+        7.885686,
+        7.925944,
+        8.351135,
+        7.786504,
+        7.986801
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4187253288,
+        "runqueue_ns": 493514
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4204957503,
+        "runqueue_ns": 493514
+      },
+      "cpu": {
+        "cpu_ns": 17704215,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1475.35125,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.653672,
+        1.612942,
+        1.604229,
+        1.617932,
+        1.694877,
+        1.677402,
+        1.605958,
+        1.585865,
+        1.601314,
+        1.632337,
+        1.623582,
+        1.571196
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4271784872,
+        "runqueue_ns": 493514
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4672046443,
+        "runqueue_ns": 521604
+      },
+      "cpu": {
+        "cpu_ns": 400261571,
+        "runqueue_ns": 28090,
+        "cpu_us_per_query": 33355.13091666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        34.20644,
+        33.774414,
+        33.661912,
+        33.682695,
+        33.512157,
+        33.742245,
+        33.686114,
+        33.582775,
+        33.561796,
+        33.564361,
+        33.408888,
+        33.344685
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 4739300158,
+        "runqueue_ns": 521604
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5140007847,
+        "runqueue_ns": 539167
+      },
+      "cpu": {
+        "cpu_ns": 400707689,
+        "runqueue_ns": 17563,
+        "cpu_us_per_query": 33392.30741666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.675195,
+        33.734221,
+        33.649291,
+        33.691787,
+        33.450874,
+        33.735245,
+        33.512804,
+        33.679099,
+        33.559326,
+        33.541033,
+        33.714904,
+        33.863669
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5143320385,
+        "runqueue_ns": 539167
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5161256634,
+        "runqueue_ns": 544909
+      },
+      "cpu": {
+        "cpu_ns": 17936249,
+        "runqueue_ns": 5742,
+        "cpu_us_per_query": 1494.6874166666666,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.858884,
+        1.783345,
+        1.653674,
+        1.624887,
+        1.618913,
+        1.63442,
+        1.589398,
+        1.563239,
+        1.558184,
+        1.573179,
+        1.573124,
+        1.611145
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5176973309,
+        "runqueue_ns": 544909
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5270383853,
+        "runqueue_ns": 544909
+      },
+      "cpu": {
+        "cpu_ns": 93410544,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 7784.212,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        7.831497,
+        8.134193,
+        7.983413,
+        8.058149,
+        7.864613,
+        7.935347,
+        7.773091,
+        7.800226,
+        8.125641,
+        8.332036,
+        7.901051,
+        7.833061
+      ],
+      "answer": "2048"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5388168186,
+        "runqueue_ns": 553099
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5484231203,
+        "runqueue_ns": 560340
+      },
+      "cpu": {
+        "cpu_ns": 96063017,
+        "runqueue_ns": 7241,
+        "cpu_us_per_query": 8005.251416666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.094917,
+        8.431977,
+        8.068595,
+        8.195353,
+        8.121962,
+        8.399966,
+        8.150991,
+        8.009826,
+        7.944,
+        8.174255,
+        8.232753,
+        8.049095
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5488052131,
+        "runqueue_ns": 560340
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5509543775,
+        "runqueue_ns": 560340
+      },
+      "cpu": {
+        "cpu_ns": 21491644,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1790.9703333333332,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        2.00905,
+        1.962606,
+        1.892191,
+        1.880383,
+        1.875398,
+        1.971332,
+        1.95987,
+        1.973441,
+        1.867582,
+        1.92143,
+        1.852574,
+        1.843953
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 0,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5576175536,
+        "runqueue_ns": 560340
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 5987002238,
+        "runqueue_ns": 568431
+      },
+      "cpu": {
+        "cpu_ns": 410826702,
+        "runqueue_ns": 8091,
+        "cpu_us_per_query": 34235.5585,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.465216,
+        37.401874,
+        33.408078,
+        33.335759,
+        33.26118,
+        41.05748,
+        33.764635,
+        33.374351,
+        33.54396,
+        33.459606,
+        33.443925,
+        33.331687
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6053582075,
+        "runqueue_ns": 575869
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6453205918,
+        "runqueue_ns": 601353
+      },
+      "cpu": {
+        "cpu_ns": 399623843,
+        "runqueue_ns": 25484,
+        "cpu_us_per_query": 33301.98691666667,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.653011,
+        33.432098,
+        33.798183,
+        33.505766,
+        33.489294,
+        33.269406,
+        33.265047,
+        33.340105,
+        33.235474,
+        33.485821,
+        33.470627,
+        33.744392
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6457262875,
+        "runqueue_ns": 601353
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6478794439,
+        "runqueue_ns": 601353
+      },
+      "cpu": {
+        "cpu_ns": 21531564,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1794.297,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.983632,
+        1.956256,
+        1.906085,
+        1.897478,
+        1.858969,
+        1.863367,
+        1.840735,
+        1.910053,
+        1.902616,
+        1.898193,
+        1.897574,
+        1.877506
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 1,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6495468517,
+        "runqueue_ns": 601353
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6592870385,
+        "runqueue_ns": 601353
+      },
+      "cpu": {
+        "cpu_ns": 97401868,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 8116.822333333333,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.329544,
+        8.072053,
+        8.486312,
+        8.130941,
+        8.176615,
+        8.160474,
+        8.457056,
+        8.360912,
+        8.165129,
+        8.154429,
+        8.406861,
+        8.194673
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6609050943,
+        "runqueue_ns": 601353
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6707209550,
+        "runqueue_ns": 601353
+      },
+      "cpu": {
+        "cpu_ns": 98158607,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 8179.883916666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.49817,
+        8.160294,
+        8.192817,
+        8.459731,
+        8.471869,
+        8.199634,
+        8.254783,
+        8.277794,
+        8.427019,
+        8.158973,
+        8.238799,
+        8.327168
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6711168654,
+        "runqueue_ns": 601353
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6732982157,
+        "runqueue_ns": 601353
+      },
+      "cpu": {
+        "cpu_ns": 21813503,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 1817.7919166666668,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        1.998594,
+        1.927959,
+        1.892372,
+        1.924224,
+        1.924432,
+        2.113097,
+        1.970277,
+        1.924814,
+        1.957855,
+        2.028632,
+        2.032805,
+        1.902926
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 2,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 6799862984,
+        "runqueue_ns": 612615
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7198636083,
+        "runqueue_ns": 625630
+      },
+      "cpu": {
+        "cpu_ns": 398773099,
+        "runqueue_ns": 13015,
+        "cpu_us_per_query": 33231.091583333335,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.398327,
+        33.423401,
+        33.325348,
+        33.278772,
+        33.349549,
+        33.255247,
+        33.244754,
+        33.380158,
+        33.292836,
+        33.830331,
+        33.699183,
+        33.989418
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7265718159,
+        "runqueue_ns": 633306
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7666699138,
+        "runqueue_ns": 648739
+      },
+      "cpu": {
+        "cpu_ns": 400980979,
+        "runqueue_ns": 15433,
+        "cpu_us_per_query": 33415.08158333333,
+        "short_batch_warning": false
+      },
+      "latency_ms": [
+        33.47237,
+        33.490758,
+        33.878343,
+        33.383494,
+        33.393654,
+        33.55156,
+        33.353763,
+        33.933758,
+        33.586837,
+        33.386275,
+        33.909462,
+        34.048436
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7670904556,
+        "runqueue_ns": 648739
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7692562512,
+        "runqueue_ns": 653630
+      },
+      "cpu": {
+        "cpu_ns": 21657956,
+        "runqueue_ns": 4891,
+        "cpu_us_per_query": 1804.8296666666668,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        2.012337,
+        1.956108,
+        1.961674,
+        1.927492,
+        1.916267,
+        1.954051,
+        1.947869,
+        1.928642,
+        1.885257,
+        1.868682,
+        1.907824,
+        2.047553
+      ],
+      "answer": "0"
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "block": 3,
+      "before": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7709072507,
+        "runqueue_ns": 653630
+      },
+      "after": {
+        "pid": 15470,
+        "start": 167074,
+        "cpu_ns": 7807208566,
+        "runqueue_ns": 653630
+      },
+      "cpu": {
+        "cpu_ns": 98136059,
+        "runqueue_ns": 0,
+        "cpu_us_per_query": 8178.004916666667,
+        "short_batch_warning": true
+      },
+      "latency_ms": [
+        8.318579,
+        8.508484,
+        8.351512,
+        8.387215,
+        8.354231,
+        8.474693,
+        8.233122,
+        8.223549,
+        8.096611,
+        8.438672,
+        8.476238,
+        8.283322
+      ],
+      "answer": "0"
+    }
+  ],
+  "summary": [
+    {
+      "case": "adjacent",
+      "mode": "legacy",
+      "median_cpu_us": 8126.5041666666675
+    },
+    {
+      "case": "adjacent",
+      "mode": "positions",
+      "median_cpu_us": 1292.9077083333334
+    },
+    {
+      "case": "adjacent",
+      "mode": "gin",
+      "median_cpu_us": 33489.08541666667
+    },
+    {
+      "case": "repeated",
+      "mode": "legacy",
+      "median_cpu_us": 7802.31425
+    },
+    {
+      "case": "repeated",
+      "mode": "positions",
+      "median_cpu_us": 1501.4370416666666
+    },
+    {
+      "case": "repeated",
+      "mode": "gin",
+      "median_cpu_us": 33414.41070833334
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "legacy",
+      "median_cpu_us": 8147.413624999999
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "positions",
+      "median_cpu_us": 1799.5633333333335
+    },
+    {
+      "case": "nonadjacent",
+      "mode": "gin",
+      "median_cpu_us": 33358.53425
+    }
+  ],
+  "checks": [
+    {
+      "case": "adjacent",
+      "identities": {
+        "oracle": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(0,14)\n16|(0,16)\n18|(0,18)\n20|(0,20)\n22|(0,22)\n24|(0,24)\n26|(0,26)\n28|(0,28)\n30|(0,30)\n32|(0,32)\n34|(0,34)\n36|(0,36)\n38|(0,38)\n40|(1,2)\n42|(1,4)\n44|(1,6)\n46|(1,8)\n48|(1,10)\n50|(1,12)\n52|(1,14)\n54|(1,16)\n56|(1,18)\n58|(1,20)\n60|(1,22)\n62|(1,24)\n64|(1,26)\n66|(1,28)\n68|(1,30)\n70|(1,32)\n72|(1,34)\n74|(1,36)\n76|(1,38)\n78|(2,2)\n80|(2,4)\n82|(2,6)\n84|(2,8)\n86|(2,10)\n88|(2,12)\n90|(2,14)\n92|(2,16)\n94|(2,18)\n96|(2,20)\n98|(2,22)\n100|(2,24)\n102|(2,26)\n104|(2,28)\n106|(2,30)\n108|(2,32)\n110|(2,34)\n112|(2,36)\n114|(2,38)\n116|(3,2)\n118|(3,4)\n120|(3,6)\n122|(3,8)\n124|(3,10)\n126|(3,12)\n128|(3,14)\n130|(3,16)\n132|(3,18)\n134|(3,20)\n136|(3,22)\n138|(3,24)\n140|(3,26)\n142|(3,28)\n144|(3,30)\n146|(3,32)\n148|(3,34)\n150|(3,36)\n152|(3,38)\n154|(4,2)\n156|(4,4)\n158|(4,6)\n160|(4,8)\n162|(4,10)\n164|(4,12)\n166|(4,14)\n168|(4,16)\n170|(4,18)\n172|(4,20)\n174|(4,22)\n176|(4,24)\n178|(4,26)\n180|(4,28)\n182|(4,30)\n184|(4,32)\n186|(4,34)\n188|(4,36)\n190|(4,38)\n192|(5,2)\n194|(5,4)\n196|(5,6)\n198|(5,8)\n200|(5,10)\n202|(5,12)\n204|(5,14)\n206|(5,16)\n208|(5,18)\n210|(5,20)\n212|(5,22)\n214|(5,24)\n216|(5,26)\n218|(5,28)\n220|(5,30)\n222|(5,32)\n224|(5,34)\n226|(5,36)\n228|(5,38)\n230|(6,2)\n232|(6,4)\n234|(6,6)\n236|(6,8)\n238|(6,10)\n240|(6,12)\n242|(6,14)\n244|(6,16)\n246|(6,18)\n248|(6,20)\n250|(6,22)\n252|(6,24)\n254|(6,26)\n256|(6,28)\n258|(6,30)\n260|(6,32)\n262|(6,34)\n264|(6,36)\n266|(6,38)\n268|(7,2)\n270|(7,4)\n272|(7,6)\n274|(7,8)\n276|(7,10)\n278|(7,12)\n280|(7,14)\n282|(7,16)\n284|(7,18)\n286|(7,20)\n288|(7,22)\n290|(7,24)\n292|(7,26)\n294|(7,28)\n296|(7,30)\n298|(7,32)\n300|(7,34)\n302|(7,36)\n304|(7,38)\n306|(8,2)\n308|(8,4)\n310|(8,6)\n312|(8,8)\n314|(8,10)\n316|(8,12)\n318|(8,14)\n320|(8,16)\n322|(8,18)\n324|(8,20)\n326|(8,22)\n328|(8,24)\n330|(8,26)\n332|(8,28)\n334|(8,30)\n336|(8,32)\n338|(8,34)\n340|(8,36)\n342|(8,38)\n344|(9,2)\n346|(9,4)\n348|(9,6)\n350|(9,8)\n352|(9,10)\n354|(9,12)\n356|(9,14)\n358|(9,16)\n360|(9,18)\n362|(9,20)\n364|(9,22)\n366|(9,24)\n368|(9,26)\n370|(9,28)\n372|(9,30)\n374|(9,32)\n376|(9,34)\n378|(9,36)\n380|(9,38)\n382|(10,2)\n384|(10,4)\n386|(10,6)\n388|(10,8)\n390|(10,10)\n392|(10,12)\n394|(10,14)\n396|(10,16)\n398|(10,18)\n400|(10,20)\n402|(10,22)\n404|(10,24)\n406|(10,26)\n408|(10,28)\n410|(10,30)\n412|(10,32)\n414|(10,34)\n416|(10,36)\n418|(10,38)\n420|(11,2)\n422|(11,4)\n424|(11,6)\n426|(11,8)\n428|(11,10)\n430|(11,12)\n432|(11,14)\n434|(11,16)\n436|(11,18)\n438|(11,20)\n440|(11,22)\n442|(11,24)\n444|(11,26)\n446|(11,28)\n448|(11,30)\n450|(11,32)\n452|(11,34)\n454|(11,36)\n456|(11,38)\n458|(12,2)\n460|(12,4)\n462|(12,6)\n464|(12,8)\n466|(12,10)\n468|(12,12)\n470|(12,14)\n472|(12,16)\n474|(12,18)\n476|(12,20)\n478|(12,22)\n480|(12,24)\n482|(12,26)\n484|(12,28)\n486|(12,30)\n488|(12,32)\n490|(12,34)\n492|(12,36)\n494|(12,38)\n496|(13,2)\n498|(13,4)\n500|(13,6)\n502|(13,8)\n504|(13,10)\n506|(13,12)\n508|(13,14)\n510|(13,16)\n512|(13,18)\n514|(13,20)\n516|(13,22)\n518|(13,24)\n520|(13,26)\n522|(13,28)\n524|(13,30)\n526|(13,32)\n528|(13,34)\n530|(13,36)\n532|(13,38)\n534|(14,2)\n536|(14,4)\n538|(14,6)\n540|(14,8)\n542|(14,10)\n544|(14,12)\n546|(14,14)\n548|(14,16)\n550|(14,18)\n552|(14,20)\n554|(14,22)\n556|(14,24)\n558|(14,26)\n560|(14,28)\n562|(14,30)\n564|(14,32)\n566|(14,34)\n568|(14,36)\n570|(14,38)\n572|(15,2)\n574|(15,4)\n576|(15,6)\n578|(15,8)\n580|(15,10)\n582|(15,12)\n584|(15,14)\n586|(15,16)\n588|(15,18)\n590|(15,20)\n592|(15,22)\n594|(15,24)\n596|(15,26)\n598|(15,28)\n600|(15,30)\n602|(15,32)\n604|(15,34)\n606|(15,36)\n608|(15,38)\n610|(16,2)\n612|(16,4)\n614|(16,6)\n616|(16,8)\n618|(16,10)\n620|(16,12)\n622|(16,14)\n624|(16,16)\n626|(16,18)\n628|(16,20)\n630|(16,22)\n632|(16,24)\n634|(16,26)\n636|(16,28)\n638|(16,30)\n640|(16,32)\n642|(16,34)\n644|(16,36)\n646|(16,38)\n648|(17,2)\n650|(17,4)\n652|(17,6)\n654|(17,8)\n656|(17,10)\n658|(17,12)\n660|(17,14)\n662|(17,16)\n664|(17,18)\n666|(17,20)\n668|(17,22)\n670|(17,24)\n672|(17,26)\n674|(17,28)\n676|(17,30)\n678|(17,32)\n680|(17,34)\n682|(17,36)\n684|(17,38)\n686|(18,2)\n688|(18,4)\n690|(18,6)\n692|(18,8)\n694|(18,10)\n696|(18,12)\n698|(18,14)\n700|(18,16)\n702|(18,18)\n704|(18,20)\n706|(18,22)\n708|(18,24)\n710|(18,26)\n712|(18,28)\n714|(18,30)\n716|(18,32)\n718|(18,34)\n720|(18,36)\n722|(18,38)\n724|(19,2)\n726|(19,4)\n728|(19,6)\n730|(19,8)\n732|(19,10)\n734|(19,12)\n736|(19,14)\n738|(19,16)\n740|(19,18)\n742|(19,20)\n744|(19,22)\n746|(19,24)\n748|(19,26)\n750|(19,28)\n752|(19,30)\n754|(19,32)\n756|(19,34)\n758|(19,36)\n760|(19,38)\n762|(20,2)\n764|(20,4)\n766|(20,6)\n768|(20,8)\n770|(20,10)\n772|(20,12)\n774|(20,14)\n776|(20,16)\n778|(20,18)\n780|(20,20)\n782|(20,22)\n784|(20,24)\n786|(20,26)\n788|(20,28)\n790|(20,30)\n792|(20,32)\n794|(20,34)\n796|(20,36)\n798|(20,38)\n800|(21,2)\n802|(21,4)\n804|(21,6)\n806|(21,8)\n808|(21,10)\n810|(21,12)\n812|(21,14)\n814|(21,16)\n816|(21,18)\n818|(21,20)\n820|(21,22)\n822|(21,24)\n824|(21,26)\n826|(21,28)\n828|(21,30)\n830|(21,32)\n832|(21,34)\n834|(21,36)\n836|(21,38)\n838|(22,2)\n840|(22,4)\n842|(22,6)\n844|(22,8)\n846|(22,10)\n848|(22,12)\n850|(22,14)\n852|(22,16)\n854|(22,18)\n856|(22,20)\n858|(22,22)\n860|(22,24)\n862|(22,26)\n864|(22,28)\n866|(22,30)\n868|(22,32)\n870|(22,34)\n872|(22,36)\n874|(22,38)\n876|(23,2)\n878|(23,4)\n880|(23,6)\n882|(23,8)\n884|(23,10)\n886|(23,12)\n888|(23,14)\n890|(23,16)\n892|(23,18)\n894|(23,20)\n896|(23,22)\n898|(23,24)\n900|(23,26)\n902|(23,28)\n904|(23,30)\n906|(23,32)\n908|(23,34)\n910|(23,36)\n912|(23,38)\n914|(24,2)\n916|(24,4)\n918|(24,6)\n920|(24,8)\n922|(24,10)\n924|(24,12)\n926|(24,14)\n928|(24,16)\n930|(24,18)\n932|(24,20)\n934|(24,22)\n936|(24,24)\n938|(24,26)\n940|(24,28)\n942|(24,30)\n944|(24,32)\n946|(24,34)\n948|(24,36)\n950|(24,38)\n952|(25,2)\n954|(25,4)\n956|(25,6)\n958|(25,8)\n960|(25,10)\n962|(25,12)\n964|(25,14)\n966|(25,16)\n968|(25,18)\n970|(25,20)\n972|(25,22)\n974|(25,24)\n976|(25,26)\n978|(25,28)\n980|(25,30)\n982|(25,32)\n984|(25,34)\n986|(25,36)\n988|(25,38)\n990|(26,2)\n992|(26,4)\n994|(26,6)\n996|(26,8)\n998|(26,10)\n1000|(26,12)\n1002|(26,14)\n1004|(26,16)\n1006|(26,18)\n1008|(26,20)\n1010|(26,22)\n1012|(26,24)\n1014|(26,26)\n1016|(26,28)\n1018|(26,30)\n1020|(26,32)\n1022|(26,34)\n1024|(26,36)\n1026|(26,38)\n1028|(27,2)\n1030|(27,4)\n1032|(27,6)\n1034|(27,8)\n1036|(27,10)\n1038|(27,12)\n1040|(27,14)\n1042|(27,16)\n1044|(27,18)\n1046|(27,20)\n1048|(27,22)\n1050|(27,24)\n1052|(27,26)\n1054|(27,28)\n1056|(27,30)\n1058|(27,32)\n1060|(27,34)\n1062|(27,36)\n1064|(27,38)\n1066|(28,2)\n1068|(28,4)\n1070|(28,6)\n1072|(28,8)\n1074|(28,10)\n1076|(28,12)\n1078|(28,14)\n1080|(28,16)\n1082|(28,18)\n1084|(28,20)\n1086|(28,22)\n1088|(28,24)\n1090|(28,26)\n1092|(28,28)\n1094|(28,30)\n1096|(28,32)\n1098|(28,34)\n1100|(28,36)\n1102|(28,38)\n1104|(29,2)\n1106|(29,4)\n1108|(29,6)\n1110|(29,8)\n1112|(29,10)\n1114|(29,12)\n1116|(29,14)\n1118|(29,16)\n1120|(29,18)\n1122|(29,20)\n1124|(29,22)\n1126|(29,24)\n1128|(29,26)\n1130|(29,28)\n1132|(29,30)\n1134|(29,32)\n1136|(29,34)\n1138|(29,36)\n1140|(29,38)\n1142|(30,2)\n1144|(30,4)\n1146|(30,6)\n1148|(30,8)\n1150|(30,10)\n1152|(30,12)\n1154|(30,14)\n1156|(30,16)\n1158|(30,18)\n1160|(30,20)\n1162|(30,22)\n1164|(30,24)\n1166|(30,26)\n1168|(30,28)\n1170|(30,30)\n1172|(30,32)\n1174|(30,34)\n1176|(30,36)\n1178|(30,38)\n1180|(31,2)\n1182|(31,4)\n1184|(31,6)\n1186|(31,8)\n1188|(31,10)\n1190|(31,12)\n1192|(31,14)\n1194|(31,16)\n1196|(31,18)\n1198|(31,20)\n1200|(31,22)\n1202|(31,24)\n1204|(31,26)\n1206|(31,28)\n1208|(31,30)\n1210|(31,32)\n1212|(31,34)\n1214|(31,36)\n1216|(31,38)\n1218|(32,2)\n1220|(32,4)\n1222|(32,6)\n1224|(32,8)\n1226|(32,10)\n1228|(32,12)\n1230|(32,14)\n1232|(32,16)\n1234|(32,18)\n1236|(32,20)\n1238|(32,22)\n1240|(32,24)\n1242|(32,26)\n1244|(32,28)\n1246|(32,30)\n1248|(32,32)\n1250|(32,34)\n1252|(32,36)\n1254|(32,38)\n1256|(33,2)\n1258|(33,4)\n1260|(33,6)\n1262|(33,8)\n1264|(33,10)\n1266|(33,12)\n1268|(33,14)\n1270|(33,16)\n1272|(33,18)\n1274|(33,20)\n1276|(33,22)\n1278|(33,24)\n1280|(33,26)\n1282|(33,28)\n1284|(33,30)\n1286|(33,32)\n1288|(33,34)\n1290|(33,36)\n1292|(33,38)\n1294|(34,2)\n1296|(34,4)\n1298|(34,6)\n1300|(34,8)\n1302|(34,10)\n1304|(34,12)\n1306|(34,14)\n1308|(34,16)\n1310|(34,18)\n1312|(34,20)\n1314|(34,22)\n1316|(34,24)\n1318|(34,26)\n1320|(34,28)\n1322|(34,30)\n1324|(34,32)\n1326|(34,34)\n1328|(34,36)\n1330|(34,38)\n1332|(35,2)\n1334|(35,4)\n1336|(35,6)\n1338|(35,8)\n1340|(35,10)\n1342|(35,12)\n1344|(35,14)\n1346|(35,16)\n1348|(35,18)\n1350|(35,20)\n1352|(35,22)\n1354|(35,24)\n1356|(35,26)\n1358|(35,28)\n1360|(35,30)\n1362|(35,32)\n1364|(35,34)\n1366|(35,36)\n1368|(35,38)\n1370|(36,2)\n1372|(36,4)\n1374|(36,6)\n1376|(36,8)\n1378|(36,10)\n1380|(36,12)\n1382|(36,14)\n1384|(36,16)\n1386|(36,18)\n1388|(36,20)\n1390|(36,22)\n1392|(36,24)\n1394|(36,26)\n1396|(36,28)\n1398|(36,30)\n1400|(36,32)\n1402|(36,34)\n1404|(36,36)\n1406|(36,38)\n1408|(37,2)\n1410|(37,4)\n1412|(37,6)\n1414|(37,8)\n1416|(37,10)\n1418|(37,12)\n1420|(37,14)\n1422|(37,16)\n1424|(37,18)\n1426|(37,20)\n1428|(37,22)\n1430|(37,24)\n1432|(37,26)\n1434|(37,28)\n1436|(37,30)\n1438|(37,32)\n1440|(37,34)\n1442|(37,36)\n1444|(37,38)\n1446|(38,2)\n1448|(38,4)\n1450|(38,6)\n1452|(38,8)\n1454|(38,10)\n1456|(38,12)\n1458|(38,14)\n1460|(38,16)\n1462|(38,18)\n1464|(38,20)\n1466|(38,22)\n1468|(38,24)\n1470|(38,26)\n1472|(38,28)\n1474|(38,30)\n1476|(38,32)\n1478|(38,34)\n1480|(38,36)\n1482|(38,38)\n1484|(39,2)\n1486|(39,4)\n1488|(39,6)\n1490|(39,8)\n1492|(39,10)\n1494|(39,12)\n1496|(39,14)\n1498|(39,16)\n1500|(39,18)\n1502|(39,20)\n1504|(39,22)\n1506|(39,24)\n1508|(39,26)\n1510|(39,28)\n1512|(39,30)\n1514|(39,32)\n1516|(39,34)\n1518|(39,36)\n1520|(39,38)\n1522|(40,2)\n1524|(40,4)\n1526|(40,6)\n1528|(40,8)\n1530|(40,10)\n1532|(40,12)\n1534|(40,14)\n1536|(40,16)\n1538|(40,18)\n1540|(40,20)\n1542|(40,22)\n1544|(40,24)\n1546|(40,26)\n1548|(40,28)\n1550|(40,30)\n1552|(40,32)\n1554|(40,34)\n1556|(40,36)\n1558|(40,38)\n1560|(41,2)\n1562|(41,4)\n1564|(41,6)\n1566|(41,8)\n1568|(41,10)\n1570|(41,12)\n1572|(41,14)\n1574|(41,16)\n1576|(41,18)\n1578|(41,20)\n1580|(41,22)\n1582|(41,24)\n1584|(41,26)\n1586|(41,28)\n1588|(41,30)\n1590|(41,32)\n1592|(41,34)\n1594|(41,36)\n1596|(41,38)\n1598|(42,2)\n1600|(42,4)\n1602|(42,6)\n1604|(42,8)\n1606|(42,10)\n1608|(42,12)\n1610|(42,14)\n1612|(42,16)\n1614|(42,18)\n1616|(42,20)\n1618|(42,22)\n1620|(42,24)\n1622|(42,26)\n1624|(42,28)\n1626|(42,30)\n1628|(42,32)\n1630|(42,34)\n1632|(42,36)\n1634|(42,38)\n1636|(43,2)\n1638|(43,4)\n1640|(43,6)\n1642|(43,8)\n1644|(43,10)\n1646|(43,12)\n1648|(43,14)\n1650|(43,16)\n1652|(43,18)\n1654|(43,20)\n1656|(43,22)\n1658|(43,24)\n1660|(43,26)\n1662|(43,28)\n1664|(43,30)\n1666|(43,32)\n1668|(43,34)\n1670|(43,36)\n1672|(43,38)\n1674|(44,2)\n1676|(44,4)\n1678|(44,6)\n1680|(44,8)\n1682|(44,10)\n1684|(44,12)\n1686|(44,14)\n1688|(44,16)\n1690|(44,18)\n1692|(44,20)\n1694|(44,22)\n1696|(44,24)\n1698|(44,26)\n1700|(44,28)\n1702|(44,30)\n1704|(44,32)\n1706|(44,34)\n1708|(44,36)\n1710|(44,38)\n1712|(45,2)\n1714|(45,4)\n1716|(45,6)\n1718|(45,8)\n1720|(45,10)\n1722|(45,12)\n1724|(45,14)\n1726|(45,16)\n1728|(45,18)\n1730|(45,20)\n1732|(45,22)\n1734|(45,24)\n1736|(45,26)\n1738|(45,28)\n1740|(45,30)\n1742|(45,32)\n1744|(45,34)\n1746|(45,36)\n1748|(45,38)\n1750|(46,2)\n1752|(46,4)\n1754|(46,6)\n1756|(46,8)\n1758|(46,10)\n1760|(46,12)\n1762|(46,14)\n1764|(46,16)\n1766|(46,18)\n1768|(46,20)\n1770|(46,22)\n1772|(46,24)\n1774|(46,26)\n1776|(46,28)\n1778|(46,30)\n1780|(46,32)\n1782|(46,34)\n1784|(46,36)\n1786|(46,38)\n1788|(47,2)\n1790|(47,4)\n1792|(47,6)\n1794|(47,8)\n1796|(47,10)\n1798|(47,12)\n1800|(47,14)\n1802|(47,16)\n1804|(47,18)\n1806|(47,20)\n1808|(47,22)\n1810|(47,24)\n1812|(47,26)\n1814|(47,28)\n1816|(47,30)\n1818|(47,32)\n1820|(47,34)\n1822|(47,36)\n1824|(47,38)\n1826|(48,2)\n1828|(48,4)\n1830|(48,6)\n1832|(48,8)\n1834|(48,10)\n1836|(48,12)\n1838|(48,14)\n1840|(48,16)\n1842|(48,18)\n1844|(48,20)\n1846|(48,22)\n1848|(48,24)\n1850|(48,26)\n1852|(48,28)\n1854|(48,30)\n1856|(48,32)\n1858|(48,34)\n1860|(48,36)\n1862|(48,38)\n1864|(49,2)\n1866|(49,4)\n1868|(49,6)\n1870|(49,8)\n1872|(49,10)\n1874|(49,12)\n1876|(49,14)\n1878|(49,16)\n1880|(49,18)\n1882|(49,20)\n1884|(49,22)\n1886|(49,24)\n1888|(49,26)\n1890|(49,28)\n1892|(49,30)\n1894|(49,32)\n1896|(49,34)\n1898|(49,36)\n1900|(49,38)\n1902|(50,2)\n1904|(50,4)\n1906|(50,6)\n1908|(50,8)\n1910|(50,10)\n1912|(50,12)\n1914|(50,14)\n1916|(50,16)\n1918|(50,18)\n1920|(50,20)\n1922|(50,22)\n1924|(50,24)\n1926|(50,26)\n1928|(50,28)\n1930|(50,30)\n1932|(50,32)\n1934|(50,34)\n1936|(50,36)\n1938|(50,38)\n1940|(51,2)\n1942|(51,4)\n1944|(51,6)\n1946|(51,8)\n1948|(51,10)\n1950|(51,12)\n1952|(51,14)\n1954|(51,16)\n1956|(51,18)\n1958|(51,20)\n1960|(51,22)\n1962|(51,24)\n1964|(51,26)\n1966|(51,28)\n1968|(51,30)\n1970|(51,32)\n1972|(51,34)\n1974|(51,36)\n1976|(51,38)\n1978|(52,2)\n1980|(52,4)\n1982|(52,6)\n1984|(52,8)\n1986|(52,10)\n1988|(52,12)\n1990|(52,14)\n1992|(52,16)\n1994|(52,18)\n1996|(52,20)\n1998|(52,22)\n2000|(52,24)\n2002|(52,26)\n2004|(52,28)\n2006|(52,30)\n2008|(52,32)\n2010|(52,34)\n2012|(52,36)\n2014|(52,38)\n2016|(53,2)\n2018|(53,4)\n2020|(53,6)\n2022|(53,8)\n2024|(53,10)\n2026|(53,12)\n2028|(53,14)\n2030|(53,16)\n2032|(53,18)\n2034|(53,20)\n2036|(53,22)\n2038|(53,24)\n2040|(53,26)\n2042|(53,28)\n2044|(53,30)\n2046|(53,32)\n2048|(53,34)",
+        "legacy": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(0,14)\n16|(0,16)\n18|(0,18)\n20|(0,20)\n22|(0,22)\n24|(0,24)\n26|(0,26)\n28|(0,28)\n30|(0,30)\n32|(0,32)\n34|(0,34)\n36|(0,36)\n38|(0,38)\n40|(1,2)\n42|(1,4)\n44|(1,6)\n46|(1,8)\n48|(1,10)\n50|(1,12)\n52|(1,14)\n54|(1,16)\n56|(1,18)\n58|(1,20)\n60|(1,22)\n62|(1,24)\n64|(1,26)\n66|(1,28)\n68|(1,30)\n70|(1,32)\n72|(1,34)\n74|(1,36)\n76|(1,38)\n78|(2,2)\n80|(2,4)\n82|(2,6)\n84|(2,8)\n86|(2,10)\n88|(2,12)\n90|(2,14)\n92|(2,16)\n94|(2,18)\n96|(2,20)\n98|(2,22)\n100|(2,24)\n102|(2,26)\n104|(2,28)\n106|(2,30)\n108|(2,32)\n110|(2,34)\n112|(2,36)\n114|(2,38)\n116|(3,2)\n118|(3,4)\n120|(3,6)\n122|(3,8)\n124|(3,10)\n126|(3,12)\n128|(3,14)\n130|(3,16)\n132|(3,18)\n134|(3,20)\n136|(3,22)\n138|(3,24)\n140|(3,26)\n142|(3,28)\n144|(3,30)\n146|(3,32)\n148|(3,34)\n150|(3,36)\n152|(3,38)\n154|(4,2)\n156|(4,4)\n158|(4,6)\n160|(4,8)\n162|(4,10)\n164|(4,12)\n166|(4,14)\n168|(4,16)\n170|(4,18)\n172|(4,20)\n174|(4,22)\n176|(4,24)\n178|(4,26)\n180|(4,28)\n182|(4,30)\n184|(4,32)\n186|(4,34)\n188|(4,36)\n190|(4,38)\n192|(5,2)\n194|(5,4)\n196|(5,6)\n198|(5,8)\n200|(5,10)\n202|(5,12)\n204|(5,14)\n206|(5,16)\n208|(5,18)\n210|(5,20)\n212|(5,22)\n214|(5,24)\n216|(5,26)\n218|(5,28)\n220|(5,30)\n222|(5,32)\n224|(5,34)\n226|(5,36)\n228|(5,38)\n230|(6,2)\n232|(6,4)\n234|(6,6)\n236|(6,8)\n238|(6,10)\n240|(6,12)\n242|(6,14)\n244|(6,16)\n246|(6,18)\n248|(6,20)\n250|(6,22)\n252|(6,24)\n254|(6,26)\n256|(6,28)\n258|(6,30)\n260|(6,32)\n262|(6,34)\n264|(6,36)\n266|(6,38)\n268|(7,2)\n270|(7,4)\n272|(7,6)\n274|(7,8)\n276|(7,10)\n278|(7,12)\n280|(7,14)\n282|(7,16)\n284|(7,18)\n286|(7,20)\n288|(7,22)\n290|(7,24)\n292|(7,26)\n294|(7,28)\n296|(7,30)\n298|(7,32)\n300|(7,34)\n302|(7,36)\n304|(7,38)\n306|(8,2)\n308|(8,4)\n310|(8,6)\n312|(8,8)\n314|(8,10)\n316|(8,12)\n318|(8,14)\n320|(8,16)\n322|(8,18)\n324|(8,20)\n326|(8,22)\n328|(8,24)\n330|(8,26)\n332|(8,28)\n334|(8,30)\n336|(8,32)\n338|(8,34)\n340|(8,36)\n342|(8,38)\n344|(9,2)\n346|(9,4)\n348|(9,6)\n350|(9,8)\n352|(9,10)\n354|(9,12)\n356|(9,14)\n358|(9,16)\n360|(9,18)\n362|(9,20)\n364|(9,22)\n366|(9,24)\n368|(9,26)\n370|(9,28)\n372|(9,30)\n374|(9,32)\n376|(9,34)\n378|(9,36)\n380|(9,38)\n382|(10,2)\n384|(10,4)\n386|(10,6)\n388|(10,8)\n390|(10,10)\n392|(10,12)\n394|(10,14)\n396|(10,16)\n398|(10,18)\n400|(10,20)\n402|(10,22)\n404|(10,24)\n406|(10,26)\n408|(10,28)\n410|(10,30)\n412|(10,32)\n414|(10,34)\n416|(10,36)\n418|(10,38)\n420|(11,2)\n422|(11,4)\n424|(11,6)\n426|(11,8)\n428|(11,10)\n430|(11,12)\n432|(11,14)\n434|(11,16)\n436|(11,18)\n438|(11,20)\n440|(11,22)\n442|(11,24)\n444|(11,26)\n446|(11,28)\n448|(11,30)\n450|(11,32)\n452|(11,34)\n454|(11,36)\n456|(11,38)\n458|(12,2)\n460|(12,4)\n462|(12,6)\n464|(12,8)\n466|(12,10)\n468|(12,12)\n470|(12,14)\n472|(12,16)\n474|(12,18)\n476|(12,20)\n478|(12,22)\n480|(12,24)\n482|(12,26)\n484|(12,28)\n486|(12,30)\n488|(12,32)\n490|(12,34)\n492|(12,36)\n494|(12,38)\n496|(13,2)\n498|(13,4)\n500|(13,6)\n502|(13,8)\n504|(13,10)\n506|(13,12)\n508|(13,14)\n510|(13,16)\n512|(13,18)\n514|(13,20)\n516|(13,22)\n518|(13,24)\n520|(13,26)\n522|(13,28)\n524|(13,30)\n526|(13,32)\n528|(13,34)\n530|(13,36)\n532|(13,38)\n534|(14,2)\n536|(14,4)\n538|(14,6)\n540|(14,8)\n542|(14,10)\n544|(14,12)\n546|(14,14)\n548|(14,16)\n550|(14,18)\n552|(14,20)\n554|(14,22)\n556|(14,24)\n558|(14,26)\n560|(14,28)\n562|(14,30)\n564|(14,32)\n566|(14,34)\n568|(14,36)\n570|(14,38)\n572|(15,2)\n574|(15,4)\n576|(15,6)\n578|(15,8)\n580|(15,10)\n582|(15,12)\n584|(15,14)\n586|(15,16)\n588|(15,18)\n590|(15,20)\n592|(15,22)\n594|(15,24)\n596|(15,26)\n598|(15,28)\n600|(15,30)\n602|(15,32)\n604|(15,34)\n606|(15,36)\n608|(15,38)\n610|(16,2)\n612|(16,4)\n614|(16,6)\n616|(16,8)\n618|(16,10)\n620|(16,12)\n622|(16,14)\n624|(16,16)\n626|(16,18)\n628|(16,20)\n630|(16,22)\n632|(16,24)\n634|(16,26)\n636|(16,28)\n638|(16,30)\n640|(16,32)\n642|(16,34)\n644|(16,36)\n646|(16,38)\n648|(17,2)\n650|(17,4)\n652|(17,6)\n654|(17,8)\n656|(17,10)\n658|(17,12)\n660|(17,14)\n662|(17,16)\n664|(17,18)\n666|(17,20)\n668|(17,22)\n670|(17,24)\n672|(17,26)\n674|(17,28)\n676|(17,30)\n678|(17,32)\n680|(17,34)\n682|(17,36)\n684|(17,38)\n686|(18,2)\n688|(18,4)\n690|(18,6)\n692|(18,8)\n694|(18,10)\n696|(18,12)\n698|(18,14)\n700|(18,16)\n702|(18,18)\n704|(18,20)\n706|(18,22)\n708|(18,24)\n710|(18,26)\n712|(18,28)\n714|(18,30)\n716|(18,32)\n718|(18,34)\n720|(18,36)\n722|(18,38)\n724|(19,2)\n726|(19,4)\n728|(19,6)\n730|(19,8)\n732|(19,10)\n734|(19,12)\n736|(19,14)\n738|(19,16)\n740|(19,18)\n742|(19,20)\n744|(19,22)\n746|(19,24)\n748|(19,26)\n750|(19,28)\n752|(19,30)\n754|(19,32)\n756|(19,34)\n758|(19,36)\n760|(19,38)\n762|(20,2)\n764|(20,4)\n766|(20,6)\n768|(20,8)\n770|(20,10)\n772|(20,12)\n774|(20,14)\n776|(20,16)\n778|(20,18)\n780|(20,20)\n782|(20,22)\n784|(20,24)\n786|(20,26)\n788|(20,28)\n790|(20,30)\n792|(20,32)\n794|(20,34)\n796|(20,36)\n798|(20,38)\n800|(21,2)\n802|(21,4)\n804|(21,6)\n806|(21,8)\n808|(21,10)\n810|(21,12)\n812|(21,14)\n814|(21,16)\n816|(21,18)\n818|(21,20)\n820|(21,22)\n822|(21,24)\n824|(21,26)\n826|(21,28)\n828|(21,30)\n830|(21,32)\n832|(21,34)\n834|(21,36)\n836|(21,38)\n838|(22,2)\n840|(22,4)\n842|(22,6)\n844|(22,8)\n846|(22,10)\n848|(22,12)\n850|(22,14)\n852|(22,16)\n854|(22,18)\n856|(22,20)\n858|(22,22)\n860|(22,24)\n862|(22,26)\n864|(22,28)\n866|(22,30)\n868|(22,32)\n870|(22,34)\n872|(22,36)\n874|(22,38)\n876|(23,2)\n878|(23,4)\n880|(23,6)\n882|(23,8)\n884|(23,10)\n886|(23,12)\n888|(23,14)\n890|(23,16)\n892|(23,18)\n894|(23,20)\n896|(23,22)\n898|(23,24)\n900|(23,26)\n902|(23,28)\n904|(23,30)\n906|(23,32)\n908|(23,34)\n910|(23,36)\n912|(23,38)\n914|(24,2)\n916|(24,4)\n918|(24,6)\n920|(24,8)\n922|(24,10)\n924|(24,12)\n926|(24,14)\n928|(24,16)\n930|(24,18)\n932|(24,20)\n934|(24,22)\n936|(24,24)\n938|(24,26)\n940|(24,28)\n942|(24,30)\n944|(24,32)\n946|(24,34)\n948|(24,36)\n950|(24,38)\n952|(25,2)\n954|(25,4)\n956|(25,6)\n958|(25,8)\n960|(25,10)\n962|(25,12)\n964|(25,14)\n966|(25,16)\n968|(25,18)\n970|(25,20)\n972|(25,22)\n974|(25,24)\n976|(25,26)\n978|(25,28)\n980|(25,30)\n982|(25,32)\n984|(25,34)\n986|(25,36)\n988|(25,38)\n990|(26,2)\n992|(26,4)\n994|(26,6)\n996|(26,8)\n998|(26,10)\n1000|(26,12)\n1002|(26,14)\n1004|(26,16)\n1006|(26,18)\n1008|(26,20)\n1010|(26,22)\n1012|(26,24)\n1014|(26,26)\n1016|(26,28)\n1018|(26,30)\n1020|(26,32)\n1022|(26,34)\n1024|(26,36)\n1026|(26,38)\n1028|(27,2)\n1030|(27,4)\n1032|(27,6)\n1034|(27,8)\n1036|(27,10)\n1038|(27,12)\n1040|(27,14)\n1042|(27,16)\n1044|(27,18)\n1046|(27,20)\n1048|(27,22)\n1050|(27,24)\n1052|(27,26)\n1054|(27,28)\n1056|(27,30)\n1058|(27,32)\n1060|(27,34)\n1062|(27,36)\n1064|(27,38)\n1066|(28,2)\n1068|(28,4)\n1070|(28,6)\n1072|(28,8)\n1074|(28,10)\n1076|(28,12)\n1078|(28,14)\n1080|(28,16)\n1082|(28,18)\n1084|(28,20)\n1086|(28,22)\n1088|(28,24)\n1090|(28,26)\n1092|(28,28)\n1094|(28,30)\n1096|(28,32)\n1098|(28,34)\n1100|(28,36)\n1102|(28,38)\n1104|(29,2)\n1106|(29,4)\n1108|(29,6)\n1110|(29,8)\n1112|(29,10)\n1114|(29,12)\n1116|(29,14)\n1118|(29,16)\n1120|(29,18)\n1122|(29,20)\n1124|(29,22)\n1126|(29,24)\n1128|(29,26)\n1130|(29,28)\n1132|(29,30)\n1134|(29,32)\n1136|(29,34)\n1138|(29,36)\n1140|(29,38)\n1142|(30,2)\n1144|(30,4)\n1146|(30,6)\n1148|(30,8)\n1150|(30,10)\n1152|(30,12)\n1154|(30,14)\n1156|(30,16)\n1158|(30,18)\n1160|(30,20)\n1162|(30,22)\n1164|(30,24)\n1166|(30,26)\n1168|(30,28)\n1170|(30,30)\n1172|(30,32)\n1174|(30,34)\n1176|(30,36)\n1178|(30,38)\n1180|(31,2)\n1182|(31,4)\n1184|(31,6)\n1186|(31,8)\n1188|(31,10)\n1190|(31,12)\n1192|(31,14)\n1194|(31,16)\n1196|(31,18)\n1198|(31,20)\n1200|(31,22)\n1202|(31,24)\n1204|(31,26)\n1206|(31,28)\n1208|(31,30)\n1210|(31,32)\n1212|(31,34)\n1214|(31,36)\n1216|(31,38)\n1218|(32,2)\n1220|(32,4)\n1222|(32,6)\n1224|(32,8)\n1226|(32,10)\n1228|(32,12)\n1230|(32,14)\n1232|(32,16)\n1234|(32,18)\n1236|(32,20)\n1238|(32,22)\n1240|(32,24)\n1242|(32,26)\n1244|(32,28)\n1246|(32,30)\n1248|(32,32)\n1250|(32,34)\n1252|(32,36)\n1254|(32,38)\n1256|(33,2)\n1258|(33,4)\n1260|(33,6)\n1262|(33,8)\n1264|(33,10)\n1266|(33,12)\n1268|(33,14)\n1270|(33,16)\n1272|(33,18)\n1274|(33,20)\n1276|(33,22)\n1278|(33,24)\n1280|(33,26)\n1282|(33,28)\n1284|(33,30)\n1286|(33,32)\n1288|(33,34)\n1290|(33,36)\n1292|(33,38)\n1294|(34,2)\n1296|(34,4)\n1298|(34,6)\n1300|(34,8)\n1302|(34,10)\n1304|(34,12)\n1306|(34,14)\n1308|(34,16)\n1310|(34,18)\n1312|(34,20)\n1314|(34,22)\n1316|(34,24)\n1318|(34,26)\n1320|(34,28)\n1322|(34,30)\n1324|(34,32)\n1326|(34,34)\n1328|(34,36)\n1330|(34,38)\n1332|(35,2)\n1334|(35,4)\n1336|(35,6)\n1338|(35,8)\n1340|(35,10)\n1342|(35,12)\n1344|(35,14)\n1346|(35,16)\n1348|(35,18)\n1350|(35,20)\n1352|(35,22)\n1354|(35,24)\n1356|(35,26)\n1358|(35,28)\n1360|(35,30)\n1362|(35,32)\n1364|(35,34)\n1366|(35,36)\n1368|(35,38)\n1370|(36,2)\n1372|(36,4)\n1374|(36,6)\n1376|(36,8)\n1378|(36,10)\n1380|(36,12)\n1382|(36,14)\n1384|(36,16)\n1386|(36,18)\n1388|(36,20)\n1390|(36,22)\n1392|(36,24)\n1394|(36,26)\n1396|(36,28)\n1398|(36,30)\n1400|(36,32)\n1402|(36,34)\n1404|(36,36)\n1406|(36,38)\n1408|(37,2)\n1410|(37,4)\n1412|(37,6)\n1414|(37,8)\n1416|(37,10)\n1418|(37,12)\n1420|(37,14)\n1422|(37,16)\n1424|(37,18)\n1426|(37,20)\n1428|(37,22)\n1430|(37,24)\n1432|(37,26)\n1434|(37,28)\n1436|(37,30)\n1438|(37,32)\n1440|(37,34)\n1442|(37,36)\n1444|(37,38)\n1446|(38,2)\n1448|(38,4)\n1450|(38,6)\n1452|(38,8)\n1454|(38,10)\n1456|(38,12)\n1458|(38,14)\n1460|(38,16)\n1462|(38,18)\n1464|(38,20)\n1466|(38,22)\n1468|(38,24)\n1470|(38,26)\n1472|(38,28)\n1474|(38,30)\n1476|(38,32)\n1478|(38,34)\n1480|(38,36)\n1482|(38,38)\n1484|(39,2)\n1486|(39,4)\n1488|(39,6)\n1490|(39,8)\n1492|(39,10)\n1494|(39,12)\n1496|(39,14)\n1498|(39,16)\n1500|(39,18)\n1502|(39,20)\n1504|(39,22)\n1506|(39,24)\n1508|(39,26)\n1510|(39,28)\n1512|(39,30)\n1514|(39,32)\n1516|(39,34)\n1518|(39,36)\n1520|(39,38)\n1522|(40,2)\n1524|(40,4)\n1526|(40,6)\n1528|(40,8)\n1530|(40,10)\n1532|(40,12)\n1534|(40,14)\n1536|(40,16)\n1538|(40,18)\n1540|(40,20)\n1542|(40,22)\n1544|(40,24)\n1546|(40,26)\n1548|(40,28)\n1550|(40,30)\n1552|(40,32)\n1554|(40,34)\n1556|(40,36)\n1558|(40,38)\n1560|(41,2)\n1562|(41,4)\n1564|(41,6)\n1566|(41,8)\n1568|(41,10)\n1570|(41,12)\n1572|(41,14)\n1574|(41,16)\n1576|(41,18)\n1578|(41,20)\n1580|(41,22)\n1582|(41,24)\n1584|(41,26)\n1586|(41,28)\n1588|(41,30)\n1590|(41,32)\n1592|(41,34)\n1594|(41,36)\n1596|(41,38)\n1598|(42,2)\n1600|(42,4)\n1602|(42,6)\n1604|(42,8)\n1606|(42,10)\n1608|(42,12)\n1610|(42,14)\n1612|(42,16)\n1614|(42,18)\n1616|(42,20)\n1618|(42,22)\n1620|(42,24)\n1622|(42,26)\n1624|(42,28)\n1626|(42,30)\n1628|(42,32)\n1630|(42,34)\n1632|(42,36)\n1634|(42,38)\n1636|(43,2)\n1638|(43,4)\n1640|(43,6)\n1642|(43,8)\n1644|(43,10)\n1646|(43,12)\n1648|(43,14)\n1650|(43,16)\n1652|(43,18)\n1654|(43,20)\n1656|(43,22)\n1658|(43,24)\n1660|(43,26)\n1662|(43,28)\n1664|(43,30)\n1666|(43,32)\n1668|(43,34)\n1670|(43,36)\n1672|(43,38)\n1674|(44,2)\n1676|(44,4)\n1678|(44,6)\n1680|(44,8)\n1682|(44,10)\n1684|(44,12)\n1686|(44,14)\n1688|(44,16)\n1690|(44,18)\n1692|(44,20)\n1694|(44,22)\n1696|(44,24)\n1698|(44,26)\n1700|(44,28)\n1702|(44,30)\n1704|(44,32)\n1706|(44,34)\n1708|(44,36)\n1710|(44,38)\n1712|(45,2)\n1714|(45,4)\n1716|(45,6)\n1718|(45,8)\n1720|(45,10)\n1722|(45,12)\n1724|(45,14)\n1726|(45,16)\n1728|(45,18)\n1730|(45,20)\n1732|(45,22)\n1734|(45,24)\n1736|(45,26)\n1738|(45,28)\n1740|(45,30)\n1742|(45,32)\n1744|(45,34)\n1746|(45,36)\n1748|(45,38)\n1750|(46,2)\n1752|(46,4)\n1754|(46,6)\n1756|(46,8)\n1758|(46,10)\n1760|(46,12)\n1762|(46,14)\n1764|(46,16)\n1766|(46,18)\n1768|(46,20)\n1770|(46,22)\n1772|(46,24)\n1774|(46,26)\n1776|(46,28)\n1778|(46,30)\n1780|(46,32)\n1782|(46,34)\n1784|(46,36)\n1786|(46,38)\n1788|(47,2)\n1790|(47,4)\n1792|(47,6)\n1794|(47,8)\n1796|(47,10)\n1798|(47,12)\n1800|(47,14)\n1802|(47,16)\n1804|(47,18)\n1806|(47,20)\n1808|(47,22)\n1810|(47,24)\n1812|(47,26)\n1814|(47,28)\n1816|(47,30)\n1818|(47,32)\n1820|(47,34)\n1822|(47,36)\n1824|(47,38)\n1826|(48,2)\n1828|(48,4)\n1830|(48,6)\n1832|(48,8)\n1834|(48,10)\n1836|(48,12)\n1838|(48,14)\n1840|(48,16)\n1842|(48,18)\n1844|(48,20)\n1846|(48,22)\n1848|(48,24)\n1850|(48,26)\n1852|(48,28)\n1854|(48,30)\n1856|(48,32)\n1858|(48,34)\n1860|(48,36)\n1862|(48,38)\n1864|(49,2)\n1866|(49,4)\n1868|(49,6)\n1870|(49,8)\n1872|(49,10)\n1874|(49,12)\n1876|(49,14)\n1878|(49,16)\n1880|(49,18)\n1882|(49,20)\n1884|(49,22)\n1886|(49,24)\n1888|(49,26)\n1890|(49,28)\n1892|(49,30)\n1894|(49,32)\n1896|(49,34)\n1898|(49,36)\n1900|(49,38)\n1902|(50,2)\n1904|(50,4)\n1906|(50,6)\n1908|(50,8)\n1910|(50,10)\n1912|(50,12)\n1914|(50,14)\n1916|(50,16)\n1918|(50,18)\n1920|(50,20)\n1922|(50,22)\n1924|(50,24)\n1926|(50,26)\n1928|(50,28)\n1930|(50,30)\n1932|(50,32)\n1934|(50,34)\n1936|(50,36)\n1938|(50,38)\n1940|(51,2)\n1942|(51,4)\n1944|(51,6)\n1946|(51,8)\n1948|(51,10)\n1950|(51,12)\n1952|(51,14)\n1954|(51,16)\n1956|(51,18)\n1958|(51,20)\n1960|(51,22)\n1962|(51,24)\n1964|(51,26)\n1966|(51,28)\n1968|(51,30)\n1970|(51,32)\n1972|(51,34)\n1974|(51,36)\n1976|(51,38)\n1978|(52,2)\n1980|(52,4)\n1982|(52,6)\n1984|(52,8)\n1986|(52,10)\n1988|(52,12)\n1990|(52,14)\n1992|(52,16)\n1994|(52,18)\n1996|(52,20)\n1998|(52,22)\n2000|(52,24)\n2002|(52,26)\n2004|(52,28)\n2006|(52,30)\n2008|(52,32)\n2010|(52,34)\n2012|(52,36)\n2014|(52,38)\n2016|(53,2)\n2018|(53,4)\n2020|(53,6)\n2022|(53,8)\n2024|(53,10)\n2026|(53,12)\n2028|(53,14)\n2030|(53,16)\n2032|(53,18)\n2034|(53,20)\n2036|(53,22)\n2038|(53,24)\n2040|(53,26)\n2042|(53,28)\n2044|(53,30)\n2046|(53,32)\n2048|(53,34)",
+        "positions": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(0,14)\n16|(0,16)\n18|(0,18)\n20|(0,20)\n22|(0,22)\n24|(0,24)\n26|(0,26)\n28|(0,28)\n30|(0,30)\n32|(0,32)\n34|(0,34)\n36|(0,36)\n38|(0,38)\n40|(1,2)\n42|(1,4)\n44|(1,6)\n46|(1,8)\n48|(1,10)\n50|(1,12)\n52|(1,14)\n54|(1,16)\n56|(1,18)\n58|(1,20)\n60|(1,22)\n62|(1,24)\n64|(1,26)\n66|(1,28)\n68|(1,30)\n70|(1,32)\n72|(1,34)\n74|(1,36)\n76|(1,38)\n78|(2,2)\n80|(2,4)\n82|(2,6)\n84|(2,8)\n86|(2,10)\n88|(2,12)\n90|(2,14)\n92|(2,16)\n94|(2,18)\n96|(2,20)\n98|(2,22)\n100|(2,24)\n102|(2,26)\n104|(2,28)\n106|(2,30)\n108|(2,32)\n110|(2,34)\n112|(2,36)\n114|(2,38)\n116|(3,2)\n118|(3,4)\n120|(3,6)\n122|(3,8)\n124|(3,10)\n126|(3,12)\n128|(3,14)\n130|(3,16)\n132|(3,18)\n134|(3,20)\n136|(3,22)\n138|(3,24)\n140|(3,26)\n142|(3,28)\n144|(3,30)\n146|(3,32)\n148|(3,34)\n150|(3,36)\n152|(3,38)\n154|(4,2)\n156|(4,4)\n158|(4,6)\n160|(4,8)\n162|(4,10)\n164|(4,12)\n166|(4,14)\n168|(4,16)\n170|(4,18)\n172|(4,20)\n174|(4,22)\n176|(4,24)\n178|(4,26)\n180|(4,28)\n182|(4,30)\n184|(4,32)\n186|(4,34)\n188|(4,36)\n190|(4,38)\n192|(5,2)\n194|(5,4)\n196|(5,6)\n198|(5,8)\n200|(5,10)\n202|(5,12)\n204|(5,14)\n206|(5,16)\n208|(5,18)\n210|(5,20)\n212|(5,22)\n214|(5,24)\n216|(5,26)\n218|(5,28)\n220|(5,30)\n222|(5,32)\n224|(5,34)\n226|(5,36)\n228|(5,38)\n230|(6,2)\n232|(6,4)\n234|(6,6)\n236|(6,8)\n238|(6,10)\n240|(6,12)\n242|(6,14)\n244|(6,16)\n246|(6,18)\n248|(6,20)\n250|(6,22)\n252|(6,24)\n254|(6,26)\n256|(6,28)\n258|(6,30)\n260|(6,32)\n262|(6,34)\n264|(6,36)\n266|(6,38)\n268|(7,2)\n270|(7,4)\n272|(7,6)\n274|(7,8)\n276|(7,10)\n278|(7,12)\n280|(7,14)\n282|(7,16)\n284|(7,18)\n286|(7,20)\n288|(7,22)\n290|(7,24)\n292|(7,26)\n294|(7,28)\n296|(7,30)\n298|(7,32)\n300|(7,34)\n302|(7,36)\n304|(7,38)\n306|(8,2)\n308|(8,4)\n310|(8,6)\n312|(8,8)\n314|(8,10)\n316|(8,12)\n318|(8,14)\n320|(8,16)\n322|(8,18)\n324|(8,20)\n326|(8,22)\n328|(8,24)\n330|(8,26)\n332|(8,28)\n334|(8,30)\n336|(8,32)\n338|(8,34)\n340|(8,36)\n342|(8,38)\n344|(9,2)\n346|(9,4)\n348|(9,6)\n350|(9,8)\n352|(9,10)\n354|(9,12)\n356|(9,14)\n358|(9,16)\n360|(9,18)\n362|(9,20)\n364|(9,22)\n366|(9,24)\n368|(9,26)\n370|(9,28)\n372|(9,30)\n374|(9,32)\n376|(9,34)\n378|(9,36)\n380|(9,38)\n382|(10,2)\n384|(10,4)\n386|(10,6)\n388|(10,8)\n390|(10,10)\n392|(10,12)\n394|(10,14)\n396|(10,16)\n398|(10,18)\n400|(10,20)\n402|(10,22)\n404|(10,24)\n406|(10,26)\n408|(10,28)\n410|(10,30)\n412|(10,32)\n414|(10,34)\n416|(10,36)\n418|(10,38)\n420|(11,2)\n422|(11,4)\n424|(11,6)\n426|(11,8)\n428|(11,10)\n430|(11,12)\n432|(11,14)\n434|(11,16)\n436|(11,18)\n438|(11,20)\n440|(11,22)\n442|(11,24)\n444|(11,26)\n446|(11,28)\n448|(11,30)\n450|(11,32)\n452|(11,34)\n454|(11,36)\n456|(11,38)\n458|(12,2)\n460|(12,4)\n462|(12,6)\n464|(12,8)\n466|(12,10)\n468|(12,12)\n470|(12,14)\n472|(12,16)\n474|(12,18)\n476|(12,20)\n478|(12,22)\n480|(12,24)\n482|(12,26)\n484|(12,28)\n486|(12,30)\n488|(12,32)\n490|(12,34)\n492|(12,36)\n494|(12,38)\n496|(13,2)\n498|(13,4)\n500|(13,6)\n502|(13,8)\n504|(13,10)\n506|(13,12)\n508|(13,14)\n510|(13,16)\n512|(13,18)\n514|(13,20)\n516|(13,22)\n518|(13,24)\n520|(13,26)\n522|(13,28)\n524|(13,30)\n526|(13,32)\n528|(13,34)\n530|(13,36)\n532|(13,38)\n534|(14,2)\n536|(14,4)\n538|(14,6)\n540|(14,8)\n542|(14,10)\n544|(14,12)\n546|(14,14)\n548|(14,16)\n550|(14,18)\n552|(14,20)\n554|(14,22)\n556|(14,24)\n558|(14,26)\n560|(14,28)\n562|(14,30)\n564|(14,32)\n566|(14,34)\n568|(14,36)\n570|(14,38)\n572|(15,2)\n574|(15,4)\n576|(15,6)\n578|(15,8)\n580|(15,10)\n582|(15,12)\n584|(15,14)\n586|(15,16)\n588|(15,18)\n590|(15,20)\n592|(15,22)\n594|(15,24)\n596|(15,26)\n598|(15,28)\n600|(15,30)\n602|(15,32)\n604|(15,34)\n606|(15,36)\n608|(15,38)\n610|(16,2)\n612|(16,4)\n614|(16,6)\n616|(16,8)\n618|(16,10)\n620|(16,12)\n622|(16,14)\n624|(16,16)\n626|(16,18)\n628|(16,20)\n630|(16,22)\n632|(16,24)\n634|(16,26)\n636|(16,28)\n638|(16,30)\n640|(16,32)\n642|(16,34)\n644|(16,36)\n646|(16,38)\n648|(17,2)\n650|(17,4)\n652|(17,6)\n654|(17,8)\n656|(17,10)\n658|(17,12)\n660|(17,14)\n662|(17,16)\n664|(17,18)\n666|(17,20)\n668|(17,22)\n670|(17,24)\n672|(17,26)\n674|(17,28)\n676|(17,30)\n678|(17,32)\n680|(17,34)\n682|(17,36)\n684|(17,38)\n686|(18,2)\n688|(18,4)\n690|(18,6)\n692|(18,8)\n694|(18,10)\n696|(18,12)\n698|(18,14)\n700|(18,16)\n702|(18,18)\n704|(18,20)\n706|(18,22)\n708|(18,24)\n710|(18,26)\n712|(18,28)\n714|(18,30)\n716|(18,32)\n718|(18,34)\n720|(18,36)\n722|(18,38)\n724|(19,2)\n726|(19,4)\n728|(19,6)\n730|(19,8)\n732|(19,10)\n734|(19,12)\n736|(19,14)\n738|(19,16)\n740|(19,18)\n742|(19,20)\n744|(19,22)\n746|(19,24)\n748|(19,26)\n750|(19,28)\n752|(19,30)\n754|(19,32)\n756|(19,34)\n758|(19,36)\n760|(19,38)\n762|(20,2)\n764|(20,4)\n766|(20,6)\n768|(20,8)\n770|(20,10)\n772|(20,12)\n774|(20,14)\n776|(20,16)\n778|(20,18)\n780|(20,20)\n782|(20,22)\n784|(20,24)\n786|(20,26)\n788|(20,28)\n790|(20,30)\n792|(20,32)\n794|(20,34)\n796|(20,36)\n798|(20,38)\n800|(21,2)\n802|(21,4)\n804|(21,6)\n806|(21,8)\n808|(21,10)\n810|(21,12)\n812|(21,14)\n814|(21,16)\n816|(21,18)\n818|(21,20)\n820|(21,22)\n822|(21,24)\n824|(21,26)\n826|(21,28)\n828|(21,30)\n830|(21,32)\n832|(21,34)\n834|(21,36)\n836|(21,38)\n838|(22,2)\n840|(22,4)\n842|(22,6)\n844|(22,8)\n846|(22,10)\n848|(22,12)\n850|(22,14)\n852|(22,16)\n854|(22,18)\n856|(22,20)\n858|(22,22)\n860|(22,24)\n862|(22,26)\n864|(22,28)\n866|(22,30)\n868|(22,32)\n870|(22,34)\n872|(22,36)\n874|(22,38)\n876|(23,2)\n878|(23,4)\n880|(23,6)\n882|(23,8)\n884|(23,10)\n886|(23,12)\n888|(23,14)\n890|(23,16)\n892|(23,18)\n894|(23,20)\n896|(23,22)\n898|(23,24)\n900|(23,26)\n902|(23,28)\n904|(23,30)\n906|(23,32)\n908|(23,34)\n910|(23,36)\n912|(23,38)\n914|(24,2)\n916|(24,4)\n918|(24,6)\n920|(24,8)\n922|(24,10)\n924|(24,12)\n926|(24,14)\n928|(24,16)\n930|(24,18)\n932|(24,20)\n934|(24,22)\n936|(24,24)\n938|(24,26)\n940|(24,28)\n942|(24,30)\n944|(24,32)\n946|(24,34)\n948|(24,36)\n950|(24,38)\n952|(25,2)\n954|(25,4)\n956|(25,6)\n958|(25,8)\n960|(25,10)\n962|(25,12)\n964|(25,14)\n966|(25,16)\n968|(25,18)\n970|(25,20)\n972|(25,22)\n974|(25,24)\n976|(25,26)\n978|(25,28)\n980|(25,30)\n982|(25,32)\n984|(25,34)\n986|(25,36)\n988|(25,38)\n990|(26,2)\n992|(26,4)\n994|(26,6)\n996|(26,8)\n998|(26,10)\n1000|(26,12)\n1002|(26,14)\n1004|(26,16)\n1006|(26,18)\n1008|(26,20)\n1010|(26,22)\n1012|(26,24)\n1014|(26,26)\n1016|(26,28)\n1018|(26,30)\n1020|(26,32)\n1022|(26,34)\n1024|(26,36)\n1026|(26,38)\n1028|(27,2)\n1030|(27,4)\n1032|(27,6)\n1034|(27,8)\n1036|(27,10)\n1038|(27,12)\n1040|(27,14)\n1042|(27,16)\n1044|(27,18)\n1046|(27,20)\n1048|(27,22)\n1050|(27,24)\n1052|(27,26)\n1054|(27,28)\n1056|(27,30)\n1058|(27,32)\n1060|(27,34)\n1062|(27,36)\n1064|(27,38)\n1066|(28,2)\n1068|(28,4)\n1070|(28,6)\n1072|(28,8)\n1074|(28,10)\n1076|(28,12)\n1078|(28,14)\n1080|(28,16)\n1082|(28,18)\n1084|(28,20)\n1086|(28,22)\n1088|(28,24)\n1090|(28,26)\n1092|(28,28)\n1094|(28,30)\n1096|(28,32)\n1098|(28,34)\n1100|(28,36)\n1102|(28,38)\n1104|(29,2)\n1106|(29,4)\n1108|(29,6)\n1110|(29,8)\n1112|(29,10)\n1114|(29,12)\n1116|(29,14)\n1118|(29,16)\n1120|(29,18)\n1122|(29,20)\n1124|(29,22)\n1126|(29,24)\n1128|(29,26)\n1130|(29,28)\n1132|(29,30)\n1134|(29,32)\n1136|(29,34)\n1138|(29,36)\n1140|(29,38)\n1142|(30,2)\n1144|(30,4)\n1146|(30,6)\n1148|(30,8)\n1150|(30,10)\n1152|(30,12)\n1154|(30,14)\n1156|(30,16)\n1158|(30,18)\n1160|(30,20)\n1162|(30,22)\n1164|(30,24)\n1166|(30,26)\n1168|(30,28)\n1170|(30,30)\n1172|(30,32)\n1174|(30,34)\n1176|(30,36)\n1178|(30,38)\n1180|(31,2)\n1182|(31,4)\n1184|(31,6)\n1186|(31,8)\n1188|(31,10)\n1190|(31,12)\n1192|(31,14)\n1194|(31,16)\n1196|(31,18)\n1198|(31,20)\n1200|(31,22)\n1202|(31,24)\n1204|(31,26)\n1206|(31,28)\n1208|(31,30)\n1210|(31,32)\n1212|(31,34)\n1214|(31,36)\n1216|(31,38)\n1218|(32,2)\n1220|(32,4)\n1222|(32,6)\n1224|(32,8)\n1226|(32,10)\n1228|(32,12)\n1230|(32,14)\n1232|(32,16)\n1234|(32,18)\n1236|(32,20)\n1238|(32,22)\n1240|(32,24)\n1242|(32,26)\n1244|(32,28)\n1246|(32,30)\n1248|(32,32)\n1250|(32,34)\n1252|(32,36)\n1254|(32,38)\n1256|(33,2)\n1258|(33,4)\n1260|(33,6)\n1262|(33,8)\n1264|(33,10)\n1266|(33,12)\n1268|(33,14)\n1270|(33,16)\n1272|(33,18)\n1274|(33,20)\n1276|(33,22)\n1278|(33,24)\n1280|(33,26)\n1282|(33,28)\n1284|(33,30)\n1286|(33,32)\n1288|(33,34)\n1290|(33,36)\n1292|(33,38)\n1294|(34,2)\n1296|(34,4)\n1298|(34,6)\n1300|(34,8)\n1302|(34,10)\n1304|(34,12)\n1306|(34,14)\n1308|(34,16)\n1310|(34,18)\n1312|(34,20)\n1314|(34,22)\n1316|(34,24)\n1318|(34,26)\n1320|(34,28)\n1322|(34,30)\n1324|(34,32)\n1326|(34,34)\n1328|(34,36)\n1330|(34,38)\n1332|(35,2)\n1334|(35,4)\n1336|(35,6)\n1338|(35,8)\n1340|(35,10)\n1342|(35,12)\n1344|(35,14)\n1346|(35,16)\n1348|(35,18)\n1350|(35,20)\n1352|(35,22)\n1354|(35,24)\n1356|(35,26)\n1358|(35,28)\n1360|(35,30)\n1362|(35,32)\n1364|(35,34)\n1366|(35,36)\n1368|(35,38)\n1370|(36,2)\n1372|(36,4)\n1374|(36,6)\n1376|(36,8)\n1378|(36,10)\n1380|(36,12)\n1382|(36,14)\n1384|(36,16)\n1386|(36,18)\n1388|(36,20)\n1390|(36,22)\n1392|(36,24)\n1394|(36,26)\n1396|(36,28)\n1398|(36,30)\n1400|(36,32)\n1402|(36,34)\n1404|(36,36)\n1406|(36,38)\n1408|(37,2)\n1410|(37,4)\n1412|(37,6)\n1414|(37,8)\n1416|(37,10)\n1418|(37,12)\n1420|(37,14)\n1422|(37,16)\n1424|(37,18)\n1426|(37,20)\n1428|(37,22)\n1430|(37,24)\n1432|(37,26)\n1434|(37,28)\n1436|(37,30)\n1438|(37,32)\n1440|(37,34)\n1442|(37,36)\n1444|(37,38)\n1446|(38,2)\n1448|(38,4)\n1450|(38,6)\n1452|(38,8)\n1454|(38,10)\n1456|(38,12)\n1458|(38,14)\n1460|(38,16)\n1462|(38,18)\n1464|(38,20)\n1466|(38,22)\n1468|(38,24)\n1470|(38,26)\n1472|(38,28)\n1474|(38,30)\n1476|(38,32)\n1478|(38,34)\n1480|(38,36)\n1482|(38,38)\n1484|(39,2)\n1486|(39,4)\n1488|(39,6)\n1490|(39,8)\n1492|(39,10)\n1494|(39,12)\n1496|(39,14)\n1498|(39,16)\n1500|(39,18)\n1502|(39,20)\n1504|(39,22)\n1506|(39,24)\n1508|(39,26)\n1510|(39,28)\n1512|(39,30)\n1514|(39,32)\n1516|(39,34)\n1518|(39,36)\n1520|(39,38)\n1522|(40,2)\n1524|(40,4)\n1526|(40,6)\n1528|(40,8)\n1530|(40,10)\n1532|(40,12)\n1534|(40,14)\n1536|(40,16)\n1538|(40,18)\n1540|(40,20)\n1542|(40,22)\n1544|(40,24)\n1546|(40,26)\n1548|(40,28)\n1550|(40,30)\n1552|(40,32)\n1554|(40,34)\n1556|(40,36)\n1558|(40,38)\n1560|(41,2)\n1562|(41,4)\n1564|(41,6)\n1566|(41,8)\n1568|(41,10)\n1570|(41,12)\n1572|(41,14)\n1574|(41,16)\n1576|(41,18)\n1578|(41,20)\n1580|(41,22)\n1582|(41,24)\n1584|(41,26)\n1586|(41,28)\n1588|(41,30)\n1590|(41,32)\n1592|(41,34)\n1594|(41,36)\n1596|(41,38)\n1598|(42,2)\n1600|(42,4)\n1602|(42,6)\n1604|(42,8)\n1606|(42,10)\n1608|(42,12)\n1610|(42,14)\n1612|(42,16)\n1614|(42,18)\n1616|(42,20)\n1618|(42,22)\n1620|(42,24)\n1622|(42,26)\n1624|(42,28)\n1626|(42,30)\n1628|(42,32)\n1630|(42,34)\n1632|(42,36)\n1634|(42,38)\n1636|(43,2)\n1638|(43,4)\n1640|(43,6)\n1642|(43,8)\n1644|(43,10)\n1646|(43,12)\n1648|(43,14)\n1650|(43,16)\n1652|(43,18)\n1654|(43,20)\n1656|(43,22)\n1658|(43,24)\n1660|(43,26)\n1662|(43,28)\n1664|(43,30)\n1666|(43,32)\n1668|(43,34)\n1670|(43,36)\n1672|(43,38)\n1674|(44,2)\n1676|(44,4)\n1678|(44,6)\n1680|(44,8)\n1682|(44,10)\n1684|(44,12)\n1686|(44,14)\n1688|(44,16)\n1690|(44,18)\n1692|(44,20)\n1694|(44,22)\n1696|(44,24)\n1698|(44,26)\n1700|(44,28)\n1702|(44,30)\n1704|(44,32)\n1706|(44,34)\n1708|(44,36)\n1710|(44,38)\n1712|(45,2)\n1714|(45,4)\n1716|(45,6)\n1718|(45,8)\n1720|(45,10)\n1722|(45,12)\n1724|(45,14)\n1726|(45,16)\n1728|(45,18)\n1730|(45,20)\n1732|(45,22)\n1734|(45,24)\n1736|(45,26)\n1738|(45,28)\n1740|(45,30)\n1742|(45,32)\n1744|(45,34)\n1746|(45,36)\n1748|(45,38)\n1750|(46,2)\n1752|(46,4)\n1754|(46,6)\n1756|(46,8)\n1758|(46,10)\n1760|(46,12)\n1762|(46,14)\n1764|(46,16)\n1766|(46,18)\n1768|(46,20)\n1770|(46,22)\n1772|(46,24)\n1774|(46,26)\n1776|(46,28)\n1778|(46,30)\n1780|(46,32)\n1782|(46,34)\n1784|(46,36)\n1786|(46,38)\n1788|(47,2)\n1790|(47,4)\n1792|(47,6)\n1794|(47,8)\n1796|(47,10)\n1798|(47,12)\n1800|(47,14)\n1802|(47,16)\n1804|(47,18)\n1806|(47,20)\n1808|(47,22)\n1810|(47,24)\n1812|(47,26)\n1814|(47,28)\n1816|(47,30)\n1818|(47,32)\n1820|(47,34)\n1822|(47,36)\n1824|(47,38)\n1826|(48,2)\n1828|(48,4)\n1830|(48,6)\n1832|(48,8)\n1834|(48,10)\n1836|(48,12)\n1838|(48,14)\n1840|(48,16)\n1842|(48,18)\n1844|(48,20)\n1846|(48,22)\n1848|(48,24)\n1850|(48,26)\n1852|(48,28)\n1854|(48,30)\n1856|(48,32)\n1858|(48,34)\n1860|(48,36)\n1862|(48,38)\n1864|(49,2)\n1866|(49,4)\n1868|(49,6)\n1870|(49,8)\n1872|(49,10)\n1874|(49,12)\n1876|(49,14)\n1878|(49,16)\n1880|(49,18)\n1882|(49,20)\n1884|(49,22)\n1886|(49,24)\n1888|(49,26)\n1890|(49,28)\n1892|(49,30)\n1894|(49,32)\n1896|(49,34)\n1898|(49,36)\n1900|(49,38)\n1902|(50,2)\n1904|(50,4)\n1906|(50,6)\n1908|(50,8)\n1910|(50,10)\n1912|(50,12)\n1914|(50,14)\n1916|(50,16)\n1918|(50,18)\n1920|(50,20)\n1922|(50,22)\n1924|(50,24)\n1926|(50,26)\n1928|(50,28)\n1930|(50,30)\n1932|(50,32)\n1934|(50,34)\n1936|(50,36)\n1938|(50,38)\n1940|(51,2)\n1942|(51,4)\n1944|(51,6)\n1946|(51,8)\n1948|(51,10)\n1950|(51,12)\n1952|(51,14)\n1954|(51,16)\n1956|(51,18)\n1958|(51,20)\n1960|(51,22)\n1962|(51,24)\n1964|(51,26)\n1966|(51,28)\n1968|(51,30)\n1970|(51,32)\n1972|(51,34)\n1974|(51,36)\n1976|(51,38)\n1978|(52,2)\n1980|(52,4)\n1982|(52,6)\n1984|(52,8)\n1986|(52,10)\n1988|(52,12)\n1990|(52,14)\n1992|(52,16)\n1994|(52,18)\n1996|(52,20)\n1998|(52,22)\n2000|(52,24)\n2002|(52,26)\n2004|(52,28)\n2006|(52,30)\n2008|(52,32)\n2010|(52,34)\n2012|(52,36)\n2014|(52,38)\n2016|(53,2)\n2018|(53,4)\n2020|(53,6)\n2022|(53,8)\n2024|(53,10)\n2026|(53,12)\n2028|(53,14)\n2030|(53,16)\n2032|(53,18)\n2034|(53,20)\n2036|(53,22)\n2038|(53,24)\n2040|(53,26)\n2042|(53,28)\n2044|(53,30)\n2046|(53,32)\n2048|(53,34)",
+        "gin": "2|(0,2)\n4|(0,4)\n6|(0,6)\n8|(0,8)\n10|(0,10)\n12|(0,12)\n14|(0,14)\n16|(0,16)\n18|(0,18)\n20|(0,20)\n22|(0,22)\n24|(0,24)\n26|(0,26)\n28|(0,28)\n30|(0,30)\n32|(0,32)\n34|(0,34)\n36|(0,36)\n38|(0,38)\n40|(1,2)\n42|(1,4)\n44|(1,6)\n46|(1,8)\n48|(1,10)\n50|(1,12)\n52|(1,14)\n54|(1,16)\n56|(1,18)\n58|(1,20)\n60|(1,22)\n62|(1,24)\n64|(1,26)\n66|(1,28)\n68|(1,30)\n70|(1,32)\n72|(1,34)\n74|(1,36)\n76|(1,38)\n78|(2,2)\n80|(2,4)\n82|(2,6)\n84|(2,8)\n86|(2,10)\n88|(2,12)\n90|(2,14)\n92|(2,16)\n94|(2,18)\n96|(2,20)\n98|(2,22)\n100|(2,24)\n102|(2,26)\n104|(2,28)\n106|(2,30)\n108|(2,32)\n110|(2,34)\n112|(2,36)\n114|(2,38)\n116|(3,2)\n118|(3,4)\n120|(3,6)\n122|(3,8)\n124|(3,10)\n126|(3,12)\n128|(3,14)\n130|(3,16)\n132|(3,18)\n134|(3,20)\n136|(3,22)\n138|(3,24)\n140|(3,26)\n142|(3,28)\n144|(3,30)\n146|(3,32)\n148|(3,34)\n150|(3,36)\n152|(3,38)\n154|(4,2)\n156|(4,4)\n158|(4,6)\n160|(4,8)\n162|(4,10)\n164|(4,12)\n166|(4,14)\n168|(4,16)\n170|(4,18)\n172|(4,20)\n174|(4,22)\n176|(4,24)\n178|(4,26)\n180|(4,28)\n182|(4,30)\n184|(4,32)\n186|(4,34)\n188|(4,36)\n190|(4,38)\n192|(5,2)\n194|(5,4)\n196|(5,6)\n198|(5,8)\n200|(5,10)\n202|(5,12)\n204|(5,14)\n206|(5,16)\n208|(5,18)\n210|(5,20)\n212|(5,22)\n214|(5,24)\n216|(5,26)\n218|(5,28)\n220|(5,30)\n222|(5,32)\n224|(5,34)\n226|(5,36)\n228|(5,38)\n230|(6,2)\n232|(6,4)\n234|(6,6)\n236|(6,8)\n238|(6,10)\n240|(6,12)\n242|(6,14)\n244|(6,16)\n246|(6,18)\n248|(6,20)\n250|(6,22)\n252|(6,24)\n254|(6,26)\n256|(6,28)\n258|(6,30)\n260|(6,32)\n262|(6,34)\n264|(6,36)\n266|(6,38)\n268|(7,2)\n270|(7,4)\n272|(7,6)\n274|(7,8)\n276|(7,10)\n278|(7,12)\n280|(7,14)\n282|(7,16)\n284|(7,18)\n286|(7,20)\n288|(7,22)\n290|(7,24)\n292|(7,26)\n294|(7,28)\n296|(7,30)\n298|(7,32)\n300|(7,34)\n302|(7,36)\n304|(7,38)\n306|(8,2)\n308|(8,4)\n310|(8,6)\n312|(8,8)\n314|(8,10)\n316|(8,12)\n318|(8,14)\n320|(8,16)\n322|(8,18)\n324|(8,20)\n326|(8,22)\n328|(8,24)\n330|(8,26)\n332|(8,28)\n334|(8,30)\n336|(8,32)\n338|(8,34)\n340|(8,36)\n342|(8,38)\n344|(9,2)\n346|(9,4)\n348|(9,6)\n350|(9,8)\n352|(9,10)\n354|(9,12)\n356|(9,14)\n358|(9,16)\n360|(9,18)\n362|(9,20)\n364|(9,22)\n366|(9,24)\n368|(9,26)\n370|(9,28)\n372|(9,30)\n374|(9,32)\n376|(9,34)\n378|(9,36)\n380|(9,38)\n382|(10,2)\n384|(10,4)\n386|(10,6)\n388|(10,8)\n390|(10,10)\n392|(10,12)\n394|(10,14)\n396|(10,16)\n398|(10,18)\n400|(10,20)\n402|(10,22)\n404|(10,24)\n406|(10,26)\n408|(10,28)\n410|(10,30)\n412|(10,32)\n414|(10,34)\n416|(10,36)\n418|(10,38)\n420|(11,2)\n422|(11,4)\n424|(11,6)\n426|(11,8)\n428|(11,10)\n430|(11,12)\n432|(11,14)\n434|(11,16)\n436|(11,18)\n438|(11,20)\n440|(11,22)\n442|(11,24)\n444|(11,26)\n446|(11,28)\n448|(11,30)\n450|(11,32)\n452|(11,34)\n454|(11,36)\n456|(11,38)\n458|(12,2)\n460|(12,4)\n462|(12,6)\n464|(12,8)\n466|(12,10)\n468|(12,12)\n470|(12,14)\n472|(12,16)\n474|(12,18)\n476|(12,20)\n478|(12,22)\n480|(12,24)\n482|(12,26)\n484|(12,28)\n486|(12,30)\n488|(12,32)\n490|(12,34)\n492|(12,36)\n494|(12,38)\n496|(13,2)\n498|(13,4)\n500|(13,6)\n502|(13,8)\n504|(13,10)\n506|(13,12)\n508|(13,14)\n510|(13,16)\n512|(13,18)\n514|(13,20)\n516|(13,22)\n518|(13,24)\n520|(13,26)\n522|(13,28)\n524|(13,30)\n526|(13,32)\n528|(13,34)\n530|(13,36)\n532|(13,38)\n534|(14,2)\n536|(14,4)\n538|(14,6)\n540|(14,8)\n542|(14,10)\n544|(14,12)\n546|(14,14)\n548|(14,16)\n550|(14,18)\n552|(14,20)\n554|(14,22)\n556|(14,24)\n558|(14,26)\n560|(14,28)\n562|(14,30)\n564|(14,32)\n566|(14,34)\n568|(14,36)\n570|(14,38)\n572|(15,2)\n574|(15,4)\n576|(15,6)\n578|(15,8)\n580|(15,10)\n582|(15,12)\n584|(15,14)\n586|(15,16)\n588|(15,18)\n590|(15,20)\n592|(15,22)\n594|(15,24)\n596|(15,26)\n598|(15,28)\n600|(15,30)\n602|(15,32)\n604|(15,34)\n606|(15,36)\n608|(15,38)\n610|(16,2)\n612|(16,4)\n614|(16,6)\n616|(16,8)\n618|(16,10)\n620|(16,12)\n622|(16,14)\n624|(16,16)\n626|(16,18)\n628|(16,20)\n630|(16,22)\n632|(16,24)\n634|(16,26)\n636|(16,28)\n638|(16,30)\n640|(16,32)\n642|(16,34)\n644|(16,36)\n646|(16,38)\n648|(17,2)\n650|(17,4)\n652|(17,6)\n654|(17,8)\n656|(17,10)\n658|(17,12)\n660|(17,14)\n662|(17,16)\n664|(17,18)\n666|(17,20)\n668|(17,22)\n670|(17,24)\n672|(17,26)\n674|(17,28)\n676|(17,30)\n678|(17,32)\n680|(17,34)\n682|(17,36)\n684|(17,38)\n686|(18,2)\n688|(18,4)\n690|(18,6)\n692|(18,8)\n694|(18,10)\n696|(18,12)\n698|(18,14)\n700|(18,16)\n702|(18,18)\n704|(18,20)\n706|(18,22)\n708|(18,24)\n710|(18,26)\n712|(18,28)\n714|(18,30)\n716|(18,32)\n718|(18,34)\n720|(18,36)\n722|(18,38)\n724|(19,2)\n726|(19,4)\n728|(19,6)\n730|(19,8)\n732|(19,10)\n734|(19,12)\n736|(19,14)\n738|(19,16)\n740|(19,18)\n742|(19,20)\n744|(19,22)\n746|(19,24)\n748|(19,26)\n750|(19,28)\n752|(19,30)\n754|(19,32)\n756|(19,34)\n758|(19,36)\n760|(19,38)\n762|(20,2)\n764|(20,4)\n766|(20,6)\n768|(20,8)\n770|(20,10)\n772|(20,12)\n774|(20,14)\n776|(20,16)\n778|(20,18)\n780|(20,20)\n782|(20,22)\n784|(20,24)\n786|(20,26)\n788|(20,28)\n790|(20,30)\n792|(20,32)\n794|(20,34)\n796|(20,36)\n798|(20,38)\n800|(21,2)\n802|(21,4)\n804|(21,6)\n806|(21,8)\n808|(21,10)\n810|(21,12)\n812|(21,14)\n814|(21,16)\n816|(21,18)\n818|(21,20)\n820|(21,22)\n822|(21,24)\n824|(21,26)\n826|(21,28)\n828|(21,30)\n830|(21,32)\n832|(21,34)\n834|(21,36)\n836|(21,38)\n838|(22,2)\n840|(22,4)\n842|(22,6)\n844|(22,8)\n846|(22,10)\n848|(22,12)\n850|(22,14)\n852|(22,16)\n854|(22,18)\n856|(22,20)\n858|(22,22)\n860|(22,24)\n862|(22,26)\n864|(22,28)\n866|(22,30)\n868|(22,32)\n870|(22,34)\n872|(22,36)\n874|(22,38)\n876|(23,2)\n878|(23,4)\n880|(23,6)\n882|(23,8)\n884|(23,10)\n886|(23,12)\n888|(23,14)\n890|(23,16)\n892|(23,18)\n894|(23,20)\n896|(23,22)\n898|(23,24)\n900|(23,26)\n902|(23,28)\n904|(23,30)\n906|(23,32)\n908|(23,34)\n910|(23,36)\n912|(23,38)\n914|(24,2)\n916|(24,4)\n918|(24,6)\n920|(24,8)\n922|(24,10)\n924|(24,12)\n926|(24,14)\n928|(24,16)\n930|(24,18)\n932|(24,20)\n934|(24,22)\n936|(24,24)\n938|(24,26)\n940|(24,28)\n942|(24,30)\n944|(24,32)\n946|(24,34)\n948|(24,36)\n950|(24,38)\n952|(25,2)\n954|(25,4)\n956|(25,6)\n958|(25,8)\n960|(25,10)\n962|(25,12)\n964|(25,14)\n966|(25,16)\n968|(25,18)\n970|(25,20)\n972|(25,22)\n974|(25,24)\n976|(25,26)\n978|(25,28)\n980|(25,30)\n982|(25,32)\n984|(25,34)\n986|(25,36)\n988|(25,38)\n990|(26,2)\n992|(26,4)\n994|(26,6)\n996|(26,8)\n998|(26,10)\n1000|(26,12)\n1002|(26,14)\n1004|(26,16)\n1006|(26,18)\n1008|(26,20)\n1010|(26,22)\n1012|(26,24)\n1014|(26,26)\n1016|(26,28)\n1018|(26,30)\n1020|(26,32)\n1022|(26,34)\n1024|(26,36)\n1026|(26,38)\n1028|(27,2)\n1030|(27,4)\n1032|(27,6)\n1034|(27,8)\n1036|(27,10)\n1038|(27,12)\n1040|(27,14)\n1042|(27,16)\n1044|(27,18)\n1046|(27,20)\n1048|(27,22)\n1050|(27,24)\n1052|(27,26)\n1054|(27,28)\n1056|(27,30)\n1058|(27,32)\n1060|(27,34)\n1062|(27,36)\n1064|(27,38)\n1066|(28,2)\n1068|(28,4)\n1070|(28,6)\n1072|(28,8)\n1074|(28,10)\n1076|(28,12)\n1078|(28,14)\n1080|(28,16)\n1082|(28,18)\n1084|(28,20)\n1086|(28,22)\n1088|(28,24)\n1090|(28,26)\n1092|(28,28)\n1094|(28,30)\n1096|(28,32)\n1098|(28,34)\n1100|(28,36)\n1102|(28,38)\n1104|(29,2)\n1106|(29,4)\n1108|(29,6)\n1110|(29,8)\n1112|(29,10)\n1114|(29,12)\n1116|(29,14)\n1118|(29,16)\n1120|(29,18)\n1122|(29,20)\n1124|(29,22)\n1126|(29,24)\n1128|(29,26)\n1130|(29,28)\n1132|(29,30)\n1134|(29,32)\n1136|(29,34)\n1138|(29,36)\n1140|(29,38)\n1142|(30,2)\n1144|(30,4)\n1146|(30,6)\n1148|(30,8)\n1150|(30,10)\n1152|(30,12)\n1154|(30,14)\n1156|(30,16)\n1158|(30,18)\n1160|(30,20)\n1162|(30,22)\n1164|(30,24)\n1166|(30,26)\n1168|(30,28)\n1170|(30,30)\n1172|(30,32)\n1174|(30,34)\n1176|(30,36)\n1178|(30,38)\n1180|(31,2)\n1182|(31,4)\n1184|(31,6)\n1186|(31,8)\n1188|(31,10)\n1190|(31,12)\n1192|(31,14)\n1194|(31,16)\n1196|(31,18)\n1198|(31,20)\n1200|(31,22)\n1202|(31,24)\n1204|(31,26)\n1206|(31,28)\n1208|(31,30)\n1210|(31,32)\n1212|(31,34)\n1214|(31,36)\n1216|(31,38)\n1218|(32,2)\n1220|(32,4)\n1222|(32,6)\n1224|(32,8)\n1226|(32,10)\n1228|(32,12)\n1230|(32,14)\n1232|(32,16)\n1234|(32,18)\n1236|(32,20)\n1238|(32,22)\n1240|(32,24)\n1242|(32,26)\n1244|(32,28)\n1246|(32,30)\n1248|(32,32)\n1250|(32,34)\n1252|(32,36)\n1254|(32,38)\n1256|(33,2)\n1258|(33,4)\n1260|(33,6)\n1262|(33,8)\n1264|(33,10)\n1266|(33,12)\n1268|(33,14)\n1270|(33,16)\n1272|(33,18)\n1274|(33,20)\n1276|(33,22)\n1278|(33,24)\n1280|(33,26)\n1282|(33,28)\n1284|(33,30)\n1286|(33,32)\n1288|(33,34)\n1290|(33,36)\n1292|(33,38)\n1294|(34,2)\n1296|(34,4)\n1298|(34,6)\n1300|(34,8)\n1302|(34,10)\n1304|(34,12)\n1306|(34,14)\n1308|(34,16)\n1310|(34,18)\n1312|(34,20)\n1314|(34,22)\n1316|(34,24)\n1318|(34,26)\n1320|(34,28)\n1322|(34,30)\n1324|(34,32)\n1326|(34,34)\n1328|(34,36)\n1330|(34,38)\n1332|(35,2)\n1334|(35,4)\n1336|(35,6)\n1338|(35,8)\n1340|(35,10)\n1342|(35,12)\n1344|(35,14)\n1346|(35,16)\n1348|(35,18)\n1350|(35,20)\n1352|(35,22)\n1354|(35,24)\n1356|(35,26)\n1358|(35,28)\n1360|(35,30)\n1362|(35,32)\n1364|(35,34)\n1366|(35,36)\n1368|(35,38)\n1370|(36,2)\n1372|(36,4)\n1374|(36,6)\n1376|(36,8)\n1378|(36,10)\n1380|(36,12)\n1382|(36,14)\n1384|(36,16)\n1386|(36,18)\n1388|(36,20)\n1390|(36,22)\n1392|(36,24)\n1394|(36,26)\n1396|(36,28)\n1398|(36,30)\n1400|(36,32)\n1402|(36,34)\n1404|(36,36)\n1406|(36,38)\n1408|(37,2)\n1410|(37,4)\n1412|(37,6)\n1414|(37,8)\n1416|(37,10)\n1418|(37,12)\n1420|(37,14)\n1422|(37,16)\n1424|(37,18)\n1426|(37,20)\n1428|(37,22)\n1430|(37,24)\n1432|(37,26)\n1434|(37,28)\n1436|(37,30)\n1438|(37,32)\n1440|(37,34)\n1442|(37,36)\n1444|(37,38)\n1446|(38,2)\n1448|(38,4)\n1450|(38,6)\n1452|(38,8)\n1454|(38,10)\n1456|(38,12)\n1458|(38,14)\n1460|(38,16)\n1462|(38,18)\n1464|(38,20)\n1466|(38,22)\n1468|(38,24)\n1470|(38,26)\n1472|(38,28)\n1474|(38,30)\n1476|(38,32)\n1478|(38,34)\n1480|(38,36)\n1482|(38,38)\n1484|(39,2)\n1486|(39,4)\n1488|(39,6)\n1490|(39,8)\n1492|(39,10)\n1494|(39,12)\n1496|(39,14)\n1498|(39,16)\n1500|(39,18)\n1502|(39,20)\n1504|(39,22)\n1506|(39,24)\n1508|(39,26)\n1510|(39,28)\n1512|(39,30)\n1514|(39,32)\n1516|(39,34)\n1518|(39,36)\n1520|(39,38)\n1522|(40,2)\n1524|(40,4)\n1526|(40,6)\n1528|(40,8)\n1530|(40,10)\n1532|(40,12)\n1534|(40,14)\n1536|(40,16)\n1538|(40,18)\n1540|(40,20)\n1542|(40,22)\n1544|(40,24)\n1546|(40,26)\n1548|(40,28)\n1550|(40,30)\n1552|(40,32)\n1554|(40,34)\n1556|(40,36)\n1558|(40,38)\n1560|(41,2)\n1562|(41,4)\n1564|(41,6)\n1566|(41,8)\n1568|(41,10)\n1570|(41,12)\n1572|(41,14)\n1574|(41,16)\n1576|(41,18)\n1578|(41,20)\n1580|(41,22)\n1582|(41,24)\n1584|(41,26)\n1586|(41,28)\n1588|(41,30)\n1590|(41,32)\n1592|(41,34)\n1594|(41,36)\n1596|(41,38)\n1598|(42,2)\n1600|(42,4)\n1602|(42,6)\n1604|(42,8)\n1606|(42,10)\n1608|(42,12)\n1610|(42,14)\n1612|(42,16)\n1614|(42,18)\n1616|(42,20)\n1618|(42,22)\n1620|(42,24)\n1622|(42,26)\n1624|(42,28)\n1626|(42,30)\n1628|(42,32)\n1630|(42,34)\n1632|(42,36)\n1634|(42,38)\n1636|(43,2)\n1638|(43,4)\n1640|(43,6)\n1642|(43,8)\n1644|(43,10)\n1646|(43,12)\n1648|(43,14)\n1650|(43,16)\n1652|(43,18)\n1654|(43,20)\n1656|(43,22)\n1658|(43,24)\n1660|(43,26)\n1662|(43,28)\n1664|(43,30)\n1666|(43,32)\n1668|(43,34)\n1670|(43,36)\n1672|(43,38)\n1674|(44,2)\n1676|(44,4)\n1678|(44,6)\n1680|(44,8)\n1682|(44,10)\n1684|(44,12)\n1686|(44,14)\n1688|(44,16)\n1690|(44,18)\n1692|(44,20)\n1694|(44,22)\n1696|(44,24)\n1698|(44,26)\n1700|(44,28)\n1702|(44,30)\n1704|(44,32)\n1706|(44,34)\n1708|(44,36)\n1710|(44,38)\n1712|(45,2)\n1714|(45,4)\n1716|(45,6)\n1718|(45,8)\n1720|(45,10)\n1722|(45,12)\n1724|(45,14)\n1726|(45,16)\n1728|(45,18)\n1730|(45,20)\n1732|(45,22)\n1734|(45,24)\n1736|(45,26)\n1738|(45,28)\n1740|(45,30)\n1742|(45,32)\n1744|(45,34)\n1746|(45,36)\n1748|(45,38)\n1750|(46,2)\n1752|(46,4)\n1754|(46,6)\n1756|(46,8)\n1758|(46,10)\n1760|(46,12)\n1762|(46,14)\n1764|(46,16)\n1766|(46,18)\n1768|(46,20)\n1770|(46,22)\n1772|(46,24)\n1774|(46,26)\n1776|(46,28)\n1778|(46,30)\n1780|(46,32)\n1782|(46,34)\n1784|(46,36)\n1786|(46,38)\n1788|(47,2)\n1790|(47,4)\n1792|(47,6)\n1794|(47,8)\n1796|(47,10)\n1798|(47,12)\n1800|(47,14)\n1802|(47,16)\n1804|(47,18)\n1806|(47,20)\n1808|(47,22)\n1810|(47,24)\n1812|(47,26)\n1814|(47,28)\n1816|(47,30)\n1818|(47,32)\n1820|(47,34)\n1822|(47,36)\n1824|(47,38)\n1826|(48,2)\n1828|(48,4)\n1830|(48,6)\n1832|(48,8)\n1834|(48,10)\n1836|(48,12)\n1838|(48,14)\n1840|(48,16)\n1842|(48,18)\n1844|(48,20)\n1846|(48,22)\n1848|(48,24)\n1850|(48,26)\n1852|(48,28)\n1854|(48,30)\n1856|(48,32)\n1858|(48,34)\n1860|(48,36)\n1862|(48,38)\n1864|(49,2)\n1866|(49,4)\n1868|(49,6)\n1870|(49,8)\n1872|(49,10)\n1874|(49,12)\n1876|(49,14)\n1878|(49,16)\n1880|(49,18)\n1882|(49,20)\n1884|(49,22)\n1886|(49,24)\n1888|(49,26)\n1890|(49,28)\n1892|(49,30)\n1894|(49,32)\n1896|(49,34)\n1898|(49,36)\n1900|(49,38)\n1902|(50,2)\n1904|(50,4)\n1906|(50,6)\n1908|(50,8)\n1910|(50,10)\n1912|(50,12)\n1914|(50,14)\n1916|(50,16)\n1918|(50,18)\n1920|(50,20)\n1922|(50,22)\n1924|(50,24)\n1926|(50,26)\n1928|(50,28)\n1930|(50,30)\n1932|(50,32)\n1934|(50,34)\n1936|(50,36)\n1938|(50,38)\n1940|(51,2)\n1942|(51,4)\n1944|(51,6)\n1946|(51,8)\n1948|(51,10)\n1950|(51,12)\n1952|(51,14)\n1954|(51,16)\n1956|(51,18)\n1958|(51,20)\n1960|(51,22)\n1962|(51,24)\n1964|(51,26)\n1966|(51,28)\n1968|(51,30)\n1970|(51,32)\n1972|(51,34)\n1974|(51,36)\n1976|(51,38)\n1978|(52,2)\n1980|(52,4)\n1982|(52,6)\n1984|(52,8)\n1986|(52,10)\n1988|(52,12)\n1990|(52,14)\n1992|(52,16)\n1994|(52,18)\n1996|(52,20)\n1998|(52,22)\n2000|(52,24)\n2002|(52,26)\n2004|(52,28)\n2006|(52,30)\n2008|(52,32)\n2010|(52,34)\n2012|(52,36)\n2014|(52,38)\n2016|(53,2)\n2018|(53,4)\n2020|(53,6)\n2022|(53,8)\n2024|(53,10)\n2026|(53,12)\n2028|(53,14)\n2030|(53,16)\n2032|(53,18)\n2034|(53,20)\n2036|(53,22)\n2038|(53,24)\n2040|(53,26)\n2042|(53,28)\n2044|(53,30)\n2046|(53,32)\n2048|(53,34)"
+      },
+      "sha256": "b76af49301fc5edd967d19bdbbe4739694099047ee3edf605c9153403d82752d"
+    },
+    {
+      "case": "repeated",
+      "identities": {
+        "oracle": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(0,13)\n14|(0,14)\n15|(0,15)\n16|(0,16)\n17|(0,17)\n18|(0,18)\n19|(0,19)\n20|(0,20)\n21|(0,21)\n22|(0,22)\n23|(0,23)\n24|(0,24)\n25|(0,25)\n26|(0,26)\n27|(0,27)\n28|(0,28)\n29|(0,29)\n30|(0,30)\n31|(0,31)\n32|(0,32)\n33|(0,33)\n34|(0,34)\n35|(0,35)\n36|(0,36)\n37|(0,37)\n38|(0,38)\n39|(1,1)\n40|(1,2)\n41|(1,3)\n42|(1,4)\n43|(1,5)\n44|(1,6)\n45|(1,7)\n46|(1,8)\n47|(1,9)\n48|(1,10)\n49|(1,11)\n50|(1,12)\n51|(1,13)\n52|(1,14)\n53|(1,15)\n54|(1,16)\n55|(1,17)\n56|(1,18)\n57|(1,19)\n58|(1,20)\n59|(1,21)\n60|(1,22)\n61|(1,23)\n62|(1,24)\n63|(1,25)\n64|(1,26)\n65|(1,27)\n66|(1,28)\n67|(1,29)\n68|(1,30)\n69|(1,31)\n70|(1,32)\n71|(1,33)\n72|(1,34)\n73|(1,35)\n74|(1,36)\n75|(1,37)\n76|(1,38)\n77|(2,1)\n78|(2,2)\n79|(2,3)\n80|(2,4)\n81|(2,5)\n82|(2,6)\n83|(2,7)\n84|(2,8)\n85|(2,9)\n86|(2,10)\n87|(2,11)\n88|(2,12)\n89|(2,13)\n90|(2,14)\n91|(2,15)\n92|(2,16)\n93|(2,17)\n94|(2,18)\n95|(2,19)\n96|(2,20)\n97|(2,21)\n98|(2,22)\n99|(2,23)\n100|(2,24)\n101|(2,25)\n102|(2,26)\n103|(2,27)\n104|(2,28)\n105|(2,29)\n106|(2,30)\n107|(2,31)\n108|(2,32)\n109|(2,33)\n110|(2,34)\n111|(2,35)\n112|(2,36)\n113|(2,37)\n114|(2,38)\n115|(3,1)\n116|(3,2)\n117|(3,3)\n118|(3,4)\n119|(3,5)\n120|(3,6)\n121|(3,7)\n122|(3,8)\n123|(3,9)\n124|(3,10)\n125|(3,11)\n126|(3,12)\n127|(3,13)\n128|(3,14)\n129|(3,15)\n130|(3,16)\n131|(3,17)\n132|(3,18)\n133|(3,19)\n134|(3,20)\n135|(3,21)\n136|(3,22)\n137|(3,23)\n138|(3,24)\n139|(3,25)\n140|(3,26)\n141|(3,27)\n142|(3,28)\n143|(3,29)\n144|(3,30)\n145|(3,31)\n146|(3,32)\n147|(3,33)\n148|(3,34)\n149|(3,35)\n150|(3,36)\n151|(3,37)\n152|(3,38)\n153|(4,1)\n154|(4,2)\n155|(4,3)\n156|(4,4)\n157|(4,5)\n158|(4,6)\n159|(4,7)\n160|(4,8)\n161|(4,9)\n162|(4,10)\n163|(4,11)\n164|(4,12)\n165|(4,13)\n166|(4,14)\n167|(4,15)\n168|(4,16)\n169|(4,17)\n170|(4,18)\n171|(4,19)\n172|(4,20)\n173|(4,21)\n174|(4,22)\n175|(4,23)\n176|(4,24)\n177|(4,25)\n178|(4,26)\n179|(4,27)\n180|(4,28)\n181|(4,29)\n182|(4,30)\n183|(4,31)\n184|(4,32)\n185|(4,33)\n186|(4,34)\n187|(4,35)\n188|(4,36)\n189|(4,37)\n190|(4,38)\n191|(5,1)\n192|(5,2)\n193|(5,3)\n194|(5,4)\n195|(5,5)\n196|(5,6)\n197|(5,7)\n198|(5,8)\n199|(5,9)\n200|(5,10)\n201|(5,11)\n202|(5,12)\n203|(5,13)\n204|(5,14)\n205|(5,15)\n206|(5,16)\n207|(5,17)\n208|(5,18)\n209|(5,19)\n210|(5,20)\n211|(5,21)\n212|(5,22)\n213|(5,23)\n214|(5,24)\n215|(5,25)\n216|(5,26)\n217|(5,27)\n218|(5,28)\n219|(5,29)\n220|(5,30)\n221|(5,31)\n222|(5,32)\n223|(5,33)\n224|(5,34)\n225|(5,35)\n226|(5,36)\n227|(5,37)\n228|(5,38)\n229|(6,1)\n230|(6,2)\n231|(6,3)\n232|(6,4)\n233|(6,5)\n234|(6,6)\n235|(6,7)\n236|(6,8)\n237|(6,9)\n238|(6,10)\n239|(6,11)\n240|(6,12)\n241|(6,13)\n242|(6,14)\n243|(6,15)\n244|(6,16)\n245|(6,17)\n246|(6,18)\n247|(6,19)\n248|(6,20)\n249|(6,21)\n250|(6,22)\n251|(6,23)\n252|(6,24)\n253|(6,25)\n254|(6,26)\n255|(6,27)\n256|(6,28)\n257|(6,29)\n258|(6,30)\n259|(6,31)\n260|(6,32)\n261|(6,33)\n262|(6,34)\n263|(6,35)\n264|(6,36)\n265|(6,37)\n266|(6,38)\n267|(7,1)\n268|(7,2)\n269|(7,3)\n270|(7,4)\n271|(7,5)\n272|(7,6)\n273|(7,7)\n274|(7,8)\n275|(7,9)\n276|(7,10)\n277|(7,11)\n278|(7,12)\n279|(7,13)\n280|(7,14)\n281|(7,15)\n282|(7,16)\n283|(7,17)\n284|(7,18)\n285|(7,19)\n286|(7,20)\n287|(7,21)\n288|(7,22)\n289|(7,23)\n290|(7,24)\n291|(7,25)\n292|(7,26)\n293|(7,27)\n294|(7,28)\n295|(7,29)\n296|(7,30)\n297|(7,31)\n298|(7,32)\n299|(7,33)\n300|(7,34)\n301|(7,35)\n302|(7,36)\n303|(7,37)\n304|(7,38)\n305|(8,1)\n306|(8,2)\n307|(8,3)\n308|(8,4)\n309|(8,5)\n310|(8,6)\n311|(8,7)\n312|(8,8)\n313|(8,9)\n314|(8,10)\n315|(8,11)\n316|(8,12)\n317|(8,13)\n318|(8,14)\n319|(8,15)\n320|(8,16)\n321|(8,17)\n322|(8,18)\n323|(8,19)\n324|(8,20)\n325|(8,21)\n326|(8,22)\n327|(8,23)\n328|(8,24)\n329|(8,25)\n330|(8,26)\n331|(8,27)\n332|(8,28)\n333|(8,29)\n334|(8,30)\n335|(8,31)\n336|(8,32)\n337|(8,33)\n338|(8,34)\n339|(8,35)\n340|(8,36)\n341|(8,37)\n342|(8,38)\n343|(9,1)\n344|(9,2)\n345|(9,3)\n346|(9,4)\n347|(9,5)\n348|(9,6)\n349|(9,7)\n350|(9,8)\n351|(9,9)\n352|(9,10)\n353|(9,11)\n354|(9,12)\n355|(9,13)\n356|(9,14)\n357|(9,15)\n358|(9,16)\n359|(9,17)\n360|(9,18)\n361|(9,19)\n362|(9,20)\n363|(9,21)\n364|(9,22)\n365|(9,23)\n366|(9,24)\n367|(9,25)\n368|(9,26)\n369|(9,27)\n370|(9,28)\n371|(9,29)\n372|(9,30)\n373|(9,31)\n374|(9,32)\n375|(9,33)\n376|(9,34)\n377|(9,35)\n378|(9,36)\n379|(9,37)\n380|(9,38)\n381|(10,1)\n382|(10,2)\n383|(10,3)\n384|(10,4)\n385|(10,5)\n386|(10,6)\n387|(10,7)\n388|(10,8)\n389|(10,9)\n390|(10,10)\n391|(10,11)\n392|(10,12)\n393|(10,13)\n394|(10,14)\n395|(10,15)\n396|(10,16)\n397|(10,17)\n398|(10,18)\n399|(10,19)\n400|(10,20)\n401|(10,21)\n402|(10,22)\n403|(10,23)\n404|(10,24)\n405|(10,25)\n406|(10,26)\n407|(10,27)\n408|(10,28)\n409|(10,29)\n410|(10,30)\n411|(10,31)\n412|(10,32)\n413|(10,33)\n414|(10,34)\n415|(10,35)\n416|(10,36)\n417|(10,37)\n418|(10,38)\n419|(11,1)\n420|(11,2)\n421|(11,3)\n422|(11,4)\n423|(11,5)\n424|(11,6)\n425|(11,7)\n426|(11,8)\n427|(11,9)\n428|(11,10)\n429|(11,11)\n430|(11,12)\n431|(11,13)\n432|(11,14)\n433|(11,15)\n434|(11,16)\n435|(11,17)\n436|(11,18)\n437|(11,19)\n438|(11,20)\n439|(11,21)\n440|(11,22)\n441|(11,23)\n442|(11,24)\n443|(11,25)\n444|(11,26)\n445|(11,27)\n446|(11,28)\n447|(11,29)\n448|(11,30)\n449|(11,31)\n450|(11,32)\n451|(11,33)\n452|(11,34)\n453|(11,35)\n454|(11,36)\n455|(11,37)\n456|(11,38)\n457|(12,1)\n458|(12,2)\n459|(12,3)\n460|(12,4)\n461|(12,5)\n462|(12,6)\n463|(12,7)\n464|(12,8)\n465|(12,9)\n466|(12,10)\n467|(12,11)\n468|(12,12)\n469|(12,13)\n470|(12,14)\n471|(12,15)\n472|(12,16)\n473|(12,17)\n474|(12,18)\n475|(12,19)\n476|(12,20)\n477|(12,21)\n478|(12,22)\n479|(12,23)\n480|(12,24)\n481|(12,25)\n482|(12,26)\n483|(12,27)\n484|(12,28)\n485|(12,29)\n486|(12,30)\n487|(12,31)\n488|(12,32)\n489|(12,33)\n490|(12,34)\n491|(12,35)\n492|(12,36)\n493|(12,37)\n494|(12,38)\n495|(13,1)\n496|(13,2)\n497|(13,3)\n498|(13,4)\n499|(13,5)\n500|(13,6)\n501|(13,7)\n502|(13,8)\n503|(13,9)\n504|(13,10)\n505|(13,11)\n506|(13,12)\n507|(13,13)\n508|(13,14)\n509|(13,15)\n510|(13,16)\n511|(13,17)\n512|(13,18)\n513|(13,19)\n514|(13,20)\n515|(13,21)\n516|(13,22)\n517|(13,23)\n518|(13,24)\n519|(13,25)\n520|(13,26)\n521|(13,27)\n522|(13,28)\n523|(13,29)\n524|(13,30)\n525|(13,31)\n526|(13,32)\n527|(13,33)\n528|(13,34)\n529|(13,35)\n530|(13,36)\n531|(13,37)\n532|(13,38)\n533|(14,1)\n534|(14,2)\n535|(14,3)\n536|(14,4)\n537|(14,5)\n538|(14,6)\n539|(14,7)\n540|(14,8)\n541|(14,9)\n542|(14,10)\n543|(14,11)\n544|(14,12)\n545|(14,13)\n546|(14,14)\n547|(14,15)\n548|(14,16)\n549|(14,17)\n550|(14,18)\n551|(14,19)\n552|(14,20)\n553|(14,21)\n554|(14,22)\n555|(14,23)\n556|(14,24)\n557|(14,25)\n558|(14,26)\n559|(14,27)\n560|(14,28)\n561|(14,29)\n562|(14,30)\n563|(14,31)\n564|(14,32)\n565|(14,33)\n566|(14,34)\n567|(14,35)\n568|(14,36)\n569|(14,37)\n570|(14,38)\n571|(15,1)\n572|(15,2)\n573|(15,3)\n574|(15,4)\n575|(15,5)\n576|(15,6)\n577|(15,7)\n578|(15,8)\n579|(15,9)\n580|(15,10)\n581|(15,11)\n582|(15,12)\n583|(15,13)\n584|(15,14)\n585|(15,15)\n586|(15,16)\n587|(15,17)\n588|(15,18)\n589|(15,19)\n590|(15,20)\n591|(15,21)\n592|(15,22)\n593|(15,23)\n594|(15,24)\n595|(15,25)\n596|(15,26)\n597|(15,27)\n598|(15,28)\n599|(15,29)\n600|(15,30)\n601|(15,31)\n602|(15,32)\n603|(15,33)\n604|(15,34)\n605|(15,35)\n606|(15,36)\n607|(15,37)\n608|(15,38)\n609|(16,1)\n610|(16,2)\n611|(16,3)\n612|(16,4)\n613|(16,5)\n614|(16,6)\n615|(16,7)\n616|(16,8)\n617|(16,9)\n618|(16,10)\n619|(16,11)\n620|(16,12)\n621|(16,13)\n622|(16,14)\n623|(16,15)\n624|(16,16)\n625|(16,17)\n626|(16,18)\n627|(16,19)\n628|(16,20)\n629|(16,21)\n630|(16,22)\n631|(16,23)\n632|(16,24)\n633|(16,25)\n634|(16,26)\n635|(16,27)\n636|(16,28)\n637|(16,29)\n638|(16,30)\n639|(16,31)\n640|(16,32)\n641|(16,33)\n642|(16,34)\n643|(16,35)\n644|(16,36)\n645|(16,37)\n646|(16,38)\n647|(17,1)\n648|(17,2)\n649|(17,3)\n650|(17,4)\n651|(17,5)\n652|(17,6)\n653|(17,7)\n654|(17,8)\n655|(17,9)\n656|(17,10)\n657|(17,11)\n658|(17,12)\n659|(17,13)\n660|(17,14)\n661|(17,15)\n662|(17,16)\n663|(17,17)\n664|(17,18)\n665|(17,19)\n666|(17,20)\n667|(17,21)\n668|(17,22)\n669|(17,23)\n670|(17,24)\n671|(17,25)\n672|(17,26)\n673|(17,27)\n674|(17,28)\n675|(17,29)\n676|(17,30)\n677|(17,31)\n678|(17,32)\n679|(17,33)\n680|(17,34)\n681|(17,35)\n682|(17,36)\n683|(17,37)\n684|(17,38)\n685|(18,1)\n686|(18,2)\n687|(18,3)\n688|(18,4)\n689|(18,5)\n690|(18,6)\n691|(18,7)\n692|(18,8)\n693|(18,9)\n694|(18,10)\n695|(18,11)\n696|(18,12)\n697|(18,13)\n698|(18,14)\n699|(18,15)\n700|(18,16)\n701|(18,17)\n702|(18,18)\n703|(18,19)\n704|(18,20)\n705|(18,21)\n706|(18,22)\n707|(18,23)\n708|(18,24)\n709|(18,25)\n710|(18,26)\n711|(18,27)\n712|(18,28)\n713|(18,29)\n714|(18,30)\n715|(18,31)\n716|(18,32)\n717|(18,33)\n718|(18,34)\n719|(18,35)\n720|(18,36)\n721|(18,37)\n722|(18,38)\n723|(19,1)\n724|(19,2)\n725|(19,3)\n726|(19,4)\n727|(19,5)\n728|(19,6)\n729|(19,7)\n730|(19,8)\n731|(19,9)\n732|(19,10)\n733|(19,11)\n734|(19,12)\n735|(19,13)\n736|(19,14)\n737|(19,15)\n738|(19,16)\n739|(19,17)\n740|(19,18)\n741|(19,19)\n742|(19,20)\n743|(19,21)\n744|(19,22)\n745|(19,23)\n746|(19,24)\n747|(19,25)\n748|(19,26)\n749|(19,27)\n750|(19,28)\n751|(19,29)\n752|(19,30)\n753|(19,31)\n754|(19,32)\n755|(19,33)\n756|(19,34)\n757|(19,35)\n758|(19,36)\n759|(19,37)\n760|(19,38)\n761|(20,1)\n762|(20,2)\n763|(20,3)\n764|(20,4)\n765|(20,5)\n766|(20,6)\n767|(20,7)\n768|(20,8)\n769|(20,9)\n770|(20,10)\n771|(20,11)\n772|(20,12)\n773|(20,13)\n774|(20,14)\n775|(20,15)\n776|(20,16)\n777|(20,17)\n778|(20,18)\n779|(20,19)\n780|(20,20)\n781|(20,21)\n782|(20,22)\n783|(20,23)\n784|(20,24)\n785|(20,25)\n786|(20,26)\n787|(20,27)\n788|(20,28)\n789|(20,29)\n790|(20,30)\n791|(20,31)\n792|(20,32)\n793|(20,33)\n794|(20,34)\n795|(20,35)\n796|(20,36)\n797|(20,37)\n798|(20,38)\n799|(21,1)\n800|(21,2)\n801|(21,3)\n802|(21,4)\n803|(21,5)\n804|(21,6)\n805|(21,7)\n806|(21,8)\n807|(21,9)\n808|(21,10)\n809|(21,11)\n810|(21,12)\n811|(21,13)\n812|(21,14)\n813|(21,15)\n814|(21,16)\n815|(21,17)\n816|(21,18)\n817|(21,19)\n818|(21,20)\n819|(21,21)\n820|(21,22)\n821|(21,23)\n822|(21,24)\n823|(21,25)\n824|(21,26)\n825|(21,27)\n826|(21,28)\n827|(21,29)\n828|(21,30)\n829|(21,31)\n830|(21,32)\n831|(21,33)\n832|(21,34)\n833|(21,35)\n834|(21,36)\n835|(21,37)\n836|(21,38)\n837|(22,1)\n838|(22,2)\n839|(22,3)\n840|(22,4)\n841|(22,5)\n842|(22,6)\n843|(22,7)\n844|(22,8)\n845|(22,9)\n846|(22,10)\n847|(22,11)\n848|(22,12)\n849|(22,13)\n850|(22,14)\n851|(22,15)\n852|(22,16)\n853|(22,17)\n854|(22,18)\n855|(22,19)\n856|(22,20)\n857|(22,21)\n858|(22,22)\n859|(22,23)\n860|(22,24)\n861|(22,25)\n862|(22,26)\n863|(22,27)\n864|(22,28)\n865|(22,29)\n866|(22,30)\n867|(22,31)\n868|(22,32)\n869|(22,33)\n870|(22,34)\n871|(22,35)\n872|(22,36)\n873|(22,37)\n874|(22,38)\n875|(23,1)\n876|(23,2)\n877|(23,3)\n878|(23,4)\n879|(23,5)\n880|(23,6)\n881|(23,7)\n882|(23,8)\n883|(23,9)\n884|(23,10)\n885|(23,11)\n886|(23,12)\n887|(23,13)\n888|(23,14)\n889|(23,15)\n890|(23,16)\n891|(23,17)\n892|(23,18)\n893|(23,19)\n894|(23,20)\n895|(23,21)\n896|(23,22)\n897|(23,23)\n898|(23,24)\n899|(23,25)\n900|(23,26)\n901|(23,27)\n902|(23,28)\n903|(23,29)\n904|(23,30)\n905|(23,31)\n906|(23,32)\n907|(23,33)\n908|(23,34)\n909|(23,35)\n910|(23,36)\n911|(23,37)\n912|(23,38)\n913|(24,1)\n914|(24,2)\n915|(24,3)\n916|(24,4)\n917|(24,5)\n918|(24,6)\n919|(24,7)\n920|(24,8)\n921|(24,9)\n922|(24,10)\n923|(24,11)\n924|(24,12)\n925|(24,13)\n926|(24,14)\n927|(24,15)\n928|(24,16)\n929|(24,17)\n930|(24,18)\n931|(24,19)\n932|(24,20)\n933|(24,21)\n934|(24,22)\n935|(24,23)\n936|(24,24)\n937|(24,25)\n938|(24,26)\n939|(24,27)\n940|(24,28)\n941|(24,29)\n942|(24,30)\n943|(24,31)\n944|(24,32)\n945|(24,33)\n946|(24,34)\n947|(24,35)\n948|(24,36)\n949|(24,37)\n950|(24,38)\n951|(25,1)\n952|(25,2)\n953|(25,3)\n954|(25,4)\n955|(25,5)\n956|(25,6)\n957|(25,7)\n958|(25,8)\n959|(25,9)\n960|(25,10)\n961|(25,11)\n962|(25,12)\n963|(25,13)\n964|(25,14)\n965|(25,15)\n966|(25,16)\n967|(25,17)\n968|(25,18)\n969|(25,19)\n970|(25,20)\n971|(25,21)\n972|(25,22)\n973|(25,23)\n974|(25,24)\n975|(25,25)\n976|(25,26)\n977|(25,27)\n978|(25,28)\n979|(25,29)\n980|(25,30)\n981|(25,31)\n982|(25,32)\n983|(25,33)\n984|(25,34)\n985|(25,35)\n986|(25,36)\n987|(25,37)\n988|(25,38)\n989|(26,1)\n990|(26,2)\n991|(26,3)\n992|(26,4)\n993|(26,5)\n994|(26,6)\n995|(26,7)\n996|(26,8)\n997|(26,9)\n998|(26,10)\n999|(26,11)\n1000|(26,12)\n1001|(26,13)\n1002|(26,14)\n1003|(26,15)\n1004|(26,16)\n1005|(26,17)\n1006|(26,18)\n1007|(26,19)\n1008|(26,20)\n1009|(26,21)\n1010|(26,22)\n1011|(26,23)\n1012|(26,24)\n1013|(26,25)\n1014|(26,26)\n1015|(26,27)\n1016|(26,28)\n1017|(26,29)\n1018|(26,30)\n1019|(26,31)\n1020|(26,32)\n1021|(26,33)\n1022|(26,34)\n1023|(26,35)\n1024|(26,36)\n1025|(26,37)\n1026|(26,38)\n1027|(27,1)\n1028|(27,2)\n1029|(27,3)\n1030|(27,4)\n1031|(27,5)\n1032|(27,6)\n1033|(27,7)\n1034|(27,8)\n1035|(27,9)\n1036|(27,10)\n1037|(27,11)\n1038|(27,12)\n1039|(27,13)\n1040|(27,14)\n1041|(27,15)\n1042|(27,16)\n1043|(27,17)\n1044|(27,18)\n1045|(27,19)\n1046|(27,20)\n1047|(27,21)\n1048|(27,22)\n1049|(27,23)\n1050|(27,24)\n1051|(27,25)\n1052|(27,26)\n1053|(27,27)\n1054|(27,28)\n1055|(27,29)\n1056|(27,30)\n1057|(27,31)\n1058|(27,32)\n1059|(27,33)\n1060|(27,34)\n1061|(27,35)\n1062|(27,36)\n1063|(27,37)\n1064|(27,38)\n1065|(28,1)\n1066|(28,2)\n1067|(28,3)\n1068|(28,4)\n1069|(28,5)\n1070|(28,6)\n1071|(28,7)\n1072|(28,8)\n1073|(28,9)\n1074|(28,10)\n1075|(28,11)\n1076|(28,12)\n1077|(28,13)\n1078|(28,14)\n1079|(28,15)\n1080|(28,16)\n1081|(28,17)\n1082|(28,18)\n1083|(28,19)\n1084|(28,20)\n1085|(28,21)\n1086|(28,22)\n1087|(28,23)\n1088|(28,24)\n1089|(28,25)\n1090|(28,26)\n1091|(28,27)\n1092|(28,28)\n1093|(28,29)\n1094|(28,30)\n1095|(28,31)\n1096|(28,32)\n1097|(28,33)\n1098|(28,34)\n1099|(28,35)\n1100|(28,36)\n1101|(28,37)\n1102|(28,38)\n1103|(29,1)\n1104|(29,2)\n1105|(29,3)\n1106|(29,4)\n1107|(29,5)\n1108|(29,6)\n1109|(29,7)\n1110|(29,8)\n1111|(29,9)\n1112|(29,10)\n1113|(29,11)\n1114|(29,12)\n1115|(29,13)\n1116|(29,14)\n1117|(29,15)\n1118|(29,16)\n1119|(29,17)\n1120|(29,18)\n1121|(29,19)\n1122|(29,20)\n1123|(29,21)\n1124|(29,22)\n1125|(29,23)\n1126|(29,24)\n1127|(29,25)\n1128|(29,26)\n1129|(29,27)\n1130|(29,28)\n1131|(29,29)\n1132|(29,30)\n1133|(29,31)\n1134|(29,32)\n1135|(29,33)\n1136|(29,34)\n1137|(29,35)\n1138|(29,36)\n1139|(29,37)\n1140|(29,38)\n1141|(30,1)\n1142|(30,2)\n1143|(30,3)\n1144|(30,4)\n1145|(30,5)\n1146|(30,6)\n1147|(30,7)\n1148|(30,8)\n1149|(30,9)\n1150|(30,10)\n1151|(30,11)\n1152|(30,12)\n1153|(30,13)\n1154|(30,14)\n1155|(30,15)\n1156|(30,16)\n1157|(30,17)\n1158|(30,18)\n1159|(30,19)\n1160|(30,20)\n1161|(30,21)\n1162|(30,22)\n1163|(30,23)\n1164|(30,24)\n1165|(30,25)\n1166|(30,26)\n1167|(30,27)\n1168|(30,28)\n1169|(30,29)\n1170|(30,30)\n1171|(30,31)\n1172|(30,32)\n1173|(30,33)\n1174|(30,34)\n1175|(30,35)\n1176|(30,36)\n1177|(30,37)\n1178|(30,38)\n1179|(31,1)\n1180|(31,2)\n1181|(31,3)\n1182|(31,4)\n1183|(31,5)\n1184|(31,6)\n1185|(31,7)\n1186|(31,8)\n1187|(31,9)\n1188|(31,10)\n1189|(31,11)\n1190|(31,12)\n1191|(31,13)\n1192|(31,14)\n1193|(31,15)\n1194|(31,16)\n1195|(31,17)\n1196|(31,18)\n1197|(31,19)\n1198|(31,20)\n1199|(31,21)\n1200|(31,22)\n1201|(31,23)\n1202|(31,24)\n1203|(31,25)\n1204|(31,26)\n1205|(31,27)\n1206|(31,28)\n1207|(31,29)\n1208|(31,30)\n1209|(31,31)\n1210|(31,32)\n1211|(31,33)\n1212|(31,34)\n1213|(31,35)\n1214|(31,36)\n1215|(31,37)\n1216|(31,38)\n1217|(32,1)\n1218|(32,2)\n1219|(32,3)\n1220|(32,4)\n1221|(32,5)\n1222|(32,6)\n1223|(32,7)\n1224|(32,8)\n1225|(32,9)\n1226|(32,10)\n1227|(32,11)\n1228|(32,12)\n1229|(32,13)\n1230|(32,14)\n1231|(32,15)\n1232|(32,16)\n1233|(32,17)\n1234|(32,18)\n1235|(32,19)\n1236|(32,20)\n1237|(32,21)\n1238|(32,22)\n1239|(32,23)\n1240|(32,24)\n1241|(32,25)\n1242|(32,26)\n1243|(32,27)\n1244|(32,28)\n1245|(32,29)\n1246|(32,30)\n1247|(32,31)\n1248|(32,32)\n1249|(32,33)\n1250|(32,34)\n1251|(32,35)\n1252|(32,36)\n1253|(32,37)\n1254|(32,38)\n1255|(33,1)\n1256|(33,2)\n1257|(33,3)\n1258|(33,4)\n1259|(33,5)\n1260|(33,6)\n1261|(33,7)\n1262|(33,8)\n1263|(33,9)\n1264|(33,10)\n1265|(33,11)\n1266|(33,12)\n1267|(33,13)\n1268|(33,14)\n1269|(33,15)\n1270|(33,16)\n1271|(33,17)\n1272|(33,18)\n1273|(33,19)\n1274|(33,20)\n1275|(33,21)\n1276|(33,22)\n1277|(33,23)\n1278|(33,24)\n1279|(33,25)\n1280|(33,26)\n1281|(33,27)\n1282|(33,28)\n1283|(33,29)\n1284|(33,30)\n1285|(33,31)\n1286|(33,32)\n1287|(33,33)\n1288|(33,34)\n1289|(33,35)\n1290|(33,36)\n1291|(33,37)\n1292|(33,38)\n1293|(34,1)\n1294|(34,2)\n1295|(34,3)\n1296|(34,4)\n1297|(34,5)\n1298|(34,6)\n1299|(34,7)\n1300|(34,8)\n1301|(34,9)\n1302|(34,10)\n1303|(34,11)\n1304|(34,12)\n1305|(34,13)\n1306|(34,14)\n1307|(34,15)\n1308|(34,16)\n1309|(34,17)\n1310|(34,18)\n1311|(34,19)\n1312|(34,20)\n1313|(34,21)\n1314|(34,22)\n1315|(34,23)\n1316|(34,24)\n1317|(34,25)\n1318|(34,26)\n1319|(34,27)\n1320|(34,28)\n1321|(34,29)\n1322|(34,30)\n1323|(34,31)\n1324|(34,32)\n1325|(34,33)\n1326|(34,34)\n1327|(34,35)\n1328|(34,36)\n1329|(34,37)\n1330|(34,38)\n1331|(35,1)\n1332|(35,2)\n1333|(35,3)\n1334|(35,4)\n1335|(35,5)\n1336|(35,6)\n1337|(35,7)\n1338|(35,8)\n1339|(35,9)\n1340|(35,10)\n1341|(35,11)\n1342|(35,12)\n1343|(35,13)\n1344|(35,14)\n1345|(35,15)\n1346|(35,16)\n1347|(35,17)\n1348|(35,18)\n1349|(35,19)\n1350|(35,20)\n1351|(35,21)\n1352|(35,22)\n1353|(35,23)\n1354|(35,24)\n1355|(35,25)\n1356|(35,26)\n1357|(35,27)\n1358|(35,28)\n1359|(35,29)\n1360|(35,30)\n1361|(35,31)\n1362|(35,32)\n1363|(35,33)\n1364|(35,34)\n1365|(35,35)\n1366|(35,36)\n1367|(35,37)\n1368|(35,38)\n1369|(36,1)\n1370|(36,2)\n1371|(36,3)\n1372|(36,4)\n1373|(36,5)\n1374|(36,6)\n1375|(36,7)\n1376|(36,8)\n1377|(36,9)\n1378|(36,10)\n1379|(36,11)\n1380|(36,12)\n1381|(36,13)\n1382|(36,14)\n1383|(36,15)\n1384|(36,16)\n1385|(36,17)\n1386|(36,18)\n1387|(36,19)\n1388|(36,20)\n1389|(36,21)\n1390|(36,22)\n1391|(36,23)\n1392|(36,24)\n1393|(36,25)\n1394|(36,26)\n1395|(36,27)\n1396|(36,28)\n1397|(36,29)\n1398|(36,30)\n1399|(36,31)\n1400|(36,32)\n1401|(36,33)\n1402|(36,34)\n1403|(36,35)\n1404|(36,36)\n1405|(36,37)\n1406|(36,38)\n1407|(37,1)\n1408|(37,2)\n1409|(37,3)\n1410|(37,4)\n1411|(37,5)\n1412|(37,6)\n1413|(37,7)\n1414|(37,8)\n1415|(37,9)\n1416|(37,10)\n1417|(37,11)\n1418|(37,12)\n1419|(37,13)\n1420|(37,14)\n1421|(37,15)\n1422|(37,16)\n1423|(37,17)\n1424|(37,18)\n1425|(37,19)\n1426|(37,20)\n1427|(37,21)\n1428|(37,22)\n1429|(37,23)\n1430|(37,24)\n1431|(37,25)\n1432|(37,26)\n1433|(37,27)\n1434|(37,28)\n1435|(37,29)\n1436|(37,30)\n1437|(37,31)\n1438|(37,32)\n1439|(37,33)\n1440|(37,34)\n1441|(37,35)\n1442|(37,36)\n1443|(37,37)\n1444|(37,38)\n1445|(38,1)\n1446|(38,2)\n1447|(38,3)\n1448|(38,4)\n1449|(38,5)\n1450|(38,6)\n1451|(38,7)\n1452|(38,8)\n1453|(38,9)\n1454|(38,10)\n1455|(38,11)\n1456|(38,12)\n1457|(38,13)\n1458|(38,14)\n1459|(38,15)\n1460|(38,16)\n1461|(38,17)\n1462|(38,18)\n1463|(38,19)\n1464|(38,20)\n1465|(38,21)\n1466|(38,22)\n1467|(38,23)\n1468|(38,24)\n1469|(38,25)\n1470|(38,26)\n1471|(38,27)\n1472|(38,28)\n1473|(38,29)\n1474|(38,30)\n1475|(38,31)\n1476|(38,32)\n1477|(38,33)\n1478|(38,34)\n1479|(38,35)\n1480|(38,36)\n1481|(38,37)\n1482|(38,38)\n1483|(39,1)\n1484|(39,2)\n1485|(39,3)\n1486|(39,4)\n1487|(39,5)\n1488|(39,6)\n1489|(39,7)\n1490|(39,8)\n1491|(39,9)\n1492|(39,10)\n1493|(39,11)\n1494|(39,12)\n1495|(39,13)\n1496|(39,14)\n1497|(39,15)\n1498|(39,16)\n1499|(39,17)\n1500|(39,18)\n1501|(39,19)\n1502|(39,20)\n1503|(39,21)\n1504|(39,22)\n1505|(39,23)\n1506|(39,24)\n1507|(39,25)\n1508|(39,26)\n1509|(39,27)\n1510|(39,28)\n1511|(39,29)\n1512|(39,30)\n1513|(39,31)\n1514|(39,32)\n1515|(39,33)\n1516|(39,34)\n1517|(39,35)\n1518|(39,36)\n1519|(39,37)\n1520|(39,38)\n1521|(40,1)\n1522|(40,2)\n1523|(40,3)\n1524|(40,4)\n1525|(40,5)\n1526|(40,6)\n1527|(40,7)\n1528|(40,8)\n1529|(40,9)\n1530|(40,10)\n1531|(40,11)\n1532|(40,12)\n1533|(40,13)\n1534|(40,14)\n1535|(40,15)\n1536|(40,16)\n1537|(40,17)\n1538|(40,18)\n1539|(40,19)\n1540|(40,20)\n1541|(40,21)\n1542|(40,22)\n1543|(40,23)\n1544|(40,24)\n1545|(40,25)\n1546|(40,26)\n1547|(40,27)\n1548|(40,28)\n1549|(40,29)\n1550|(40,30)\n1551|(40,31)\n1552|(40,32)\n1553|(40,33)\n1554|(40,34)\n1555|(40,35)\n1556|(40,36)\n1557|(40,37)\n1558|(40,38)\n1559|(41,1)\n1560|(41,2)\n1561|(41,3)\n1562|(41,4)\n1563|(41,5)\n1564|(41,6)\n1565|(41,7)\n1566|(41,8)\n1567|(41,9)\n1568|(41,10)\n1569|(41,11)\n1570|(41,12)\n1571|(41,13)\n1572|(41,14)\n1573|(41,15)\n1574|(41,16)\n1575|(41,17)\n1576|(41,18)\n1577|(41,19)\n1578|(41,20)\n1579|(41,21)\n1580|(41,22)\n1581|(41,23)\n1582|(41,24)\n1583|(41,25)\n1584|(41,26)\n1585|(41,27)\n1586|(41,28)\n1587|(41,29)\n1588|(41,30)\n1589|(41,31)\n1590|(41,32)\n1591|(41,33)\n1592|(41,34)\n1593|(41,35)\n1594|(41,36)\n1595|(41,37)\n1596|(41,38)\n1597|(42,1)\n1598|(42,2)\n1599|(42,3)\n1600|(42,4)\n1601|(42,5)\n1602|(42,6)\n1603|(42,7)\n1604|(42,8)\n1605|(42,9)\n1606|(42,10)\n1607|(42,11)\n1608|(42,12)\n1609|(42,13)\n1610|(42,14)\n1611|(42,15)\n1612|(42,16)\n1613|(42,17)\n1614|(42,18)\n1615|(42,19)\n1616|(42,20)\n1617|(42,21)\n1618|(42,22)\n1619|(42,23)\n1620|(42,24)\n1621|(42,25)\n1622|(42,26)\n1623|(42,27)\n1624|(42,28)\n1625|(42,29)\n1626|(42,30)\n1627|(42,31)\n1628|(42,32)\n1629|(42,33)\n1630|(42,34)\n1631|(42,35)\n1632|(42,36)\n1633|(42,37)\n1634|(42,38)\n1635|(43,1)\n1636|(43,2)\n1637|(43,3)\n1638|(43,4)\n1639|(43,5)\n1640|(43,6)\n1641|(43,7)\n1642|(43,8)\n1643|(43,9)\n1644|(43,10)\n1645|(43,11)\n1646|(43,12)\n1647|(43,13)\n1648|(43,14)\n1649|(43,15)\n1650|(43,16)\n1651|(43,17)\n1652|(43,18)\n1653|(43,19)\n1654|(43,20)\n1655|(43,21)\n1656|(43,22)\n1657|(43,23)\n1658|(43,24)\n1659|(43,25)\n1660|(43,26)\n1661|(43,27)\n1662|(43,28)\n1663|(43,29)\n1664|(43,30)\n1665|(43,31)\n1666|(43,32)\n1667|(43,33)\n1668|(43,34)\n1669|(43,35)\n1670|(43,36)\n1671|(43,37)\n1672|(43,38)\n1673|(44,1)\n1674|(44,2)\n1675|(44,3)\n1676|(44,4)\n1677|(44,5)\n1678|(44,6)\n1679|(44,7)\n1680|(44,8)\n1681|(44,9)\n1682|(44,10)\n1683|(44,11)\n1684|(44,12)\n1685|(44,13)\n1686|(44,14)\n1687|(44,15)\n1688|(44,16)\n1689|(44,17)\n1690|(44,18)\n1691|(44,19)\n1692|(44,20)\n1693|(44,21)\n1694|(44,22)\n1695|(44,23)\n1696|(44,24)\n1697|(44,25)\n1698|(44,26)\n1699|(44,27)\n1700|(44,28)\n1701|(44,29)\n1702|(44,30)\n1703|(44,31)\n1704|(44,32)\n1705|(44,33)\n1706|(44,34)\n1707|(44,35)\n1708|(44,36)\n1709|(44,37)\n1710|(44,38)\n1711|(45,1)\n1712|(45,2)\n1713|(45,3)\n1714|(45,4)\n1715|(45,5)\n1716|(45,6)\n1717|(45,7)\n1718|(45,8)\n1719|(45,9)\n1720|(45,10)\n1721|(45,11)\n1722|(45,12)\n1723|(45,13)\n1724|(45,14)\n1725|(45,15)\n1726|(45,16)\n1727|(45,17)\n1728|(45,18)\n1729|(45,19)\n1730|(45,20)\n1731|(45,21)\n1732|(45,22)\n1733|(45,23)\n1734|(45,24)\n1735|(45,25)\n1736|(45,26)\n1737|(45,27)\n1738|(45,28)\n1739|(45,29)\n1740|(45,30)\n1741|(45,31)\n1742|(45,32)\n1743|(45,33)\n1744|(45,34)\n1745|(45,35)\n1746|(45,36)\n1747|(45,37)\n1748|(45,38)\n1749|(46,1)\n1750|(46,2)\n1751|(46,3)\n1752|(46,4)\n1753|(46,5)\n1754|(46,6)\n1755|(46,7)\n1756|(46,8)\n1757|(46,9)\n1758|(46,10)\n1759|(46,11)\n1760|(46,12)\n1761|(46,13)\n1762|(46,14)\n1763|(46,15)\n1764|(46,16)\n1765|(46,17)\n1766|(46,18)\n1767|(46,19)\n1768|(46,20)\n1769|(46,21)\n1770|(46,22)\n1771|(46,23)\n1772|(46,24)\n1773|(46,25)\n1774|(46,26)\n1775|(46,27)\n1776|(46,28)\n1777|(46,29)\n1778|(46,30)\n1779|(46,31)\n1780|(46,32)\n1781|(46,33)\n1782|(46,34)\n1783|(46,35)\n1784|(46,36)\n1785|(46,37)\n1786|(46,38)\n1787|(47,1)\n1788|(47,2)\n1789|(47,3)\n1790|(47,4)\n1791|(47,5)\n1792|(47,6)\n1793|(47,7)\n1794|(47,8)\n1795|(47,9)\n1796|(47,10)\n1797|(47,11)\n1798|(47,12)\n1799|(47,13)\n1800|(47,14)\n1801|(47,15)\n1802|(47,16)\n1803|(47,17)\n1804|(47,18)\n1805|(47,19)\n1806|(47,20)\n1807|(47,21)\n1808|(47,22)\n1809|(47,23)\n1810|(47,24)\n1811|(47,25)\n1812|(47,26)\n1813|(47,27)\n1814|(47,28)\n1815|(47,29)\n1816|(47,30)\n1817|(47,31)\n1818|(47,32)\n1819|(47,33)\n1820|(47,34)\n1821|(47,35)\n1822|(47,36)\n1823|(47,37)\n1824|(47,38)\n1825|(48,1)\n1826|(48,2)\n1827|(48,3)\n1828|(48,4)\n1829|(48,5)\n1830|(48,6)\n1831|(48,7)\n1832|(48,8)\n1833|(48,9)\n1834|(48,10)\n1835|(48,11)\n1836|(48,12)\n1837|(48,13)\n1838|(48,14)\n1839|(48,15)\n1840|(48,16)\n1841|(48,17)\n1842|(48,18)\n1843|(48,19)\n1844|(48,20)\n1845|(48,21)\n1846|(48,22)\n1847|(48,23)\n1848|(48,24)\n1849|(48,25)\n1850|(48,26)\n1851|(48,27)\n1852|(48,28)\n1853|(48,29)\n1854|(48,30)\n1855|(48,31)\n1856|(48,32)\n1857|(48,33)\n1858|(48,34)\n1859|(48,35)\n1860|(48,36)\n1861|(48,37)\n1862|(48,38)\n1863|(49,1)\n1864|(49,2)\n1865|(49,3)\n1866|(49,4)\n1867|(49,5)\n1868|(49,6)\n1869|(49,7)\n1870|(49,8)\n1871|(49,9)\n1872|(49,10)\n1873|(49,11)\n1874|(49,12)\n1875|(49,13)\n1876|(49,14)\n1877|(49,15)\n1878|(49,16)\n1879|(49,17)\n1880|(49,18)\n1881|(49,19)\n1882|(49,20)\n1883|(49,21)\n1884|(49,22)\n1885|(49,23)\n1886|(49,24)\n1887|(49,25)\n1888|(49,26)\n1889|(49,27)\n1890|(49,28)\n1891|(49,29)\n1892|(49,30)\n1893|(49,31)\n1894|(49,32)\n1895|(49,33)\n1896|(49,34)\n1897|(49,35)\n1898|(49,36)\n1899|(49,37)\n1900|(49,38)\n1901|(50,1)\n1902|(50,2)\n1903|(50,3)\n1904|(50,4)\n1905|(50,5)\n1906|(50,6)\n1907|(50,7)\n1908|(50,8)\n1909|(50,9)\n1910|(50,10)\n1911|(50,11)\n1912|(50,12)\n1913|(50,13)\n1914|(50,14)\n1915|(50,15)\n1916|(50,16)\n1917|(50,17)\n1918|(50,18)\n1919|(50,19)\n1920|(50,20)\n1921|(50,21)\n1922|(50,22)\n1923|(50,23)\n1924|(50,24)\n1925|(50,25)\n1926|(50,26)\n1927|(50,27)\n1928|(50,28)\n1929|(50,29)\n1930|(50,30)\n1931|(50,31)\n1932|(50,32)\n1933|(50,33)\n1934|(50,34)\n1935|(50,35)\n1936|(50,36)\n1937|(50,37)\n1938|(50,38)\n1939|(51,1)\n1940|(51,2)\n1941|(51,3)\n1942|(51,4)\n1943|(51,5)\n1944|(51,6)\n1945|(51,7)\n1946|(51,8)\n1947|(51,9)\n1948|(51,10)\n1949|(51,11)\n1950|(51,12)\n1951|(51,13)\n1952|(51,14)\n1953|(51,15)\n1954|(51,16)\n1955|(51,17)\n1956|(51,18)\n1957|(51,19)\n1958|(51,20)\n1959|(51,21)\n1960|(51,22)\n1961|(51,23)\n1962|(51,24)\n1963|(51,25)\n1964|(51,26)\n1965|(51,27)\n1966|(51,28)\n1967|(51,29)\n1968|(51,30)\n1969|(51,31)\n1970|(51,32)\n1971|(51,33)\n1972|(51,34)\n1973|(51,35)\n1974|(51,36)\n1975|(51,37)\n1976|(51,38)\n1977|(52,1)\n1978|(52,2)\n1979|(52,3)\n1980|(52,4)\n1981|(52,5)\n1982|(52,6)\n1983|(52,7)\n1984|(52,8)\n1985|(52,9)\n1986|(52,10)\n1987|(52,11)\n1988|(52,12)\n1989|(52,13)\n1990|(52,14)\n1991|(52,15)\n1992|(52,16)\n1993|(52,17)\n1994|(52,18)\n1995|(52,19)\n1996|(52,20)\n1997|(52,21)\n1998|(52,22)\n1999|(52,23)\n2000|(52,24)\n2001|(52,25)\n2002|(52,26)\n2003|(52,27)\n2004|(52,28)\n2005|(52,29)\n2006|(52,30)\n2007|(52,31)\n2008|(52,32)\n2009|(52,33)\n2010|(52,34)\n2011|(52,35)\n2012|(52,36)\n2013|(52,37)\n2014|(52,38)\n2015|(53,1)\n2016|(53,2)\n2017|(53,3)\n2018|(53,4)\n2019|(53,5)\n2020|(53,6)\n2021|(53,7)\n2022|(53,8)\n2023|(53,9)\n2024|(53,10)\n2025|(53,11)\n2026|(53,12)\n2027|(53,13)\n2028|(53,14)\n2029|(53,15)\n2030|(53,16)\n2031|(53,17)\n2032|(53,18)\n2033|(53,19)\n2034|(53,20)\n2035|(53,21)\n2036|(53,22)\n2037|(53,23)\n2038|(53,24)\n2039|(53,25)\n2040|(53,26)\n2041|(53,27)\n2042|(53,28)\n2043|(53,29)\n2044|(53,30)\n2045|(53,31)\n2046|(53,32)\n2047|(53,33)\n2048|(53,34)",
+        "legacy": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(0,13)\n14|(0,14)\n15|(0,15)\n16|(0,16)\n17|(0,17)\n18|(0,18)\n19|(0,19)\n20|(0,20)\n21|(0,21)\n22|(0,22)\n23|(0,23)\n24|(0,24)\n25|(0,25)\n26|(0,26)\n27|(0,27)\n28|(0,28)\n29|(0,29)\n30|(0,30)\n31|(0,31)\n32|(0,32)\n33|(0,33)\n34|(0,34)\n35|(0,35)\n36|(0,36)\n37|(0,37)\n38|(0,38)\n39|(1,1)\n40|(1,2)\n41|(1,3)\n42|(1,4)\n43|(1,5)\n44|(1,6)\n45|(1,7)\n46|(1,8)\n47|(1,9)\n48|(1,10)\n49|(1,11)\n50|(1,12)\n51|(1,13)\n52|(1,14)\n53|(1,15)\n54|(1,16)\n55|(1,17)\n56|(1,18)\n57|(1,19)\n58|(1,20)\n59|(1,21)\n60|(1,22)\n61|(1,23)\n62|(1,24)\n63|(1,25)\n64|(1,26)\n65|(1,27)\n66|(1,28)\n67|(1,29)\n68|(1,30)\n69|(1,31)\n70|(1,32)\n71|(1,33)\n72|(1,34)\n73|(1,35)\n74|(1,36)\n75|(1,37)\n76|(1,38)\n77|(2,1)\n78|(2,2)\n79|(2,3)\n80|(2,4)\n81|(2,5)\n82|(2,6)\n83|(2,7)\n84|(2,8)\n85|(2,9)\n86|(2,10)\n87|(2,11)\n88|(2,12)\n89|(2,13)\n90|(2,14)\n91|(2,15)\n92|(2,16)\n93|(2,17)\n94|(2,18)\n95|(2,19)\n96|(2,20)\n97|(2,21)\n98|(2,22)\n99|(2,23)\n100|(2,24)\n101|(2,25)\n102|(2,26)\n103|(2,27)\n104|(2,28)\n105|(2,29)\n106|(2,30)\n107|(2,31)\n108|(2,32)\n109|(2,33)\n110|(2,34)\n111|(2,35)\n112|(2,36)\n113|(2,37)\n114|(2,38)\n115|(3,1)\n116|(3,2)\n117|(3,3)\n118|(3,4)\n119|(3,5)\n120|(3,6)\n121|(3,7)\n122|(3,8)\n123|(3,9)\n124|(3,10)\n125|(3,11)\n126|(3,12)\n127|(3,13)\n128|(3,14)\n129|(3,15)\n130|(3,16)\n131|(3,17)\n132|(3,18)\n133|(3,19)\n134|(3,20)\n135|(3,21)\n136|(3,22)\n137|(3,23)\n138|(3,24)\n139|(3,25)\n140|(3,26)\n141|(3,27)\n142|(3,28)\n143|(3,29)\n144|(3,30)\n145|(3,31)\n146|(3,32)\n147|(3,33)\n148|(3,34)\n149|(3,35)\n150|(3,36)\n151|(3,37)\n152|(3,38)\n153|(4,1)\n154|(4,2)\n155|(4,3)\n156|(4,4)\n157|(4,5)\n158|(4,6)\n159|(4,7)\n160|(4,8)\n161|(4,9)\n162|(4,10)\n163|(4,11)\n164|(4,12)\n165|(4,13)\n166|(4,14)\n167|(4,15)\n168|(4,16)\n169|(4,17)\n170|(4,18)\n171|(4,19)\n172|(4,20)\n173|(4,21)\n174|(4,22)\n175|(4,23)\n176|(4,24)\n177|(4,25)\n178|(4,26)\n179|(4,27)\n180|(4,28)\n181|(4,29)\n182|(4,30)\n183|(4,31)\n184|(4,32)\n185|(4,33)\n186|(4,34)\n187|(4,35)\n188|(4,36)\n189|(4,37)\n190|(4,38)\n191|(5,1)\n192|(5,2)\n193|(5,3)\n194|(5,4)\n195|(5,5)\n196|(5,6)\n197|(5,7)\n198|(5,8)\n199|(5,9)\n200|(5,10)\n201|(5,11)\n202|(5,12)\n203|(5,13)\n204|(5,14)\n205|(5,15)\n206|(5,16)\n207|(5,17)\n208|(5,18)\n209|(5,19)\n210|(5,20)\n211|(5,21)\n212|(5,22)\n213|(5,23)\n214|(5,24)\n215|(5,25)\n216|(5,26)\n217|(5,27)\n218|(5,28)\n219|(5,29)\n220|(5,30)\n221|(5,31)\n222|(5,32)\n223|(5,33)\n224|(5,34)\n225|(5,35)\n226|(5,36)\n227|(5,37)\n228|(5,38)\n229|(6,1)\n230|(6,2)\n231|(6,3)\n232|(6,4)\n233|(6,5)\n234|(6,6)\n235|(6,7)\n236|(6,8)\n237|(6,9)\n238|(6,10)\n239|(6,11)\n240|(6,12)\n241|(6,13)\n242|(6,14)\n243|(6,15)\n244|(6,16)\n245|(6,17)\n246|(6,18)\n247|(6,19)\n248|(6,20)\n249|(6,21)\n250|(6,22)\n251|(6,23)\n252|(6,24)\n253|(6,25)\n254|(6,26)\n255|(6,27)\n256|(6,28)\n257|(6,29)\n258|(6,30)\n259|(6,31)\n260|(6,32)\n261|(6,33)\n262|(6,34)\n263|(6,35)\n264|(6,36)\n265|(6,37)\n266|(6,38)\n267|(7,1)\n268|(7,2)\n269|(7,3)\n270|(7,4)\n271|(7,5)\n272|(7,6)\n273|(7,7)\n274|(7,8)\n275|(7,9)\n276|(7,10)\n277|(7,11)\n278|(7,12)\n279|(7,13)\n280|(7,14)\n281|(7,15)\n282|(7,16)\n283|(7,17)\n284|(7,18)\n285|(7,19)\n286|(7,20)\n287|(7,21)\n288|(7,22)\n289|(7,23)\n290|(7,24)\n291|(7,25)\n292|(7,26)\n293|(7,27)\n294|(7,28)\n295|(7,29)\n296|(7,30)\n297|(7,31)\n298|(7,32)\n299|(7,33)\n300|(7,34)\n301|(7,35)\n302|(7,36)\n303|(7,37)\n304|(7,38)\n305|(8,1)\n306|(8,2)\n307|(8,3)\n308|(8,4)\n309|(8,5)\n310|(8,6)\n311|(8,7)\n312|(8,8)\n313|(8,9)\n314|(8,10)\n315|(8,11)\n316|(8,12)\n317|(8,13)\n318|(8,14)\n319|(8,15)\n320|(8,16)\n321|(8,17)\n322|(8,18)\n323|(8,19)\n324|(8,20)\n325|(8,21)\n326|(8,22)\n327|(8,23)\n328|(8,24)\n329|(8,25)\n330|(8,26)\n331|(8,27)\n332|(8,28)\n333|(8,29)\n334|(8,30)\n335|(8,31)\n336|(8,32)\n337|(8,33)\n338|(8,34)\n339|(8,35)\n340|(8,36)\n341|(8,37)\n342|(8,38)\n343|(9,1)\n344|(9,2)\n345|(9,3)\n346|(9,4)\n347|(9,5)\n348|(9,6)\n349|(9,7)\n350|(9,8)\n351|(9,9)\n352|(9,10)\n353|(9,11)\n354|(9,12)\n355|(9,13)\n356|(9,14)\n357|(9,15)\n358|(9,16)\n359|(9,17)\n360|(9,18)\n361|(9,19)\n362|(9,20)\n363|(9,21)\n364|(9,22)\n365|(9,23)\n366|(9,24)\n367|(9,25)\n368|(9,26)\n369|(9,27)\n370|(9,28)\n371|(9,29)\n372|(9,30)\n373|(9,31)\n374|(9,32)\n375|(9,33)\n376|(9,34)\n377|(9,35)\n378|(9,36)\n379|(9,37)\n380|(9,38)\n381|(10,1)\n382|(10,2)\n383|(10,3)\n384|(10,4)\n385|(10,5)\n386|(10,6)\n387|(10,7)\n388|(10,8)\n389|(10,9)\n390|(10,10)\n391|(10,11)\n392|(10,12)\n393|(10,13)\n394|(10,14)\n395|(10,15)\n396|(10,16)\n397|(10,17)\n398|(10,18)\n399|(10,19)\n400|(10,20)\n401|(10,21)\n402|(10,22)\n403|(10,23)\n404|(10,24)\n405|(10,25)\n406|(10,26)\n407|(10,27)\n408|(10,28)\n409|(10,29)\n410|(10,30)\n411|(10,31)\n412|(10,32)\n413|(10,33)\n414|(10,34)\n415|(10,35)\n416|(10,36)\n417|(10,37)\n418|(10,38)\n419|(11,1)\n420|(11,2)\n421|(11,3)\n422|(11,4)\n423|(11,5)\n424|(11,6)\n425|(11,7)\n426|(11,8)\n427|(11,9)\n428|(11,10)\n429|(11,11)\n430|(11,12)\n431|(11,13)\n432|(11,14)\n433|(11,15)\n434|(11,16)\n435|(11,17)\n436|(11,18)\n437|(11,19)\n438|(11,20)\n439|(11,21)\n440|(11,22)\n441|(11,23)\n442|(11,24)\n443|(11,25)\n444|(11,26)\n445|(11,27)\n446|(11,28)\n447|(11,29)\n448|(11,30)\n449|(11,31)\n450|(11,32)\n451|(11,33)\n452|(11,34)\n453|(11,35)\n454|(11,36)\n455|(11,37)\n456|(11,38)\n457|(12,1)\n458|(12,2)\n459|(12,3)\n460|(12,4)\n461|(12,5)\n462|(12,6)\n463|(12,7)\n464|(12,8)\n465|(12,9)\n466|(12,10)\n467|(12,11)\n468|(12,12)\n469|(12,13)\n470|(12,14)\n471|(12,15)\n472|(12,16)\n473|(12,17)\n474|(12,18)\n475|(12,19)\n476|(12,20)\n477|(12,21)\n478|(12,22)\n479|(12,23)\n480|(12,24)\n481|(12,25)\n482|(12,26)\n483|(12,27)\n484|(12,28)\n485|(12,29)\n486|(12,30)\n487|(12,31)\n488|(12,32)\n489|(12,33)\n490|(12,34)\n491|(12,35)\n492|(12,36)\n493|(12,37)\n494|(12,38)\n495|(13,1)\n496|(13,2)\n497|(13,3)\n498|(13,4)\n499|(13,5)\n500|(13,6)\n501|(13,7)\n502|(13,8)\n503|(13,9)\n504|(13,10)\n505|(13,11)\n506|(13,12)\n507|(13,13)\n508|(13,14)\n509|(13,15)\n510|(13,16)\n511|(13,17)\n512|(13,18)\n513|(13,19)\n514|(13,20)\n515|(13,21)\n516|(13,22)\n517|(13,23)\n518|(13,24)\n519|(13,25)\n520|(13,26)\n521|(13,27)\n522|(13,28)\n523|(13,29)\n524|(13,30)\n525|(13,31)\n526|(13,32)\n527|(13,33)\n528|(13,34)\n529|(13,35)\n530|(13,36)\n531|(13,37)\n532|(13,38)\n533|(14,1)\n534|(14,2)\n535|(14,3)\n536|(14,4)\n537|(14,5)\n538|(14,6)\n539|(14,7)\n540|(14,8)\n541|(14,9)\n542|(14,10)\n543|(14,11)\n544|(14,12)\n545|(14,13)\n546|(14,14)\n547|(14,15)\n548|(14,16)\n549|(14,17)\n550|(14,18)\n551|(14,19)\n552|(14,20)\n553|(14,21)\n554|(14,22)\n555|(14,23)\n556|(14,24)\n557|(14,25)\n558|(14,26)\n559|(14,27)\n560|(14,28)\n561|(14,29)\n562|(14,30)\n563|(14,31)\n564|(14,32)\n565|(14,33)\n566|(14,34)\n567|(14,35)\n568|(14,36)\n569|(14,37)\n570|(14,38)\n571|(15,1)\n572|(15,2)\n573|(15,3)\n574|(15,4)\n575|(15,5)\n576|(15,6)\n577|(15,7)\n578|(15,8)\n579|(15,9)\n580|(15,10)\n581|(15,11)\n582|(15,12)\n583|(15,13)\n584|(15,14)\n585|(15,15)\n586|(15,16)\n587|(15,17)\n588|(15,18)\n589|(15,19)\n590|(15,20)\n591|(15,21)\n592|(15,22)\n593|(15,23)\n594|(15,24)\n595|(15,25)\n596|(15,26)\n597|(15,27)\n598|(15,28)\n599|(15,29)\n600|(15,30)\n601|(15,31)\n602|(15,32)\n603|(15,33)\n604|(15,34)\n605|(15,35)\n606|(15,36)\n607|(15,37)\n608|(15,38)\n609|(16,1)\n610|(16,2)\n611|(16,3)\n612|(16,4)\n613|(16,5)\n614|(16,6)\n615|(16,7)\n616|(16,8)\n617|(16,9)\n618|(16,10)\n619|(16,11)\n620|(16,12)\n621|(16,13)\n622|(16,14)\n623|(16,15)\n624|(16,16)\n625|(16,17)\n626|(16,18)\n627|(16,19)\n628|(16,20)\n629|(16,21)\n630|(16,22)\n631|(16,23)\n632|(16,24)\n633|(16,25)\n634|(16,26)\n635|(16,27)\n636|(16,28)\n637|(16,29)\n638|(16,30)\n639|(16,31)\n640|(16,32)\n641|(16,33)\n642|(16,34)\n643|(16,35)\n644|(16,36)\n645|(16,37)\n646|(16,38)\n647|(17,1)\n648|(17,2)\n649|(17,3)\n650|(17,4)\n651|(17,5)\n652|(17,6)\n653|(17,7)\n654|(17,8)\n655|(17,9)\n656|(17,10)\n657|(17,11)\n658|(17,12)\n659|(17,13)\n660|(17,14)\n661|(17,15)\n662|(17,16)\n663|(17,17)\n664|(17,18)\n665|(17,19)\n666|(17,20)\n667|(17,21)\n668|(17,22)\n669|(17,23)\n670|(17,24)\n671|(17,25)\n672|(17,26)\n673|(17,27)\n674|(17,28)\n675|(17,29)\n676|(17,30)\n677|(17,31)\n678|(17,32)\n679|(17,33)\n680|(17,34)\n681|(17,35)\n682|(17,36)\n683|(17,37)\n684|(17,38)\n685|(18,1)\n686|(18,2)\n687|(18,3)\n688|(18,4)\n689|(18,5)\n690|(18,6)\n691|(18,7)\n692|(18,8)\n693|(18,9)\n694|(18,10)\n695|(18,11)\n696|(18,12)\n697|(18,13)\n698|(18,14)\n699|(18,15)\n700|(18,16)\n701|(18,17)\n702|(18,18)\n703|(18,19)\n704|(18,20)\n705|(18,21)\n706|(18,22)\n707|(18,23)\n708|(18,24)\n709|(18,25)\n710|(18,26)\n711|(18,27)\n712|(18,28)\n713|(18,29)\n714|(18,30)\n715|(18,31)\n716|(18,32)\n717|(18,33)\n718|(18,34)\n719|(18,35)\n720|(18,36)\n721|(18,37)\n722|(18,38)\n723|(19,1)\n724|(19,2)\n725|(19,3)\n726|(19,4)\n727|(19,5)\n728|(19,6)\n729|(19,7)\n730|(19,8)\n731|(19,9)\n732|(19,10)\n733|(19,11)\n734|(19,12)\n735|(19,13)\n736|(19,14)\n737|(19,15)\n738|(19,16)\n739|(19,17)\n740|(19,18)\n741|(19,19)\n742|(19,20)\n743|(19,21)\n744|(19,22)\n745|(19,23)\n746|(19,24)\n747|(19,25)\n748|(19,26)\n749|(19,27)\n750|(19,28)\n751|(19,29)\n752|(19,30)\n753|(19,31)\n754|(19,32)\n755|(19,33)\n756|(19,34)\n757|(19,35)\n758|(19,36)\n759|(19,37)\n760|(19,38)\n761|(20,1)\n762|(20,2)\n763|(20,3)\n764|(20,4)\n765|(20,5)\n766|(20,6)\n767|(20,7)\n768|(20,8)\n769|(20,9)\n770|(20,10)\n771|(20,11)\n772|(20,12)\n773|(20,13)\n774|(20,14)\n775|(20,15)\n776|(20,16)\n777|(20,17)\n778|(20,18)\n779|(20,19)\n780|(20,20)\n781|(20,21)\n782|(20,22)\n783|(20,23)\n784|(20,24)\n785|(20,25)\n786|(20,26)\n787|(20,27)\n788|(20,28)\n789|(20,29)\n790|(20,30)\n791|(20,31)\n792|(20,32)\n793|(20,33)\n794|(20,34)\n795|(20,35)\n796|(20,36)\n797|(20,37)\n798|(20,38)\n799|(21,1)\n800|(21,2)\n801|(21,3)\n802|(21,4)\n803|(21,5)\n804|(21,6)\n805|(21,7)\n806|(21,8)\n807|(21,9)\n808|(21,10)\n809|(21,11)\n810|(21,12)\n811|(21,13)\n812|(21,14)\n813|(21,15)\n814|(21,16)\n815|(21,17)\n816|(21,18)\n817|(21,19)\n818|(21,20)\n819|(21,21)\n820|(21,22)\n821|(21,23)\n822|(21,24)\n823|(21,25)\n824|(21,26)\n825|(21,27)\n826|(21,28)\n827|(21,29)\n828|(21,30)\n829|(21,31)\n830|(21,32)\n831|(21,33)\n832|(21,34)\n833|(21,35)\n834|(21,36)\n835|(21,37)\n836|(21,38)\n837|(22,1)\n838|(22,2)\n839|(22,3)\n840|(22,4)\n841|(22,5)\n842|(22,6)\n843|(22,7)\n844|(22,8)\n845|(22,9)\n846|(22,10)\n847|(22,11)\n848|(22,12)\n849|(22,13)\n850|(22,14)\n851|(22,15)\n852|(22,16)\n853|(22,17)\n854|(22,18)\n855|(22,19)\n856|(22,20)\n857|(22,21)\n858|(22,22)\n859|(22,23)\n860|(22,24)\n861|(22,25)\n862|(22,26)\n863|(22,27)\n864|(22,28)\n865|(22,29)\n866|(22,30)\n867|(22,31)\n868|(22,32)\n869|(22,33)\n870|(22,34)\n871|(22,35)\n872|(22,36)\n873|(22,37)\n874|(22,38)\n875|(23,1)\n876|(23,2)\n877|(23,3)\n878|(23,4)\n879|(23,5)\n880|(23,6)\n881|(23,7)\n882|(23,8)\n883|(23,9)\n884|(23,10)\n885|(23,11)\n886|(23,12)\n887|(23,13)\n888|(23,14)\n889|(23,15)\n890|(23,16)\n891|(23,17)\n892|(23,18)\n893|(23,19)\n894|(23,20)\n895|(23,21)\n896|(23,22)\n897|(23,23)\n898|(23,24)\n899|(23,25)\n900|(23,26)\n901|(23,27)\n902|(23,28)\n903|(23,29)\n904|(23,30)\n905|(23,31)\n906|(23,32)\n907|(23,33)\n908|(23,34)\n909|(23,35)\n910|(23,36)\n911|(23,37)\n912|(23,38)\n913|(24,1)\n914|(24,2)\n915|(24,3)\n916|(24,4)\n917|(24,5)\n918|(24,6)\n919|(24,7)\n920|(24,8)\n921|(24,9)\n922|(24,10)\n923|(24,11)\n924|(24,12)\n925|(24,13)\n926|(24,14)\n927|(24,15)\n928|(24,16)\n929|(24,17)\n930|(24,18)\n931|(24,19)\n932|(24,20)\n933|(24,21)\n934|(24,22)\n935|(24,23)\n936|(24,24)\n937|(24,25)\n938|(24,26)\n939|(24,27)\n940|(24,28)\n941|(24,29)\n942|(24,30)\n943|(24,31)\n944|(24,32)\n945|(24,33)\n946|(24,34)\n947|(24,35)\n948|(24,36)\n949|(24,37)\n950|(24,38)\n951|(25,1)\n952|(25,2)\n953|(25,3)\n954|(25,4)\n955|(25,5)\n956|(25,6)\n957|(25,7)\n958|(25,8)\n959|(25,9)\n960|(25,10)\n961|(25,11)\n962|(25,12)\n963|(25,13)\n964|(25,14)\n965|(25,15)\n966|(25,16)\n967|(25,17)\n968|(25,18)\n969|(25,19)\n970|(25,20)\n971|(25,21)\n972|(25,22)\n973|(25,23)\n974|(25,24)\n975|(25,25)\n976|(25,26)\n977|(25,27)\n978|(25,28)\n979|(25,29)\n980|(25,30)\n981|(25,31)\n982|(25,32)\n983|(25,33)\n984|(25,34)\n985|(25,35)\n986|(25,36)\n987|(25,37)\n988|(25,38)\n989|(26,1)\n990|(26,2)\n991|(26,3)\n992|(26,4)\n993|(26,5)\n994|(26,6)\n995|(26,7)\n996|(26,8)\n997|(26,9)\n998|(26,10)\n999|(26,11)\n1000|(26,12)\n1001|(26,13)\n1002|(26,14)\n1003|(26,15)\n1004|(26,16)\n1005|(26,17)\n1006|(26,18)\n1007|(26,19)\n1008|(26,20)\n1009|(26,21)\n1010|(26,22)\n1011|(26,23)\n1012|(26,24)\n1013|(26,25)\n1014|(26,26)\n1015|(26,27)\n1016|(26,28)\n1017|(26,29)\n1018|(26,30)\n1019|(26,31)\n1020|(26,32)\n1021|(26,33)\n1022|(26,34)\n1023|(26,35)\n1024|(26,36)\n1025|(26,37)\n1026|(26,38)\n1027|(27,1)\n1028|(27,2)\n1029|(27,3)\n1030|(27,4)\n1031|(27,5)\n1032|(27,6)\n1033|(27,7)\n1034|(27,8)\n1035|(27,9)\n1036|(27,10)\n1037|(27,11)\n1038|(27,12)\n1039|(27,13)\n1040|(27,14)\n1041|(27,15)\n1042|(27,16)\n1043|(27,17)\n1044|(27,18)\n1045|(27,19)\n1046|(27,20)\n1047|(27,21)\n1048|(27,22)\n1049|(27,23)\n1050|(27,24)\n1051|(27,25)\n1052|(27,26)\n1053|(27,27)\n1054|(27,28)\n1055|(27,29)\n1056|(27,30)\n1057|(27,31)\n1058|(27,32)\n1059|(27,33)\n1060|(27,34)\n1061|(27,35)\n1062|(27,36)\n1063|(27,37)\n1064|(27,38)\n1065|(28,1)\n1066|(28,2)\n1067|(28,3)\n1068|(28,4)\n1069|(28,5)\n1070|(28,6)\n1071|(28,7)\n1072|(28,8)\n1073|(28,9)\n1074|(28,10)\n1075|(28,11)\n1076|(28,12)\n1077|(28,13)\n1078|(28,14)\n1079|(28,15)\n1080|(28,16)\n1081|(28,17)\n1082|(28,18)\n1083|(28,19)\n1084|(28,20)\n1085|(28,21)\n1086|(28,22)\n1087|(28,23)\n1088|(28,24)\n1089|(28,25)\n1090|(28,26)\n1091|(28,27)\n1092|(28,28)\n1093|(28,29)\n1094|(28,30)\n1095|(28,31)\n1096|(28,32)\n1097|(28,33)\n1098|(28,34)\n1099|(28,35)\n1100|(28,36)\n1101|(28,37)\n1102|(28,38)\n1103|(29,1)\n1104|(29,2)\n1105|(29,3)\n1106|(29,4)\n1107|(29,5)\n1108|(29,6)\n1109|(29,7)\n1110|(29,8)\n1111|(29,9)\n1112|(29,10)\n1113|(29,11)\n1114|(29,12)\n1115|(29,13)\n1116|(29,14)\n1117|(29,15)\n1118|(29,16)\n1119|(29,17)\n1120|(29,18)\n1121|(29,19)\n1122|(29,20)\n1123|(29,21)\n1124|(29,22)\n1125|(29,23)\n1126|(29,24)\n1127|(29,25)\n1128|(29,26)\n1129|(29,27)\n1130|(29,28)\n1131|(29,29)\n1132|(29,30)\n1133|(29,31)\n1134|(29,32)\n1135|(29,33)\n1136|(29,34)\n1137|(29,35)\n1138|(29,36)\n1139|(29,37)\n1140|(29,38)\n1141|(30,1)\n1142|(30,2)\n1143|(30,3)\n1144|(30,4)\n1145|(30,5)\n1146|(30,6)\n1147|(30,7)\n1148|(30,8)\n1149|(30,9)\n1150|(30,10)\n1151|(30,11)\n1152|(30,12)\n1153|(30,13)\n1154|(30,14)\n1155|(30,15)\n1156|(30,16)\n1157|(30,17)\n1158|(30,18)\n1159|(30,19)\n1160|(30,20)\n1161|(30,21)\n1162|(30,22)\n1163|(30,23)\n1164|(30,24)\n1165|(30,25)\n1166|(30,26)\n1167|(30,27)\n1168|(30,28)\n1169|(30,29)\n1170|(30,30)\n1171|(30,31)\n1172|(30,32)\n1173|(30,33)\n1174|(30,34)\n1175|(30,35)\n1176|(30,36)\n1177|(30,37)\n1178|(30,38)\n1179|(31,1)\n1180|(31,2)\n1181|(31,3)\n1182|(31,4)\n1183|(31,5)\n1184|(31,6)\n1185|(31,7)\n1186|(31,8)\n1187|(31,9)\n1188|(31,10)\n1189|(31,11)\n1190|(31,12)\n1191|(31,13)\n1192|(31,14)\n1193|(31,15)\n1194|(31,16)\n1195|(31,17)\n1196|(31,18)\n1197|(31,19)\n1198|(31,20)\n1199|(31,21)\n1200|(31,22)\n1201|(31,23)\n1202|(31,24)\n1203|(31,25)\n1204|(31,26)\n1205|(31,27)\n1206|(31,28)\n1207|(31,29)\n1208|(31,30)\n1209|(31,31)\n1210|(31,32)\n1211|(31,33)\n1212|(31,34)\n1213|(31,35)\n1214|(31,36)\n1215|(31,37)\n1216|(31,38)\n1217|(32,1)\n1218|(32,2)\n1219|(32,3)\n1220|(32,4)\n1221|(32,5)\n1222|(32,6)\n1223|(32,7)\n1224|(32,8)\n1225|(32,9)\n1226|(32,10)\n1227|(32,11)\n1228|(32,12)\n1229|(32,13)\n1230|(32,14)\n1231|(32,15)\n1232|(32,16)\n1233|(32,17)\n1234|(32,18)\n1235|(32,19)\n1236|(32,20)\n1237|(32,21)\n1238|(32,22)\n1239|(32,23)\n1240|(32,24)\n1241|(32,25)\n1242|(32,26)\n1243|(32,27)\n1244|(32,28)\n1245|(32,29)\n1246|(32,30)\n1247|(32,31)\n1248|(32,32)\n1249|(32,33)\n1250|(32,34)\n1251|(32,35)\n1252|(32,36)\n1253|(32,37)\n1254|(32,38)\n1255|(33,1)\n1256|(33,2)\n1257|(33,3)\n1258|(33,4)\n1259|(33,5)\n1260|(33,6)\n1261|(33,7)\n1262|(33,8)\n1263|(33,9)\n1264|(33,10)\n1265|(33,11)\n1266|(33,12)\n1267|(33,13)\n1268|(33,14)\n1269|(33,15)\n1270|(33,16)\n1271|(33,17)\n1272|(33,18)\n1273|(33,19)\n1274|(33,20)\n1275|(33,21)\n1276|(33,22)\n1277|(33,23)\n1278|(33,24)\n1279|(33,25)\n1280|(33,26)\n1281|(33,27)\n1282|(33,28)\n1283|(33,29)\n1284|(33,30)\n1285|(33,31)\n1286|(33,32)\n1287|(33,33)\n1288|(33,34)\n1289|(33,35)\n1290|(33,36)\n1291|(33,37)\n1292|(33,38)\n1293|(34,1)\n1294|(34,2)\n1295|(34,3)\n1296|(34,4)\n1297|(34,5)\n1298|(34,6)\n1299|(34,7)\n1300|(34,8)\n1301|(34,9)\n1302|(34,10)\n1303|(34,11)\n1304|(34,12)\n1305|(34,13)\n1306|(34,14)\n1307|(34,15)\n1308|(34,16)\n1309|(34,17)\n1310|(34,18)\n1311|(34,19)\n1312|(34,20)\n1313|(34,21)\n1314|(34,22)\n1315|(34,23)\n1316|(34,24)\n1317|(34,25)\n1318|(34,26)\n1319|(34,27)\n1320|(34,28)\n1321|(34,29)\n1322|(34,30)\n1323|(34,31)\n1324|(34,32)\n1325|(34,33)\n1326|(34,34)\n1327|(34,35)\n1328|(34,36)\n1329|(34,37)\n1330|(34,38)\n1331|(35,1)\n1332|(35,2)\n1333|(35,3)\n1334|(35,4)\n1335|(35,5)\n1336|(35,6)\n1337|(35,7)\n1338|(35,8)\n1339|(35,9)\n1340|(35,10)\n1341|(35,11)\n1342|(35,12)\n1343|(35,13)\n1344|(35,14)\n1345|(35,15)\n1346|(35,16)\n1347|(35,17)\n1348|(35,18)\n1349|(35,19)\n1350|(35,20)\n1351|(35,21)\n1352|(35,22)\n1353|(35,23)\n1354|(35,24)\n1355|(35,25)\n1356|(35,26)\n1357|(35,27)\n1358|(35,28)\n1359|(35,29)\n1360|(35,30)\n1361|(35,31)\n1362|(35,32)\n1363|(35,33)\n1364|(35,34)\n1365|(35,35)\n1366|(35,36)\n1367|(35,37)\n1368|(35,38)\n1369|(36,1)\n1370|(36,2)\n1371|(36,3)\n1372|(36,4)\n1373|(36,5)\n1374|(36,6)\n1375|(36,7)\n1376|(36,8)\n1377|(36,9)\n1378|(36,10)\n1379|(36,11)\n1380|(36,12)\n1381|(36,13)\n1382|(36,14)\n1383|(36,15)\n1384|(36,16)\n1385|(36,17)\n1386|(36,18)\n1387|(36,19)\n1388|(36,20)\n1389|(36,21)\n1390|(36,22)\n1391|(36,23)\n1392|(36,24)\n1393|(36,25)\n1394|(36,26)\n1395|(36,27)\n1396|(36,28)\n1397|(36,29)\n1398|(36,30)\n1399|(36,31)\n1400|(36,32)\n1401|(36,33)\n1402|(36,34)\n1403|(36,35)\n1404|(36,36)\n1405|(36,37)\n1406|(36,38)\n1407|(37,1)\n1408|(37,2)\n1409|(37,3)\n1410|(37,4)\n1411|(37,5)\n1412|(37,6)\n1413|(37,7)\n1414|(37,8)\n1415|(37,9)\n1416|(37,10)\n1417|(37,11)\n1418|(37,12)\n1419|(37,13)\n1420|(37,14)\n1421|(37,15)\n1422|(37,16)\n1423|(37,17)\n1424|(37,18)\n1425|(37,19)\n1426|(37,20)\n1427|(37,21)\n1428|(37,22)\n1429|(37,23)\n1430|(37,24)\n1431|(37,25)\n1432|(37,26)\n1433|(37,27)\n1434|(37,28)\n1435|(37,29)\n1436|(37,30)\n1437|(37,31)\n1438|(37,32)\n1439|(37,33)\n1440|(37,34)\n1441|(37,35)\n1442|(37,36)\n1443|(37,37)\n1444|(37,38)\n1445|(38,1)\n1446|(38,2)\n1447|(38,3)\n1448|(38,4)\n1449|(38,5)\n1450|(38,6)\n1451|(38,7)\n1452|(38,8)\n1453|(38,9)\n1454|(38,10)\n1455|(38,11)\n1456|(38,12)\n1457|(38,13)\n1458|(38,14)\n1459|(38,15)\n1460|(38,16)\n1461|(38,17)\n1462|(38,18)\n1463|(38,19)\n1464|(38,20)\n1465|(38,21)\n1466|(38,22)\n1467|(38,23)\n1468|(38,24)\n1469|(38,25)\n1470|(38,26)\n1471|(38,27)\n1472|(38,28)\n1473|(38,29)\n1474|(38,30)\n1475|(38,31)\n1476|(38,32)\n1477|(38,33)\n1478|(38,34)\n1479|(38,35)\n1480|(38,36)\n1481|(38,37)\n1482|(38,38)\n1483|(39,1)\n1484|(39,2)\n1485|(39,3)\n1486|(39,4)\n1487|(39,5)\n1488|(39,6)\n1489|(39,7)\n1490|(39,8)\n1491|(39,9)\n1492|(39,10)\n1493|(39,11)\n1494|(39,12)\n1495|(39,13)\n1496|(39,14)\n1497|(39,15)\n1498|(39,16)\n1499|(39,17)\n1500|(39,18)\n1501|(39,19)\n1502|(39,20)\n1503|(39,21)\n1504|(39,22)\n1505|(39,23)\n1506|(39,24)\n1507|(39,25)\n1508|(39,26)\n1509|(39,27)\n1510|(39,28)\n1511|(39,29)\n1512|(39,30)\n1513|(39,31)\n1514|(39,32)\n1515|(39,33)\n1516|(39,34)\n1517|(39,35)\n1518|(39,36)\n1519|(39,37)\n1520|(39,38)\n1521|(40,1)\n1522|(40,2)\n1523|(40,3)\n1524|(40,4)\n1525|(40,5)\n1526|(40,6)\n1527|(40,7)\n1528|(40,8)\n1529|(40,9)\n1530|(40,10)\n1531|(40,11)\n1532|(40,12)\n1533|(40,13)\n1534|(40,14)\n1535|(40,15)\n1536|(40,16)\n1537|(40,17)\n1538|(40,18)\n1539|(40,19)\n1540|(40,20)\n1541|(40,21)\n1542|(40,22)\n1543|(40,23)\n1544|(40,24)\n1545|(40,25)\n1546|(40,26)\n1547|(40,27)\n1548|(40,28)\n1549|(40,29)\n1550|(40,30)\n1551|(40,31)\n1552|(40,32)\n1553|(40,33)\n1554|(40,34)\n1555|(40,35)\n1556|(40,36)\n1557|(40,37)\n1558|(40,38)\n1559|(41,1)\n1560|(41,2)\n1561|(41,3)\n1562|(41,4)\n1563|(41,5)\n1564|(41,6)\n1565|(41,7)\n1566|(41,8)\n1567|(41,9)\n1568|(41,10)\n1569|(41,11)\n1570|(41,12)\n1571|(41,13)\n1572|(41,14)\n1573|(41,15)\n1574|(41,16)\n1575|(41,17)\n1576|(41,18)\n1577|(41,19)\n1578|(41,20)\n1579|(41,21)\n1580|(41,22)\n1581|(41,23)\n1582|(41,24)\n1583|(41,25)\n1584|(41,26)\n1585|(41,27)\n1586|(41,28)\n1587|(41,29)\n1588|(41,30)\n1589|(41,31)\n1590|(41,32)\n1591|(41,33)\n1592|(41,34)\n1593|(41,35)\n1594|(41,36)\n1595|(41,37)\n1596|(41,38)\n1597|(42,1)\n1598|(42,2)\n1599|(42,3)\n1600|(42,4)\n1601|(42,5)\n1602|(42,6)\n1603|(42,7)\n1604|(42,8)\n1605|(42,9)\n1606|(42,10)\n1607|(42,11)\n1608|(42,12)\n1609|(42,13)\n1610|(42,14)\n1611|(42,15)\n1612|(42,16)\n1613|(42,17)\n1614|(42,18)\n1615|(42,19)\n1616|(42,20)\n1617|(42,21)\n1618|(42,22)\n1619|(42,23)\n1620|(42,24)\n1621|(42,25)\n1622|(42,26)\n1623|(42,27)\n1624|(42,28)\n1625|(42,29)\n1626|(42,30)\n1627|(42,31)\n1628|(42,32)\n1629|(42,33)\n1630|(42,34)\n1631|(42,35)\n1632|(42,36)\n1633|(42,37)\n1634|(42,38)\n1635|(43,1)\n1636|(43,2)\n1637|(43,3)\n1638|(43,4)\n1639|(43,5)\n1640|(43,6)\n1641|(43,7)\n1642|(43,8)\n1643|(43,9)\n1644|(43,10)\n1645|(43,11)\n1646|(43,12)\n1647|(43,13)\n1648|(43,14)\n1649|(43,15)\n1650|(43,16)\n1651|(43,17)\n1652|(43,18)\n1653|(43,19)\n1654|(43,20)\n1655|(43,21)\n1656|(43,22)\n1657|(43,23)\n1658|(43,24)\n1659|(43,25)\n1660|(43,26)\n1661|(43,27)\n1662|(43,28)\n1663|(43,29)\n1664|(43,30)\n1665|(43,31)\n1666|(43,32)\n1667|(43,33)\n1668|(43,34)\n1669|(43,35)\n1670|(43,36)\n1671|(43,37)\n1672|(43,38)\n1673|(44,1)\n1674|(44,2)\n1675|(44,3)\n1676|(44,4)\n1677|(44,5)\n1678|(44,6)\n1679|(44,7)\n1680|(44,8)\n1681|(44,9)\n1682|(44,10)\n1683|(44,11)\n1684|(44,12)\n1685|(44,13)\n1686|(44,14)\n1687|(44,15)\n1688|(44,16)\n1689|(44,17)\n1690|(44,18)\n1691|(44,19)\n1692|(44,20)\n1693|(44,21)\n1694|(44,22)\n1695|(44,23)\n1696|(44,24)\n1697|(44,25)\n1698|(44,26)\n1699|(44,27)\n1700|(44,28)\n1701|(44,29)\n1702|(44,30)\n1703|(44,31)\n1704|(44,32)\n1705|(44,33)\n1706|(44,34)\n1707|(44,35)\n1708|(44,36)\n1709|(44,37)\n1710|(44,38)\n1711|(45,1)\n1712|(45,2)\n1713|(45,3)\n1714|(45,4)\n1715|(45,5)\n1716|(45,6)\n1717|(45,7)\n1718|(45,8)\n1719|(45,9)\n1720|(45,10)\n1721|(45,11)\n1722|(45,12)\n1723|(45,13)\n1724|(45,14)\n1725|(45,15)\n1726|(45,16)\n1727|(45,17)\n1728|(45,18)\n1729|(45,19)\n1730|(45,20)\n1731|(45,21)\n1732|(45,22)\n1733|(45,23)\n1734|(45,24)\n1735|(45,25)\n1736|(45,26)\n1737|(45,27)\n1738|(45,28)\n1739|(45,29)\n1740|(45,30)\n1741|(45,31)\n1742|(45,32)\n1743|(45,33)\n1744|(45,34)\n1745|(45,35)\n1746|(45,36)\n1747|(45,37)\n1748|(45,38)\n1749|(46,1)\n1750|(46,2)\n1751|(46,3)\n1752|(46,4)\n1753|(46,5)\n1754|(46,6)\n1755|(46,7)\n1756|(46,8)\n1757|(46,9)\n1758|(46,10)\n1759|(46,11)\n1760|(46,12)\n1761|(46,13)\n1762|(46,14)\n1763|(46,15)\n1764|(46,16)\n1765|(46,17)\n1766|(46,18)\n1767|(46,19)\n1768|(46,20)\n1769|(46,21)\n1770|(46,22)\n1771|(46,23)\n1772|(46,24)\n1773|(46,25)\n1774|(46,26)\n1775|(46,27)\n1776|(46,28)\n1777|(46,29)\n1778|(46,30)\n1779|(46,31)\n1780|(46,32)\n1781|(46,33)\n1782|(46,34)\n1783|(46,35)\n1784|(46,36)\n1785|(46,37)\n1786|(46,38)\n1787|(47,1)\n1788|(47,2)\n1789|(47,3)\n1790|(47,4)\n1791|(47,5)\n1792|(47,6)\n1793|(47,7)\n1794|(47,8)\n1795|(47,9)\n1796|(47,10)\n1797|(47,11)\n1798|(47,12)\n1799|(47,13)\n1800|(47,14)\n1801|(47,15)\n1802|(47,16)\n1803|(47,17)\n1804|(47,18)\n1805|(47,19)\n1806|(47,20)\n1807|(47,21)\n1808|(47,22)\n1809|(47,23)\n1810|(47,24)\n1811|(47,25)\n1812|(47,26)\n1813|(47,27)\n1814|(47,28)\n1815|(47,29)\n1816|(47,30)\n1817|(47,31)\n1818|(47,32)\n1819|(47,33)\n1820|(47,34)\n1821|(47,35)\n1822|(47,36)\n1823|(47,37)\n1824|(47,38)\n1825|(48,1)\n1826|(48,2)\n1827|(48,3)\n1828|(48,4)\n1829|(48,5)\n1830|(48,6)\n1831|(48,7)\n1832|(48,8)\n1833|(48,9)\n1834|(48,10)\n1835|(48,11)\n1836|(48,12)\n1837|(48,13)\n1838|(48,14)\n1839|(48,15)\n1840|(48,16)\n1841|(48,17)\n1842|(48,18)\n1843|(48,19)\n1844|(48,20)\n1845|(48,21)\n1846|(48,22)\n1847|(48,23)\n1848|(48,24)\n1849|(48,25)\n1850|(48,26)\n1851|(48,27)\n1852|(48,28)\n1853|(48,29)\n1854|(48,30)\n1855|(48,31)\n1856|(48,32)\n1857|(48,33)\n1858|(48,34)\n1859|(48,35)\n1860|(48,36)\n1861|(48,37)\n1862|(48,38)\n1863|(49,1)\n1864|(49,2)\n1865|(49,3)\n1866|(49,4)\n1867|(49,5)\n1868|(49,6)\n1869|(49,7)\n1870|(49,8)\n1871|(49,9)\n1872|(49,10)\n1873|(49,11)\n1874|(49,12)\n1875|(49,13)\n1876|(49,14)\n1877|(49,15)\n1878|(49,16)\n1879|(49,17)\n1880|(49,18)\n1881|(49,19)\n1882|(49,20)\n1883|(49,21)\n1884|(49,22)\n1885|(49,23)\n1886|(49,24)\n1887|(49,25)\n1888|(49,26)\n1889|(49,27)\n1890|(49,28)\n1891|(49,29)\n1892|(49,30)\n1893|(49,31)\n1894|(49,32)\n1895|(49,33)\n1896|(49,34)\n1897|(49,35)\n1898|(49,36)\n1899|(49,37)\n1900|(49,38)\n1901|(50,1)\n1902|(50,2)\n1903|(50,3)\n1904|(50,4)\n1905|(50,5)\n1906|(50,6)\n1907|(50,7)\n1908|(50,8)\n1909|(50,9)\n1910|(50,10)\n1911|(50,11)\n1912|(50,12)\n1913|(50,13)\n1914|(50,14)\n1915|(50,15)\n1916|(50,16)\n1917|(50,17)\n1918|(50,18)\n1919|(50,19)\n1920|(50,20)\n1921|(50,21)\n1922|(50,22)\n1923|(50,23)\n1924|(50,24)\n1925|(50,25)\n1926|(50,26)\n1927|(50,27)\n1928|(50,28)\n1929|(50,29)\n1930|(50,30)\n1931|(50,31)\n1932|(50,32)\n1933|(50,33)\n1934|(50,34)\n1935|(50,35)\n1936|(50,36)\n1937|(50,37)\n1938|(50,38)\n1939|(51,1)\n1940|(51,2)\n1941|(51,3)\n1942|(51,4)\n1943|(51,5)\n1944|(51,6)\n1945|(51,7)\n1946|(51,8)\n1947|(51,9)\n1948|(51,10)\n1949|(51,11)\n1950|(51,12)\n1951|(51,13)\n1952|(51,14)\n1953|(51,15)\n1954|(51,16)\n1955|(51,17)\n1956|(51,18)\n1957|(51,19)\n1958|(51,20)\n1959|(51,21)\n1960|(51,22)\n1961|(51,23)\n1962|(51,24)\n1963|(51,25)\n1964|(51,26)\n1965|(51,27)\n1966|(51,28)\n1967|(51,29)\n1968|(51,30)\n1969|(51,31)\n1970|(51,32)\n1971|(51,33)\n1972|(51,34)\n1973|(51,35)\n1974|(51,36)\n1975|(51,37)\n1976|(51,38)\n1977|(52,1)\n1978|(52,2)\n1979|(52,3)\n1980|(52,4)\n1981|(52,5)\n1982|(52,6)\n1983|(52,7)\n1984|(52,8)\n1985|(52,9)\n1986|(52,10)\n1987|(52,11)\n1988|(52,12)\n1989|(52,13)\n1990|(52,14)\n1991|(52,15)\n1992|(52,16)\n1993|(52,17)\n1994|(52,18)\n1995|(52,19)\n1996|(52,20)\n1997|(52,21)\n1998|(52,22)\n1999|(52,23)\n2000|(52,24)\n2001|(52,25)\n2002|(52,26)\n2003|(52,27)\n2004|(52,28)\n2005|(52,29)\n2006|(52,30)\n2007|(52,31)\n2008|(52,32)\n2009|(52,33)\n2010|(52,34)\n2011|(52,35)\n2012|(52,36)\n2013|(52,37)\n2014|(52,38)\n2015|(53,1)\n2016|(53,2)\n2017|(53,3)\n2018|(53,4)\n2019|(53,5)\n2020|(53,6)\n2021|(53,7)\n2022|(53,8)\n2023|(53,9)\n2024|(53,10)\n2025|(53,11)\n2026|(53,12)\n2027|(53,13)\n2028|(53,14)\n2029|(53,15)\n2030|(53,16)\n2031|(53,17)\n2032|(53,18)\n2033|(53,19)\n2034|(53,20)\n2035|(53,21)\n2036|(53,22)\n2037|(53,23)\n2038|(53,24)\n2039|(53,25)\n2040|(53,26)\n2041|(53,27)\n2042|(53,28)\n2043|(53,29)\n2044|(53,30)\n2045|(53,31)\n2046|(53,32)\n2047|(53,33)\n2048|(53,34)",
+        "positions": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(0,13)\n14|(0,14)\n15|(0,15)\n16|(0,16)\n17|(0,17)\n18|(0,18)\n19|(0,19)\n20|(0,20)\n21|(0,21)\n22|(0,22)\n23|(0,23)\n24|(0,24)\n25|(0,25)\n26|(0,26)\n27|(0,27)\n28|(0,28)\n29|(0,29)\n30|(0,30)\n31|(0,31)\n32|(0,32)\n33|(0,33)\n34|(0,34)\n35|(0,35)\n36|(0,36)\n37|(0,37)\n38|(0,38)\n39|(1,1)\n40|(1,2)\n41|(1,3)\n42|(1,4)\n43|(1,5)\n44|(1,6)\n45|(1,7)\n46|(1,8)\n47|(1,9)\n48|(1,10)\n49|(1,11)\n50|(1,12)\n51|(1,13)\n52|(1,14)\n53|(1,15)\n54|(1,16)\n55|(1,17)\n56|(1,18)\n57|(1,19)\n58|(1,20)\n59|(1,21)\n60|(1,22)\n61|(1,23)\n62|(1,24)\n63|(1,25)\n64|(1,26)\n65|(1,27)\n66|(1,28)\n67|(1,29)\n68|(1,30)\n69|(1,31)\n70|(1,32)\n71|(1,33)\n72|(1,34)\n73|(1,35)\n74|(1,36)\n75|(1,37)\n76|(1,38)\n77|(2,1)\n78|(2,2)\n79|(2,3)\n80|(2,4)\n81|(2,5)\n82|(2,6)\n83|(2,7)\n84|(2,8)\n85|(2,9)\n86|(2,10)\n87|(2,11)\n88|(2,12)\n89|(2,13)\n90|(2,14)\n91|(2,15)\n92|(2,16)\n93|(2,17)\n94|(2,18)\n95|(2,19)\n96|(2,20)\n97|(2,21)\n98|(2,22)\n99|(2,23)\n100|(2,24)\n101|(2,25)\n102|(2,26)\n103|(2,27)\n104|(2,28)\n105|(2,29)\n106|(2,30)\n107|(2,31)\n108|(2,32)\n109|(2,33)\n110|(2,34)\n111|(2,35)\n112|(2,36)\n113|(2,37)\n114|(2,38)\n115|(3,1)\n116|(3,2)\n117|(3,3)\n118|(3,4)\n119|(3,5)\n120|(3,6)\n121|(3,7)\n122|(3,8)\n123|(3,9)\n124|(3,10)\n125|(3,11)\n126|(3,12)\n127|(3,13)\n128|(3,14)\n129|(3,15)\n130|(3,16)\n131|(3,17)\n132|(3,18)\n133|(3,19)\n134|(3,20)\n135|(3,21)\n136|(3,22)\n137|(3,23)\n138|(3,24)\n139|(3,25)\n140|(3,26)\n141|(3,27)\n142|(3,28)\n143|(3,29)\n144|(3,30)\n145|(3,31)\n146|(3,32)\n147|(3,33)\n148|(3,34)\n149|(3,35)\n150|(3,36)\n151|(3,37)\n152|(3,38)\n153|(4,1)\n154|(4,2)\n155|(4,3)\n156|(4,4)\n157|(4,5)\n158|(4,6)\n159|(4,7)\n160|(4,8)\n161|(4,9)\n162|(4,10)\n163|(4,11)\n164|(4,12)\n165|(4,13)\n166|(4,14)\n167|(4,15)\n168|(4,16)\n169|(4,17)\n170|(4,18)\n171|(4,19)\n172|(4,20)\n173|(4,21)\n174|(4,22)\n175|(4,23)\n176|(4,24)\n177|(4,25)\n178|(4,26)\n179|(4,27)\n180|(4,28)\n181|(4,29)\n182|(4,30)\n183|(4,31)\n184|(4,32)\n185|(4,33)\n186|(4,34)\n187|(4,35)\n188|(4,36)\n189|(4,37)\n190|(4,38)\n191|(5,1)\n192|(5,2)\n193|(5,3)\n194|(5,4)\n195|(5,5)\n196|(5,6)\n197|(5,7)\n198|(5,8)\n199|(5,9)\n200|(5,10)\n201|(5,11)\n202|(5,12)\n203|(5,13)\n204|(5,14)\n205|(5,15)\n206|(5,16)\n207|(5,17)\n208|(5,18)\n209|(5,19)\n210|(5,20)\n211|(5,21)\n212|(5,22)\n213|(5,23)\n214|(5,24)\n215|(5,25)\n216|(5,26)\n217|(5,27)\n218|(5,28)\n219|(5,29)\n220|(5,30)\n221|(5,31)\n222|(5,32)\n223|(5,33)\n224|(5,34)\n225|(5,35)\n226|(5,36)\n227|(5,37)\n228|(5,38)\n229|(6,1)\n230|(6,2)\n231|(6,3)\n232|(6,4)\n233|(6,5)\n234|(6,6)\n235|(6,7)\n236|(6,8)\n237|(6,9)\n238|(6,10)\n239|(6,11)\n240|(6,12)\n241|(6,13)\n242|(6,14)\n243|(6,15)\n244|(6,16)\n245|(6,17)\n246|(6,18)\n247|(6,19)\n248|(6,20)\n249|(6,21)\n250|(6,22)\n251|(6,23)\n252|(6,24)\n253|(6,25)\n254|(6,26)\n255|(6,27)\n256|(6,28)\n257|(6,29)\n258|(6,30)\n259|(6,31)\n260|(6,32)\n261|(6,33)\n262|(6,34)\n263|(6,35)\n264|(6,36)\n265|(6,37)\n266|(6,38)\n267|(7,1)\n268|(7,2)\n269|(7,3)\n270|(7,4)\n271|(7,5)\n272|(7,6)\n273|(7,7)\n274|(7,8)\n275|(7,9)\n276|(7,10)\n277|(7,11)\n278|(7,12)\n279|(7,13)\n280|(7,14)\n281|(7,15)\n282|(7,16)\n283|(7,17)\n284|(7,18)\n285|(7,19)\n286|(7,20)\n287|(7,21)\n288|(7,22)\n289|(7,23)\n290|(7,24)\n291|(7,25)\n292|(7,26)\n293|(7,27)\n294|(7,28)\n295|(7,29)\n296|(7,30)\n297|(7,31)\n298|(7,32)\n299|(7,33)\n300|(7,34)\n301|(7,35)\n302|(7,36)\n303|(7,37)\n304|(7,38)\n305|(8,1)\n306|(8,2)\n307|(8,3)\n308|(8,4)\n309|(8,5)\n310|(8,6)\n311|(8,7)\n312|(8,8)\n313|(8,9)\n314|(8,10)\n315|(8,11)\n316|(8,12)\n317|(8,13)\n318|(8,14)\n319|(8,15)\n320|(8,16)\n321|(8,17)\n322|(8,18)\n323|(8,19)\n324|(8,20)\n325|(8,21)\n326|(8,22)\n327|(8,23)\n328|(8,24)\n329|(8,25)\n330|(8,26)\n331|(8,27)\n332|(8,28)\n333|(8,29)\n334|(8,30)\n335|(8,31)\n336|(8,32)\n337|(8,33)\n338|(8,34)\n339|(8,35)\n340|(8,36)\n341|(8,37)\n342|(8,38)\n343|(9,1)\n344|(9,2)\n345|(9,3)\n346|(9,4)\n347|(9,5)\n348|(9,6)\n349|(9,7)\n350|(9,8)\n351|(9,9)\n352|(9,10)\n353|(9,11)\n354|(9,12)\n355|(9,13)\n356|(9,14)\n357|(9,15)\n358|(9,16)\n359|(9,17)\n360|(9,18)\n361|(9,19)\n362|(9,20)\n363|(9,21)\n364|(9,22)\n365|(9,23)\n366|(9,24)\n367|(9,25)\n368|(9,26)\n369|(9,27)\n370|(9,28)\n371|(9,29)\n372|(9,30)\n373|(9,31)\n374|(9,32)\n375|(9,33)\n376|(9,34)\n377|(9,35)\n378|(9,36)\n379|(9,37)\n380|(9,38)\n381|(10,1)\n382|(10,2)\n383|(10,3)\n384|(10,4)\n385|(10,5)\n386|(10,6)\n387|(10,7)\n388|(10,8)\n389|(10,9)\n390|(10,10)\n391|(10,11)\n392|(10,12)\n393|(10,13)\n394|(10,14)\n395|(10,15)\n396|(10,16)\n397|(10,17)\n398|(10,18)\n399|(10,19)\n400|(10,20)\n401|(10,21)\n402|(10,22)\n403|(10,23)\n404|(10,24)\n405|(10,25)\n406|(10,26)\n407|(10,27)\n408|(10,28)\n409|(10,29)\n410|(10,30)\n411|(10,31)\n412|(10,32)\n413|(10,33)\n414|(10,34)\n415|(10,35)\n416|(10,36)\n417|(10,37)\n418|(10,38)\n419|(11,1)\n420|(11,2)\n421|(11,3)\n422|(11,4)\n423|(11,5)\n424|(11,6)\n425|(11,7)\n426|(11,8)\n427|(11,9)\n428|(11,10)\n429|(11,11)\n430|(11,12)\n431|(11,13)\n432|(11,14)\n433|(11,15)\n434|(11,16)\n435|(11,17)\n436|(11,18)\n437|(11,19)\n438|(11,20)\n439|(11,21)\n440|(11,22)\n441|(11,23)\n442|(11,24)\n443|(11,25)\n444|(11,26)\n445|(11,27)\n446|(11,28)\n447|(11,29)\n448|(11,30)\n449|(11,31)\n450|(11,32)\n451|(11,33)\n452|(11,34)\n453|(11,35)\n454|(11,36)\n455|(11,37)\n456|(11,38)\n457|(12,1)\n458|(12,2)\n459|(12,3)\n460|(12,4)\n461|(12,5)\n462|(12,6)\n463|(12,7)\n464|(12,8)\n465|(12,9)\n466|(12,10)\n467|(12,11)\n468|(12,12)\n469|(12,13)\n470|(12,14)\n471|(12,15)\n472|(12,16)\n473|(12,17)\n474|(12,18)\n475|(12,19)\n476|(12,20)\n477|(12,21)\n478|(12,22)\n479|(12,23)\n480|(12,24)\n481|(12,25)\n482|(12,26)\n483|(12,27)\n484|(12,28)\n485|(12,29)\n486|(12,30)\n487|(12,31)\n488|(12,32)\n489|(12,33)\n490|(12,34)\n491|(12,35)\n492|(12,36)\n493|(12,37)\n494|(12,38)\n495|(13,1)\n496|(13,2)\n497|(13,3)\n498|(13,4)\n499|(13,5)\n500|(13,6)\n501|(13,7)\n502|(13,8)\n503|(13,9)\n504|(13,10)\n505|(13,11)\n506|(13,12)\n507|(13,13)\n508|(13,14)\n509|(13,15)\n510|(13,16)\n511|(13,17)\n512|(13,18)\n513|(13,19)\n514|(13,20)\n515|(13,21)\n516|(13,22)\n517|(13,23)\n518|(13,24)\n519|(13,25)\n520|(13,26)\n521|(13,27)\n522|(13,28)\n523|(13,29)\n524|(13,30)\n525|(13,31)\n526|(13,32)\n527|(13,33)\n528|(13,34)\n529|(13,35)\n530|(13,36)\n531|(13,37)\n532|(13,38)\n533|(14,1)\n534|(14,2)\n535|(14,3)\n536|(14,4)\n537|(14,5)\n538|(14,6)\n539|(14,7)\n540|(14,8)\n541|(14,9)\n542|(14,10)\n543|(14,11)\n544|(14,12)\n545|(14,13)\n546|(14,14)\n547|(14,15)\n548|(14,16)\n549|(14,17)\n550|(14,18)\n551|(14,19)\n552|(14,20)\n553|(14,21)\n554|(14,22)\n555|(14,23)\n556|(14,24)\n557|(14,25)\n558|(14,26)\n559|(14,27)\n560|(14,28)\n561|(14,29)\n562|(14,30)\n563|(14,31)\n564|(14,32)\n565|(14,33)\n566|(14,34)\n567|(14,35)\n568|(14,36)\n569|(14,37)\n570|(14,38)\n571|(15,1)\n572|(15,2)\n573|(15,3)\n574|(15,4)\n575|(15,5)\n576|(15,6)\n577|(15,7)\n578|(15,8)\n579|(15,9)\n580|(15,10)\n581|(15,11)\n582|(15,12)\n583|(15,13)\n584|(15,14)\n585|(15,15)\n586|(15,16)\n587|(15,17)\n588|(15,18)\n589|(15,19)\n590|(15,20)\n591|(15,21)\n592|(15,22)\n593|(15,23)\n594|(15,24)\n595|(15,25)\n596|(15,26)\n597|(15,27)\n598|(15,28)\n599|(15,29)\n600|(15,30)\n601|(15,31)\n602|(15,32)\n603|(15,33)\n604|(15,34)\n605|(15,35)\n606|(15,36)\n607|(15,37)\n608|(15,38)\n609|(16,1)\n610|(16,2)\n611|(16,3)\n612|(16,4)\n613|(16,5)\n614|(16,6)\n615|(16,7)\n616|(16,8)\n617|(16,9)\n618|(16,10)\n619|(16,11)\n620|(16,12)\n621|(16,13)\n622|(16,14)\n623|(16,15)\n624|(16,16)\n625|(16,17)\n626|(16,18)\n627|(16,19)\n628|(16,20)\n629|(16,21)\n630|(16,22)\n631|(16,23)\n632|(16,24)\n633|(16,25)\n634|(16,26)\n635|(16,27)\n636|(16,28)\n637|(16,29)\n638|(16,30)\n639|(16,31)\n640|(16,32)\n641|(16,33)\n642|(16,34)\n643|(16,35)\n644|(16,36)\n645|(16,37)\n646|(16,38)\n647|(17,1)\n648|(17,2)\n649|(17,3)\n650|(17,4)\n651|(17,5)\n652|(17,6)\n653|(17,7)\n654|(17,8)\n655|(17,9)\n656|(17,10)\n657|(17,11)\n658|(17,12)\n659|(17,13)\n660|(17,14)\n661|(17,15)\n662|(17,16)\n663|(17,17)\n664|(17,18)\n665|(17,19)\n666|(17,20)\n667|(17,21)\n668|(17,22)\n669|(17,23)\n670|(17,24)\n671|(17,25)\n672|(17,26)\n673|(17,27)\n674|(17,28)\n675|(17,29)\n676|(17,30)\n677|(17,31)\n678|(17,32)\n679|(17,33)\n680|(17,34)\n681|(17,35)\n682|(17,36)\n683|(17,37)\n684|(17,38)\n685|(18,1)\n686|(18,2)\n687|(18,3)\n688|(18,4)\n689|(18,5)\n690|(18,6)\n691|(18,7)\n692|(18,8)\n693|(18,9)\n694|(18,10)\n695|(18,11)\n696|(18,12)\n697|(18,13)\n698|(18,14)\n699|(18,15)\n700|(18,16)\n701|(18,17)\n702|(18,18)\n703|(18,19)\n704|(18,20)\n705|(18,21)\n706|(18,22)\n707|(18,23)\n708|(18,24)\n709|(18,25)\n710|(18,26)\n711|(18,27)\n712|(18,28)\n713|(18,29)\n714|(18,30)\n715|(18,31)\n716|(18,32)\n717|(18,33)\n718|(18,34)\n719|(18,35)\n720|(18,36)\n721|(18,37)\n722|(18,38)\n723|(19,1)\n724|(19,2)\n725|(19,3)\n726|(19,4)\n727|(19,5)\n728|(19,6)\n729|(19,7)\n730|(19,8)\n731|(19,9)\n732|(19,10)\n733|(19,11)\n734|(19,12)\n735|(19,13)\n736|(19,14)\n737|(19,15)\n738|(19,16)\n739|(19,17)\n740|(19,18)\n741|(19,19)\n742|(19,20)\n743|(19,21)\n744|(19,22)\n745|(19,23)\n746|(19,24)\n747|(19,25)\n748|(19,26)\n749|(19,27)\n750|(19,28)\n751|(19,29)\n752|(19,30)\n753|(19,31)\n754|(19,32)\n755|(19,33)\n756|(19,34)\n757|(19,35)\n758|(19,36)\n759|(19,37)\n760|(19,38)\n761|(20,1)\n762|(20,2)\n763|(20,3)\n764|(20,4)\n765|(20,5)\n766|(20,6)\n767|(20,7)\n768|(20,8)\n769|(20,9)\n770|(20,10)\n771|(20,11)\n772|(20,12)\n773|(20,13)\n774|(20,14)\n775|(20,15)\n776|(20,16)\n777|(20,17)\n778|(20,18)\n779|(20,19)\n780|(20,20)\n781|(20,21)\n782|(20,22)\n783|(20,23)\n784|(20,24)\n785|(20,25)\n786|(20,26)\n787|(20,27)\n788|(20,28)\n789|(20,29)\n790|(20,30)\n791|(20,31)\n792|(20,32)\n793|(20,33)\n794|(20,34)\n795|(20,35)\n796|(20,36)\n797|(20,37)\n798|(20,38)\n799|(21,1)\n800|(21,2)\n801|(21,3)\n802|(21,4)\n803|(21,5)\n804|(21,6)\n805|(21,7)\n806|(21,8)\n807|(21,9)\n808|(21,10)\n809|(21,11)\n810|(21,12)\n811|(21,13)\n812|(21,14)\n813|(21,15)\n814|(21,16)\n815|(21,17)\n816|(21,18)\n817|(21,19)\n818|(21,20)\n819|(21,21)\n820|(21,22)\n821|(21,23)\n822|(21,24)\n823|(21,25)\n824|(21,26)\n825|(21,27)\n826|(21,28)\n827|(21,29)\n828|(21,30)\n829|(21,31)\n830|(21,32)\n831|(21,33)\n832|(21,34)\n833|(21,35)\n834|(21,36)\n835|(21,37)\n836|(21,38)\n837|(22,1)\n838|(22,2)\n839|(22,3)\n840|(22,4)\n841|(22,5)\n842|(22,6)\n843|(22,7)\n844|(22,8)\n845|(22,9)\n846|(22,10)\n847|(22,11)\n848|(22,12)\n849|(22,13)\n850|(22,14)\n851|(22,15)\n852|(22,16)\n853|(22,17)\n854|(22,18)\n855|(22,19)\n856|(22,20)\n857|(22,21)\n858|(22,22)\n859|(22,23)\n860|(22,24)\n861|(22,25)\n862|(22,26)\n863|(22,27)\n864|(22,28)\n865|(22,29)\n866|(22,30)\n867|(22,31)\n868|(22,32)\n869|(22,33)\n870|(22,34)\n871|(22,35)\n872|(22,36)\n873|(22,37)\n874|(22,38)\n875|(23,1)\n876|(23,2)\n877|(23,3)\n878|(23,4)\n879|(23,5)\n880|(23,6)\n881|(23,7)\n882|(23,8)\n883|(23,9)\n884|(23,10)\n885|(23,11)\n886|(23,12)\n887|(23,13)\n888|(23,14)\n889|(23,15)\n890|(23,16)\n891|(23,17)\n892|(23,18)\n893|(23,19)\n894|(23,20)\n895|(23,21)\n896|(23,22)\n897|(23,23)\n898|(23,24)\n899|(23,25)\n900|(23,26)\n901|(23,27)\n902|(23,28)\n903|(23,29)\n904|(23,30)\n905|(23,31)\n906|(23,32)\n907|(23,33)\n908|(23,34)\n909|(23,35)\n910|(23,36)\n911|(23,37)\n912|(23,38)\n913|(24,1)\n914|(24,2)\n915|(24,3)\n916|(24,4)\n917|(24,5)\n918|(24,6)\n919|(24,7)\n920|(24,8)\n921|(24,9)\n922|(24,10)\n923|(24,11)\n924|(24,12)\n925|(24,13)\n926|(24,14)\n927|(24,15)\n928|(24,16)\n929|(24,17)\n930|(24,18)\n931|(24,19)\n932|(24,20)\n933|(24,21)\n934|(24,22)\n935|(24,23)\n936|(24,24)\n937|(24,25)\n938|(24,26)\n939|(24,27)\n940|(24,28)\n941|(24,29)\n942|(24,30)\n943|(24,31)\n944|(24,32)\n945|(24,33)\n946|(24,34)\n947|(24,35)\n948|(24,36)\n949|(24,37)\n950|(24,38)\n951|(25,1)\n952|(25,2)\n953|(25,3)\n954|(25,4)\n955|(25,5)\n956|(25,6)\n957|(25,7)\n958|(25,8)\n959|(25,9)\n960|(25,10)\n961|(25,11)\n962|(25,12)\n963|(25,13)\n964|(25,14)\n965|(25,15)\n966|(25,16)\n967|(25,17)\n968|(25,18)\n969|(25,19)\n970|(25,20)\n971|(25,21)\n972|(25,22)\n973|(25,23)\n974|(25,24)\n975|(25,25)\n976|(25,26)\n977|(25,27)\n978|(25,28)\n979|(25,29)\n980|(25,30)\n981|(25,31)\n982|(25,32)\n983|(25,33)\n984|(25,34)\n985|(25,35)\n986|(25,36)\n987|(25,37)\n988|(25,38)\n989|(26,1)\n990|(26,2)\n991|(26,3)\n992|(26,4)\n993|(26,5)\n994|(26,6)\n995|(26,7)\n996|(26,8)\n997|(26,9)\n998|(26,10)\n999|(26,11)\n1000|(26,12)\n1001|(26,13)\n1002|(26,14)\n1003|(26,15)\n1004|(26,16)\n1005|(26,17)\n1006|(26,18)\n1007|(26,19)\n1008|(26,20)\n1009|(26,21)\n1010|(26,22)\n1011|(26,23)\n1012|(26,24)\n1013|(26,25)\n1014|(26,26)\n1015|(26,27)\n1016|(26,28)\n1017|(26,29)\n1018|(26,30)\n1019|(26,31)\n1020|(26,32)\n1021|(26,33)\n1022|(26,34)\n1023|(26,35)\n1024|(26,36)\n1025|(26,37)\n1026|(26,38)\n1027|(27,1)\n1028|(27,2)\n1029|(27,3)\n1030|(27,4)\n1031|(27,5)\n1032|(27,6)\n1033|(27,7)\n1034|(27,8)\n1035|(27,9)\n1036|(27,10)\n1037|(27,11)\n1038|(27,12)\n1039|(27,13)\n1040|(27,14)\n1041|(27,15)\n1042|(27,16)\n1043|(27,17)\n1044|(27,18)\n1045|(27,19)\n1046|(27,20)\n1047|(27,21)\n1048|(27,22)\n1049|(27,23)\n1050|(27,24)\n1051|(27,25)\n1052|(27,26)\n1053|(27,27)\n1054|(27,28)\n1055|(27,29)\n1056|(27,30)\n1057|(27,31)\n1058|(27,32)\n1059|(27,33)\n1060|(27,34)\n1061|(27,35)\n1062|(27,36)\n1063|(27,37)\n1064|(27,38)\n1065|(28,1)\n1066|(28,2)\n1067|(28,3)\n1068|(28,4)\n1069|(28,5)\n1070|(28,6)\n1071|(28,7)\n1072|(28,8)\n1073|(28,9)\n1074|(28,10)\n1075|(28,11)\n1076|(28,12)\n1077|(28,13)\n1078|(28,14)\n1079|(28,15)\n1080|(28,16)\n1081|(28,17)\n1082|(28,18)\n1083|(28,19)\n1084|(28,20)\n1085|(28,21)\n1086|(28,22)\n1087|(28,23)\n1088|(28,24)\n1089|(28,25)\n1090|(28,26)\n1091|(28,27)\n1092|(28,28)\n1093|(28,29)\n1094|(28,30)\n1095|(28,31)\n1096|(28,32)\n1097|(28,33)\n1098|(28,34)\n1099|(28,35)\n1100|(28,36)\n1101|(28,37)\n1102|(28,38)\n1103|(29,1)\n1104|(29,2)\n1105|(29,3)\n1106|(29,4)\n1107|(29,5)\n1108|(29,6)\n1109|(29,7)\n1110|(29,8)\n1111|(29,9)\n1112|(29,10)\n1113|(29,11)\n1114|(29,12)\n1115|(29,13)\n1116|(29,14)\n1117|(29,15)\n1118|(29,16)\n1119|(29,17)\n1120|(29,18)\n1121|(29,19)\n1122|(29,20)\n1123|(29,21)\n1124|(29,22)\n1125|(29,23)\n1126|(29,24)\n1127|(29,25)\n1128|(29,26)\n1129|(29,27)\n1130|(29,28)\n1131|(29,29)\n1132|(29,30)\n1133|(29,31)\n1134|(29,32)\n1135|(29,33)\n1136|(29,34)\n1137|(29,35)\n1138|(29,36)\n1139|(29,37)\n1140|(29,38)\n1141|(30,1)\n1142|(30,2)\n1143|(30,3)\n1144|(30,4)\n1145|(30,5)\n1146|(30,6)\n1147|(30,7)\n1148|(30,8)\n1149|(30,9)\n1150|(30,10)\n1151|(30,11)\n1152|(30,12)\n1153|(30,13)\n1154|(30,14)\n1155|(30,15)\n1156|(30,16)\n1157|(30,17)\n1158|(30,18)\n1159|(30,19)\n1160|(30,20)\n1161|(30,21)\n1162|(30,22)\n1163|(30,23)\n1164|(30,24)\n1165|(30,25)\n1166|(30,26)\n1167|(30,27)\n1168|(30,28)\n1169|(30,29)\n1170|(30,30)\n1171|(30,31)\n1172|(30,32)\n1173|(30,33)\n1174|(30,34)\n1175|(30,35)\n1176|(30,36)\n1177|(30,37)\n1178|(30,38)\n1179|(31,1)\n1180|(31,2)\n1181|(31,3)\n1182|(31,4)\n1183|(31,5)\n1184|(31,6)\n1185|(31,7)\n1186|(31,8)\n1187|(31,9)\n1188|(31,10)\n1189|(31,11)\n1190|(31,12)\n1191|(31,13)\n1192|(31,14)\n1193|(31,15)\n1194|(31,16)\n1195|(31,17)\n1196|(31,18)\n1197|(31,19)\n1198|(31,20)\n1199|(31,21)\n1200|(31,22)\n1201|(31,23)\n1202|(31,24)\n1203|(31,25)\n1204|(31,26)\n1205|(31,27)\n1206|(31,28)\n1207|(31,29)\n1208|(31,30)\n1209|(31,31)\n1210|(31,32)\n1211|(31,33)\n1212|(31,34)\n1213|(31,35)\n1214|(31,36)\n1215|(31,37)\n1216|(31,38)\n1217|(32,1)\n1218|(32,2)\n1219|(32,3)\n1220|(32,4)\n1221|(32,5)\n1222|(32,6)\n1223|(32,7)\n1224|(32,8)\n1225|(32,9)\n1226|(32,10)\n1227|(32,11)\n1228|(32,12)\n1229|(32,13)\n1230|(32,14)\n1231|(32,15)\n1232|(32,16)\n1233|(32,17)\n1234|(32,18)\n1235|(32,19)\n1236|(32,20)\n1237|(32,21)\n1238|(32,22)\n1239|(32,23)\n1240|(32,24)\n1241|(32,25)\n1242|(32,26)\n1243|(32,27)\n1244|(32,28)\n1245|(32,29)\n1246|(32,30)\n1247|(32,31)\n1248|(32,32)\n1249|(32,33)\n1250|(32,34)\n1251|(32,35)\n1252|(32,36)\n1253|(32,37)\n1254|(32,38)\n1255|(33,1)\n1256|(33,2)\n1257|(33,3)\n1258|(33,4)\n1259|(33,5)\n1260|(33,6)\n1261|(33,7)\n1262|(33,8)\n1263|(33,9)\n1264|(33,10)\n1265|(33,11)\n1266|(33,12)\n1267|(33,13)\n1268|(33,14)\n1269|(33,15)\n1270|(33,16)\n1271|(33,17)\n1272|(33,18)\n1273|(33,19)\n1274|(33,20)\n1275|(33,21)\n1276|(33,22)\n1277|(33,23)\n1278|(33,24)\n1279|(33,25)\n1280|(33,26)\n1281|(33,27)\n1282|(33,28)\n1283|(33,29)\n1284|(33,30)\n1285|(33,31)\n1286|(33,32)\n1287|(33,33)\n1288|(33,34)\n1289|(33,35)\n1290|(33,36)\n1291|(33,37)\n1292|(33,38)\n1293|(34,1)\n1294|(34,2)\n1295|(34,3)\n1296|(34,4)\n1297|(34,5)\n1298|(34,6)\n1299|(34,7)\n1300|(34,8)\n1301|(34,9)\n1302|(34,10)\n1303|(34,11)\n1304|(34,12)\n1305|(34,13)\n1306|(34,14)\n1307|(34,15)\n1308|(34,16)\n1309|(34,17)\n1310|(34,18)\n1311|(34,19)\n1312|(34,20)\n1313|(34,21)\n1314|(34,22)\n1315|(34,23)\n1316|(34,24)\n1317|(34,25)\n1318|(34,26)\n1319|(34,27)\n1320|(34,28)\n1321|(34,29)\n1322|(34,30)\n1323|(34,31)\n1324|(34,32)\n1325|(34,33)\n1326|(34,34)\n1327|(34,35)\n1328|(34,36)\n1329|(34,37)\n1330|(34,38)\n1331|(35,1)\n1332|(35,2)\n1333|(35,3)\n1334|(35,4)\n1335|(35,5)\n1336|(35,6)\n1337|(35,7)\n1338|(35,8)\n1339|(35,9)\n1340|(35,10)\n1341|(35,11)\n1342|(35,12)\n1343|(35,13)\n1344|(35,14)\n1345|(35,15)\n1346|(35,16)\n1347|(35,17)\n1348|(35,18)\n1349|(35,19)\n1350|(35,20)\n1351|(35,21)\n1352|(35,22)\n1353|(35,23)\n1354|(35,24)\n1355|(35,25)\n1356|(35,26)\n1357|(35,27)\n1358|(35,28)\n1359|(35,29)\n1360|(35,30)\n1361|(35,31)\n1362|(35,32)\n1363|(35,33)\n1364|(35,34)\n1365|(35,35)\n1366|(35,36)\n1367|(35,37)\n1368|(35,38)\n1369|(36,1)\n1370|(36,2)\n1371|(36,3)\n1372|(36,4)\n1373|(36,5)\n1374|(36,6)\n1375|(36,7)\n1376|(36,8)\n1377|(36,9)\n1378|(36,10)\n1379|(36,11)\n1380|(36,12)\n1381|(36,13)\n1382|(36,14)\n1383|(36,15)\n1384|(36,16)\n1385|(36,17)\n1386|(36,18)\n1387|(36,19)\n1388|(36,20)\n1389|(36,21)\n1390|(36,22)\n1391|(36,23)\n1392|(36,24)\n1393|(36,25)\n1394|(36,26)\n1395|(36,27)\n1396|(36,28)\n1397|(36,29)\n1398|(36,30)\n1399|(36,31)\n1400|(36,32)\n1401|(36,33)\n1402|(36,34)\n1403|(36,35)\n1404|(36,36)\n1405|(36,37)\n1406|(36,38)\n1407|(37,1)\n1408|(37,2)\n1409|(37,3)\n1410|(37,4)\n1411|(37,5)\n1412|(37,6)\n1413|(37,7)\n1414|(37,8)\n1415|(37,9)\n1416|(37,10)\n1417|(37,11)\n1418|(37,12)\n1419|(37,13)\n1420|(37,14)\n1421|(37,15)\n1422|(37,16)\n1423|(37,17)\n1424|(37,18)\n1425|(37,19)\n1426|(37,20)\n1427|(37,21)\n1428|(37,22)\n1429|(37,23)\n1430|(37,24)\n1431|(37,25)\n1432|(37,26)\n1433|(37,27)\n1434|(37,28)\n1435|(37,29)\n1436|(37,30)\n1437|(37,31)\n1438|(37,32)\n1439|(37,33)\n1440|(37,34)\n1441|(37,35)\n1442|(37,36)\n1443|(37,37)\n1444|(37,38)\n1445|(38,1)\n1446|(38,2)\n1447|(38,3)\n1448|(38,4)\n1449|(38,5)\n1450|(38,6)\n1451|(38,7)\n1452|(38,8)\n1453|(38,9)\n1454|(38,10)\n1455|(38,11)\n1456|(38,12)\n1457|(38,13)\n1458|(38,14)\n1459|(38,15)\n1460|(38,16)\n1461|(38,17)\n1462|(38,18)\n1463|(38,19)\n1464|(38,20)\n1465|(38,21)\n1466|(38,22)\n1467|(38,23)\n1468|(38,24)\n1469|(38,25)\n1470|(38,26)\n1471|(38,27)\n1472|(38,28)\n1473|(38,29)\n1474|(38,30)\n1475|(38,31)\n1476|(38,32)\n1477|(38,33)\n1478|(38,34)\n1479|(38,35)\n1480|(38,36)\n1481|(38,37)\n1482|(38,38)\n1483|(39,1)\n1484|(39,2)\n1485|(39,3)\n1486|(39,4)\n1487|(39,5)\n1488|(39,6)\n1489|(39,7)\n1490|(39,8)\n1491|(39,9)\n1492|(39,10)\n1493|(39,11)\n1494|(39,12)\n1495|(39,13)\n1496|(39,14)\n1497|(39,15)\n1498|(39,16)\n1499|(39,17)\n1500|(39,18)\n1501|(39,19)\n1502|(39,20)\n1503|(39,21)\n1504|(39,22)\n1505|(39,23)\n1506|(39,24)\n1507|(39,25)\n1508|(39,26)\n1509|(39,27)\n1510|(39,28)\n1511|(39,29)\n1512|(39,30)\n1513|(39,31)\n1514|(39,32)\n1515|(39,33)\n1516|(39,34)\n1517|(39,35)\n1518|(39,36)\n1519|(39,37)\n1520|(39,38)\n1521|(40,1)\n1522|(40,2)\n1523|(40,3)\n1524|(40,4)\n1525|(40,5)\n1526|(40,6)\n1527|(40,7)\n1528|(40,8)\n1529|(40,9)\n1530|(40,10)\n1531|(40,11)\n1532|(40,12)\n1533|(40,13)\n1534|(40,14)\n1535|(40,15)\n1536|(40,16)\n1537|(40,17)\n1538|(40,18)\n1539|(40,19)\n1540|(40,20)\n1541|(40,21)\n1542|(40,22)\n1543|(40,23)\n1544|(40,24)\n1545|(40,25)\n1546|(40,26)\n1547|(40,27)\n1548|(40,28)\n1549|(40,29)\n1550|(40,30)\n1551|(40,31)\n1552|(40,32)\n1553|(40,33)\n1554|(40,34)\n1555|(40,35)\n1556|(40,36)\n1557|(40,37)\n1558|(40,38)\n1559|(41,1)\n1560|(41,2)\n1561|(41,3)\n1562|(41,4)\n1563|(41,5)\n1564|(41,6)\n1565|(41,7)\n1566|(41,8)\n1567|(41,9)\n1568|(41,10)\n1569|(41,11)\n1570|(41,12)\n1571|(41,13)\n1572|(41,14)\n1573|(41,15)\n1574|(41,16)\n1575|(41,17)\n1576|(41,18)\n1577|(41,19)\n1578|(41,20)\n1579|(41,21)\n1580|(41,22)\n1581|(41,23)\n1582|(41,24)\n1583|(41,25)\n1584|(41,26)\n1585|(41,27)\n1586|(41,28)\n1587|(41,29)\n1588|(41,30)\n1589|(41,31)\n1590|(41,32)\n1591|(41,33)\n1592|(41,34)\n1593|(41,35)\n1594|(41,36)\n1595|(41,37)\n1596|(41,38)\n1597|(42,1)\n1598|(42,2)\n1599|(42,3)\n1600|(42,4)\n1601|(42,5)\n1602|(42,6)\n1603|(42,7)\n1604|(42,8)\n1605|(42,9)\n1606|(42,10)\n1607|(42,11)\n1608|(42,12)\n1609|(42,13)\n1610|(42,14)\n1611|(42,15)\n1612|(42,16)\n1613|(42,17)\n1614|(42,18)\n1615|(42,19)\n1616|(42,20)\n1617|(42,21)\n1618|(42,22)\n1619|(42,23)\n1620|(42,24)\n1621|(42,25)\n1622|(42,26)\n1623|(42,27)\n1624|(42,28)\n1625|(42,29)\n1626|(42,30)\n1627|(42,31)\n1628|(42,32)\n1629|(42,33)\n1630|(42,34)\n1631|(42,35)\n1632|(42,36)\n1633|(42,37)\n1634|(42,38)\n1635|(43,1)\n1636|(43,2)\n1637|(43,3)\n1638|(43,4)\n1639|(43,5)\n1640|(43,6)\n1641|(43,7)\n1642|(43,8)\n1643|(43,9)\n1644|(43,10)\n1645|(43,11)\n1646|(43,12)\n1647|(43,13)\n1648|(43,14)\n1649|(43,15)\n1650|(43,16)\n1651|(43,17)\n1652|(43,18)\n1653|(43,19)\n1654|(43,20)\n1655|(43,21)\n1656|(43,22)\n1657|(43,23)\n1658|(43,24)\n1659|(43,25)\n1660|(43,26)\n1661|(43,27)\n1662|(43,28)\n1663|(43,29)\n1664|(43,30)\n1665|(43,31)\n1666|(43,32)\n1667|(43,33)\n1668|(43,34)\n1669|(43,35)\n1670|(43,36)\n1671|(43,37)\n1672|(43,38)\n1673|(44,1)\n1674|(44,2)\n1675|(44,3)\n1676|(44,4)\n1677|(44,5)\n1678|(44,6)\n1679|(44,7)\n1680|(44,8)\n1681|(44,9)\n1682|(44,10)\n1683|(44,11)\n1684|(44,12)\n1685|(44,13)\n1686|(44,14)\n1687|(44,15)\n1688|(44,16)\n1689|(44,17)\n1690|(44,18)\n1691|(44,19)\n1692|(44,20)\n1693|(44,21)\n1694|(44,22)\n1695|(44,23)\n1696|(44,24)\n1697|(44,25)\n1698|(44,26)\n1699|(44,27)\n1700|(44,28)\n1701|(44,29)\n1702|(44,30)\n1703|(44,31)\n1704|(44,32)\n1705|(44,33)\n1706|(44,34)\n1707|(44,35)\n1708|(44,36)\n1709|(44,37)\n1710|(44,38)\n1711|(45,1)\n1712|(45,2)\n1713|(45,3)\n1714|(45,4)\n1715|(45,5)\n1716|(45,6)\n1717|(45,7)\n1718|(45,8)\n1719|(45,9)\n1720|(45,10)\n1721|(45,11)\n1722|(45,12)\n1723|(45,13)\n1724|(45,14)\n1725|(45,15)\n1726|(45,16)\n1727|(45,17)\n1728|(45,18)\n1729|(45,19)\n1730|(45,20)\n1731|(45,21)\n1732|(45,22)\n1733|(45,23)\n1734|(45,24)\n1735|(45,25)\n1736|(45,26)\n1737|(45,27)\n1738|(45,28)\n1739|(45,29)\n1740|(45,30)\n1741|(45,31)\n1742|(45,32)\n1743|(45,33)\n1744|(45,34)\n1745|(45,35)\n1746|(45,36)\n1747|(45,37)\n1748|(45,38)\n1749|(46,1)\n1750|(46,2)\n1751|(46,3)\n1752|(46,4)\n1753|(46,5)\n1754|(46,6)\n1755|(46,7)\n1756|(46,8)\n1757|(46,9)\n1758|(46,10)\n1759|(46,11)\n1760|(46,12)\n1761|(46,13)\n1762|(46,14)\n1763|(46,15)\n1764|(46,16)\n1765|(46,17)\n1766|(46,18)\n1767|(46,19)\n1768|(46,20)\n1769|(46,21)\n1770|(46,22)\n1771|(46,23)\n1772|(46,24)\n1773|(46,25)\n1774|(46,26)\n1775|(46,27)\n1776|(46,28)\n1777|(46,29)\n1778|(46,30)\n1779|(46,31)\n1780|(46,32)\n1781|(46,33)\n1782|(46,34)\n1783|(46,35)\n1784|(46,36)\n1785|(46,37)\n1786|(46,38)\n1787|(47,1)\n1788|(47,2)\n1789|(47,3)\n1790|(47,4)\n1791|(47,5)\n1792|(47,6)\n1793|(47,7)\n1794|(47,8)\n1795|(47,9)\n1796|(47,10)\n1797|(47,11)\n1798|(47,12)\n1799|(47,13)\n1800|(47,14)\n1801|(47,15)\n1802|(47,16)\n1803|(47,17)\n1804|(47,18)\n1805|(47,19)\n1806|(47,20)\n1807|(47,21)\n1808|(47,22)\n1809|(47,23)\n1810|(47,24)\n1811|(47,25)\n1812|(47,26)\n1813|(47,27)\n1814|(47,28)\n1815|(47,29)\n1816|(47,30)\n1817|(47,31)\n1818|(47,32)\n1819|(47,33)\n1820|(47,34)\n1821|(47,35)\n1822|(47,36)\n1823|(47,37)\n1824|(47,38)\n1825|(48,1)\n1826|(48,2)\n1827|(48,3)\n1828|(48,4)\n1829|(48,5)\n1830|(48,6)\n1831|(48,7)\n1832|(48,8)\n1833|(48,9)\n1834|(48,10)\n1835|(48,11)\n1836|(48,12)\n1837|(48,13)\n1838|(48,14)\n1839|(48,15)\n1840|(48,16)\n1841|(48,17)\n1842|(48,18)\n1843|(48,19)\n1844|(48,20)\n1845|(48,21)\n1846|(48,22)\n1847|(48,23)\n1848|(48,24)\n1849|(48,25)\n1850|(48,26)\n1851|(48,27)\n1852|(48,28)\n1853|(48,29)\n1854|(48,30)\n1855|(48,31)\n1856|(48,32)\n1857|(48,33)\n1858|(48,34)\n1859|(48,35)\n1860|(48,36)\n1861|(48,37)\n1862|(48,38)\n1863|(49,1)\n1864|(49,2)\n1865|(49,3)\n1866|(49,4)\n1867|(49,5)\n1868|(49,6)\n1869|(49,7)\n1870|(49,8)\n1871|(49,9)\n1872|(49,10)\n1873|(49,11)\n1874|(49,12)\n1875|(49,13)\n1876|(49,14)\n1877|(49,15)\n1878|(49,16)\n1879|(49,17)\n1880|(49,18)\n1881|(49,19)\n1882|(49,20)\n1883|(49,21)\n1884|(49,22)\n1885|(49,23)\n1886|(49,24)\n1887|(49,25)\n1888|(49,26)\n1889|(49,27)\n1890|(49,28)\n1891|(49,29)\n1892|(49,30)\n1893|(49,31)\n1894|(49,32)\n1895|(49,33)\n1896|(49,34)\n1897|(49,35)\n1898|(49,36)\n1899|(49,37)\n1900|(49,38)\n1901|(50,1)\n1902|(50,2)\n1903|(50,3)\n1904|(50,4)\n1905|(50,5)\n1906|(50,6)\n1907|(50,7)\n1908|(50,8)\n1909|(50,9)\n1910|(50,10)\n1911|(50,11)\n1912|(50,12)\n1913|(50,13)\n1914|(50,14)\n1915|(50,15)\n1916|(50,16)\n1917|(50,17)\n1918|(50,18)\n1919|(50,19)\n1920|(50,20)\n1921|(50,21)\n1922|(50,22)\n1923|(50,23)\n1924|(50,24)\n1925|(50,25)\n1926|(50,26)\n1927|(50,27)\n1928|(50,28)\n1929|(50,29)\n1930|(50,30)\n1931|(50,31)\n1932|(50,32)\n1933|(50,33)\n1934|(50,34)\n1935|(50,35)\n1936|(50,36)\n1937|(50,37)\n1938|(50,38)\n1939|(51,1)\n1940|(51,2)\n1941|(51,3)\n1942|(51,4)\n1943|(51,5)\n1944|(51,6)\n1945|(51,7)\n1946|(51,8)\n1947|(51,9)\n1948|(51,10)\n1949|(51,11)\n1950|(51,12)\n1951|(51,13)\n1952|(51,14)\n1953|(51,15)\n1954|(51,16)\n1955|(51,17)\n1956|(51,18)\n1957|(51,19)\n1958|(51,20)\n1959|(51,21)\n1960|(51,22)\n1961|(51,23)\n1962|(51,24)\n1963|(51,25)\n1964|(51,26)\n1965|(51,27)\n1966|(51,28)\n1967|(51,29)\n1968|(51,30)\n1969|(51,31)\n1970|(51,32)\n1971|(51,33)\n1972|(51,34)\n1973|(51,35)\n1974|(51,36)\n1975|(51,37)\n1976|(51,38)\n1977|(52,1)\n1978|(52,2)\n1979|(52,3)\n1980|(52,4)\n1981|(52,5)\n1982|(52,6)\n1983|(52,7)\n1984|(52,8)\n1985|(52,9)\n1986|(52,10)\n1987|(52,11)\n1988|(52,12)\n1989|(52,13)\n1990|(52,14)\n1991|(52,15)\n1992|(52,16)\n1993|(52,17)\n1994|(52,18)\n1995|(52,19)\n1996|(52,20)\n1997|(52,21)\n1998|(52,22)\n1999|(52,23)\n2000|(52,24)\n2001|(52,25)\n2002|(52,26)\n2003|(52,27)\n2004|(52,28)\n2005|(52,29)\n2006|(52,30)\n2007|(52,31)\n2008|(52,32)\n2009|(52,33)\n2010|(52,34)\n2011|(52,35)\n2012|(52,36)\n2013|(52,37)\n2014|(52,38)\n2015|(53,1)\n2016|(53,2)\n2017|(53,3)\n2018|(53,4)\n2019|(53,5)\n2020|(53,6)\n2021|(53,7)\n2022|(53,8)\n2023|(53,9)\n2024|(53,10)\n2025|(53,11)\n2026|(53,12)\n2027|(53,13)\n2028|(53,14)\n2029|(53,15)\n2030|(53,16)\n2031|(53,17)\n2032|(53,18)\n2033|(53,19)\n2034|(53,20)\n2035|(53,21)\n2036|(53,22)\n2037|(53,23)\n2038|(53,24)\n2039|(53,25)\n2040|(53,26)\n2041|(53,27)\n2042|(53,28)\n2043|(53,29)\n2044|(53,30)\n2045|(53,31)\n2046|(53,32)\n2047|(53,33)\n2048|(53,34)",
+        "gin": "1|(0,1)\n2|(0,2)\n3|(0,3)\n4|(0,4)\n5|(0,5)\n6|(0,6)\n7|(0,7)\n8|(0,8)\n9|(0,9)\n10|(0,10)\n11|(0,11)\n12|(0,12)\n13|(0,13)\n14|(0,14)\n15|(0,15)\n16|(0,16)\n17|(0,17)\n18|(0,18)\n19|(0,19)\n20|(0,20)\n21|(0,21)\n22|(0,22)\n23|(0,23)\n24|(0,24)\n25|(0,25)\n26|(0,26)\n27|(0,27)\n28|(0,28)\n29|(0,29)\n30|(0,30)\n31|(0,31)\n32|(0,32)\n33|(0,33)\n34|(0,34)\n35|(0,35)\n36|(0,36)\n37|(0,37)\n38|(0,38)\n39|(1,1)\n40|(1,2)\n41|(1,3)\n42|(1,4)\n43|(1,5)\n44|(1,6)\n45|(1,7)\n46|(1,8)\n47|(1,9)\n48|(1,10)\n49|(1,11)\n50|(1,12)\n51|(1,13)\n52|(1,14)\n53|(1,15)\n54|(1,16)\n55|(1,17)\n56|(1,18)\n57|(1,19)\n58|(1,20)\n59|(1,21)\n60|(1,22)\n61|(1,23)\n62|(1,24)\n63|(1,25)\n64|(1,26)\n65|(1,27)\n66|(1,28)\n67|(1,29)\n68|(1,30)\n69|(1,31)\n70|(1,32)\n71|(1,33)\n72|(1,34)\n73|(1,35)\n74|(1,36)\n75|(1,37)\n76|(1,38)\n77|(2,1)\n78|(2,2)\n79|(2,3)\n80|(2,4)\n81|(2,5)\n82|(2,6)\n83|(2,7)\n84|(2,8)\n85|(2,9)\n86|(2,10)\n87|(2,11)\n88|(2,12)\n89|(2,13)\n90|(2,14)\n91|(2,15)\n92|(2,16)\n93|(2,17)\n94|(2,18)\n95|(2,19)\n96|(2,20)\n97|(2,21)\n98|(2,22)\n99|(2,23)\n100|(2,24)\n101|(2,25)\n102|(2,26)\n103|(2,27)\n104|(2,28)\n105|(2,29)\n106|(2,30)\n107|(2,31)\n108|(2,32)\n109|(2,33)\n110|(2,34)\n111|(2,35)\n112|(2,36)\n113|(2,37)\n114|(2,38)\n115|(3,1)\n116|(3,2)\n117|(3,3)\n118|(3,4)\n119|(3,5)\n120|(3,6)\n121|(3,7)\n122|(3,8)\n123|(3,9)\n124|(3,10)\n125|(3,11)\n126|(3,12)\n127|(3,13)\n128|(3,14)\n129|(3,15)\n130|(3,16)\n131|(3,17)\n132|(3,18)\n133|(3,19)\n134|(3,20)\n135|(3,21)\n136|(3,22)\n137|(3,23)\n138|(3,24)\n139|(3,25)\n140|(3,26)\n141|(3,27)\n142|(3,28)\n143|(3,29)\n144|(3,30)\n145|(3,31)\n146|(3,32)\n147|(3,33)\n148|(3,34)\n149|(3,35)\n150|(3,36)\n151|(3,37)\n152|(3,38)\n153|(4,1)\n154|(4,2)\n155|(4,3)\n156|(4,4)\n157|(4,5)\n158|(4,6)\n159|(4,7)\n160|(4,8)\n161|(4,9)\n162|(4,10)\n163|(4,11)\n164|(4,12)\n165|(4,13)\n166|(4,14)\n167|(4,15)\n168|(4,16)\n169|(4,17)\n170|(4,18)\n171|(4,19)\n172|(4,20)\n173|(4,21)\n174|(4,22)\n175|(4,23)\n176|(4,24)\n177|(4,25)\n178|(4,26)\n179|(4,27)\n180|(4,28)\n181|(4,29)\n182|(4,30)\n183|(4,31)\n184|(4,32)\n185|(4,33)\n186|(4,34)\n187|(4,35)\n188|(4,36)\n189|(4,37)\n190|(4,38)\n191|(5,1)\n192|(5,2)\n193|(5,3)\n194|(5,4)\n195|(5,5)\n196|(5,6)\n197|(5,7)\n198|(5,8)\n199|(5,9)\n200|(5,10)\n201|(5,11)\n202|(5,12)\n203|(5,13)\n204|(5,14)\n205|(5,15)\n206|(5,16)\n207|(5,17)\n208|(5,18)\n209|(5,19)\n210|(5,20)\n211|(5,21)\n212|(5,22)\n213|(5,23)\n214|(5,24)\n215|(5,25)\n216|(5,26)\n217|(5,27)\n218|(5,28)\n219|(5,29)\n220|(5,30)\n221|(5,31)\n222|(5,32)\n223|(5,33)\n224|(5,34)\n225|(5,35)\n226|(5,36)\n227|(5,37)\n228|(5,38)\n229|(6,1)\n230|(6,2)\n231|(6,3)\n232|(6,4)\n233|(6,5)\n234|(6,6)\n235|(6,7)\n236|(6,8)\n237|(6,9)\n238|(6,10)\n239|(6,11)\n240|(6,12)\n241|(6,13)\n242|(6,14)\n243|(6,15)\n244|(6,16)\n245|(6,17)\n246|(6,18)\n247|(6,19)\n248|(6,20)\n249|(6,21)\n250|(6,22)\n251|(6,23)\n252|(6,24)\n253|(6,25)\n254|(6,26)\n255|(6,27)\n256|(6,28)\n257|(6,29)\n258|(6,30)\n259|(6,31)\n260|(6,32)\n261|(6,33)\n262|(6,34)\n263|(6,35)\n264|(6,36)\n265|(6,37)\n266|(6,38)\n267|(7,1)\n268|(7,2)\n269|(7,3)\n270|(7,4)\n271|(7,5)\n272|(7,6)\n273|(7,7)\n274|(7,8)\n275|(7,9)\n276|(7,10)\n277|(7,11)\n278|(7,12)\n279|(7,13)\n280|(7,14)\n281|(7,15)\n282|(7,16)\n283|(7,17)\n284|(7,18)\n285|(7,19)\n286|(7,20)\n287|(7,21)\n288|(7,22)\n289|(7,23)\n290|(7,24)\n291|(7,25)\n292|(7,26)\n293|(7,27)\n294|(7,28)\n295|(7,29)\n296|(7,30)\n297|(7,31)\n298|(7,32)\n299|(7,33)\n300|(7,34)\n301|(7,35)\n302|(7,36)\n303|(7,37)\n304|(7,38)\n305|(8,1)\n306|(8,2)\n307|(8,3)\n308|(8,4)\n309|(8,5)\n310|(8,6)\n311|(8,7)\n312|(8,8)\n313|(8,9)\n314|(8,10)\n315|(8,11)\n316|(8,12)\n317|(8,13)\n318|(8,14)\n319|(8,15)\n320|(8,16)\n321|(8,17)\n322|(8,18)\n323|(8,19)\n324|(8,20)\n325|(8,21)\n326|(8,22)\n327|(8,23)\n328|(8,24)\n329|(8,25)\n330|(8,26)\n331|(8,27)\n332|(8,28)\n333|(8,29)\n334|(8,30)\n335|(8,31)\n336|(8,32)\n337|(8,33)\n338|(8,34)\n339|(8,35)\n340|(8,36)\n341|(8,37)\n342|(8,38)\n343|(9,1)\n344|(9,2)\n345|(9,3)\n346|(9,4)\n347|(9,5)\n348|(9,6)\n349|(9,7)\n350|(9,8)\n351|(9,9)\n352|(9,10)\n353|(9,11)\n354|(9,12)\n355|(9,13)\n356|(9,14)\n357|(9,15)\n358|(9,16)\n359|(9,17)\n360|(9,18)\n361|(9,19)\n362|(9,20)\n363|(9,21)\n364|(9,22)\n365|(9,23)\n366|(9,24)\n367|(9,25)\n368|(9,26)\n369|(9,27)\n370|(9,28)\n371|(9,29)\n372|(9,30)\n373|(9,31)\n374|(9,32)\n375|(9,33)\n376|(9,34)\n377|(9,35)\n378|(9,36)\n379|(9,37)\n380|(9,38)\n381|(10,1)\n382|(10,2)\n383|(10,3)\n384|(10,4)\n385|(10,5)\n386|(10,6)\n387|(10,7)\n388|(10,8)\n389|(10,9)\n390|(10,10)\n391|(10,11)\n392|(10,12)\n393|(10,13)\n394|(10,14)\n395|(10,15)\n396|(10,16)\n397|(10,17)\n398|(10,18)\n399|(10,19)\n400|(10,20)\n401|(10,21)\n402|(10,22)\n403|(10,23)\n404|(10,24)\n405|(10,25)\n406|(10,26)\n407|(10,27)\n408|(10,28)\n409|(10,29)\n410|(10,30)\n411|(10,31)\n412|(10,32)\n413|(10,33)\n414|(10,34)\n415|(10,35)\n416|(10,36)\n417|(10,37)\n418|(10,38)\n419|(11,1)\n420|(11,2)\n421|(11,3)\n422|(11,4)\n423|(11,5)\n424|(11,6)\n425|(11,7)\n426|(11,8)\n427|(11,9)\n428|(11,10)\n429|(11,11)\n430|(11,12)\n431|(11,13)\n432|(11,14)\n433|(11,15)\n434|(11,16)\n435|(11,17)\n436|(11,18)\n437|(11,19)\n438|(11,20)\n439|(11,21)\n440|(11,22)\n441|(11,23)\n442|(11,24)\n443|(11,25)\n444|(11,26)\n445|(11,27)\n446|(11,28)\n447|(11,29)\n448|(11,30)\n449|(11,31)\n450|(11,32)\n451|(11,33)\n452|(11,34)\n453|(11,35)\n454|(11,36)\n455|(11,37)\n456|(11,38)\n457|(12,1)\n458|(12,2)\n459|(12,3)\n460|(12,4)\n461|(12,5)\n462|(12,6)\n463|(12,7)\n464|(12,8)\n465|(12,9)\n466|(12,10)\n467|(12,11)\n468|(12,12)\n469|(12,13)\n470|(12,14)\n471|(12,15)\n472|(12,16)\n473|(12,17)\n474|(12,18)\n475|(12,19)\n476|(12,20)\n477|(12,21)\n478|(12,22)\n479|(12,23)\n480|(12,24)\n481|(12,25)\n482|(12,26)\n483|(12,27)\n484|(12,28)\n485|(12,29)\n486|(12,30)\n487|(12,31)\n488|(12,32)\n489|(12,33)\n490|(12,34)\n491|(12,35)\n492|(12,36)\n493|(12,37)\n494|(12,38)\n495|(13,1)\n496|(13,2)\n497|(13,3)\n498|(13,4)\n499|(13,5)\n500|(13,6)\n501|(13,7)\n502|(13,8)\n503|(13,9)\n504|(13,10)\n505|(13,11)\n506|(13,12)\n507|(13,13)\n508|(13,14)\n509|(13,15)\n510|(13,16)\n511|(13,17)\n512|(13,18)\n513|(13,19)\n514|(13,20)\n515|(13,21)\n516|(13,22)\n517|(13,23)\n518|(13,24)\n519|(13,25)\n520|(13,26)\n521|(13,27)\n522|(13,28)\n523|(13,29)\n524|(13,30)\n525|(13,31)\n526|(13,32)\n527|(13,33)\n528|(13,34)\n529|(13,35)\n530|(13,36)\n531|(13,37)\n532|(13,38)\n533|(14,1)\n534|(14,2)\n535|(14,3)\n536|(14,4)\n537|(14,5)\n538|(14,6)\n539|(14,7)\n540|(14,8)\n541|(14,9)\n542|(14,10)\n543|(14,11)\n544|(14,12)\n545|(14,13)\n546|(14,14)\n547|(14,15)\n548|(14,16)\n549|(14,17)\n550|(14,18)\n551|(14,19)\n552|(14,20)\n553|(14,21)\n554|(14,22)\n555|(14,23)\n556|(14,24)\n557|(14,25)\n558|(14,26)\n559|(14,27)\n560|(14,28)\n561|(14,29)\n562|(14,30)\n563|(14,31)\n564|(14,32)\n565|(14,33)\n566|(14,34)\n567|(14,35)\n568|(14,36)\n569|(14,37)\n570|(14,38)\n571|(15,1)\n572|(15,2)\n573|(15,3)\n574|(15,4)\n575|(15,5)\n576|(15,6)\n577|(15,7)\n578|(15,8)\n579|(15,9)\n580|(15,10)\n581|(15,11)\n582|(15,12)\n583|(15,13)\n584|(15,14)\n585|(15,15)\n586|(15,16)\n587|(15,17)\n588|(15,18)\n589|(15,19)\n590|(15,20)\n591|(15,21)\n592|(15,22)\n593|(15,23)\n594|(15,24)\n595|(15,25)\n596|(15,26)\n597|(15,27)\n598|(15,28)\n599|(15,29)\n600|(15,30)\n601|(15,31)\n602|(15,32)\n603|(15,33)\n604|(15,34)\n605|(15,35)\n606|(15,36)\n607|(15,37)\n608|(15,38)\n609|(16,1)\n610|(16,2)\n611|(16,3)\n612|(16,4)\n613|(16,5)\n614|(16,6)\n615|(16,7)\n616|(16,8)\n617|(16,9)\n618|(16,10)\n619|(16,11)\n620|(16,12)\n621|(16,13)\n622|(16,14)\n623|(16,15)\n624|(16,16)\n625|(16,17)\n626|(16,18)\n627|(16,19)\n628|(16,20)\n629|(16,21)\n630|(16,22)\n631|(16,23)\n632|(16,24)\n633|(16,25)\n634|(16,26)\n635|(16,27)\n636|(16,28)\n637|(16,29)\n638|(16,30)\n639|(16,31)\n640|(16,32)\n641|(16,33)\n642|(16,34)\n643|(16,35)\n644|(16,36)\n645|(16,37)\n646|(16,38)\n647|(17,1)\n648|(17,2)\n649|(17,3)\n650|(17,4)\n651|(17,5)\n652|(17,6)\n653|(17,7)\n654|(17,8)\n655|(17,9)\n656|(17,10)\n657|(17,11)\n658|(17,12)\n659|(17,13)\n660|(17,14)\n661|(17,15)\n662|(17,16)\n663|(17,17)\n664|(17,18)\n665|(17,19)\n666|(17,20)\n667|(17,21)\n668|(17,22)\n669|(17,23)\n670|(17,24)\n671|(17,25)\n672|(17,26)\n673|(17,27)\n674|(17,28)\n675|(17,29)\n676|(17,30)\n677|(17,31)\n678|(17,32)\n679|(17,33)\n680|(17,34)\n681|(17,35)\n682|(17,36)\n683|(17,37)\n684|(17,38)\n685|(18,1)\n686|(18,2)\n687|(18,3)\n688|(18,4)\n689|(18,5)\n690|(18,6)\n691|(18,7)\n692|(18,8)\n693|(18,9)\n694|(18,10)\n695|(18,11)\n696|(18,12)\n697|(18,13)\n698|(18,14)\n699|(18,15)\n700|(18,16)\n701|(18,17)\n702|(18,18)\n703|(18,19)\n704|(18,20)\n705|(18,21)\n706|(18,22)\n707|(18,23)\n708|(18,24)\n709|(18,25)\n710|(18,26)\n711|(18,27)\n712|(18,28)\n713|(18,29)\n714|(18,30)\n715|(18,31)\n716|(18,32)\n717|(18,33)\n718|(18,34)\n719|(18,35)\n720|(18,36)\n721|(18,37)\n722|(18,38)\n723|(19,1)\n724|(19,2)\n725|(19,3)\n726|(19,4)\n727|(19,5)\n728|(19,6)\n729|(19,7)\n730|(19,8)\n731|(19,9)\n732|(19,10)\n733|(19,11)\n734|(19,12)\n735|(19,13)\n736|(19,14)\n737|(19,15)\n738|(19,16)\n739|(19,17)\n740|(19,18)\n741|(19,19)\n742|(19,20)\n743|(19,21)\n744|(19,22)\n745|(19,23)\n746|(19,24)\n747|(19,25)\n748|(19,26)\n749|(19,27)\n750|(19,28)\n751|(19,29)\n752|(19,30)\n753|(19,31)\n754|(19,32)\n755|(19,33)\n756|(19,34)\n757|(19,35)\n758|(19,36)\n759|(19,37)\n760|(19,38)\n761|(20,1)\n762|(20,2)\n763|(20,3)\n764|(20,4)\n765|(20,5)\n766|(20,6)\n767|(20,7)\n768|(20,8)\n769|(20,9)\n770|(20,10)\n771|(20,11)\n772|(20,12)\n773|(20,13)\n774|(20,14)\n775|(20,15)\n776|(20,16)\n777|(20,17)\n778|(20,18)\n779|(20,19)\n780|(20,20)\n781|(20,21)\n782|(20,22)\n783|(20,23)\n784|(20,24)\n785|(20,25)\n786|(20,26)\n787|(20,27)\n788|(20,28)\n789|(20,29)\n790|(20,30)\n791|(20,31)\n792|(20,32)\n793|(20,33)\n794|(20,34)\n795|(20,35)\n796|(20,36)\n797|(20,37)\n798|(20,38)\n799|(21,1)\n800|(21,2)\n801|(21,3)\n802|(21,4)\n803|(21,5)\n804|(21,6)\n805|(21,7)\n806|(21,8)\n807|(21,9)\n808|(21,10)\n809|(21,11)\n810|(21,12)\n811|(21,13)\n812|(21,14)\n813|(21,15)\n814|(21,16)\n815|(21,17)\n816|(21,18)\n817|(21,19)\n818|(21,20)\n819|(21,21)\n820|(21,22)\n821|(21,23)\n822|(21,24)\n823|(21,25)\n824|(21,26)\n825|(21,27)\n826|(21,28)\n827|(21,29)\n828|(21,30)\n829|(21,31)\n830|(21,32)\n831|(21,33)\n832|(21,34)\n833|(21,35)\n834|(21,36)\n835|(21,37)\n836|(21,38)\n837|(22,1)\n838|(22,2)\n839|(22,3)\n840|(22,4)\n841|(22,5)\n842|(22,6)\n843|(22,7)\n844|(22,8)\n845|(22,9)\n846|(22,10)\n847|(22,11)\n848|(22,12)\n849|(22,13)\n850|(22,14)\n851|(22,15)\n852|(22,16)\n853|(22,17)\n854|(22,18)\n855|(22,19)\n856|(22,20)\n857|(22,21)\n858|(22,22)\n859|(22,23)\n860|(22,24)\n861|(22,25)\n862|(22,26)\n863|(22,27)\n864|(22,28)\n865|(22,29)\n866|(22,30)\n867|(22,31)\n868|(22,32)\n869|(22,33)\n870|(22,34)\n871|(22,35)\n872|(22,36)\n873|(22,37)\n874|(22,38)\n875|(23,1)\n876|(23,2)\n877|(23,3)\n878|(23,4)\n879|(23,5)\n880|(23,6)\n881|(23,7)\n882|(23,8)\n883|(23,9)\n884|(23,10)\n885|(23,11)\n886|(23,12)\n887|(23,13)\n888|(23,14)\n889|(23,15)\n890|(23,16)\n891|(23,17)\n892|(23,18)\n893|(23,19)\n894|(23,20)\n895|(23,21)\n896|(23,22)\n897|(23,23)\n898|(23,24)\n899|(23,25)\n900|(23,26)\n901|(23,27)\n902|(23,28)\n903|(23,29)\n904|(23,30)\n905|(23,31)\n906|(23,32)\n907|(23,33)\n908|(23,34)\n909|(23,35)\n910|(23,36)\n911|(23,37)\n912|(23,38)\n913|(24,1)\n914|(24,2)\n915|(24,3)\n916|(24,4)\n917|(24,5)\n918|(24,6)\n919|(24,7)\n920|(24,8)\n921|(24,9)\n922|(24,10)\n923|(24,11)\n924|(24,12)\n925|(24,13)\n926|(24,14)\n927|(24,15)\n928|(24,16)\n929|(24,17)\n930|(24,18)\n931|(24,19)\n932|(24,20)\n933|(24,21)\n934|(24,22)\n935|(24,23)\n936|(24,24)\n937|(24,25)\n938|(24,26)\n939|(24,27)\n940|(24,28)\n941|(24,29)\n942|(24,30)\n943|(24,31)\n944|(24,32)\n945|(24,33)\n946|(24,34)\n947|(24,35)\n948|(24,36)\n949|(24,37)\n950|(24,38)\n951|(25,1)\n952|(25,2)\n953|(25,3)\n954|(25,4)\n955|(25,5)\n956|(25,6)\n957|(25,7)\n958|(25,8)\n959|(25,9)\n960|(25,10)\n961|(25,11)\n962|(25,12)\n963|(25,13)\n964|(25,14)\n965|(25,15)\n966|(25,16)\n967|(25,17)\n968|(25,18)\n969|(25,19)\n970|(25,20)\n971|(25,21)\n972|(25,22)\n973|(25,23)\n974|(25,24)\n975|(25,25)\n976|(25,26)\n977|(25,27)\n978|(25,28)\n979|(25,29)\n980|(25,30)\n981|(25,31)\n982|(25,32)\n983|(25,33)\n984|(25,34)\n985|(25,35)\n986|(25,36)\n987|(25,37)\n988|(25,38)\n989|(26,1)\n990|(26,2)\n991|(26,3)\n992|(26,4)\n993|(26,5)\n994|(26,6)\n995|(26,7)\n996|(26,8)\n997|(26,9)\n998|(26,10)\n999|(26,11)\n1000|(26,12)\n1001|(26,13)\n1002|(26,14)\n1003|(26,15)\n1004|(26,16)\n1005|(26,17)\n1006|(26,18)\n1007|(26,19)\n1008|(26,20)\n1009|(26,21)\n1010|(26,22)\n1011|(26,23)\n1012|(26,24)\n1013|(26,25)\n1014|(26,26)\n1015|(26,27)\n1016|(26,28)\n1017|(26,29)\n1018|(26,30)\n1019|(26,31)\n1020|(26,32)\n1021|(26,33)\n1022|(26,34)\n1023|(26,35)\n1024|(26,36)\n1025|(26,37)\n1026|(26,38)\n1027|(27,1)\n1028|(27,2)\n1029|(27,3)\n1030|(27,4)\n1031|(27,5)\n1032|(27,6)\n1033|(27,7)\n1034|(27,8)\n1035|(27,9)\n1036|(27,10)\n1037|(27,11)\n1038|(27,12)\n1039|(27,13)\n1040|(27,14)\n1041|(27,15)\n1042|(27,16)\n1043|(27,17)\n1044|(27,18)\n1045|(27,19)\n1046|(27,20)\n1047|(27,21)\n1048|(27,22)\n1049|(27,23)\n1050|(27,24)\n1051|(27,25)\n1052|(27,26)\n1053|(27,27)\n1054|(27,28)\n1055|(27,29)\n1056|(27,30)\n1057|(27,31)\n1058|(27,32)\n1059|(27,33)\n1060|(27,34)\n1061|(27,35)\n1062|(27,36)\n1063|(27,37)\n1064|(27,38)\n1065|(28,1)\n1066|(28,2)\n1067|(28,3)\n1068|(28,4)\n1069|(28,5)\n1070|(28,6)\n1071|(28,7)\n1072|(28,8)\n1073|(28,9)\n1074|(28,10)\n1075|(28,11)\n1076|(28,12)\n1077|(28,13)\n1078|(28,14)\n1079|(28,15)\n1080|(28,16)\n1081|(28,17)\n1082|(28,18)\n1083|(28,19)\n1084|(28,20)\n1085|(28,21)\n1086|(28,22)\n1087|(28,23)\n1088|(28,24)\n1089|(28,25)\n1090|(28,26)\n1091|(28,27)\n1092|(28,28)\n1093|(28,29)\n1094|(28,30)\n1095|(28,31)\n1096|(28,32)\n1097|(28,33)\n1098|(28,34)\n1099|(28,35)\n1100|(28,36)\n1101|(28,37)\n1102|(28,38)\n1103|(29,1)\n1104|(29,2)\n1105|(29,3)\n1106|(29,4)\n1107|(29,5)\n1108|(29,6)\n1109|(29,7)\n1110|(29,8)\n1111|(29,9)\n1112|(29,10)\n1113|(29,11)\n1114|(29,12)\n1115|(29,13)\n1116|(29,14)\n1117|(29,15)\n1118|(29,16)\n1119|(29,17)\n1120|(29,18)\n1121|(29,19)\n1122|(29,20)\n1123|(29,21)\n1124|(29,22)\n1125|(29,23)\n1126|(29,24)\n1127|(29,25)\n1128|(29,26)\n1129|(29,27)\n1130|(29,28)\n1131|(29,29)\n1132|(29,30)\n1133|(29,31)\n1134|(29,32)\n1135|(29,33)\n1136|(29,34)\n1137|(29,35)\n1138|(29,36)\n1139|(29,37)\n1140|(29,38)\n1141|(30,1)\n1142|(30,2)\n1143|(30,3)\n1144|(30,4)\n1145|(30,5)\n1146|(30,6)\n1147|(30,7)\n1148|(30,8)\n1149|(30,9)\n1150|(30,10)\n1151|(30,11)\n1152|(30,12)\n1153|(30,13)\n1154|(30,14)\n1155|(30,15)\n1156|(30,16)\n1157|(30,17)\n1158|(30,18)\n1159|(30,19)\n1160|(30,20)\n1161|(30,21)\n1162|(30,22)\n1163|(30,23)\n1164|(30,24)\n1165|(30,25)\n1166|(30,26)\n1167|(30,27)\n1168|(30,28)\n1169|(30,29)\n1170|(30,30)\n1171|(30,31)\n1172|(30,32)\n1173|(30,33)\n1174|(30,34)\n1175|(30,35)\n1176|(30,36)\n1177|(30,37)\n1178|(30,38)\n1179|(31,1)\n1180|(31,2)\n1181|(31,3)\n1182|(31,4)\n1183|(31,5)\n1184|(31,6)\n1185|(31,7)\n1186|(31,8)\n1187|(31,9)\n1188|(31,10)\n1189|(31,11)\n1190|(31,12)\n1191|(31,13)\n1192|(31,14)\n1193|(31,15)\n1194|(31,16)\n1195|(31,17)\n1196|(31,18)\n1197|(31,19)\n1198|(31,20)\n1199|(31,21)\n1200|(31,22)\n1201|(31,23)\n1202|(31,24)\n1203|(31,25)\n1204|(31,26)\n1205|(31,27)\n1206|(31,28)\n1207|(31,29)\n1208|(31,30)\n1209|(31,31)\n1210|(31,32)\n1211|(31,33)\n1212|(31,34)\n1213|(31,35)\n1214|(31,36)\n1215|(31,37)\n1216|(31,38)\n1217|(32,1)\n1218|(32,2)\n1219|(32,3)\n1220|(32,4)\n1221|(32,5)\n1222|(32,6)\n1223|(32,7)\n1224|(32,8)\n1225|(32,9)\n1226|(32,10)\n1227|(32,11)\n1228|(32,12)\n1229|(32,13)\n1230|(32,14)\n1231|(32,15)\n1232|(32,16)\n1233|(32,17)\n1234|(32,18)\n1235|(32,19)\n1236|(32,20)\n1237|(32,21)\n1238|(32,22)\n1239|(32,23)\n1240|(32,24)\n1241|(32,25)\n1242|(32,26)\n1243|(32,27)\n1244|(32,28)\n1245|(32,29)\n1246|(32,30)\n1247|(32,31)\n1248|(32,32)\n1249|(32,33)\n1250|(32,34)\n1251|(32,35)\n1252|(32,36)\n1253|(32,37)\n1254|(32,38)\n1255|(33,1)\n1256|(33,2)\n1257|(33,3)\n1258|(33,4)\n1259|(33,5)\n1260|(33,6)\n1261|(33,7)\n1262|(33,8)\n1263|(33,9)\n1264|(33,10)\n1265|(33,11)\n1266|(33,12)\n1267|(33,13)\n1268|(33,14)\n1269|(33,15)\n1270|(33,16)\n1271|(33,17)\n1272|(33,18)\n1273|(33,19)\n1274|(33,20)\n1275|(33,21)\n1276|(33,22)\n1277|(33,23)\n1278|(33,24)\n1279|(33,25)\n1280|(33,26)\n1281|(33,27)\n1282|(33,28)\n1283|(33,29)\n1284|(33,30)\n1285|(33,31)\n1286|(33,32)\n1287|(33,33)\n1288|(33,34)\n1289|(33,35)\n1290|(33,36)\n1291|(33,37)\n1292|(33,38)\n1293|(34,1)\n1294|(34,2)\n1295|(34,3)\n1296|(34,4)\n1297|(34,5)\n1298|(34,6)\n1299|(34,7)\n1300|(34,8)\n1301|(34,9)\n1302|(34,10)\n1303|(34,11)\n1304|(34,12)\n1305|(34,13)\n1306|(34,14)\n1307|(34,15)\n1308|(34,16)\n1309|(34,17)\n1310|(34,18)\n1311|(34,19)\n1312|(34,20)\n1313|(34,21)\n1314|(34,22)\n1315|(34,23)\n1316|(34,24)\n1317|(34,25)\n1318|(34,26)\n1319|(34,27)\n1320|(34,28)\n1321|(34,29)\n1322|(34,30)\n1323|(34,31)\n1324|(34,32)\n1325|(34,33)\n1326|(34,34)\n1327|(34,35)\n1328|(34,36)\n1329|(34,37)\n1330|(34,38)\n1331|(35,1)\n1332|(35,2)\n1333|(35,3)\n1334|(35,4)\n1335|(35,5)\n1336|(35,6)\n1337|(35,7)\n1338|(35,8)\n1339|(35,9)\n1340|(35,10)\n1341|(35,11)\n1342|(35,12)\n1343|(35,13)\n1344|(35,14)\n1345|(35,15)\n1346|(35,16)\n1347|(35,17)\n1348|(35,18)\n1349|(35,19)\n1350|(35,20)\n1351|(35,21)\n1352|(35,22)\n1353|(35,23)\n1354|(35,24)\n1355|(35,25)\n1356|(35,26)\n1357|(35,27)\n1358|(35,28)\n1359|(35,29)\n1360|(35,30)\n1361|(35,31)\n1362|(35,32)\n1363|(35,33)\n1364|(35,34)\n1365|(35,35)\n1366|(35,36)\n1367|(35,37)\n1368|(35,38)\n1369|(36,1)\n1370|(36,2)\n1371|(36,3)\n1372|(36,4)\n1373|(36,5)\n1374|(36,6)\n1375|(36,7)\n1376|(36,8)\n1377|(36,9)\n1378|(36,10)\n1379|(36,11)\n1380|(36,12)\n1381|(36,13)\n1382|(36,14)\n1383|(36,15)\n1384|(36,16)\n1385|(36,17)\n1386|(36,18)\n1387|(36,19)\n1388|(36,20)\n1389|(36,21)\n1390|(36,22)\n1391|(36,23)\n1392|(36,24)\n1393|(36,25)\n1394|(36,26)\n1395|(36,27)\n1396|(36,28)\n1397|(36,29)\n1398|(36,30)\n1399|(36,31)\n1400|(36,32)\n1401|(36,33)\n1402|(36,34)\n1403|(36,35)\n1404|(36,36)\n1405|(36,37)\n1406|(36,38)\n1407|(37,1)\n1408|(37,2)\n1409|(37,3)\n1410|(37,4)\n1411|(37,5)\n1412|(37,6)\n1413|(37,7)\n1414|(37,8)\n1415|(37,9)\n1416|(37,10)\n1417|(37,11)\n1418|(37,12)\n1419|(37,13)\n1420|(37,14)\n1421|(37,15)\n1422|(37,16)\n1423|(37,17)\n1424|(37,18)\n1425|(37,19)\n1426|(37,20)\n1427|(37,21)\n1428|(37,22)\n1429|(37,23)\n1430|(37,24)\n1431|(37,25)\n1432|(37,26)\n1433|(37,27)\n1434|(37,28)\n1435|(37,29)\n1436|(37,30)\n1437|(37,31)\n1438|(37,32)\n1439|(37,33)\n1440|(37,34)\n1441|(37,35)\n1442|(37,36)\n1443|(37,37)\n1444|(37,38)\n1445|(38,1)\n1446|(38,2)\n1447|(38,3)\n1448|(38,4)\n1449|(38,5)\n1450|(38,6)\n1451|(38,7)\n1452|(38,8)\n1453|(38,9)\n1454|(38,10)\n1455|(38,11)\n1456|(38,12)\n1457|(38,13)\n1458|(38,14)\n1459|(38,15)\n1460|(38,16)\n1461|(38,17)\n1462|(38,18)\n1463|(38,19)\n1464|(38,20)\n1465|(38,21)\n1466|(38,22)\n1467|(38,23)\n1468|(38,24)\n1469|(38,25)\n1470|(38,26)\n1471|(38,27)\n1472|(38,28)\n1473|(38,29)\n1474|(38,30)\n1475|(38,31)\n1476|(38,32)\n1477|(38,33)\n1478|(38,34)\n1479|(38,35)\n1480|(38,36)\n1481|(38,37)\n1482|(38,38)\n1483|(39,1)\n1484|(39,2)\n1485|(39,3)\n1486|(39,4)\n1487|(39,5)\n1488|(39,6)\n1489|(39,7)\n1490|(39,8)\n1491|(39,9)\n1492|(39,10)\n1493|(39,11)\n1494|(39,12)\n1495|(39,13)\n1496|(39,14)\n1497|(39,15)\n1498|(39,16)\n1499|(39,17)\n1500|(39,18)\n1501|(39,19)\n1502|(39,20)\n1503|(39,21)\n1504|(39,22)\n1505|(39,23)\n1506|(39,24)\n1507|(39,25)\n1508|(39,26)\n1509|(39,27)\n1510|(39,28)\n1511|(39,29)\n1512|(39,30)\n1513|(39,31)\n1514|(39,32)\n1515|(39,33)\n1516|(39,34)\n1517|(39,35)\n1518|(39,36)\n1519|(39,37)\n1520|(39,38)\n1521|(40,1)\n1522|(40,2)\n1523|(40,3)\n1524|(40,4)\n1525|(40,5)\n1526|(40,6)\n1527|(40,7)\n1528|(40,8)\n1529|(40,9)\n1530|(40,10)\n1531|(40,11)\n1532|(40,12)\n1533|(40,13)\n1534|(40,14)\n1535|(40,15)\n1536|(40,16)\n1537|(40,17)\n1538|(40,18)\n1539|(40,19)\n1540|(40,20)\n1541|(40,21)\n1542|(40,22)\n1543|(40,23)\n1544|(40,24)\n1545|(40,25)\n1546|(40,26)\n1547|(40,27)\n1548|(40,28)\n1549|(40,29)\n1550|(40,30)\n1551|(40,31)\n1552|(40,32)\n1553|(40,33)\n1554|(40,34)\n1555|(40,35)\n1556|(40,36)\n1557|(40,37)\n1558|(40,38)\n1559|(41,1)\n1560|(41,2)\n1561|(41,3)\n1562|(41,4)\n1563|(41,5)\n1564|(41,6)\n1565|(41,7)\n1566|(41,8)\n1567|(41,9)\n1568|(41,10)\n1569|(41,11)\n1570|(41,12)\n1571|(41,13)\n1572|(41,14)\n1573|(41,15)\n1574|(41,16)\n1575|(41,17)\n1576|(41,18)\n1577|(41,19)\n1578|(41,20)\n1579|(41,21)\n1580|(41,22)\n1581|(41,23)\n1582|(41,24)\n1583|(41,25)\n1584|(41,26)\n1585|(41,27)\n1586|(41,28)\n1587|(41,29)\n1588|(41,30)\n1589|(41,31)\n1590|(41,32)\n1591|(41,33)\n1592|(41,34)\n1593|(41,35)\n1594|(41,36)\n1595|(41,37)\n1596|(41,38)\n1597|(42,1)\n1598|(42,2)\n1599|(42,3)\n1600|(42,4)\n1601|(42,5)\n1602|(42,6)\n1603|(42,7)\n1604|(42,8)\n1605|(42,9)\n1606|(42,10)\n1607|(42,11)\n1608|(42,12)\n1609|(42,13)\n1610|(42,14)\n1611|(42,15)\n1612|(42,16)\n1613|(42,17)\n1614|(42,18)\n1615|(42,19)\n1616|(42,20)\n1617|(42,21)\n1618|(42,22)\n1619|(42,23)\n1620|(42,24)\n1621|(42,25)\n1622|(42,26)\n1623|(42,27)\n1624|(42,28)\n1625|(42,29)\n1626|(42,30)\n1627|(42,31)\n1628|(42,32)\n1629|(42,33)\n1630|(42,34)\n1631|(42,35)\n1632|(42,36)\n1633|(42,37)\n1634|(42,38)\n1635|(43,1)\n1636|(43,2)\n1637|(43,3)\n1638|(43,4)\n1639|(43,5)\n1640|(43,6)\n1641|(43,7)\n1642|(43,8)\n1643|(43,9)\n1644|(43,10)\n1645|(43,11)\n1646|(43,12)\n1647|(43,13)\n1648|(43,14)\n1649|(43,15)\n1650|(43,16)\n1651|(43,17)\n1652|(43,18)\n1653|(43,19)\n1654|(43,20)\n1655|(43,21)\n1656|(43,22)\n1657|(43,23)\n1658|(43,24)\n1659|(43,25)\n1660|(43,26)\n1661|(43,27)\n1662|(43,28)\n1663|(43,29)\n1664|(43,30)\n1665|(43,31)\n1666|(43,32)\n1667|(43,33)\n1668|(43,34)\n1669|(43,35)\n1670|(43,36)\n1671|(43,37)\n1672|(43,38)\n1673|(44,1)\n1674|(44,2)\n1675|(44,3)\n1676|(44,4)\n1677|(44,5)\n1678|(44,6)\n1679|(44,7)\n1680|(44,8)\n1681|(44,9)\n1682|(44,10)\n1683|(44,11)\n1684|(44,12)\n1685|(44,13)\n1686|(44,14)\n1687|(44,15)\n1688|(44,16)\n1689|(44,17)\n1690|(44,18)\n1691|(44,19)\n1692|(44,20)\n1693|(44,21)\n1694|(44,22)\n1695|(44,23)\n1696|(44,24)\n1697|(44,25)\n1698|(44,26)\n1699|(44,27)\n1700|(44,28)\n1701|(44,29)\n1702|(44,30)\n1703|(44,31)\n1704|(44,32)\n1705|(44,33)\n1706|(44,34)\n1707|(44,35)\n1708|(44,36)\n1709|(44,37)\n1710|(44,38)\n1711|(45,1)\n1712|(45,2)\n1713|(45,3)\n1714|(45,4)\n1715|(45,5)\n1716|(45,6)\n1717|(45,7)\n1718|(45,8)\n1719|(45,9)\n1720|(45,10)\n1721|(45,11)\n1722|(45,12)\n1723|(45,13)\n1724|(45,14)\n1725|(45,15)\n1726|(45,16)\n1727|(45,17)\n1728|(45,18)\n1729|(45,19)\n1730|(45,20)\n1731|(45,21)\n1732|(45,22)\n1733|(45,23)\n1734|(45,24)\n1735|(45,25)\n1736|(45,26)\n1737|(45,27)\n1738|(45,28)\n1739|(45,29)\n1740|(45,30)\n1741|(45,31)\n1742|(45,32)\n1743|(45,33)\n1744|(45,34)\n1745|(45,35)\n1746|(45,36)\n1747|(45,37)\n1748|(45,38)\n1749|(46,1)\n1750|(46,2)\n1751|(46,3)\n1752|(46,4)\n1753|(46,5)\n1754|(46,6)\n1755|(46,7)\n1756|(46,8)\n1757|(46,9)\n1758|(46,10)\n1759|(46,11)\n1760|(46,12)\n1761|(46,13)\n1762|(46,14)\n1763|(46,15)\n1764|(46,16)\n1765|(46,17)\n1766|(46,18)\n1767|(46,19)\n1768|(46,20)\n1769|(46,21)\n1770|(46,22)\n1771|(46,23)\n1772|(46,24)\n1773|(46,25)\n1774|(46,26)\n1775|(46,27)\n1776|(46,28)\n1777|(46,29)\n1778|(46,30)\n1779|(46,31)\n1780|(46,32)\n1781|(46,33)\n1782|(46,34)\n1783|(46,35)\n1784|(46,36)\n1785|(46,37)\n1786|(46,38)\n1787|(47,1)\n1788|(47,2)\n1789|(47,3)\n1790|(47,4)\n1791|(47,5)\n1792|(47,6)\n1793|(47,7)\n1794|(47,8)\n1795|(47,9)\n1796|(47,10)\n1797|(47,11)\n1798|(47,12)\n1799|(47,13)\n1800|(47,14)\n1801|(47,15)\n1802|(47,16)\n1803|(47,17)\n1804|(47,18)\n1805|(47,19)\n1806|(47,20)\n1807|(47,21)\n1808|(47,22)\n1809|(47,23)\n1810|(47,24)\n1811|(47,25)\n1812|(47,26)\n1813|(47,27)\n1814|(47,28)\n1815|(47,29)\n1816|(47,30)\n1817|(47,31)\n1818|(47,32)\n1819|(47,33)\n1820|(47,34)\n1821|(47,35)\n1822|(47,36)\n1823|(47,37)\n1824|(47,38)\n1825|(48,1)\n1826|(48,2)\n1827|(48,3)\n1828|(48,4)\n1829|(48,5)\n1830|(48,6)\n1831|(48,7)\n1832|(48,8)\n1833|(48,9)\n1834|(48,10)\n1835|(48,11)\n1836|(48,12)\n1837|(48,13)\n1838|(48,14)\n1839|(48,15)\n1840|(48,16)\n1841|(48,17)\n1842|(48,18)\n1843|(48,19)\n1844|(48,20)\n1845|(48,21)\n1846|(48,22)\n1847|(48,23)\n1848|(48,24)\n1849|(48,25)\n1850|(48,26)\n1851|(48,27)\n1852|(48,28)\n1853|(48,29)\n1854|(48,30)\n1855|(48,31)\n1856|(48,32)\n1857|(48,33)\n1858|(48,34)\n1859|(48,35)\n1860|(48,36)\n1861|(48,37)\n1862|(48,38)\n1863|(49,1)\n1864|(49,2)\n1865|(49,3)\n1866|(49,4)\n1867|(49,5)\n1868|(49,6)\n1869|(49,7)\n1870|(49,8)\n1871|(49,9)\n1872|(49,10)\n1873|(49,11)\n1874|(49,12)\n1875|(49,13)\n1876|(49,14)\n1877|(49,15)\n1878|(49,16)\n1879|(49,17)\n1880|(49,18)\n1881|(49,19)\n1882|(49,20)\n1883|(49,21)\n1884|(49,22)\n1885|(49,23)\n1886|(49,24)\n1887|(49,25)\n1888|(49,26)\n1889|(49,27)\n1890|(49,28)\n1891|(49,29)\n1892|(49,30)\n1893|(49,31)\n1894|(49,32)\n1895|(49,33)\n1896|(49,34)\n1897|(49,35)\n1898|(49,36)\n1899|(49,37)\n1900|(49,38)\n1901|(50,1)\n1902|(50,2)\n1903|(50,3)\n1904|(50,4)\n1905|(50,5)\n1906|(50,6)\n1907|(50,7)\n1908|(50,8)\n1909|(50,9)\n1910|(50,10)\n1911|(50,11)\n1912|(50,12)\n1913|(50,13)\n1914|(50,14)\n1915|(50,15)\n1916|(50,16)\n1917|(50,17)\n1918|(50,18)\n1919|(50,19)\n1920|(50,20)\n1921|(50,21)\n1922|(50,22)\n1923|(50,23)\n1924|(50,24)\n1925|(50,25)\n1926|(50,26)\n1927|(50,27)\n1928|(50,28)\n1929|(50,29)\n1930|(50,30)\n1931|(50,31)\n1932|(50,32)\n1933|(50,33)\n1934|(50,34)\n1935|(50,35)\n1936|(50,36)\n1937|(50,37)\n1938|(50,38)\n1939|(51,1)\n1940|(51,2)\n1941|(51,3)\n1942|(51,4)\n1943|(51,5)\n1944|(51,6)\n1945|(51,7)\n1946|(51,8)\n1947|(51,9)\n1948|(51,10)\n1949|(51,11)\n1950|(51,12)\n1951|(51,13)\n1952|(51,14)\n1953|(51,15)\n1954|(51,16)\n1955|(51,17)\n1956|(51,18)\n1957|(51,19)\n1958|(51,20)\n1959|(51,21)\n1960|(51,22)\n1961|(51,23)\n1962|(51,24)\n1963|(51,25)\n1964|(51,26)\n1965|(51,27)\n1966|(51,28)\n1967|(51,29)\n1968|(51,30)\n1969|(51,31)\n1970|(51,32)\n1971|(51,33)\n1972|(51,34)\n1973|(51,35)\n1974|(51,36)\n1975|(51,37)\n1976|(51,38)\n1977|(52,1)\n1978|(52,2)\n1979|(52,3)\n1980|(52,4)\n1981|(52,5)\n1982|(52,6)\n1983|(52,7)\n1984|(52,8)\n1985|(52,9)\n1986|(52,10)\n1987|(52,11)\n1988|(52,12)\n1989|(52,13)\n1990|(52,14)\n1991|(52,15)\n1992|(52,16)\n1993|(52,17)\n1994|(52,18)\n1995|(52,19)\n1996|(52,20)\n1997|(52,21)\n1998|(52,22)\n1999|(52,23)\n2000|(52,24)\n2001|(52,25)\n2002|(52,26)\n2003|(52,27)\n2004|(52,28)\n2005|(52,29)\n2006|(52,30)\n2007|(52,31)\n2008|(52,32)\n2009|(52,33)\n2010|(52,34)\n2011|(52,35)\n2012|(52,36)\n2013|(52,37)\n2014|(52,38)\n2015|(53,1)\n2016|(53,2)\n2017|(53,3)\n2018|(53,4)\n2019|(53,5)\n2020|(53,6)\n2021|(53,7)\n2022|(53,8)\n2023|(53,9)\n2024|(53,10)\n2025|(53,11)\n2026|(53,12)\n2027|(53,13)\n2028|(53,14)\n2029|(53,15)\n2030|(53,16)\n2031|(53,17)\n2032|(53,18)\n2033|(53,19)\n2034|(53,20)\n2035|(53,21)\n2036|(53,22)\n2037|(53,23)\n2038|(53,24)\n2039|(53,25)\n2040|(53,26)\n2041|(53,27)\n2042|(53,28)\n2043|(53,29)\n2044|(53,30)\n2045|(53,31)\n2046|(53,32)\n2047|(53,33)\n2048|(53,34)"
+      },
+      "sha256": "194f42bf167d2e3e90bdd0df3da684ad7662afb95ffbaaf69a42d1e5857d205e"
+    },
+    {
+      "case": "nonadjacent",
+      "identities": {
+        "oracle": "",
+        "legacy": "",
+        "positions": "",
+        "gin": ""
+      },
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
