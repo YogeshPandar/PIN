@@ -68,7 +68,6 @@ pub struct EncodedCataloguePage {
 
 /// Builds one sorted page at a time; callers persist each returned page immediately.
 pub struct CatalogueBuilder {
-    block: u32,
     bytes: Vec<u8>,
     previous: Vec<u8>,
     last_base: Option<u32>,
@@ -81,8 +80,8 @@ pub struct CatalogueBuilder {
 }
 
 impl CatalogueBuilder {
-    pub fn new(block: u32, first_ordinal: u64) -> Result<Self> {
-        if block == 0 || block == NO_BLOCK || first_ordinal == 0 {
+    pub fn new(first_ordinal: u64) -> Result<Self> {
+        if first_ordinal == 0 {
             return Err(Error::InvalidParameters);
         }
         let mut bytes = Vec::new();
@@ -102,7 +101,6 @@ impl CatalogueBuilder {
             .try_reserve_exact(PRIMARY_PAYLOAD_BYTES / 16)
             .map_err(|_| Error::Allocation)?;
         Ok(Self {
-            block,
             bytes,
             previous,
             last_base: None,
@@ -115,23 +113,14 @@ impl CatalogueBuilder {
         })
     }
 
-    /// selects the next newly allocated catalogue page after `finish_page`.
-    pub fn set_block(&mut self, block: u32) -> Result<()> {
-        if self.count != 0 || block == 0 || block == NO_BLOCK || block == self.block {
-            return Err(Error::InvalidParameters);
-        }
-        self.block = block;
-        Ok(())
-    }
-
     /// Adds the next `(lexeme, group_base)` row. Repeated lexemes share one ordinal.
-    /// If a row cannot fit, the full page is returned and the row must be retried.
-    pub fn push(
+    /// Returns false without consuming it when the current page cannot fit the row.
+    pub fn try_push(
         &mut self,
         lexeme: &[u8],
         term_ordinal: u64,
         group: GroupAddress,
-    ) -> Result<Option<EncodedCataloguePage>> {
+    ) -> Result<bool> {
         if lexeme.is_empty()
             || lexeme.len() > MAX_TERM_BYTES
             || !group.valid()
@@ -182,7 +171,7 @@ impl CatalogueBuilder {
             && HEADER + self.bytes.len() + self.restart_bytes + record.len() + restart_cost
                 > PRIMARY_PAYLOAD_BYTES
         {
-            return Ok(Some(self.finish_page()?));
+            return Ok(false);
         }
         if HEADER + self.bytes.len() + self.restart_bytes + record.len() + restart_cost
             > PRIMARY_PAYLOAD_BYTES
@@ -209,12 +198,12 @@ impl CatalogueBuilder {
         self.last_base = Some(group.group_base);
         self.previous_ordinal = term_ordinal;
         self.count += 1;
-        Ok(None)
+        Ok(true)
     }
 
-    /// Finishes a nonempty page. The returned payload is at most 8152 bytes.
-    pub fn finish_page(&mut self) -> Result<EncodedCataloguePage> {
-        if self.count == 0 {
+    /// Finishes a page using the block reserved by the caller after detecting rollover.
+    pub fn finish_page_at(&mut self, block: u32) -> Result<EncodedCataloguePage> {
+        if self.count == 0 || block == 0 || block == NO_BLOCK {
             return Err(Error::InvalidState);
         }
         let restarts_len = self.restarts.iter().try_fold(0usize, |n, (_, key)| {
@@ -239,7 +228,7 @@ impl CatalogueBuilder {
         w.u64(self.first_ordinal)?;
         w.u16(self.bytes.len() as u16)?;
         w.u16(self.restarts.len() as u16)?;
-        w.u32(self.block)?;
+        w.u32(block)?;
         w.put(&self.bytes)?;
         for (offset, key) in &self.restarts {
             w.u16(*offset)?;
@@ -252,7 +241,7 @@ impl CatalogueBuilder {
                 first_lexeme: self.first.clone(),
                 last_lexeme: self.previous.clone(),
                 first_ordinal: self.first_ordinal,
-                block: self.block,
+                block,
             },
         };
         self.bytes.clear();
@@ -529,6 +518,47 @@ fn decode_record(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::{Error, Result as CoreResult};
+    use crate::identity::HeapLayout;
+    use crate::mutable::{PageStore, page::Page};
+    use std::collections::BTreeMap;
+
+    #[derive(Default)]
+    struct SerialStore {
+        next: u32,
+        outstanding: Option<u32>,
+        pages: BTreeMap<u32, Page>,
+    }
+
+    impl PageStore for SerialStore {
+        fn layout(&self) -> HeapLayout {
+            HeapLayout::new(512).unwrap()
+        }
+        fn blocks(&mut self) -> CoreResult<u32> {
+            Ok(self.next)
+        }
+        fn read(&mut self, block: u32) -> CoreResult<Page> {
+            self.pages.get(&block).cloned().ok_or(Error::InvalidState)
+        }
+        fn extend(&mut self) -> CoreResult<u32> {
+            if self.outstanding.is_some() {
+                return Err(Error::InvalidState);
+            }
+            self.next += 1;
+            self.outstanding = Some(self.next);
+            Ok(self.next)
+        }
+        fn commit(&mut self, pages: &[&Page]) -> CoreResult<()> {
+            if pages.len() != 1
+                || pages[0].block() != self.outstanding.ok_or(Error::InvalidState)?
+            {
+                return Err(Error::InvalidState);
+            }
+            self.pages.insert(pages[0].block(), pages[0].clone());
+            self.outstanding = None;
+            Ok(())
+        }
+    }
 
     fn addr(i: u32) -> GroupAddress {
         GroupAddress {
@@ -541,19 +571,17 @@ mod tests {
 
     fn build(terms: &[Vec<u8>]) -> Vec<EncodedCataloguePage> {
         let mut result = Vec::new();
-        let mut b = CatalogueBuilder::new(7, 1).unwrap();
+        let mut b = CatalogueBuilder::new(1).unwrap();
+        let mut block = 7;
         for (i, term) in terms.iter().enumerate() {
-            loop {
-                if let Some(page) = b.push(term, i as u64 + 1, addr(i as u32)).unwrap() {
-                    result.push(page);
-                    b.set_block(7 + result.len() as u32).unwrap();
-                    continue;
-                }
-                break;
+            if !b.try_push(term, i as u64 + 1, addr(i as u32)).unwrap() {
+                result.push(b.finish_page_at(block).unwrap());
+                block += 1;
+                assert!(b.try_push(term, i as u64 + 1, addr(i as u32)).unwrap());
             }
         }
         if b.count != 0 {
-            result.push(b.finish_page().unwrap());
+            result.push(b.finish_page_at(block).unwrap());
         }
         result
     }
@@ -581,9 +609,9 @@ mod tests {
 
     #[test]
     fn sorted_unique_and_page_limit_are_enforced() {
-        let mut b = CatalogueBuilder::new(2, 1).unwrap();
-        assert!(b.push(b"same", 1, addr(0)).unwrap().is_none());
-        assert!(b.push(b"same", 1, addr(1)).unwrap().is_none());
+        let mut b = CatalogueBuilder::new(1).unwrap();
+        assert!(b.try_push(b"same", 1, addr(0)).unwrap());
+        assert!(b.try_push(b"same", 1, addr(1)).unwrap());
         let terms: Vec<Vec<u8>> = (0..80)
             .map(|i| format!("term-{i:03}-{}", "x".repeat(120)).into_bytes())
             .collect();
@@ -605,31 +633,42 @@ mod tests {
 
     #[test]
     fn one_term_can_span_catalogue_pages() {
-        let mut builder = CatalogueBuilder::new(20, 1).unwrap();
+        let mut builder = CatalogueBuilder::new(1).unwrap();
         let mut pages = Vec::new();
+        let mut block = 20;
         for base in 0..700u32 {
-            loop {
-                if let Some(page) = builder
-                    .push(
-                        b"shared",
-                        1,
-                        GroupAddress {
-                            group_base: base * 256,
-                            block: 1000 + base,
-                            offset: 16,
-                            len: 32,
-                        },
-                    )
-                    .unwrap()
-                {
-                    pages.push(page);
-                    builder.set_block(20 + pages.len() as u32).unwrap();
-                    continue;
-                }
-                break;
+            if !builder
+                .try_push(
+                    b"shared",
+                    1,
+                    GroupAddress {
+                        group_base: base * 256,
+                        block: 1000 + base,
+                        offset: 16,
+                        len: 32,
+                    },
+                )
+                .unwrap()
+            {
+                pages.push(builder.finish_page_at(block).unwrap());
+                block += 1;
+                assert!(
+                    builder
+                        .try_push(
+                            b"shared",
+                            1,
+                            GroupAddress {
+                                group_base: base * 256,
+                                block: 1000 + base,
+                                offset: 16,
+                                len: 32,
+                            }
+                        )
+                        .unwrap()
+                );
             }
         }
-        pages.push(builder.finish_page().unwrap());
+        pages.push(builder.finish_page_at(block).unwrap());
         assert!(pages.len() > 1);
         let mut rows = 0;
         for page in &pages {
@@ -644,14 +683,44 @@ mod tests {
     }
 
     #[test]
+    fn deferred_blocks_obey_serial_extend_and_do_not_consume_full_row() {
+        let mut store = SerialStore::default();
+        let mut builder = CatalogueBuilder::new(1).unwrap();
+        let terms: Vec<Vec<u8>> = (0..600)
+            .map(|i| format!("term-{i:04}-{}", "x".repeat(120)).into_bytes())
+            .collect();
+        let mut committed = 0;
+        for (i, term) in terms.iter().enumerate() {
+            let address = addr(i as u32);
+            if !builder.try_push(term, i as u64 + 1, address).unwrap() {
+                let block = store.extend().unwrap();
+                let encoded = builder.finish_page_at(block).unwrap();
+                assert_eq!(encoded.fence.block, block);
+                let page = Page::primary(block, &encoded.payload).unwrap();
+                store.commit(&[&page]).unwrap();
+                committed += 1;
+                assert!(builder.try_push(term, i as u64 + 1, address).unwrap());
+            }
+        }
+        let block = store.extend().unwrap();
+        let encoded = builder.finish_page_at(block).unwrap();
+        let page = Page::primary(block, &encoded.payload).unwrap();
+        store.commit(&[&page]).unwrap();
+        committed += 1;
+        assert!(committed > 1);
+        assert_eq!(store.pages.len(), committed);
+        assert_eq!(store.outstanding, None);
+    }
+
+    #[test]
     fn rejects_corrupt_payload_and_group_address() {
         let pages = build(&[b"one".to_vec()]);
         let mut bad = pages[0].payload.clone();
         bad[0] ^= 1;
         assert!(CataloguePage::open(&bad).is_err());
-        let mut b = CatalogueBuilder::new(1, 1).unwrap();
+        let mut b = CatalogueBuilder::new(1).unwrap();
         assert!(
-            b.push(
+            b.try_push(
                 b"x",
                 1,
                 GroupAddress {
