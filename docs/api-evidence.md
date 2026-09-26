@@ -1681,10 +1681,13 @@ one catalogue payload at the existing 8,152-byte Primary page limit, and
 returns first/last lexeme fences for a later sparse page index. A term can span
 catalogue pages. Exact and prefix lookups binary-search restart keys within a
 validated page, then decode only the relevant restart span and following rows.
-The builder returns a full page on rollover and requires the caller to assign a
-new physical block and retry the unconsumed row. Pure tests cover ordering,
-repeated lexemes across pages, extent validation, corruption, and rollover;
-four focused tests and `pin-core` Clippy pass. The catalogue is not yet
+The builder returns `false` without consuming a row when the current page is
+full. The caller can then extend one physical page, seal with
+`finish_page_at(actual_block)`, commit, and retry the row. This avoids holding
+an uncommitted PostgreSQL extension while the posting writer allocates pages.
+Pure tests cover ordering, repeated lexemes across pages, extent validation,
+corruption, rollover, and one-outstanding-extension behavior; five focused
+tests pass. The catalogue is not yet
 connected to PostgreSQL or a published manifest. The caller must validate
 the decoded directory against the expected relation, segment, and group
 identity before using any posting extent.
