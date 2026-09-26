@@ -224,6 +224,18 @@ impl<'a> PositionBlocks<'a> {
             None => Ok(SeekResult::default()),
         }
     }
+    pub fn iter(self) -> PositionBlockIter<'a> {
+        PositionBlockIter {
+            view: self,
+            next_block: 0,
+            remaining: 0,
+            reader: Reader::new(&[]),
+            previous: 0,
+            last: 0,
+            failed: false,
+        }
+    }
+
     pub fn validate_all(self) -> Result<()> {
         for index in 0..self.blocks() {
             let block = self.directory.block(index)?;
@@ -232,6 +244,57 @@ impl<'a> PositionBlocks<'a> {
         Ok(())
     }
 }
+
+pub struct PositionBlockIter<'a> {
+    view: PositionBlocks<'a>,
+    next_block: usize,
+    remaining: usize,
+    reader: Reader<'a>,
+    previous: u32,
+    last: u32,
+    failed: bool,
+}
+
+impl Iterator for PositionBlockIter<'_> {
+    type Item = Result<u32>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.failed || (self.remaining == 0 && self.next_block == self.view.blocks()) {
+            return None;
+        }
+        let result = (|| {
+            if self.remaining == 0 {
+                let block = self.view.directory.block(self.next_block)?;
+                self.next_block += 1;
+                self.reader = Reader::new(&self.view.payload[block.byte_range()]);
+                self.previous = block.first;
+                self.last = block.last;
+                self.remaining = block.count - 1;
+            } else {
+                let delta = self.reader.var_u32()?;
+                if delta == 0 {
+                    return Err(Error::new(self.reader.offset(), ErrorKind::InvalidOrder));
+                }
+                self.previous = self
+                    .previous
+                    .checked_add(delta)
+                    .ok_or(Error::new(self.reader.offset(), ErrorKind::Overflow))?;
+                self.remaining -= 1;
+            }
+            if self.remaining == 0 {
+                self.reader.finish()?;
+                if self.previous != self.last {
+                    return Err(Error::new(self.reader.offset(), ErrorKind::InvalidValue));
+                }
+            }
+            Ok(self.previous)
+        })();
+        self.failed = result.is_err();
+        Some(result)
+    }
+}
+
+impl std::iter::FusedIterator for PositionBlockIter<'_> {}
 
 // validates input and output size before mutation; no allocation or native casts.
 pub fn encode(positions: &[u32], output: &mut [u8], max_positions: u32) -> Result<usize> {

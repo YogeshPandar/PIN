@@ -34,6 +34,10 @@ pub fn insert<S: PageStore>(
     root: RootTid,
     document: &PreparedDocument,
 ) -> Result<OwnerRef> {
+    // pd03 needs a persisted capability and native readers before publication.
+    if document.bytes().starts_with(b"PD03") {
+        return Err(Error::InvalidDocument);
+    }
     let mut meta = load(store, 0, PageKind::Meta)?;
     let owner = reserve_owner(store, &mut meta, root, document)?;
     store.event(Stage::OwnerReserved)?;

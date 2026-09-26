@@ -1491,3 +1491,11 @@ from externally located positional bytes, and checked block requests decode exac
 selected slices. PB01 wire encoding is unchanged. No native reader, unsafe call,
 PostgreSQL buffer, WAL or publication boundary changes. The adapter contract and
 remaining native integration obligations are in docs/addressable-position-reader.md.
+
+PD03 complete-consumer checkpoint: pure serialization and validation only. The
+new magic and per-term encoding flag discriminate counted deltas from unchanged
+PB01 blocks. Complete consumers keep profile/count/order/uniqueness checks;
+preparation explicitly budgets its additional scratch. No PostgreSQL, pgrx, WAL
+or locking call changes. The storage writer rejects PD03 before any allocation
+until the persisted capability and optimized native consumers exist. Format and
+integration gates are in docs/pd03-document-format.md.
