@@ -1,0 +1,9 @@
+SET
+DO
+INSERT 0 2
+ persisted_newword 
+-------------------
+                 2
+(1 row)
+
+CHECKPOINT

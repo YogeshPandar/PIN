@@ -1,0 +1,272 @@
+[
+  {
+    "case": "broad",
+    "direct": false,
+    "block": 0,
+    "cpu_ns_per_query": 1166409.32
+  },
+  {
+    "case": "broad",
+    "direct": true,
+    "block": 0,
+    "cpu_ns_per_query": 1217291.65
+  },
+  {
+    "case": "broad",
+    "direct": "gin_stored",
+    "block": 0,
+    "cpu_ns_per_query": 2049052.24
+  },
+  {
+    "case": "broad",
+    "direct": "gin_stored",
+    "block": 1,
+    "cpu_ns_per_query": 2006474.44
+  },
+  {
+    "case": "broad",
+    "direct": true,
+    "block": 1,
+    "cpu_ns_per_query": 1256923.19
+  },
+  {
+    "case": "broad",
+    "direct": false,
+    "block": 1,
+    "cpu_ns_per_query": 1259230.18
+  },
+  {
+    "case": "broad",
+    "direct": false,
+    "block": 2,
+    "cpu_ns_per_query": 1249385.09
+  },
+  {
+    "case": "broad",
+    "direct": true,
+    "block": 2,
+    "cpu_ns_per_query": 1361033.2
+  },
+  {
+    "case": "broad",
+    "direct": "gin_stored",
+    "block": 2,
+    "cpu_ns_per_query": 1959867.27
+  },
+  {
+    "case": "broad",
+    "direct": "gin_stored",
+    "block": 3,
+    "cpu_ns_per_query": 2024140.05
+  },
+  {
+    "case": "broad",
+    "direct": true,
+    "block": 3,
+    "cpu_ns_per_query": 1237290.73
+  },
+  {
+    "case": "broad",
+    "direct": false,
+    "block": 3,
+    "cpu_ns_per_query": 1205290.41
+  },
+  {
+    "case": "broad",
+    "direct": false,
+    "block": 4,
+    "cpu_ns_per_query": 1437322.57
+  },
+  {
+    "case": "broad",
+    "direct": true,
+    "block": 4,
+    "cpu_ns_per_query": 1191297.73
+  },
+  {
+    "case": "broad",
+    "direct": "gin_stored",
+    "block": 4,
+    "cpu_ns_per_query": 2017158.6
+  },
+  {
+    "case": "rare",
+    "direct": false,
+    "block": 0,
+    "cpu_ns_per_query": 92913.68
+  },
+  {
+    "case": "rare",
+    "direct": true,
+    "block": 0,
+    "cpu_ns_per_query": 80566.32
+  },
+  {
+    "case": "rare",
+    "direct": "gin_stored",
+    "block": 0,
+    "cpu_ns_per_query": 75048.16
+  },
+  {
+    "case": "rare",
+    "direct": "gin_stored",
+    "block": 1,
+    "cpu_ns_per_query": 68289.78
+  },
+  {
+    "case": "rare",
+    "direct": true,
+    "block": 1,
+    "cpu_ns_per_query": 64887.82
+  },
+  {
+    "case": "rare",
+    "direct": false,
+    "block": 1,
+    "cpu_ns_per_query": 99926.91
+  },
+  {
+    "case": "rare",
+    "direct": false,
+    "block": 2,
+    "cpu_ns_per_query": 93137.87
+  },
+  {
+    "case": "rare",
+    "direct": true,
+    "block": 2,
+    "cpu_ns_per_query": 70356.51
+  },
+  {
+    "case": "rare",
+    "direct": "gin_stored",
+    "block": 2,
+    "cpu_ns_per_query": 72613.5
+  },
+  {
+    "case": "rare",
+    "direct": "gin_stored",
+    "block": 3,
+    "cpu_ns_per_query": 64220.38
+  },
+  {
+    "case": "rare",
+    "direct": true,
+    "block": 3,
+    "cpu_ns_per_query": 72049.23
+  },
+  {
+    "case": "rare",
+    "direct": false,
+    "block": 3,
+    "cpu_ns_per_query": 111601.98
+  },
+  {
+    "case": "rare",
+    "direct": false,
+    "block": 4,
+    "cpu_ns_per_query": 103970.74
+  },
+  {
+    "case": "rare",
+    "direct": true,
+    "block": 4,
+    "cpu_ns_per_query": 81669.04
+  },
+  {
+    "case": "rare",
+    "direct": "gin_stored",
+    "block": 4,
+    "cpu_ns_per_query": 75055.53
+  },
+  {
+    "case": "and",
+    "direct": false,
+    "block": 0,
+    "cpu_ns_per_query": 115369.31
+  },
+  {
+    "case": "and",
+    "direct": true,
+    "block": 0,
+    "cpu_ns_per_query": 103191.21
+  },
+  {
+    "case": "and",
+    "direct": "gin_stored",
+    "block": 0,
+    "cpu_ns_per_query": 141462.33
+  },
+  {
+    "case": "and",
+    "direct": "gin_stored",
+    "block": 1,
+    "cpu_ns_per_query": 123925.9
+  },
+  {
+    "case": "and",
+    "direct": true,
+    "block": 1,
+    "cpu_ns_per_query": 99160.99
+  },
+  {
+    "case": "and",
+    "direct": false,
+    "block": 1,
+    "cpu_ns_per_query": 105840.8
+  },
+  {
+    "case": "and",
+    "direct": false,
+    "block": 2,
+    "cpu_ns_per_query": 114736.08
+  },
+  {
+    "case": "and",
+    "direct": true,
+    "block": 2,
+    "cpu_ns_per_query": 105535.01
+  },
+  {
+    "case": "and",
+    "direct": "gin_stored",
+    "block": 2,
+    "cpu_ns_per_query": 122625.45
+  },
+  {
+    "case": "and",
+    "direct": "gin_stored",
+    "block": 3,
+    "cpu_ns_per_query": 138084.01
+  },
+  {
+    "case": "and",
+    "direct": true,
+    "block": 3,
+    "cpu_ns_per_query": 109490.54
+  },
+  {
+    "case": "and",
+    "direct": false,
+    "block": 3,
+    "cpu_ns_per_query": 134899.28
+  },
+  {
+    "case": "and",
+    "direct": false,
+    "block": 4,
+    "cpu_ns_per_query": 123329.78
+  },
+  {
+    "case": "and",
+    "direct": true,
+    "block": 4,
+    "cpu_ns_per_query": 134394.35
+  },
+  {
+    "case": "and",
+    "direct": "gin_stored",
+    "block": 4,
+    "cpu_ns_per_query": 198310.23
+  }
+]

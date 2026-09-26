@@ -13,6 +13,10 @@ from g9_profile import Session
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--direct-build', action='store_true',
+                        help='create and rebuild the PIN index with direct-TID sealing')
+    parser.add_argument('--packed', action='store_true',
+                        help='create and rebuild the PIN index with packed two-owner terms')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     schema = 'pin_phrase_' + uuid.uuid4().hex[:12]
@@ -29,6 +33,10 @@ def main() -> None:
                             "(3,'alpha beta'),(4,'echo echo delta'),"
                             "(5,'Éclair café'),(6,repeat('echo ',10000));")
             session.execute('SET pin.enable_grouped_storage=on; SET pin.enable_grouped_delta_seal=on;')
+            if args.direct_build:
+                session.execute('SET pin.enable_direct_tid_build=on;')
+            if args.packed:
+                session.execute('SET pin.enable_packed_postings=on;')
             session.execute(f'CREATE INDEX docs_pin ON {table} USING pin(body);')
             session.execute(f"CREATE INDEX docs_gin ON {table} USING gin(to_tsvector('simple',body));")
             session.execute(f'VACUUM (ANALYZE,INDEX_CLEANUP ON,PARALLEL 0) {table};')

@@ -140,6 +140,16 @@ unsafe extern "C-unwind" fn build(
         };
         documents = state.documents;
     }
+    if crate::maintenance::direct_build_enabled() {
+        // The heap build scan has finished, and PostgreSQL still holds the
+        // index-build lock. Reuse the qualified maintenance publication path.
+        // safety: index remains a live locked build relation until this callback returns.
+        matching::stored(unsafe {
+            crate::storage_impl::with_maintenance(index, |store| {
+                mutable::compact_with_mode(store, mutable::CompactMode::DirectTid)
+            })
+        });
+    }
     if crate::grouped::storage_enabled() {
         // safety: heap participants have finished; acquire structure before writer.
         matching::stored(unsafe {
