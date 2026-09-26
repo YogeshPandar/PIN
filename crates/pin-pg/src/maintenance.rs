@@ -6,11 +6,20 @@ use pgrx::guc::{GucContext, GucFlags, GucRegistry, GucSetting};
 use pin_core::mutable::{CompactMode, CompactStats};
 
 static ENABLE_DIRECT_TID: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_DIRECT_TID_BUILD: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 static ENABLE_COMPACT_REUSE: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 // called during guarded postmaster preload, before any backend uses the policy.
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_direct_tid_build",
+        c"Seal freshly built postings with direct heap TIDs.",
+        c"Experimental build policy; adds a post-build rewrite before scans can use the index.",
+        &ENABLE_DIRECT_TID_BUILD,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_direct_tid_segments",
         c"Create experimental direct-TID sealed pages during VACUUM.",
@@ -27,6 +36,10 @@ pub(crate) fn initialize() {
         GucContext::Suset,
         GucFlags::default(),
     );
+}
+
+pub(crate) fn direct_build_enabled() -> bool {
+    ENABLE_DIRECT_TID_BUILD.get()
 }
 
 // freeze the backend's selected policy once per maintenance operation.

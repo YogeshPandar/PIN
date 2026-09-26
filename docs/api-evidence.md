@@ -1431,3 +1431,21 @@ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
 assert stable buffer address, exercise failures/recovery and preserve zero tails.
 The in-memory query adapter also exercises read_into, not just its default.
 Native tests and measurements must qualify the implementation before retention.
+
+## DIRECTBUILD01: optional direct-TID sealing after CREATE INDEX (2026-09-26)
+
+PostgreSQL 18 [index locking](https://www.postgresql.org/docs/18/index-locking.html)
+holds the index creation lock while the AM build callback runs. The official
+[generic WAL contract](https://www.postgresql.org/docs/18/generic-wal.html)
+requires WAL page changes through registered images under locks. This option
+invokes PIN's existing `compact_with_mode(DirectTid)` through the existing
+structure-then-writer maintenance wrapper only after PostgreSQL's heap build
+scan and parallel participants have completed. It adds no FFI, unsafe block,
+buffer lifetime or WAL primitive. The setting is superuser-only and defaults
+off; it affects newly built indexes and REINDEX, not existing format routing.
+
+The direct page stores both owner references and copied heap CTIDs, with
+VACUUM liveness handling already present. Build compaction must complete before
+the index becomes searchable. Performance qualification must count the extra
+build CPU, WAL and pages, and compare warm exact Boolean scans before/after
+VACUUM and across lifecycle changes. This is not an MVCC visibility shortcut.
