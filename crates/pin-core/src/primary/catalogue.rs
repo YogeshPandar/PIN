@@ -427,6 +427,59 @@ impl<'a> CataloguePage<'a> {
         self.find_range(key, false)
     }
 
+    /// Visits exact group rows in order, decoding each matching record once.
+    pub fn visit_exact(
+        &self,
+        key: &[u8],
+        visit: impl FnMut(&[u8], CatalogueEntry) -> Result<()>,
+    ) -> Result<u16> {
+        self.visit_exact_counted(key, &mut || {}, visit)
+    }
+
+    fn visit_exact_counted<F, V>(&self, key: &[u8], mut decoded: F, mut visit: V) -> Result<u16>
+    where
+        F: FnMut(),
+        V: FnMut(&[u8], CatalogueEntry) -> Result<()>,
+    {
+        let restart = self.restarts.partition_point(|item| {
+            let start = usize::from(item.key_offset);
+            let end = start + usize::from(item.key_len);
+            &self.payload[start..end] < key
+        });
+        let slot = restart.saturating_sub(1);
+        let mut index = self.restarts.get(slot).map_or(0, |item| item.row);
+        let mut pos = self
+            .restarts
+            .get(slot)
+            .map_or(HEADER, |item| HEADER + usize::from(item.record_offset));
+        let mut length = 0usize;
+        let mut scratch = [0u8; MAX_TERM_BYTES];
+        let mut rows = 0u16;
+        while index < self.count {
+            let prior = scratch;
+            let (n, entry, next) = decode_record(
+                self.payload,
+                pos,
+                self.data_end,
+                &prior[..length],
+                &mut scratch,
+            )?;
+            decoded();
+            length = n;
+            pos = next;
+            match scratch[..length].cmp(key) {
+                std::cmp::Ordering::Equal => {
+                    visit(&scratch[..length], entry)?;
+                    rows = rows.checked_add(1).ok_or(Error::InvalidState)?;
+                }
+                std::cmp::Ordering::Greater => break,
+                std::cmp::Ordering::Less => {}
+            }
+            index += 1;
+        }
+        Ok(rows)
+    }
+
     /// Returns the contiguous record-number interval matching a byte prefix.
     pub fn prefix_range(&self, prefix: &[u8]) -> Result<std::ops::Range<u16>> {
         self.find_range(prefix, true)
@@ -741,6 +794,51 @@ mod tests {
         assert_eq!(decode_work, 1);
         assert_eq!(old_decode_work, page.len() + 1);
         assert!(decode_work * 100 < old_decode_work);
+    }
+
+    #[test]
+    fn exact_range_visitor_decodes_each_repeated_row_once() {
+        let mut builder = CatalogueBuilder::new(1).unwrap();
+        for i in 0..200u32 {
+            assert!(
+                builder
+                    .try_push(
+                        b"shared",
+                        1,
+                        GroupAddress {
+                            group_base: i * 256,
+                            block: 1000 + i,
+                            offset: 16,
+                            len: 32,
+                        }
+                    )
+                    .unwrap()
+            );
+        }
+        let encoded = builder.finish_page_at(7).unwrap();
+        let page = CataloguePage::open(&encoded.payload).unwrap();
+
+        let old_entry_work: usize = (0..page.len())
+            .map(|row| row % usize::from(RESTART_EVERY) + 1)
+            .sum();
+        let old_range_work = page.lookup_range(b"shared").unwrap().len();
+        let mut decode_work = 0;
+        let mut visited = 0;
+        let rows = page
+            .visit_exact_counted(b"shared", &mut || decode_work += 1, |term, entry| {
+                assert_eq!(term, b"shared");
+                assert_eq!(entry.term_ordinal, 1);
+                visited += 1;
+                Ok(())
+            })
+            .unwrap();
+        let fence_entry_work = 1 + (page.len() - 1) % usize::from(RESTART_EVERY) + 1;
+        let old_work = old_range_work + old_entry_work + fence_entry_work;
+        assert_eq!(rows, 200);
+        assert_eq!(visited, 200);
+        assert_eq!(decode_work, 200);
+        assert_eq!(old_work, 1_877);
+        assert!(old_work >= decode_work * 9);
     }
 
     #[test]

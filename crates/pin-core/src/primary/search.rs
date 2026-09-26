@@ -46,8 +46,7 @@ pub fn scan_term<S: PageStore>(
         if last != fence.last_lexeme {
             return Err(Error::InvalidState);
         }
-        for row in catalogue.lookup_range(term)? {
-            let (found, entry) = catalogue.entry(row, &mut scratch)?;
+        catalogue.visit_exact(term, |found, entry| {
             if found != term
                 || prior_ordinal.is_some_and(|old| old != entry.term_ordinal)
                 || prior_base.is_some_and(|old| old >= entry.group.group_base)
@@ -105,7 +104,8 @@ pub fn scan_term<S: PageStore>(
                     }
                 }
             }
-        }
+            Ok(())
+        })?;
     }
     Ok(count)
 }
