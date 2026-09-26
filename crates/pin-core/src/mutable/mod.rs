@@ -88,6 +88,12 @@ pub trait PageStore {
     }
     fn blocks(&mut self) -> Result<u32>;
     fn read(&mut self, block: u32) -> Result<Page>;
+
+    /// Overwrites an exclusively borrowed private image; errors abort the operation.
+    fn read_into(&mut self, block: u32, page: &mut Page) -> Result<()> {
+        *page = self.read(block)?;
+        Ok(())
+    }
     fn extend(&mut self) -> Result<u32>;
     fn commit(&mut self, pages: &[&Page]) -> Result<()>;
 
@@ -128,6 +134,23 @@ fn load_any<S: PageStore>(store: &mut S, block: u32) -> Result<Page> {
     }
     page.validate(store.layout())?;
     Ok(page)
+}
+
+fn load_into<S: PageStore>(
+    store: &mut S,
+    block: u32,
+    kind: PageKind,
+    page: &mut Page,
+) -> Result<()> {
+    store.interrupt()?;
+    if block >= store.blocks()? {
+        return Err(Error::InvalidState);
+    }
+    store.read_into(block, page)?;
+    if page.block() != block || page.kind() != kind {
+        return Err(Error::InvalidState);
+    }
+    page.validate(store.layout())
 }
 
 fn allocate<S: PageStore>(store: &mut S) -> Result<u32> {

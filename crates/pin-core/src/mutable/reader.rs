@@ -4,7 +4,7 @@
 //! The host must use MVCC and recheck every root emitted by this reader.
 
 use super::page::{NO_BLOCK, OwnerRef, Page, PageKind};
-use super::{PageStore, find_term, following, load, load_posting, posting_next};
+use super::{PageStore, find_term, following, load, load_into, load_posting, posting_next};
 use crate::candidate::CandidatePlan;
 use crate::codec::records::Publication;
 use crate::error::{Error, Result};
@@ -99,7 +99,11 @@ pub(super) fn resolve<S: PageStore>(
         _ => true,
     };
     if reload {
-        *cache = Some(load(store, reference.page, PageKind::Owners)?);
+        if let Some(page) = cache.as_mut() {
+            load_into(store, reference.page, PageKind::Owners, page)?;
+        } else {
+            *cache = Some(load(store, reference.page, PageKind::Owners)?);
+        }
     }
     let page = cache.as_ref().ok_or(Error::InvalidState)?;
     let owner = page.owner(reference.slot, store.layout())?;

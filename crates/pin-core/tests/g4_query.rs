@@ -448,6 +448,13 @@ impl PageStore for CountStore {
         self.dictionary_reads += usize::from(page.kind() == PageKind::Dictionary);
         Ok(page)
     }
+    fn read_into(&mut self, block: u32, page: &mut Page) -> Result<()> {
+        self.inner.read_into(block, page)?;
+        self.fragment_reads += usize::from(page.kind() == PageKind::Fragment);
+        self.owner_reads += usize::from(page.kind() == PageKind::Owners);
+        self.dictionary_reads += usize::from(page.kind() == PageKind::Dictionary);
+        Ok(())
+    }
     fn extend(&mut self) -> Result<u32> {
         self.inner.extend()
     }

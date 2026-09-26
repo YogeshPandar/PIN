@@ -7,7 +7,7 @@
 use super::document;
 use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef};
 use super::reader::resolve;
-use super::{PageStore, find_term, load, load_posting, posting_next, scan};
+use super::{PageStore, find_term, load, load_into, load_posting, posting_next, scan};
 use crate::budget::MemoryBudget;
 use crate::candidate::CandidatePlan;
 use crate::error::{Error, Result};
@@ -716,7 +716,11 @@ fn resolve_phrase<S: PageStore>(
         _ => true,
     };
     if reload {
-        *cache = Some(load(store, reference.page, PageKind::Owners)?);
+        if let Some(page) = cache.as_mut() {
+            load_into(store, reference.page, PageKind::Owners, page)?;
+        } else {
+            *cache = Some(load(store, reference.page, PageKind::Owners)?);
+        }
     }
     let page = cache.as_ref().ok_or(Error::InvalidState)?;
     let owner = page.owner(reference.slot, store.layout())?;
@@ -741,7 +745,7 @@ fn resolve_phrase<S: PageStore>(
     if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
-    let first = load(store, owner.data_head, PageKind::Fragment)?;
+    let mut first = load(store, owner.data_head, PageKind::Fragment)?;
     let (identity, start, payload) = first.fragment_data()?;
     if identity != reference || start != 0 || payload.len() > total {
         return Err(Error::InvalidState);
@@ -765,8 +769,8 @@ fn resolve_phrase<S: PageStore>(
         if offset == total {
             return Err(Error::InvalidState);
         }
-        let fragment = load(store, block, PageKind::Fragment)?;
-        let (reference, current, payload) = fragment.fragment_data()?;
+        load_into(store, block, PageKind::Fragment, &mut first)?;
+        let (reference, current, payload) = first.fragment_data()?;
         let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
         let end = current
             .checked_add(payload.len())
@@ -776,7 +780,7 @@ fn resolve_phrase<S: PageStore>(
         }
         bytes.extend_from_slice(payload);
         offset = end;
-        block = fragment.next()?;
+        block = first.next()?;
     }
     if offset != total {
         return Err(Error::InvalidState);

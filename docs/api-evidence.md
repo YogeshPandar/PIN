@@ -1396,3 +1396,36 @@ No TIN implementation is copied. TIN's public separation of positional data from
 membership remains the architectural reference for the pending physical layout.
 Native measurements and PostgreSQL lifecycle results belong with their exact
 module revision in `docs/runs/2026-09-26-native-dense-seek/`.
+
+## PAGEREUSE01: exclusive private page reloads (2026-09-26)
+
+Re-read PostgreSQL 18 index-locking contracts and pinned 18.6 bufmgr.c at
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+https://www.postgresql.org/docs/18/index-locking.html and
+https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/bufmgr.c.
+The adapter still calls the same C pin_storage_read implementation: check extent,
+ReadBufferExtended, shared content lock, copy payload, UnlockReleaseBuffer.
+The existing FFI call is factored into copy_page; no new unsafe operation, PG
+pointer lifetime, WAL operation, or buffer pin is introduced.
+
+Page::reload_with requires an exclusive mutable borrow, resets image metadata
+and all bytes, then repeats the existing header parser. Errors invalidate block
+identity and expose zero bytes; callbacks cannot retain their exclusive slice.
+Successful images have the same zero-filled tail as fresh reads, so later page
+mutations cannot observe leftovers. Shared references into an old payload cannot
+coexist with reload under Rust borrowing. Publication/incarnation and page-kind
+validation remain at the same scan boundaries. Aborted operations discard their
+private state rather than use partially overwritten data.
+
+PageStore::read_into has a compatibility default. PgStore implements actual
+in-place copying through the existing guarded C call. Phrase owner caches,
+fragment traversal, and the conservative owner cache reuse their existing image.
+No new heap allocation or retained cache entry is added; fragment traversal
+reuses the first fragment image after copying its consumed payload. This removes
+return-value transfers, not the PostgreSQL-to-private copy or PD02 assembly.
+
+Review: the same live relation and full-CAPACITY exclusive extent prove the
+relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
+assert stable buffer address, exercise failures/recovery and preserve zero tails.
+The in-memory query adapter also exercises read_into, not just its default.
+Native tests and measurements must qualify the implementation before retention.
