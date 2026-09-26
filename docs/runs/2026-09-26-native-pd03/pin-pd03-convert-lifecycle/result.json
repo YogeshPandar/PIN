@@ -1,0 +1,222 @@
+[
+  {
+    "stage": "built",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,1)\n3|(0,3)"
+  },
+  {
+    "stage": "built",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,4)\n6|(0,6)"
+  },
+  {
+    "stage": "built",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "built",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,8)\n3|(0,3)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,8)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,8)\n7|(0,12)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,8)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "snapshot_before",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "snapshot_before",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "snapshot_before",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "snapshot_before",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "snapshot_after_write",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "snapshot_after_write",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "snapshot_after_write",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "snapshot_after_write",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  },
+  {
+    "stage": "committed_after_snapshot",
+    "phrase": "\"alpha beta\"",
+    "rows": "2|(0,1)\n7|(0,3)"
+  },
+  {
+    "stage": "committed_after_snapshot",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,9)\n6|(0,10)"
+  },
+  {
+    "stage": "committed_after_snapshot",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "committed_after_snapshot",
+    "phrase": "\"zulu omega\"",
+    "rows": "99|(0,7)"
+  }
+]

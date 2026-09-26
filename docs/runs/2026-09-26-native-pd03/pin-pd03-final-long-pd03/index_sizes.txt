@@ -1,0 +1,2 @@
+pin_fragment_e20acb48b42b_body_idx|pin|18956288
+pin_fragment_e20acb48b42b_pkey|btree|16384

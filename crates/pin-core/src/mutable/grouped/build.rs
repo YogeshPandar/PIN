@@ -299,7 +299,16 @@ fn emit_owner<S: PageStore, T: GroupSort>(
         if offset == total {
             return Err(Error::InvalidState);
         }
-        let page = load(store, block, PageKind::Fragment)?;
+        let page = crate::mutable::load_payload(store, block)?;
+        if page.kind() == PageKind::DocumentDirectory {
+            if offset != 0 {
+                return Err(Error::InvalidState);
+            }
+            crate::mutable::document_seek::copy_all(store, &page, owner, scratch)?;
+            offset = total;
+            block = NO_BLOCK;
+            continue;
+        }
         let (reference, current, bytes) = page.fragment_data()?;
         let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
         let end = current

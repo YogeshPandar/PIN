@@ -1,0 +1,26 @@
+[
+  {
+    "file": "pin-pd03-long-pd03/nonadjacent.perf.data.gz",
+    "sha256_uncompressed": "f1af2bee7849cd1b4d3087399d94021bad683a744e9d98d496e244cdbb5edb63"
+  },
+  {
+    "file": "pin-pd03-long-pd03/repeated.perf.data.gz",
+    "sha256_uncompressed": "93c835772ba846766b81b376e3b895df266592e9d571d7d59c2f6cb52090cf5d"
+  },
+  {
+    "file": "pin-pd03-long-pd03/adjacent.perf.data.gz",
+    "sha256_uncompressed": "e395a91423fade380509442e65ae18d22175e4c3d994e4466361e928b786c2c2"
+  },
+  {
+    "file": "pin-pd03-native.so.gz",
+    "sha256_uncompressed": "c195a6bcdd2e900adb25877325942618280bfb444a12fe378cd14c5cf14f710b"
+  },
+  {
+    "file": "pin-pd03-adaptive.so.gz",
+    "sha256_uncompressed": "22c3e6423697e8903ba2e23fed555c6e9d08b4d6ca66c2b3bcb811bb96f8cd0b"
+  },
+  {
+    "file": "pin-pd03-convert.so.gz",
+    "sha256_uncompressed": "ab2b7ec01442f8b04affa3e044d175a3edad365d97ce09e49123215c11988783"
+  }
+]

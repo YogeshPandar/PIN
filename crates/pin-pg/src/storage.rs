@@ -12,9 +12,29 @@ use pin_core::mutable::page::{CAPACITY, MAX_WAL_PAGES, Page, PageKind};
 use pin_core::mutable::{PageStore, Stage};
 use std::marker::PhantomData;
 
+static ENABLE_BLOCKED_POSITIONS: GucSetting<bool> = GucSetting::<bool>::new(false);
+
+static ENABLE_DIRECT_DOCUMENTS: GucSetting<bool> = GucSetting::<bool>::new(false);
+
 static ENABLE_EXACT_BITMAP: GucSetting<bool> = GucSetting::<bool>::new(true);
 
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_blocked_positions",
+        c"Create experimental PD03 indexes with addressable positional blocks.",
+        c"Implies mapped documents; the format persists and requires compatible readers.",
+        &ENABLE_BLOCKED_POSITIONS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
+    GucRegistry::define_bool_guc(
+        c"pin.enable_direct_documents",
+        c"Create new indexes with experimental directly addressable document extents.",
+        c"The format choice persists in the index; older binaries reject it. Requires rebuilding to change.",
+        &ENABLE_DIRECT_DOCUMENTS,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_exact_bitmap",
         c"Use proven exact term and Boolean bitmap matches.",
@@ -136,6 +156,14 @@ pub(crate) unsafe fn with_maintenance<T>(
 }
 
 impl PageStore for PgStore<'_> {
+    fn blocked_positions(&self) -> bool {
+        ENABLE_BLOCKED_POSITIONS.get()
+    }
+
+    fn direct_documents(&self) -> bool {
+        ENABLE_DIRECT_DOCUMENTS.get()
+    }
+
     fn frontier_anchors(&self) -> bool {
         crate::grouped::frontier_anchors_enabled()
     }

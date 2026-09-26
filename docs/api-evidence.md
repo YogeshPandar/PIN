@@ -1431,3 +1431,83 @@ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
 assert stable buffer address, exercise failures/recovery and preserve zero tails.
 The in-memory query adapter also exercises read_into, not just its default.
 Native tests and measurements must qualify the implementation before retention.
+
+## DOCEXTENT01: opt-in document extent directory
+
+Contracts reviewed: PostgreSQL 18 generic WAL documentation and immutable
+`724edf9bde9d356724ad384a2e196edc3c9f80f7` generic_xlog.c:
+https://www.postgresql.org/docs/18/generic-wal.html and
+https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/transam/generic_xlog.c.
+The existing adapter exclusively locks and registers pages in block order,
+modifies registered private images, and finishes one generic record per batch.
+New payload-head creation uses that same adapter, at most two pages per batch.
+No direct shared-buffer mutation, new unsafe call, resource pin or WAL API occurs.
+Existing pgrx boolean GUC registration is reused; the setting controls initial
+metapage capability only, not the interpretation of an existing index.
+
+Format and downgrade obligations are in docs/direct-document-extents.md.
+Metapage reserved field 28 becomes a checked capability bitmap (only bit 0), so
+old readers reject new indexes at metadata validation. Kind 11 owns a versioned
+prefix and bounded physical map. Old kind 5 and old metadata remain supported.
+Owner reservation precedes all payload writes; final owner publication still
+follows complete payload and dictionary preparation. Free-list removal and page
+assignment remain atomic. The structural reader barrier and heap MVCC contract
+are unchanged. VACUUM and allocation-orphan checks know every new reference.
+
+Review obligations: full consumers validate every mapped tail; selected consumers
+validate consumed identities/offsets/lengths/links and do not certify skipped
+bytes. The same phrase kernel handles selected counted streams and repeated
+terms. Query scratch includes the additional page and range/name arrays. Tests
+must cover interrupted publication/removal, reuse, layout crossings, and the
+physical work bound; native committed/uncommitted replay and measured write/size
+costs are required before merging the optional format.
+
+
+DOCEXTENT01 adaptive iteration: only pure serialized layout arithmetic changes.
+The PostgreSQL page, buffer-lock, and GenericXLog contracts above remain unchanged.
+Layout version 1 fills available head space; version 0 retains the original 3072
+byte prefix. All allowed document lengths are checked against capacity, exact
+fragment counts and the maximum map bound. Zero-tail and truncated pages have
+explicit tests. Native performance and recovery qualification remain pending.
+
+DOCEXTENT01 native replay follow-up: `tools/document_extent_recovery.py` verifies
+SHOW data_directory equals the explicit disposable /tmp target before invoking
+PG18 pg_ctl immediate stop. The official PG18 pg_ctl contract documents that this
+forces crash recovery on restart: https://www.postgresql.org/docs/18/app-pg-ctl.html.
+One checkpoint/committed/open-transaction replay, VACUUM/insert, REINDEX and exact
+bitmap/scalar identity scenario passes on 81041007. Evidence is under
+`docs/runs/2026-09-26-document-extents/long-documents/pin-extent-recovery/`.
+This adds native evidence to the existing GenericXLog contract, not a new storage
+API or a blanket ACID certification. Wider concurrent/crash-point gates remain.
+
+Dense seek width follow-up (`604dc802`): pure safe-Rust slice comparisons widen
+existing canonical +1 runs from 32 to an additional 256-position case. No host
+API, storage format or lock/WAL boundary changes. Scalar differential tests cover
+mixed deltas, target and budget edges; malformed consumed deltas remain rejected.
+Native evidence and limitations are in docs/runs/2026-09-26-wide-position-seek/.
+
+PB01 external-reader interface: `PositionDirectory` validates metadata separately
+from externally located positional bytes, and checked block requests decode exact
+selected slices. PB01 wire encoding is unchanged. No native reader, unsafe call,
+PostgreSQL buffer, WAL or publication boundary changes. The adapter contract and
+remaining native integration obligations are in docs/addressable-position-reader.md.
+
+PD03 complete-consumer checkpoint: pure serialization and validation only. The
+new magic and per-term encoding flag discriminate counted deltas from unchanged
+PB01 blocks. Complete consumers keep profile/count/order/uniqueness checks;
+preparation explicitly budgets its additional scratch. No PostgreSQL, pgrx, WAL
+or locking call changes. The storage writer rejects PD03 before any allocation
+until the persisted capability and optimized native consumers exist. Format and
+integration gates are in docs/pd03-document-format.md.
+
+
+PD03 native integration (`214a6ea`): PostgreSQL 18 Generic WAL and index-locking
+contracts rechecked at https://www.postgresql.org/docs/18/generic-wal.html and
+https://www.postgresql.org/docs/18/index-locking.html. No new FFI, unsafe call,
+GenericXLog record type or buffer-lock sequence is introduced. Existing writer
+interlock chooses a persisted metapage capability before preparing/publishing
+PD03. Metadata values 0/1/3 are accepted; 2 and unknown flags fail validation.
+Selected readers use the existing structural barrier, checked owner/extent reads
+and bounded query scratch. The native adapter's experimental PD03 conversion occurs while the writer
+interlock is held; it consumes a prevalidated PD02 document and neither repeats
+analysis nor sorting. Write CPU and lock-hold effects still need paired measurement. Core tests and native evidence are in the dated PD03 run.

@@ -116,3 +116,72 @@ The plan remains useful and incomplete: A1 packed canonical postings, A2 SQL
 BM25, B1 physical position directories and subsequent ranked/span execution are
 still substantial work. Recent bridge optimizations do not establish final
 production readiness or TIN parity.
+
+## B1 document extent prototype (not qualified)
+
+The experimental `pin.enable_direct_documents` creation option adds a versioned
+physical map and selected positional reads. Fixed 3KB heads regressed size by
+49% on the 16K fixture; adaptive heads restore the legacy page count. Retaining
+tail scratch reduces reader overhead, but final mapped late-match CPU remains
+0.931 ms versus legacy 0.785 ms and stored GIN 0.133 ms in the paired run.
+Native lifecycle passes 44 comparisons. This is physical addressing groundwork,
+not the final packed layout, performance parity or permission to enable by default.
+[All iterations, failures and raw evidence](docs/runs/2026-09-26-document-extents/README.md).
+
+Next: profile the remaining virtual-reader overhead, measure a native longer
+fixture where physical skipping actually avoids pages, and qualify crash replay.
+Keep both the positive work-bound test and the negative two-page native result.
+
+Longer native follow-up (60K tokens, same binary): mapped late rare phrase CPU
+0.876 ms versus legacy 2.327 ms, a 2.66x gain at equal index size. Negative phrase
+CPU regresses 15.7%; repeated early phrase is approximately unchanged. GIN is
+excluded beyond comparable tsvector positional limits. Raw software CPU profiles
+and one successful committed/uncommitted WAL replay are now archived. This
+supports physical skipping for selected workloads, not universal performance.
+
+## Dense-stream follow-up
+
+Checked 256-position skips reduce the 60K negative phrase CPU from 4.212 to
+2.881 ms on legacy storage and 4.874 to 3.544 ms on mapped storage. Mapped late
+rare matches retain the selective-read gain (0.863 versus legacy 2.285 ms).
+Short matching controls are 2–3% slower; all raw regressions are retained.
+[Measurements and scalar differential coverage](docs/runs/2026-09-26-wide-position-seek/README.md).
+This still scans dense bytes. Native addressable position blocks and packed
+primary postings remain the architectural next steps; the experimental PB01
+codec is not integrated and SQL BM25 remains missing.
+
+## Addressable positional reader API
+
+PB01 metadata can now be validated separately from external positional bytes.
+The callback reader fetches at most one selected block (635 bytes), with no
+payload fetch for a past-end target. Eight codec tests and all-target Clippy pass.
+[Contract and native integration requirements](docs/addressable-position-reader.md).
+This is an implemented interface, not native PB01 storage or a measured SQL
+speedup. Native document format, all consumers and lifecycle integration remain.
+
+## PD03 encoder and complete consumers
+
+The experimental document encoder now supports tagged PB01 streams for terms
+with at least 256 occurrences, retaining counted deltas for smaller terms.
+Complete validation, iteration, phrase consumers and grouped membership readers
+support both PD02 and PD03. Storage insertion rejects PD03 before allocation;
+no native writer setting enables it yet. The next step is persisted capability
+selection and native inline/mapped readers that use block bounds and range reads.
+[Format](docs/pd03-document-format.md),
+[test evidence](docs/runs/2026-09-26-pd03-readers/README.md).
+
+## Native PD03 qualification
+
+Draft PR #30 now persists the blocked-position capability and uses a bounded
+selected-block phrase reader on inline and mapped documents. The native writer
+converts a prepared PD02 document without repeating analysis, and retains PD02
+when no term has a block candidate. PostgreSQL 18 lifecycle and replay checks
+pass on the bounded fixture. [Raw native evidence and medians](docs/runs/2026-09-26-native-pd03/README.md).
+
+PD03 is not ready for default use or merge. On the final 60K-token pair it
+reduces CPU for one negative phrase from 3.625 to 1.569 ms, but increases
+adjacent from 0.874 to 1.243 ms and repeated from 0.432 to 1.554 ms. Index
+bytes rise 12.4%. The comparable 16K-token run remains well behind GIN.
+The next architecture work is A1 packed canonical postings and A2 SQL BM25,
+followed by B1 primary packed storage. Per-query isolated positional gains do
+not satisfy the broader TIN-like goal.

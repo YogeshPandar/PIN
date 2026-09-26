@@ -1,0 +1,19 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.55s
+     Running tests/document_directory.rs (target/debug/deps/document_directory-d30d637accb19884)
+
+running 11 tests
+test directory_can_hold_a_document_without_tail_pages ... ok
+test directory_codec_covers_maximum_extent_count_and_truncation ... ok
+test every_directory_publication_boundary_recovers_and_reuses_free_pages ... ok
+test consumed_extent_identity_and_mapping_corruption_fail_closed ... ok
+test fixed_prefix_version_remains_readable_and_unknown_versions_fail ... ok
+test every_directory_vacuum_boundary_is_idempotent ... ok
+test rare_late_phrase_skips_unrelated_physical_position_extents ... ok
+test adaptive_directory_layout_covers_all_document_lengths ... ok
+test selected_extents_fit_a_budget_smaller_than_the_complete_document ... ok
+test direct_and_legacy_readers_match_an_independent_text_oracle ... ok
+test selected_headers_cross_prefix_and_tail_boundaries_without_changing_phrases ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.86s
+

@@ -11,6 +11,12 @@ pub use grouped::{
     MAX_CATALOG_LEVEL,
 };
 
+#[path = "page_directory.rs"]
+mod directories;
+pub use directories::{
+    DIRECT_PREFIX_BYTES, DocumentDirectory, MAX_DIRECT_FRAGMENTS, direct_document_layout,
+};
+
 use super::document::{MAX_DOCUMENT_BYTES, MAX_DOCUMENT_TOKENS, MAX_TERM_BYTES};
 use crate::analysis::PROFILE_ID;
 use crate::codec::bytes::{Reader, Writer};
@@ -45,6 +51,7 @@ pub enum PageKind {
     DirectPostings,
     Grouped,
     Fragment,
+    DocumentDirectory,
     Free,
 }
 
@@ -227,6 +234,7 @@ impl Page {
                 7 => PageKind::SealedPostings,
                 9 => PageKind::DirectPostings,
                 10 => PageKind::Grouped,
+                11 => PageKind::DocumentDirectory,
                 _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
             };
             if reader.u8()? != 0 || reader.u32()? != block {
@@ -259,6 +267,7 @@ impl Page {
             PageKind::DirectPostings => 9,
             PageKind::Grouped => 10,
             PageKind::Fragment => 5,
+            PageKind::DocumentDirectory => 11,
             PageKind::Free => 6,
         };
         let mut page = Self {
@@ -407,7 +416,8 @@ impl Page {
                     || self.u32(20)? != 8192
                     || self.u16(24)? != layout.max_offset()
                     || usize::from(self.u16(26)?) != BUCKETS
-                    || self.u32(28)? != 0
+                    || self.u32(28)? & !3 != 0
+                    || self.u32(28)? == 2
                     || self.u64(32)? == 0
                 {
                     return Err(corrupt(16));
@@ -470,6 +480,9 @@ impl Page {
                         self.direct_root(slot, layout)?;
                     }
                 }
+            }
+            PageKind::DocumentDirectory => {
+                self.document_directory_data()?;
             }
             PageKind::Fragment => {
                 let (_, offset, payload) = self.fragment_data()?;
@@ -971,6 +984,10 @@ impl Page {
     }
 
     pub fn fragment_data(&self) -> Result<(OwnerRef, u32, &[u8])> {
+        if self.kind == PageKind::DocumentDirectory {
+            let directory = self.document_directory_data()?;
+            return Ok((directory.owner, 0, directory.prefix));
+        }
         self.require(PageKind::Fragment)?;
         let mut reader = Reader::new(&self.bytes()[HEADER..]);
         let owner = OwnerRef::read(&mut reader)?;

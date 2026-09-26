@@ -3,7 +3,10 @@
 //! admits a document to scans; transaction visibility remains the host's job.
 
 use super::document::PreparedDocument;
-use super::page::{FRAGMENT_BYTES, INLINE_BYTES, NO_BLOCK, OwnerChange, OwnerRef, Page, PageKind};
+use super::page::{
+    FRAGMENT_BYTES, INLINE_BYTES, MAX_DIRECT_FRAGMENTS, NO_BLOCK, OwnerChange, OwnerRef, Page,
+    PageKind, direct_document_layout,
+};
 use super::{PageStore, Stage, allocate, find_term, load, load_posting};
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
@@ -13,7 +16,12 @@ pub fn initialize<S: PageStore>(store: &mut S) -> Result<()> {
     if store.blocks()? != 0 || allocate(store)? != 0 {
         return Err(Error::InvalidState);
     }
-    let meta = Page::metadata(store.layout())?;
+    let mut meta = Page::metadata(store.layout())?;
+    if store.blocked_positions() {
+        meta.enable_blocked_positions()?;
+    } else if store.direct_documents() {
+        meta.enable_direct_documents()?;
+    }
     store.commit(&[&meta])
 }
 
@@ -28,14 +36,44 @@ pub fn insert<S: PageStore>(
     root: RootTid,
     document: &PreparedDocument,
 ) -> Result<OwnerRef> {
-    let mut meta = load(store, 0, PageKind::Meta)?;
+    let meta = load(store, 0, PageKind::Meta)?;
+    insert_ready(store, root, document, meta)
+}
+
+/// Chooses preparation from persisted metadata before any owner allocation.
+/// The host retains its writer interlock; no buffer lock is retained here.
+pub fn insert_with_format<S: PageStore>(
+    store: &mut S,
+    root: RootTid,
+    prepare: impl FnOnce(bool) -> Result<PreparedDocument>,
+) -> Result<OwnerRef> {
+    let meta = load(store, 0, PageKind::Meta)?;
+    let document = prepare(meta.blocked_positions()?)?;
+    insert_ready(store, root, &document, meta)
+}
+
+fn insert_ready<S: PageStore>(
+    store: &mut S,
+    root: RootTid,
+    document: &PreparedDocument,
+    mut meta: Page,
+) -> Result<OwnerRef> {
+    if document.bytes().starts_with(b"PD03") && !meta.blocked_positions()? {
+        return Err(Error::InvalidDocument);
+    }
     let owner = reserve_owner(store, &mut meta, root, document)?;
     store.event(Stage::OwnerReserved)?;
     let mut data_head = NO_BLOCK;
     if document.bytes().len() > INLINE_BYTES {
-        let count = document.bytes().len().div_ceil(FRAGMENT_BYTES);
+        let prefix = if meta.direct_documents()? {
+            direct_document_layout(document.bytes().len())?.0
+        } else {
+            0
+        };
+        let count = (document.bytes().len() - prefix).div_ceil(FRAGMENT_BYTES);
+        let mut directory = [NO_BLOCK; MAX_DIRECT_FRAGMENTS];
         for index in (0..count).rev() {
-            let offset = index * FRAGMENT_BYTES;
+            let offset = prefix + index * FRAGMENT_BYTES;
             let end = (offset + FRAGMENT_BYTES).min(document.bytes().len());
             let free = meta.free_head()?;
             let block = if free == NO_BLOCK {
@@ -56,6 +94,33 @@ pub fn insert<S: PageStore>(
                 store.commit(&[&page])?;
             } else {
                 // removal from the free list and new ownership are one WAL batch.
+                store.commit(&[&meta, &page])?;
+            }
+            data_head = block;
+            if prefix != 0 {
+                directory[index] = block;
+            }
+            store.event(Stage::FragmentStored)?;
+        }
+        if prefix != 0 {
+            let free = meta.free_head()?;
+            let block = if free == NO_BLOCK {
+                allocate(store)?
+            } else {
+                let page = load(store, free, PageKind::Free)?;
+                meta.set_free_head(page.next()?)?;
+                free
+            };
+            let page = Page::document_directory(
+                block,
+                owner,
+                document.bytes().len(),
+                &directory[..count],
+                &document.bytes()[..prefix],
+            )?;
+            if free == NO_BLOCK {
+                store.commit(&[&page])?;
+            } else {
                 store.commit(&[&meta, &page])?;
             }
             data_head = block;

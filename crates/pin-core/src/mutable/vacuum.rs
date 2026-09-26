@@ -101,7 +101,7 @@ pub fn vacuum<S: PageStore>(
                     store.event(Stage::DirectRemoved)?;
                 }
             }
-            PageKind::Fragment => {
+            PageKind::Fragment | PageKind::DocumentDirectory => {
                 let (reference, _, _) = page.fragment_data()?;
                 let owners = load(store, reference.page, PageKind::Owners)?;
                 let owner = owners.owner(reference.slot, store.layout())?;
@@ -152,6 +152,14 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
         if page.next()? == target || super::grouped::references(&page, target)? {
             return Err(Error::InvalidState);
         }
+        if page.kind() == PageKind::DocumentDirectory {
+            let directory = page.document_directory_data()?;
+            for index in 0..directory.fragments() {
+                if directory.block(index)? == target {
+                    return Err(Error::InvalidState);
+                }
+            }
+        }
         match page.kind() {
             PageKind::Meta => {
                 if page
@@ -196,7 +204,9 @@ fn check_unreferenced<S: PageStore>(store: &mut S, target: u32, pages: u32) -> R
                     }
                 }
             }
-            PageKind::Fragment if page.fragment_data()?.0.page == target => {
+            PageKind::Fragment | PageKind::DocumentDirectory
+                if page.fragment_data()?.0.page == target =>
+            {
                 return Err(Error::InvalidState);
             }
             _ => {}

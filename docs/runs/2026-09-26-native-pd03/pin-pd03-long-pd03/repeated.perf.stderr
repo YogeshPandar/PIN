@@ -1,0 +1,2 @@
+[ perf record: Woken up 27 times to write data ]
+[ perf record: Captured and wrote 7.231 MB /tmp/pin-pd03-long-pd03/repeated.perf.data (896 samples) ]

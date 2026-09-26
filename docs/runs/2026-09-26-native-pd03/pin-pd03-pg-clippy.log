@@ -1,0 +1,36 @@
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on build directory
+   Compiling pgrx-pg-sys v0.19.2
+   Compiling pin-pg v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-pg)
+error: failed to run custom build command for `pgrx-pg-sys v0.19.2`
+
+Caused by:
+  process didn't exit successfully: `/home/reing/projects/fts0/PIN/target/debug/build/pgrx-pg-sys-c39c7df10c2c469e/build-script-bindgen` (exit status: 1)
+  --- stdout
+  cargo:rustc-check-cfg=cfg(docsrs)
+  cargo:rerun-if-env-changed=DOCS_RS
+  cargo:rerun-if-env-changed=PGRX_BUILD_VERBOSE
+  cargo:rerun-if-env-changed=PGRX_PG_CONFIG_PATH
+  cargo:rerun-if-env-changed=PGRX_PG_CONFIG_AS_ENV
+  cargo:rerun-if-env-changed=LLVM_CONFIG_PATH
+  cargo:rerun-if-env-changed=LIBCLANG_PATH
+  cargo:rerun-if-env-changed=LIBCLANG_STATIC_PATH
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_x86_64-unknown-linux-gnu
+  cargo:rerun-if-env-changed=BINDGEN_EXTRA_CLANG_ARGS_x86_64_unknown_linux_gnu
+  cargo:rerun-if-env-changed=PGRX_PG_SYS_GENERATE_BINDINGS_FOR_RELEASE
+  cargo:rerun-if-changed=include
+  cargo:rerun-if-changed=pgrx-cshim.c
+  cargo:rerun-if-changed=/home/reing/.pgrx/config.toml
+  cargo:rerun-if-env-changed=PGRX_PG_SYS_GENERATE_BINDINGS_FOR_RELEASE
+
+  --- stderr
+  build_paths=BuildPaths { manifest_dir: "/home/reing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pgrx-pg-sys-0.19.2", out_dir: "/home/reing/projects/fts0/PIN/target/debug/build/pgrx-pg-sys-5a27fc56f9393919/out", src_dir: "/home/reing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pgrx-pg-sys-0.19.2/src/include", shim_src: "/home/reing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pgrx-pg-sys-0.19.2/pgrx-cshim.c", shim_dst: "/home/reing/projects/fts0/PIN/target/debug/build/pgrx-pg-sys-5a27fc56f9393919/out/pgrx-cshim.c" }
+  Error: The specified pg_config binary, `/tmp/pin-g9-pr23-pg/pg/bin/pg_config`, does not exist
+
+  Caused by:
+      No such file or directory (os error 2)
+
+  Location:
+      /home/reing/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/pgrx-pg-config-0.19.2/src/lib.rs:504:51
+warning: build failed, waiting for other jobs to finish...

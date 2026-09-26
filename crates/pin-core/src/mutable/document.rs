@@ -6,9 +6,12 @@
 use crate::analysis::{Analyzed, PROFILE_ID, Token};
 use crate::budget::MemoryBudget;
 use crate::codec::bytes::{Reader, Writer, var_u32_len};
-use crate::codec::positions::Positions;
+#[path = "document_positions.rs"]
+mod streams;
 use crate::error::{Error, Result};
 use crate::memory::vector;
+use DocumentPositions as Positions;
+pub use streams::{DocumentPositionIter, DocumentPositions};
 
 pub const MAX_TERM_BYTES: usize = 1024;
 pub const MAX_DOCUMENT_TOKENS: u32 = 262_144;
@@ -30,6 +33,15 @@ impl PreparedDocument {
     /// Rejects limits, overflow, allocation failure or insufficient peak budget.
     /// The budget includes the borrowed analyzer's retained allocation.
     pub fn prepare(document: &Analyzed, memory_bytes: usize) -> Result<Self> {
+        Self::prepare_format(document, memory_bytes, false)
+    }
+
+    /// Experimental PD03 encoding; native storage insertion remains gated.
+    pub fn prepare_blocked(document: &Analyzed, memory_bytes: usize) -> Result<Self> {
+        Self::prepare_format(document, memory_bytes, true)
+    }
+
+    fn prepare_format(document: &Analyzed, memory_bytes: usize, blocked: bool) -> Result<Self> {
         if document.len() > MAX_DOCUMENT_TOKENS {
             return Err(Error::Limit("document positions"));
         }
@@ -40,17 +52,19 @@ impl PreparedDocument {
         tokens.sort_unstable_by(|a, b| a.term.cmp(b.term).then(a.position.cmp(&b.position)));
         let mut terms = 0u32;
         let mut length = HEADER;
+        let mut largest_blocked = 0;
+        let mut largest_payload = 0;
         for group in tokens.chunk_by(|a, b| a.term == b.term) {
             let term = group[0].term;
             if term.is_empty() || term.len() > MAX_TERM_BYTES {
                 return Err(Error::Limit("term bytes"));
             }
             terms = terms.checked_add(1).ok_or(Error::Limit("document terms"))?;
-            let mut previous = 0;
-            let mut position_bytes = 4usize;
-            for token in group {
-                position_bytes += var_u32_len(token.position - previous);
-                previous = token.position;
+            let use_blocks = blocked && group.len() >= 256;
+            let position_bytes = position_bytes(group, use_blocks);
+            if use_blocks {
+                largest_blocked = largest_blocked.max(group.len());
+                largest_payload = largest_payload.max(position_bytes);
             }
             length = length
                 .checked_add(8 + term.len() + position_bytes)
@@ -59,36 +73,128 @@ impl PreparedDocument {
         if length > MAX_DOCUMENT_BYTES {
             return Err(Error::Limit("document payload"));
         }
+        // keep the established representation when no stream can use blocks.
+        let blocked = blocked && largest_blocked != 0;
+        let mut block_values: Vec<u32> = vector(largest_blocked, &mut budget)?;
+        let mut block_bytes: Vec<u8> = vector(largest_payload, &mut budget)?;
+        block_bytes.resize(largest_payload, 0);
         let mut bytes = vector(length, &mut budget)?;
         bytes.resize(length, 0);
         let mut writer = Writer::new(&mut bytes);
-        writer.put(b"PD02")?;
+        writer.put(if blocked { b"PD03" } else { b"PD02" })?;
         writer.u32(PROFILE_ID)?;
         writer.u32(document.len())?;
         writer.u32(terms)?;
         for group in tokens.chunk_by(|a, b| a.term == b.term) {
             let term = group[0].term;
-            let mut previous = 0;
-            let mut position_bytes = 4u32;
-            for token in group {
-                position_bytes += var_u32_len(token.position - previous) as u32;
-                previous = token.position;
-            }
+            let use_blocks = blocked && group.len() >= 256;
+            let position_bytes = position_bytes(group, use_blocks);
             writer.u16(term.len() as u16)?;
-            writer.u16(0)?;
-            writer.u32(position_bytes)?;
+            writer.u16(u16::from(use_blocks))?;
+            writer.u32(position_bytes as u32)?;
             writer.put(term.as_bytes())?;
-            writer.u32(group.len() as u32)?;
-            previous = 0;
-            for token in group {
-                writer.var_u32(token.position - previous)?;
-                previous = token.position;
+            if use_blocks {
+                block_values.clear();
+                block_values.extend(group.iter().map(|token| token.position));
+                let written = crate::codec::position_blocks::encode(
+                    &block_values,
+                    &mut block_bytes,
+                    MAX_DOCUMENT_TOKENS,
+                )?;
+                if written != position_bytes {
+                    return Err(Error::InvalidDocument);
+                }
+                writer.put(&block_bytes[..written])?;
+            } else {
+                writer.u32(group.len() as u32)?;
+                let mut previous = 0;
+                for token in group {
+                    writer.var_u32(token.position - previous)?;
+                    previous = token.position;
+                }
             }
         }
         Ok(Self {
             bytes,
             tokens: document.len(),
             terms,
+        })
+    }
+
+    /// Converts a validated PD02 payload without repeating analysis or token sorting.
+    /// The input, output and largest term scratch are charged together.
+    pub fn into_blocked(self, memory_bytes: usize) -> Result<Self> {
+        if self.bytes.starts_with(b"PD03") || !self.has_block_candidate()? {
+            return Ok(self);
+        }
+        let mut budget = MemoryBudget::new(memory_bytes);
+        budget.charge(self.bytes.capacity())?;
+        let mut length = HEADER;
+        let (mut largest_count, mut largest_payload) = (0, 0);
+        for item in self.terms() {
+            let item = item?;
+            let view = item.positions()?;
+            let size = if view.len() >= 256 {
+                let size = block_encoded_bytes(view)?;
+                largest_count = largest_count.max(view.len() as usize);
+                largest_payload = largest_payload.max(size);
+                size
+            } else {
+                item.positions.len()
+            };
+            length = length
+                .checked_add(8 + item.term.len())
+                .and_then(|n| n.checked_add(size))
+                .ok_or(Error::Limit("document payload"))?;
+        }
+        if length > MAX_DOCUMENT_BYTES {
+            return Err(Error::Limit("document payload"));
+        }
+        let mut positions: Vec<u32> = vector(largest_count, &mut budget)?;
+        let mut encoded: Vec<u8> = vector(largest_payload, &mut budget)?;
+        encoded.resize(largest_payload, 0);
+        let mut bytes: Vec<u8> = vector(length, &mut budget)?;
+        bytes.resize(length, 0);
+        let mut writer = Writer::new(&mut bytes);
+        writer.put(b"PD03")?;
+        writer.u32(PROFILE_ID)?;
+        writer.u32(self.tokens)?;
+        writer.u32(self.terms)?;
+        for item in self.terms() {
+            let item = item?;
+            let view = item.positions()?;
+            let blocked = view.len() >= 256;
+            let size = if blocked {
+                block_encoded_bytes(view)?
+            } else {
+                item.positions.len()
+            };
+            writer.u16(item.term.len() as u16)?;
+            writer.u16(u16::from(blocked))?;
+            writer.u32(size as u32)?;
+            writer.put(item.term.as_bytes())?;
+            if blocked {
+                positions.clear();
+                for position in view.iter() {
+                    positions.push(position?);
+                }
+                let written = crate::codec::position_blocks::encode(
+                    &positions,
+                    &mut encoded,
+                    MAX_DOCUMENT_TOKENS,
+                )?;
+                if written != size {
+                    return Err(Error::InvalidDocument);
+                }
+                writer.put(&encoded[..written])?;
+            } else {
+                writer.put(item.positions)?;
+            }
+        }
+        Ok(Self {
+            bytes,
+            tokens: self.tokens,
+            terms: self.terms,
         })
     }
 
@@ -112,6 +218,21 @@ impl PreparedDocument {
         &self.bytes
     }
 
+    /// True when a PD02 document has a term large enough for PB01 blocks.
+    pub fn has_block_candidate(&self) -> Result<bool> {
+        if self.bytes.starts_with(b"PD03") {
+            return Ok(true);
+        }
+        for term in self.terms() {
+            let term = term?;
+            let count = Reader::new(term.positions).u32()?;
+            if count >= 256 {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
     pub const fn token_count(&self) -> u32 {
         self.tokens
     }
@@ -125,6 +246,7 @@ impl PreparedDocument {
         DocumentTerms {
             reader: Reader::new(&self.bytes[HEADER..]),
             remaining: self.terms,
+            blocked_document: self.bytes.starts_with(b"PD03"),
         }
     }
 }
@@ -134,18 +256,20 @@ impl PreparedDocument {
 pub struct DocumentTerm<'a> {
     pub term: &'a str,
     positions: &'a [u8],
+    blocked: bool,
 }
 
 impl<'a> DocumentTerm<'a> {
     /// Decodes exact positions, rejecting malformed counts or deltas.
     pub fn positions(self) -> Result<Positions<'a>> {
-        Ok(Positions::parse(self.positions, MAX_DOCUMENT_TOKENS)?)
+        Positions::parse(self.positions, self.blocked)
     }
 }
 
 pub struct DocumentTerms<'a> {
     reader: Reader<'a>,
     remaining: u32,
+    blocked_document: bool,
 }
 
 impl<'a> Iterator for DocumentTerms<'a> {
@@ -157,7 +281,8 @@ impl<'a> Iterator for DocumentTerms<'a> {
         }
         let result = (|| {
             let len = usize::from(self.reader.u16()?);
-            if len == 0 || len > MAX_TERM_BYTES || self.reader.u16()? != 0 {
+            let encoding = self.reader.u16()?;
+            if len == 0 || len > MAX_TERM_BYTES || encoding > u16::from(self.blocked_document) {
                 return Err(Error::InvalidDocument);
             }
             let position_bytes = self.reader.u32()? as usize;
@@ -168,7 +293,11 @@ impl<'a> Iterator for DocumentTerms<'a> {
             if self.remaining == 0 {
                 self.reader.finish()?;
             }
-            Ok(DocumentTerm { term, positions })
+            Ok(DocumentTerm {
+                term,
+                positions,
+                blocked: encoding == 1,
+            })
         })();
         if result.is_err() {
             self.remaining = 0;
@@ -193,6 +322,7 @@ pub(crate) fn validated_terms(
     Ok(DocumentTerms {
         reader: Reader::new(&bytes[HEADER..]),
         remaining: terms,
+        blocked_document: bytes.starts_with(b"PD03"),
     })
 }
 
@@ -244,9 +374,7 @@ impl<'a> SelectedPositions<'a> {
             return Err(Error::Limit("selected positions"));
         }
         let mut reader = Reader::new(bytes);
-        if reader.take(4)? != b"PD02" || reader.u32()? != PROFILE_ID {
-            return Err(Error::InvalidProfile);
-        }
+        let blocked_document = read_profile(&mut reader)?;
         let tokens = reader.u32()?;
         let terms = reader.u32()?;
         if tokens != expected_tokens
@@ -270,17 +398,14 @@ impl<'a> SelectedPositions<'a> {
         for entry in (DocumentTerms {
             reader,
             remaining: terms,
+            blocked_document,
         }) {
             let entry = entry?;
             if entry.term <= previous {
                 return Err(Error::InvalidDocument);
             }
             previous = entry.term;
-            let mut encoded = Reader::new(entry.positions);
-            let count = encoded.u32()?;
-            if count == 0 || count > tokens || count as usize > encoded.remaining() {
-                return Err(Error::InvalidDocument);
-            }
+            let count = Positions::count(entry.positions, entry.blocked, tokens)?;
             total = total.checked_add(count).ok_or(Error::InvalidDocument)?;
             if !wanted.iter().any(|name| name == entry.term) {
                 continue;
@@ -416,9 +541,7 @@ impl<'a, 'b> TermMembership<'a, 'b> {
             return Err(Error::Limit("document membership"));
         }
         let mut reader = Reader::new(bytes);
-        if reader.take(4)? != b"PD02" || reader.u32()? != PROFILE_ID {
-            return Err(Error::InvalidProfile);
-        }
+        let blocked_document = read_profile(&mut reader)?;
         let tokens = reader.u32()?;
         let terms = reader.u32()?;
         if tokens != expected_tokens
@@ -435,7 +558,8 @@ impl<'a, 'b> TermMembership<'a, 'b> {
         let mut positions = 0u32;
         for _ in 0..terms {
             let len = usize::from(reader.u16()?);
-            if len == 0 || len > MAX_TERM_BYTES || reader.u16()? != 0 {
+            let encoding = reader.u16()?;
+            if len == 0 || len > MAX_TERM_BYTES || encoding > u16::from(blocked_document) {
                 return Err(Error::InvalidDocument);
             }
             let position_bytes = reader.u32()? as usize;
@@ -445,11 +569,7 @@ impl<'a, 'b> TermMembership<'a, 'b> {
                 return Err(Error::InvalidDocument);
             }
             previous = Some(term);
-            let mut encoded = Reader::new(reader.take(position_bytes)?);
-            let count = encoded.u32()?;
-            if count == 0 || count > tokens || count as usize > encoded.remaining() {
-                return Err(Error::InvalidDocument);
-            }
+            let count = Positions::count(reader.take(position_bytes)?, encoding == 1, tokens)?;
             positions = positions.checked_add(count).ok_or(Error::InvalidDocument)?;
 
             while query < self.ordered {
@@ -492,9 +612,7 @@ fn validate_inner<'a>(
         return Err(Error::Limit("document payload"));
     }
     let mut reader = Reader::new(bytes);
-    if reader.take(4)? != b"PD02" || reader.u32()? != PROFILE_ID {
-        return Err(Error::InvalidProfile);
-    }
+    let _blocked_document = read_profile(&mut reader)?;
     let tokens = reader.u32()?;
     let terms = reader.u32()?;
     if tokens > MAX_DOCUMENT_TOKENS || terms > tokens {
@@ -515,6 +633,7 @@ fn validate_inner<'a>(
     let iter = DocumentTerms {
         reader,
         remaining: terms,
+        blocked_document: bytes.starts_with(b"PD03"),
     };
     let mut previous = "";
     let mut total = 0u32;
@@ -547,4 +666,69 @@ fn validate_inner<'a>(
         return Err(Error::InvalidDocument);
     }
     Ok((tokens, terms))
+}
+
+fn read_profile(reader: &mut Reader<'_>) -> Result<bool> {
+    let magic = reader.take(4)?;
+    if (magic != b"PD02" && magic != b"PD03") || reader.u32()? != PROFILE_ID {
+        return Err(Error::InvalidProfile);
+    }
+    Ok(magic == b"PD03")
+}
+
+// bounded by MAX_DOCUMENT_TOKENS and the analyzer's sorted positional domain.
+fn position_bytes(group: &[Token<'_>], blocked: bool) -> usize {
+    let mut size = if blocked {
+        8 + group.len().div_ceil(128) * 16
+    } else {
+        4
+    };
+    let mut previous = 0;
+    for (index, token) in group.iter().enumerate() {
+        if !blocked || index % 128 != 0 {
+            size += var_u32_len(token.position - previous);
+        }
+        previous = token.position;
+    }
+    size
+}
+
+#[cfg(test)]
+mod blocked_membership_tests {
+    use super::*;
+    use crate::analysis::AnalysisLimits;
+
+    #[test]
+    fn membership_and_validated_terms_read_both_formats() {
+        let text = format!("{}zulu", "alpha beta ".repeat(300));
+        let analyzed = Analyzed::analyze(&text, AnalysisLimits::default()).unwrap();
+        let names = [Some("alpha"), Some("missing"), Some("zulu"), Some("alpha")];
+        let query = TermMembership::new(&names).unwrap();
+        for blocked in [false, true] {
+            let doc = PreparedDocument::prepare_format(&analyzed, 1 << 20, blocked).unwrap();
+            assert_eq!(query.read(doc.bytes(), doc.tokens, doc.terms).unwrap(), 13);
+            let names: Vec<_> = validated_terms(doc.bytes(), doc.tokens, doc.terms, 1 << 20)
+                .unwrap()
+                .map(|term| term.unwrap().term.to_owned())
+                .collect();
+            assert_eq!(names, ["alpha", "beta", "zulu"]);
+        }
+    }
+}
+
+fn block_encoded_bytes(view: Positions<'_>) -> Result<usize> {
+    let mut size = 8usize
+        .checked_add((view.len() as usize).div_ceil(128) * 16)
+        .ok_or(Error::InvalidDocument)?;
+    let mut previous = 0;
+    for (index, position) in view.iter().enumerate() {
+        let position = position?;
+        if index % 128 != 0 {
+            size = size
+                .checked_add(var_u32_len(position - previous))
+                .ok_or(Error::InvalidDocument)?;
+        }
+        previous = position;
+    }
+    Ok(size)
 }

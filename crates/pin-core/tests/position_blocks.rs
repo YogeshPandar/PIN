@@ -101,3 +101,102 @@ fn selected_block_checks_tail_even_after_early_match() {
     *bytes.last_mut().unwrap() = 0;
     assert!(PositionBlocks::open(&bytes, 3).unwrap().seek_ge(0).is_err());
 }
+
+#[test]
+fn detached_directory_reads_only_the_selected_payload_extent() {
+    use pin_core::codec::position_blocks::PositionDirectory;
+    let values: Vec<u32> = (0..60_000).map(|n| n * 3).collect();
+    let bytes = encoded(&values);
+    let size = PositionDirectory::encoded_len(&bytes[..8], 60_000).unwrap();
+    let directory = PositionDirectory::open(&bytes[..size], bytes.len() - size, 60_000).unwrap();
+    for target in [
+        0,
+        1,
+        381,
+        382,
+        383,
+        384,
+        179_000,
+        179_997,
+        179_998,
+        u32::MAX,
+    ] {
+        let mut payload_read = 0;
+        let actual = directory.select(target).unwrap().and_then(|request| {
+            let range = request.byte_range();
+            payload_read += range.len();
+            // copy only the selected extent to simulate a separate storage read.
+            let fetched = bytes[size + range.start..size + range.end].to_vec();
+            request.seek_ge(&fetched, target).unwrap().position
+        });
+        assert_eq!(actual, values.iter().copied().find(|&n| n >= target));
+        assert!(payload_read <= 635);
+        if target > *values.last().unwrap() {
+            assert_eq!(payload_read, 0);
+        }
+    }
+}
+
+#[test]
+fn detached_reader_rejects_wrong_extent_lengths_and_corruption() {
+    use pin_core::codec::position_blocks::PositionDirectory;
+    let bytes = encoded(&(0..257).collect::<Vec<_>>());
+    let size = PositionDirectory::encoded_len(&bytes[..8], 257).unwrap();
+    for end in 0..size {
+        assert!(PositionDirectory::open(&bytes[..end], bytes.len() - size, 257).is_err());
+    }
+    for extra in [1, 10] {
+        assert!(PositionDirectory::open(&bytes[..size], bytes.len() - size + extra, 257).is_err());
+    }
+    let directory = PositionDirectory::open(&bytes[..size], bytes.len() - size, 257).unwrap();
+    let request = directory.select(128).unwrap().unwrap();
+    let range = request.byte_range();
+    let payload = &bytes[size + range.start..size + range.end];
+    for length in 0..payload.len() {
+        assert!(request.seek_ge(&payload[..length], 128).is_err());
+    }
+    let mut oversized = payload.to_vec();
+    oversized.push(1);
+    assert!(request.seek_ge(&oversized, 128).is_err());
+    for index in 0..payload.len() {
+        let mut corrupt = payload.to_vec();
+        corrupt[index] = 0;
+        assert!(request.seek_ge(&corrupt, 128).is_err());
+    }
+    // a singleton has no delta payload, but still has one checked position.
+    let singleton = directory.select(256).unwrap().unwrap();
+    assert!(singleton.byte_range().is_empty());
+    assert_eq!(singleton.seek_ge(&[], 256).unwrap().position, Some(256));
+}
+
+#[test]
+fn external_fetch_preserves_errors_and_never_reads_for_bounds_only_answers() {
+    use pin_core::codec::position_blocks::PositionDirectory;
+    let bytes = encoded(&(0..257).collect::<Vec<_>>());
+    let size = PositionDirectory::encoded_len(&bytes[..8], 257).unwrap();
+    let directory = PositionDirectory::open(&bytes[..size], bytes.len() - size, 257).unwrap();
+    let mut reads = 0;
+    for target in [0, 127, 128, 255, 256, 257] {
+        let result = directory
+            .seek_with::<pin_core::error::Error>(target, |range, output| {
+                reads += 1;
+                assert_eq!(output.len(), range.len());
+                output.copy_from_slice(&bytes[size + range.start..size + range.end]);
+                Ok(())
+            })
+            .unwrap();
+        assert_eq!(result.position, (target < 257).then_some(target));
+    }
+    assert_eq!(reads, 4);
+    let error = directory
+        .seek_with::<pin_core::error::Error>(0, |_, _| {
+            Err(pin_core::error::Error::Limit(
+                "injected storage cancellation",
+            ))
+        })
+        .unwrap_err();
+    assert_eq!(
+        error,
+        pin_core::error::Error::Limit("injected storage cancellation")
+    );
+}

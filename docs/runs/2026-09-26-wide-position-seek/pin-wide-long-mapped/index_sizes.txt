@@ -1,0 +1,2 @@
+pin_fragment_0652ac904aca_body_idx|pin|16859136
+pin_fragment_0652ac904aca_pkey|btree|16384

@@ -56,3 +56,10 @@ sequential/bitmap SQL equality; reader barrier and abort cleanup; actual postmas
 crash/restart tests. Rust and PostgreSQL tests must run in CI, not an installed Rust
 toolchain in the editing VM. Independent unsafe review and measured performance remain
 explicit obligations.
+
+## Optional document extent capability
+
+New indexes can opt into metapage capability bit 0 and page kind 11 for direct
+physical document-tail addressing. The default remains legacy format. See
+[the byte layout, publication and downgrade contract](direct-document-extents.md).
+The existing generic WAL and structural-barrier adapters remain authoritative.

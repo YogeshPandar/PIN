@@ -4,9 +4,11 @@
 //! G3 reclaims posting pages only after host reader quiescence.
 //! Owner slots and dictionary identities are never reused.
 
+pub mod block_phrase;
 mod compact;
 mod count;
 pub mod document;
+mod document_seek;
 pub mod grouped;
 pub mod page;
 pub mod phrase_prefix;
@@ -23,7 +25,7 @@ pub use count::{CountCandidate, scan_count};
 pub use query::{scan_query, scan_query_with_options, scan_query_with_recheck};
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
-pub use writer::{initialize, insert};
+pub use writer::{initialize, insert, insert_with_format};
 
 use crate::error::{Error, Result};
 use crate::identity::HeapLayout;
@@ -73,6 +75,15 @@ pub enum Stage {
 /// writer interlock; no operation upgrades a shared barrier. Recovery only frees
 /// unreachable journal pages. Resource cleanup belongs to the host.
 pub trait PageStore {
+    /// selects the document extent capability only when initializing a new index.
+    fn blocked_positions(&self) -> bool {
+        false
+    }
+
+    fn direct_documents(&self) -> bool {
+        false
+    }
+
     fn layout(&self) -> HeapLayout;
 
     /// opts into persisted snapshot frontier anchors and their read-side use.
@@ -148,6 +159,34 @@ fn load_into<S: PageStore>(
     }
     store.read_into(block, page)?;
     if page.block() != block || page.kind() != kind {
+        return Err(Error::InvalidState);
+    }
+    page.validate(store.layout())
+}
+
+fn load_payload<S: PageStore>(store: &mut S, block: u32) -> Result<Page> {
+    let page = load_any(store, block)?;
+    if !matches!(
+        page.kind(),
+        PageKind::Fragment | PageKind::DocumentDirectory
+    ) {
+        return Err(Error::InvalidState);
+    }
+    Ok(page)
+}
+
+fn load_payload_into<S: PageStore>(store: &mut S, block: u32, page: &mut Page) -> Result<()> {
+    store.interrupt()?;
+    if block >= store.blocks()? {
+        return Err(Error::InvalidState);
+    }
+    store.read_into(block, page)?;
+    if page.block() != block
+        || !matches!(
+            page.kind(),
+            PageKind::Fragment | PageKind::DocumentDirectory
+        )
+    {
         return Err(Error::InvalidState);
     }
     page.validate(store.layout())

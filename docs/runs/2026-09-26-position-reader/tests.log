@@ -1,0 +1,16 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.66s
+     Running tests/position_blocks.rs (target/debug/deps/position_blocks-e9832c2dfd3733c3)
+
+running 8 tests
+test consumed_block_corruption_is_rejected_skipped_blocks_require_full_validation ... ok
+test external_fetch_preserves_errors_and_never_reads_for_bounds_only_answers ... ok
+test extremes_empty_and_output_errors ... ok
+test detached_reader_rejects_wrong_extent_lengths_and_corruption ... ok
+test selected_block_checks_tail_even_after_early_match ... ok
+test detached_directory_reads_only_the_selected_payload_extent ... ok
+test malformed_directory_and_payload_never_panic ... ok
+test seek_matches_independent_sorted_vector_oracle ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.56s
+

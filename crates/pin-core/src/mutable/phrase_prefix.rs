@@ -21,33 +21,42 @@ impl Stream<'_> {
     // budget remains charged per occurrence, including the prefix probe limit.
     fn seek_ge(&mut self, target: u32, work: &mut usize) -> Result<Option<u32>> {
         loop {
-            if !self.first
-                && self.remaining >= 32
-                && *work >= 32
-                && let Some(end) = self.previous.checked_add(32)
-                && end < target
-                && self.reader.remaining() >= 32
-            {
-                let mut probe = self.reader;
-                if probe.take(32)? == [1; 32] {
-                    if end >= self.tokens {
-                        return Err(Error::InvalidDocument);
-                    }
-                    self.reader = probe;
-                    self.previous = end;
-                    self.remaining -= 32;
-                    *work -= 32;
-                    if self.remaining == 0 && self.complete {
-                        self.reader.finish()?;
-                    }
-                    continue;
-                }
+            if self.skip_dense::<256>(target, work)? || self.skip_dense::<32>(target, work)? {
+                continue;
             }
             let value = advance(self, work)?;
             if value.is_none_or(|value| value >= target) {
                 return Ok(value);
             }
         }
+    }
+
+    #[inline]
+    fn skip_dense<const N: usize>(&mut self, target: u32, work: &mut usize) -> Result<bool> {
+        if self.first || self.remaining < N as u32 || *work < N || self.reader.remaining() < N {
+            return Ok(false);
+        }
+        let Some(end) = self.previous.checked_add(N as u32) else {
+            return Ok(false);
+        };
+        if end >= target {
+            return Ok(false);
+        }
+        let mut probe = self.reader;
+        if probe.take(N)? != [1; N] {
+            return Ok(false);
+        }
+        if end >= self.tokens {
+            return Err(Error::InvalidDocument);
+        }
+        self.reader = probe;
+        self.previous = end;
+        self.remaining -= N as u32;
+        *work -= N;
+        if self.remaining == 0 && self.complete {
+            self.reader.finish()?;
+        }
+        Ok(true)
     }
 
     fn next(&mut self) -> Result<Option<u32>> {
@@ -101,6 +110,30 @@ pub fn matches(
         Err(Error::Limit("prefix position work")) if bytes.len() < total => Ok(None),
         result => result.map(Some),
     }
+}
+
+// selected counted streams share the same positional witness and corruption policy.
+pub(super) fn matches_positions(payloads: &[&[u8]], tokens: u32) -> Result<bool> {
+    if payloads.is_empty() || payloads.len() > 64 || tokens > MAX_DOCUMENT_TOKENS {
+        return Err(Error::InvalidDocument);
+    }
+    let mut streams = [None; 64];
+    for (index, payload) in payloads.iter().enumerate() {
+        let mut reader = Reader::new(payload);
+        let count = reader.u32()?;
+        if count == 0 || count > tokens || count as usize > reader.remaining() {
+            return Err(Error::InvalidDocument);
+        }
+        streams[index] = Some(Stream {
+            reader,
+            remaining: count,
+            previous: 0,
+            first: true,
+            tokens,
+            complete: true,
+        });
+    }
+    witness(&mut streams[..payloads.len()], usize::MAX)
 }
 
 fn evaluate(
@@ -285,5 +318,48 @@ mod dense_seek_tests {
         }
         assert!(stream(&[1; 64], 32).seek_ge(64, &mut 128).is_err());
         assert!(stream(&[1; 65], 66).seek_ge(65, &mut 128).is_err());
+    }
+    #[test]
+    fn wide_dense_seek_matches_scalar_with_budgets_and_mixed_runs() {
+        for seed in 0..8 {
+            let bytes: Vec<u8> = (0..1024)
+                .map(|i| {
+                    if seed != 0 && i % (seed * 73) == 0 {
+                        2
+                    } else {
+                        1
+                    }
+                })
+                .collect();
+            for target in [1, 31, 32, 255, 256, 257, 511, 512, 513, 1025, 1100] {
+                for budget in [0, 1, 31, 32, 255, 256, 257, 511, 1024, 2048] {
+                    let mut fast = stream(&bytes, 2048);
+                    fast.remaining = bytes.len() as u32;
+                    let mut scalar = fast;
+                    let (mut fast_work, mut scalar_work) = (budget, budget);
+                    let actual = fast.seek_ge(target, &mut fast_work);
+                    let expected = loop {
+                        match advance(&mut scalar, &mut scalar_work) {
+                            Ok(Some(v)) if v < target => continue,
+                            result => break result,
+                        }
+                    };
+                    assert_eq!(
+                        actual, expected,
+                        "seed={seed} target={target} budget={budget}"
+                    );
+                    assert_eq!(fast_work, scalar_work);
+                    assert_eq!(fast.remaining, scalar.remaining);
+                    assert_eq!(fast.previous, scalar.previous);
+                }
+            }
+        }
+        for bad in 0..512 {
+            let mut bytes = [1; 512];
+            bytes[bad] = 0;
+            let mut cursor = stream(&bytes, 1024);
+            cursor.remaining = 512;
+            assert!(cursor.seek_ge(513, &mut 1024).is_err());
+        }
     }
 }

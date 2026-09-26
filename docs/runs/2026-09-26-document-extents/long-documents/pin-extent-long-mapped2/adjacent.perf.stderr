@@ -1,0 +1,2 @@
+[ perf record: Woken up 27 times to write data ]
+[ perf record: Captured and wrote 6.975 MB /tmp/pin-extent-long-mapped2/adjacent.perf.data (864 samples) ]

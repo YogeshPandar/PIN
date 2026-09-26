@@ -1,0 +1,4 @@
+pin_fragment_1ddf25a0c1e3_body_idx|pin|4276224
+pin_fragment_1ddf25a0c1e3_pkey|btree|16384
+pin_fragment_1ddf25a0c1e3_search_vector_idx|gin|16384
+pin_fragment_1ddf25a0c1e3_to_tsvector_idx|gin|16384

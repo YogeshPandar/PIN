@@ -7,7 +7,10 @@
 use super::document;
 use super::page::{NO_BLOCK, OwnedPostings, OwnerRef, Page, PageKind, Term, TermRef};
 use super::reader::resolve;
-use super::{PageStore, find_term, load, load_into, load_posting, posting_next, scan};
+use super::{
+    PageStore, find_term, load, load_into, load_payload, load_payload_into, load_posting,
+    posting_next, scan,
+};
 use crate::budget::MemoryBudget;
 use crate::candidate::CandidatePlan;
 use crate::error::{Error, Result};
@@ -651,8 +654,7 @@ pub fn scan_query_with_options<S: PageStore>(
         None
     };
     plan.open(store)?;
-    let mut payload = Vec::new();
-    let mut fragment_cache = None;
+    let mut buffers = PhraseBuffers::default();
     let mut previous = None;
     let mut cache: Option<Page> = None;
     let mut count = 0u64;
@@ -670,8 +672,7 @@ pub fn scan_query_with_options<S: PageStore>(
                 owner,
                 terms,
                 plan.scratch_bytes,
-                &mut payload,
-                &mut fragment_cache,
+                &mut buffers,
             )? {
                 emit(root, needs_recheck)?;
                 count = count
@@ -705,14 +706,20 @@ pub fn scan_query_with_options<S: PageStore>(
     Ok(count)
 }
 
+#[derive(Default)]
+struct PhraseBuffers {
+    bytes: Vec<u8>,
+    head: Option<Page>,
+    tail: Option<Page>,
+}
+
 fn resolve_phrase<S: PageStore>(
     store: &mut S,
     cache: &mut Option<Page>,
     reference: OwnerRef,
     terms: &[String],
     memory_bytes: usize,
-    bytes: &mut Vec<u8>,
-    fragment_cache: &mut Option<Page>,
+    buffers: &mut PhraseBuffers,
 ) -> Result<Option<(RootTid, bool)>> {
     let reload = match cache.as_ref() {
         Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
@@ -733,6 +740,29 @@ fn resolve_phrase<S: PageStore>(
     if !owner.live || owner.publication != crate::codec::records::Publication::Published {
         return Ok(None);
     }
+    if owner.inline.starts_with(b"PD03") {
+        let retained_pages =
+            usize::from(buffers.head.is_some()) + usize::from(buffers.tail.is_some());
+        let Some(budget) = memory_bytes.checked_sub(retained_pages * std::mem::size_of::<Page>())
+        else {
+            return Ok(Some((owner.root, true)));
+        };
+        return match super::block_phrase::matches(
+            owner.inline.len(),
+            owner.tokens,
+            owner.terms,
+            terms,
+            budget,
+            &mut buffers.bytes,
+            |offset, output| {
+                output.copy_from_slice(&owner.inline[offset..offset + output.len()]);
+                Ok(())
+            },
+        )? {
+            Some(matched) => Ok(matched.then_some((owner.root, false))),
+            None => Ok(Some((owner.root, true))),
+        };
+    }
     if !owner.inline.is_empty() {
         return Ok(super::phrase_prefix::matches(
             owner.inline,
@@ -744,27 +774,57 @@ fn resolve_phrase<S: PageStore>(
         .ok_or(Error::InvalidState)?
         .then_some((owner.root, false)));
     }
+    let PhraseBuffers {
+        bytes,
+        head: fragment_cache,
+        tail,
+    } = buffers;
+    let retained_pages = 1 + usize::from(tail.is_some());
     let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
-    let Some(memory_bytes) = memory_bytes.checked_sub(std::mem::size_of::<Page>()) else {
+    let Some(memory_bytes) = memory_bytes.checked_sub(retained_pages * std::mem::size_of::<Page>())
+    else {
         return Ok(Some((owner.root, true)));
     };
-    if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
+    if bytes.capacity() > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
     if let Some(page) = fragment_cache.as_mut() {
-        load_into(store, owner.data_head, PageKind::Fragment, page)?;
+        load_payload_into(store, owner.data_head, page)?;
     } else {
-        *fragment_cache = Some(load(store, owner.data_head, PageKind::Fragment)?);
+        *fragment_cache = Some(load_payload(store, owner.data_head)?);
     }
     let first = fragment_cache.as_mut().ok_or(Error::InvalidState)?;
+    if first.kind() == PageKind::DocumentDirectory
+        && first.document_directory_data()?.total != total
+    {
+        return Err(Error::InvalidState);
+    }
     let (identity, start, payload) = first.fragment_data()?;
     if identity != reference || start != 0 || payload.len() > total {
         return Err(Error::InvalidState);
     }
-    if let Some(matched) =
-        super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
+    if !payload.starts_with(b"PD03")
+        && let Some(matched) =
+            super::phrase_prefix::matches(payload, total, owner.tokens, owner.terms, terms)?
     {
         return Ok(matched.then_some((owner.root, false)));
+    }
+    if first.kind() == PageKind::DocumentDirectory {
+        return match super::document_seek::matches(
+            store,
+            first,
+            owner,
+            terms,
+            memory_bytes,
+            bytes,
+            tail,
+        )? {
+            Some(matched) => Ok(matched.then_some((owner.root, false))),
+            None => Ok(Some((owner.root, true))),
+        };
+    }
+    if total > memory_bytes {
+        return Ok(Some((owner.root, true)));
     }
     bytes.clear();
     if bytes.try_reserve_exact(total).is_err() || bytes.capacity() > memory_bytes {
