@@ -17,6 +17,39 @@ struct Stream<'a> {
 }
 
 impl Stream<'_> {
+    // skip dense canonical delta runs without visiting each occurrence.
+    // budget remains charged per occurrence, including the prefix probe limit.
+    fn seek_ge(&mut self, target: u32, work: &mut usize) -> Result<Option<u32>> {
+        loop {
+            if !self.first
+                && self.remaining >= 32
+                && *work >= 32
+                && let Some(end) = self.previous.checked_add(32)
+                && end < target
+                && self.reader.remaining() >= 32
+            {
+                let mut probe = self.reader;
+                if probe.take(32)? == [1; 32] {
+                    if end >= self.tokens {
+                        return Err(Error::InvalidDocument);
+                    }
+                    self.reader = probe;
+                    self.previous = end;
+                    self.remaining -= 32;
+                    *work -= 32;
+                    if self.remaining == 0 && self.complete {
+                        self.reader.finish()?;
+                    }
+                    continue;
+                }
+            }
+            let value = advance(self, work)?;
+            if value.is_none_or(|value| value >= target) {
+                return Ok(value);
+            }
+        }
+    }
+
     fn next(&mut self) -> Result<Option<u32>> {
         if self.remaining == 0 {
             return Ok(None);
@@ -174,7 +207,7 @@ fn witness(streams: &mut [Option<Stream<'_>>], mut work: usize) -> Result<bool> 
             loop {
                 let value = match current[index] {
                     Some(value) => Some(value),
-                    None => advance(stream, &mut work)?,
+                    None => stream.seek_ge(target, &mut work)?,
                 };
                 current[index] = value;
                 match value {
