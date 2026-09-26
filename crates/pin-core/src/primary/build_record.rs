@@ -1,6 +1,9 @@
+use crate::analysis::Analyzed;
+use crate::budget::MemoryBudget;
 use crate::error::{Error, Result};
 use crate::identity::{HeapLayout, RootTid};
 use crate::mutable::document::MAX_TERM_BYTES;
+use std::mem::size_of;
 
 const SUFFIX: usize = 1 + 8;
 pub const MAX_SORT_RECORD_BYTES: usize = MAX_TERM_BYTES + SUFFIX;
@@ -26,6 +29,36 @@ impl TermSortRecord<'_> {
         output[term.len()] = 0;
         output[term.len() + 1..term.len() + 9].copy_from_slice(&self.root.key().to_be_bytes());
         Ok(len)
+    }
+}
+
+impl<'a> TermSortRecord<'a> {
+    /// emits one sort record per distinct analyzed term in lexical order.
+    pub fn visit_document(
+        document: &'a Analyzed,
+        root: RootTid,
+        memory_bytes: usize,
+        mut emit: impl FnMut(Self) -> Result<()>,
+    ) -> Result<u32> {
+        let count = document.len() as usize;
+        let scratch = count
+            .checked_mul(size_of::<&str>())
+            .ok_or(Error::Limit("build term references"))?;
+        let mut budget = MemoryBudget::new(memory_bytes);
+        budget.charge(document.peak_bytes())?;
+        budget.charge(scratch)?;
+        let mut terms = Vec::new();
+        terms
+            .try_reserve_exact(count)
+            .map_err(|_| Error::Allocation)?;
+        terms.extend(document.tokens().map(|token| token.term));
+        terms.sort_unstable();
+        terms.dedup();
+        let distinct = u32::try_from(terms.len()).map_err(|_| Error::Limit("build terms"))?;
+        for term in terms {
+            emit(Self { term, root })?;
+        }
+        Ok(distinct)
     }
 }
 

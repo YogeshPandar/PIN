@@ -1632,6 +1632,17 @@ memory. `cargo clippy` with `pg18 test-hooks` and denied warnings passes.
 This qualifies the sorter API only. It does not establish v2 SQL build, WAL
 publication, crash safety, scan correctness, or query CPU improvement.
 
+The build producer now has `TermSortRecord::visit_document`: it borrows the
+existing normalized analyzer, accounts for its peak and one `&str` per token,
+reserves the reference array fallibly, sorts it in place, deduplicates, and
+emits one lexeme/root pair per document. Rust's
+[`sort_unstable`](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable)
+uses no auxiliary allocation and
+[`try_reserve_exact`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact)
+reports reservation failures. Focused repeated-token, Unicode normalization,
+empty-document, memory-limit, and callback-error checks pass. The direct PG
+build callback still needs to invoke this producer.
+
 The pure `BuildReducer` takes sorted term/root records, checks their order and
 heap layout, and emits one page's sorted offsets at a time. A failed callback
 poisons the reducer; callers must abort the build rather than publish an
