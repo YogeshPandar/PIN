@@ -1714,3 +1714,15 @@ one-directory-page-per-group layout would use one root, one posting page, and
 220 directory pages. This is an allocation result, not an SQL CPU result.
 The manifest, crash/restart proof, reclaim protocol, and query path remain
 unimplemented.
+
+## Primary v2 SQL route decision (2026-09-26)
+
+PostgreSQL 18's [CREATE ACCESS METHOD](https://www.postgresql.org/docs/18/sql-create-access-method.html)
+registers a handler for a named AM, and the
+[index AM functions contract](https://www.postgresql.org/docs/18/index-functions.html)
+lets a bitmap-only method omit `amgettuple` and requires `amcanbuildparallel`
+to be false when its build is serial. The first native v2 benchmark will use a
+distinct experimental `pin2` AM and opclass so persisted `pg_class.relam`
+routes every callback without guessing a page format from block zero. It will
+reject writes and VACUUM while static-only and will not be advertised as a
+production method. This is a design decision, not implemented SQL behavior.

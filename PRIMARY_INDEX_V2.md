@@ -41,6 +41,11 @@ New indexes will eventually use an incompatible v2 format. Old indexes retain
 their v1 reader until explicit REINDEX migration. A v2 index has one
 authoritative CTID/page membership representation; it does not write full
 canonical posting chains merely to support a nominal fallback.
+The first SQL qualification should register a distinct experimental `pin2`
+index access method, so PostgreSQL's persisted `pg_class.relam` selects the
+right callbacks before any page is read. Its bitmap-only static prototype must
+reject DML and VACUUM until the mutable/liveness protocol is implemented; the
+production `pin` method remains on v1 until that gate passes.
 
 ```text
 heap build scan -> analyzed term/CTID/TF/position records -> PostgreSQL spill sort
