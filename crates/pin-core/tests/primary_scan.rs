@@ -172,3 +172,118 @@ fn inline_singletons_intersect_without_posting_page_reads() {
     assert_eq!(work.candidate_offsets, 0);
     assert_eq!(store.reads, 0);
 }
+
+#[test]
+fn boolean_scans_reuse_two_packed_posting_pages_across_many_heap_pages() {
+    let mut store = CountStore::default();
+    mutable::initialize(&mut store).unwrap();
+    let key = GroupKey::new(
+        Generation::new(3).unwrap(),
+        SegmentId::new(2).unwrap(),
+        256,
+        store.layout(),
+    )
+    .unwrap();
+
+    let mut left_payload = Vec::new();
+    let mut right_payload = Vec::new();
+    let mut left_entries = Vec::new();
+    let mut right_entries = Vec::new();
+    let mut expected_and = Vec::new();
+    let mut expected_or = Vec::new();
+    for page in 0..120u8 {
+        let left_offset = u16::from(page) + 1;
+        let right_offset = if page.is_multiple_of(2) {
+            left_offset
+        } else {
+            left_offset + 1
+        };
+        let (left_kind, left_bytes) =
+            encode_offsets(key.layout().max_offset(), &[left_offset]).unwrap();
+        let (right_kind, right_bytes) =
+            encode_offsets(key.layout().max_offset(), &[right_offset]).unwrap();
+        assert_eq!(left_bytes.len(), 2);
+        assert_eq!(right_bytes.len(), 2);
+        left_entries.push(PageDescriptor {
+            page,
+            kind: left_kind,
+            count: 1,
+            extent: Extent {
+                block: 0,
+                offset: 16 + u16::from(page) * 2,
+                len: 2,
+            },
+        });
+        right_entries.push(PageDescriptor {
+            page,
+            kind: right_kind,
+            count: 1,
+            extent: Extent {
+                block: 0,
+                offset: 16 + u16::from(page) * 2,
+                len: 2,
+            },
+        });
+        left_payload.extend_from_slice(&left_bytes);
+        right_payload.extend_from_slice(&right_bytes);
+
+        let mut left_mask = [0u64; 8];
+        let left_bit = usize::from(left_offset - 1);
+        left_mask[left_bit / 64] |= 1 << (left_bit % 64);
+        let mut right_mask = [0u64; 8];
+        let right_bit = usize::from(right_offset - 1);
+        right_mask[right_bit / 64] |= 1 << (right_bit % 64);
+        expected_or.push((256 + u32::from(page), {
+            let mut mask = left_mask;
+            for (word, rhs) in mask.iter_mut().zip(right_mask) {
+                *word |= rhs;
+            }
+            mask
+        }));
+        if page.is_multiple_of(2) {
+            expected_and.push((256 + u32::from(page), left_mask));
+        }
+    }
+
+    let left_block = store.extend().unwrap();
+    for entry in &mut left_entries {
+        entry.extent.block = left_block;
+    }
+    let left_page = Page::primary(left_block, &left_payload).unwrap();
+    store.commit(&[&left_page]).unwrap();
+    let right_block = store.extend().unwrap();
+    for entry in &mut right_entries {
+        entry.extent.block = right_block;
+    }
+    let right_page = Page::primary(right_block, &right_payload).unwrap();
+    store.commit(&[&right_page]).unwrap();
+    let left_bytes = encode_directory(key, 1, &left_entries).unwrap();
+    let right_bytes = encode_directory(key, 2, &right_entries).unwrap();
+    let left = Directory::open(&left_bytes).unwrap();
+    let right = Directory::open(&right_bytes).unwrap();
+    let directories = [left, right];
+
+    let mut and_rows = Vec::new();
+    let and_work = scan_and(&mut store, key, &directories, |block, mask| {
+        and_rows.push((block, mask));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(and_work.selected_pages, 120);
+    assert_eq!(and_work.containers_read, 240);
+    assert_eq!(and_work.emitted_pages as usize, expected_and.len());
+    assert_eq!(and_rows, expected_and);
+    assert_eq!(store.reads, 2, "AND reads each shared packed block once");
+
+    let mut or_rows = Vec::new();
+    let or_work = scan_or(&mut store, key, &directories, |block, mask| {
+        or_rows.push((block, mask));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(or_work.selected_pages, 120);
+    assert_eq!(or_work.containers_read, 240);
+    assert_eq!(or_work.emitted_pages as usize, expected_or.len());
+    assert_eq!(or_rows, expected_or);
+    assert_eq!(store.reads, 4, "OR reads each shared packed block once");
+}

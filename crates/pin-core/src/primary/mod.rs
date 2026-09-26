@@ -405,6 +405,97 @@ pub fn read_offsets<S: PageStore>(
     })
 }
 
+const SCAN_PAGE_CACHE_CAPACITY: usize = 2;
+
+/// reads one directory container through a scan-local, two page image cache.
+/// cached images were validated against their physical block and heap layout.
+fn read_offsets_cached<S: PageStore>(
+    store: &mut S,
+    expected: GroupKey,
+    directory: Directory<'_>,
+    page: u8,
+    shared_blocks: &[u32],
+    cache: &mut Vec<(u32, crate::mutable::page::Page)>,
+    replacement: &mut usize,
+) -> Result<Option<OffsetMask>> {
+    if directory.key() != expected || expected.layout() != store.layout() {
+        return Err(Error::InvalidState);
+    }
+    directory.offsets(page, |extent, output| {
+        if shared_blocks.binary_search(&extent.block).is_err() {
+            return store.read_primary_extent(extent.block, extent.offset, output);
+        }
+        if let Some(index) = cache.iter().position(|(block, _)| *block == extent.block) {
+            output.copy_from_slice(cache[index].1.primary_extent(extent.offset, extent.len)?);
+            return Ok(());
+        }
+
+        if cache.len() < SCAN_PAGE_CACHE_CAPACITY {
+            let image = store.read(extent.block)?;
+            image.validate(expected.layout())?;
+            if image.block() != extent.block {
+                return Err(Error::InvalidState);
+            }
+            output.copy_from_slice(image.primary_extent(extent.offset, extent.len)?);
+            cache.push((extent.block, image));
+            return Ok(());
+        }
+
+        let index = *replacement % SCAN_PAGE_CACHE_CAPACITY;
+        let entry = cache.get_mut(index).ok_or(Error::InvalidState)?;
+        store.read_into(extent.block, &mut entry.1)?;
+        entry.1.validate(expected.layout())?;
+        if entry.1.block() != extent.block {
+            return Err(Error::InvalidState);
+        }
+        output.copy_from_slice(entry.1.primary_extent(extent.offset, extent.len)?);
+        entry.0 = extent.block;
+        *replacement = (index + 1) % SCAN_PAGE_CACHE_CAPACITY;
+        Ok(())
+    })
+}
+
+/// finds blocks with multiple selected extents so isolated reads keep the
+/// adapter's narrow-copy path and only shared blocks enter the page cache.
+fn repeated_extent_blocks(
+    directories: &[Directory<'_>],
+    selected_pages: [u64; 4],
+) -> Result<Vec<u32>> {
+    let mut blocks = Vec::new();
+    for (word_index, mut word) in selected_pages.into_iter().enumerate() {
+        while word != 0 {
+            let bit = word.trailing_zeros() as usize;
+            word &= word - 1;
+            let page = (word_index * 64 + bit) as u8;
+            for directory in directories {
+                if let Some(descriptor) = directory.page(page)?
+                    && descriptor.kind != ContainerKind::Inline
+                {
+                    blocks.try_reserve(1).map_err(|_| Error::Allocation)?;
+                    blocks.push(descriptor.extent.block);
+                }
+            }
+        }
+    }
+    blocks.sort_unstable();
+    let mut read = 0;
+    let mut write = 0;
+    while read < blocks.len() {
+        let block = blocks[read];
+        let mut end = read + 1;
+        while end < blocks.len() && blocks[end] == block {
+            end += 1;
+        }
+        if end - read > 1 {
+            blocks[write] = block;
+            write += 1;
+        }
+        read = end;
+    }
+    blocks.truncate(write);
+    Ok(blocks)
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct ScanWork {
     pub selected_pages: u32,
@@ -438,6 +529,14 @@ pub fn scan_and<S: PageStore>(
         }
     }
     let mut work = ScanWork::default();
+    let shared_blocks = repeated_extent_blocks(directories, pages)?;
+    let mut cache = Vec::new();
+    if !shared_blocks.is_empty() {
+        cache
+            .try_reserve_exact(SCAN_PAGE_CACHE_CAPACITY)
+            .map_err(|_| Error::Allocation)?;
+    }
+    let mut replacement = 0;
     for (word_index, mut word) in pages.into_iter().enumerate() {
         while word != 0 {
             let bit = word.trailing_zeros() as usize;
@@ -458,8 +557,16 @@ pub fn scan_and<S: PageStore>(
                     lead = index;
                 }
             }
-            let mut offsets = read_offsets(store, expected, directories[lead], page)?
-                .ok_or(Error::InvalidState)?;
+            let mut offsets = read_offsets_cached(
+                store,
+                expected,
+                directories[lead],
+                page,
+                &shared_blocks,
+                &mut cache,
+                &mut replacement,
+            )?
+            .ok_or(Error::InvalidState)?;
             work.containers_read += u32::from(
                 directories[lead]
                     .page(page)?
@@ -471,8 +578,16 @@ pub fn scan_and<S: PageStore>(
                 if index == lead {
                     continue;
                 }
-                let other =
-                    read_offsets(store, expected, *directory, page)?.ok_or(Error::InvalidState)?;
+                let other = read_offsets_cached(
+                    store,
+                    expected,
+                    *directory,
+                    page,
+                    &shared_blocks,
+                    &mut cache,
+                    &mut replacement,
+                )?
+                .ok_or(Error::InvalidState)?;
                 work.containers_read += u32::from(
                     directory.page(page)?.ok_or(Error::InvalidState)?.kind != ContainerKind::Inline,
                 );
@@ -519,6 +634,14 @@ pub fn scan_or<S: PageStore>(
         }
     }
     let mut work = ScanWork::default();
+    let shared_blocks = repeated_extent_blocks(directories, pages)?;
+    let mut cache = Vec::new();
+    if !shared_blocks.is_empty() {
+        cache
+            .try_reserve_exact(SCAN_PAGE_CACHE_CAPACITY)
+            .map_err(|_| Error::Allocation)?;
+    }
+    let mut replacement = 0;
     for (word_index, mut word) in pages.into_iter().enumerate() {
         while word != 0 {
             let bit = word.trailing_zeros() as usize;
@@ -532,7 +655,15 @@ pub fn scan_or<S: PageStore>(
             store.interrupt()?;
             let mut offsets = [0u64; 8];
             for directory in directories {
-                if let Some(other) = read_offsets(store, expected, *directory, page)? {
+                if let Some(other) = read_offsets_cached(
+                    store,
+                    expected,
+                    *directory,
+                    page,
+                    &shared_blocks,
+                    &mut cache,
+                    &mut replacement,
+                )? {
                     work.containers_read += u32::from(
                         directory.page(page)?.ok_or(Error::InvalidState)?.kind
                             != ContainerKind::Inline,
