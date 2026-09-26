@@ -18,6 +18,9 @@ extern uint32 pin_storage_blocks(Relation index);
 extern uint32 pin_storage_extend(Relation index);
 extern uint32 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                                BufferAccessStrategy strategy);
+extern uint32 pin_storage_read_bounded(Relation index, uint32 block, uint32 bound,
+                                       uint8 *out, uint32 capacity,
+                                       BufferAccessStrategy strategy);
 extern uint32 pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                                       Buffer *held);
 extern void pin_storage_remove_owners(Relation index, uint32 block,

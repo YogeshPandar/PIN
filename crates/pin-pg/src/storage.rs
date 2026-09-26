@@ -150,17 +150,21 @@ impl PageStore for PgStore<'_> {
     }
 
     fn read(&mut self, block: u32) -> Result<Page> {
+        let bound = self.blocks()?;
+        if block >= bound {
+            return Err(Error::InvalidState);
+        }
         let index = self.index;
         Page::read_with(block, |output| {
             let pointer = output.as_mut_ptr();
             let capacity = output.len() as u32;
             // safety: one exclusive output slice covers capacity bytes; C copies under
             // a shared buffer lock and retains no pointer after releasing the buffer.
-            Ok(
-                unsafe {
-                    native::call(|| native::pin_storage_read(index, block, pointer, capacity))
-                } as usize,
-            )
+            Ok(unsafe {
+                native::call(|| {
+                    native::pin_storage_read_bounded(index, block, bound, pointer, capacity)
+                })
+            } as usize)
         })
     }
 

@@ -1282,9 +1282,12 @@ The reader's existing structural barrier prevents page reclamation or index
 truncation while it uses a captured bound. Concurrent append is permitted, but
 a scan follows captured page references and need not include a later append;
 PostgreSQL index scanning explicitly permits this. The writer interlock makes
-allocation serial. The C page read and WAL commit retain their independent
-relation-size checks, so this first cache does not weaken their bounds. The
-cache never survives a callback or transaction. No new FFI or unsafe operation
-is introduced. The observed syscall count is a hypothesis for the specific
-call path; paired traces and CPU measurements are required to attribute the
-effect before a speedup claim.
+allocation serial. The cache never survives a callback or transaction. A
+separate bounded C read entry receives that captured extent, checks the block
+against it before `ReadBufferExtended`, and retains the same page and buffer
+validation. The existing generic read and WAL commit continue to query the
+relation size independently. This adds one FFI declaration and call path, so
+the extent and error boundary require independent review before default use.
+The observed syscall count is a hypothesis for the specific call path; paired
+traces and CPU measurements are required to attribute the effect before a
+speedup claim.

@@ -125,11 +125,20 @@ uint32
 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                  BufferAccessStrategy strategy)
 {
+    return pin_storage_read_bounded(index, block,
+                                    RelationGetNumberOfBlocks(index),
+                                    out, capacity, strategy);
+}
+
+uint32
+pin_storage_read_bounded(Relation index, uint32 block, uint32 bound,
+                         uint8 *out, uint32 capacity,
+                         BufferAccessStrategy strategy)
+{
     Buffer buffer;
     Page page;
     uint32 length;
-    if (out == NULL || capacity != PIN_PAYLOAD_BYTES ||
-        block >= RelationGetNumberOfBlocks(index))
+    if (out == NULL || capacity != PIN_PAYLOAD_BYTES || block >= bound)
         pin_corrupt();
     buffer = ReadBufferExtended(index, MAIN_FORKNUM, block, RBM_NORMAL, strategy);
     LockBuffer(buffer, BUFFER_LOCK_SHARE);
