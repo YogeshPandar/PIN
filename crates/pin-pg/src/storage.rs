@@ -34,6 +34,18 @@ pub(crate) struct PgStore<'rel> {
 }
 
 impl PgStore<'_> {
+    fn copy_page(&mut self, block: u32, output: &mut [u8]) -> Result<usize> {
+        let index = self.index;
+        let pointer = output.as_mut_ptr();
+        let capacity = output.len() as u32;
+        // safety: one exclusive output slice covers capacity bytes; C copies under
+        // a shared buffer lock and retains no pointer after releasing the buffer.
+        Ok(
+            unsafe { native::call(|| native::pin_storage_read(index, block, pointer, capacity)) }
+                as usize,
+        )
+    }
+
     /// # Safety
     /// index must be a validated, open, locked relation on the backend main thread
     /// and remain so for every use of the returned store. no store escapes a callback.
@@ -143,18 +155,11 @@ impl PageStore for PgStore<'_> {
     }
 
     fn read(&mut self, block: u32) -> Result<Page> {
-        let index = self.index;
-        Page::read_with(block, |output| {
-            let pointer = output.as_mut_ptr();
-            let capacity = output.len() as u32;
-            // safety: one exclusive output slice covers capacity bytes; C copies under
-            // a shared buffer lock and retains no pointer after releasing the buffer.
-            Ok(
-                unsafe {
-                    native::call(|| native::pin_storage_read(index, block, pointer, capacity))
-                } as usize,
-            )
-        })
+        Page::read_with(block, |output| self.copy_page(block, output))
+    }
+
+    fn read_into(&mut self, block: u32, page: &mut Page) -> Result<()> {
+        page.reload_with(block, |output| self.copy_page(block, output))
     }
 
     fn extend(&mut self) -> Result<u32> {

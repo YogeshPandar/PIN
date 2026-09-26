@@ -30,6 +30,17 @@ impl PageStore for MemoryStore {
         })
     }
 
+    fn read_into(&mut self, block: u32, page: &mut Page) -> Result<()> {
+        let bytes = self.pages.get(block as usize).ok_or(Error::InvalidState)?;
+        page.reload_with(block, |output| {
+            if bytes.len() > output.len() {
+                return Err(Error::InvalidState);
+            }
+            output[..bytes.len()].copy_from_slice(bytes);
+            Ok(bytes.len())
+        })
+    }
+
     fn extend(&mut self) -> Result<u32> {
         let block = self.pages.len() as u32;
         self.pages.push(Vec::new());

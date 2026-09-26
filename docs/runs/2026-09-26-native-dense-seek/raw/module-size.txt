@@ -1,0 +1,4 @@
+   text	   data	    bss	    dec	    hex	filename
+4349664	  84016	    800	4434480	 43aa30	/tmp/pin-prefix-final-package/usr/lib/postgresql/18/lib/pin.so
+4414284	  84168	   1608	4500060	 44aa5c	/tmp/pin-inline-package/usr/lib/postgresql/18/lib/pin.so
+4417828	  84216	   2136	4504180	 44ba74	/tmp/pin-dense-package/usr/lib/postgresql/18/lib/pin.so

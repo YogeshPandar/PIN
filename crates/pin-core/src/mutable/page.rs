@@ -174,50 +174,75 @@ impl Page {
     /// # Errors
     /// Rejects invalid block identities, lengths, magic, tags and reserved fields.
     /// A zero-length read represents a physically all-zero allocation orphan only.
+    #[inline(always)]
     pub fn read_with(block: u32, read: impl FnOnce(&mut [u8]) -> Result<usize>) -> Result<Self> {
-        if block == NO_BLOCK {
-            return Err(corrupt(8));
-        }
         let mut page = Self {
-            block,
+            block: NO_BLOCK,
             kind: PageKind::Zero,
             len: 0,
             initialize: false,
             bytes: [0; CAPACITY],
         };
-        page.len = read(&mut page.bytes)?;
-        if page.len == 0 {
-            return Ok(page);
-        }
-        if page.len > CAPACITY {
-            return Err(corrupt(0));
-        }
-        let mut reader = Reader::new(page.bytes());
-        if reader.take(4)? != b"PIN2" {
-            return Err(CodecError::new(0, ErrorKind::BadMagic).into());
-        }
-        if reader.u16()? != 2 {
-            return Err(CodecError::new(4, ErrorKind::UnsupportedVersion).into());
-        }
-        let kind = match reader.u8()? {
-            1 => PageKind::Meta,
-            2 => PageKind::Owners,
-            3 => PageKind::Dictionary,
-            4 => PageKind::Postings,
-            5 => PageKind::Fragment,
-            6 => PageKind::Free,
-            7 => PageKind::SealedPostings,
-            9 => PageKind::DirectPostings,
-            10 => PageKind::Grouped,
-            _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
-        };
-        if reader.u8()? != 0 || reader.u32()? != block {
-            return Err(corrupt(7));
-        }
-        reader.u32()?;
-        page.kind = kind;
-        page.check_next()?;
+        page.reload_with(block, read)?;
         Ok(page)
+    }
+
+    /// Reuses this private buffer; no slice from the old image may remain borrowed.
+    /// Failure invalidates the image. Bytes beyond the returned length stay hidden.
+    pub fn reload_with(
+        &mut self,
+        block: u32,
+        read: impl FnOnce(&mut [u8]) -> Result<usize>,
+    ) -> Result<()> {
+        self.block = block;
+        self.kind = PageKind::Zero;
+        self.len = 0;
+        self.initialize = false;
+        self.bytes.fill(0);
+        let result = (|| {
+            if block == NO_BLOCK {
+                return Err(corrupt(8));
+            }
+            self.len = read(&mut self.bytes)?;
+            if self.len == 0 {
+                return Ok(());
+            }
+            if self.len > CAPACITY {
+                return Err(corrupt(0));
+            }
+            let mut reader = Reader::new(self.bytes());
+            if reader.take(4)? != b"PIN2" {
+                return Err(CodecError::new(0, ErrorKind::BadMagic).into());
+            }
+            if reader.u16()? != 2 {
+                return Err(CodecError::new(4, ErrorKind::UnsupportedVersion).into());
+            }
+            let kind = match reader.u8()? {
+                1 => PageKind::Meta,
+                2 => PageKind::Owners,
+                3 => PageKind::Dictionary,
+                4 => PageKind::Postings,
+                5 => PageKind::Fragment,
+                6 => PageKind::Free,
+                7 => PageKind::SealedPostings,
+                9 => PageKind::DirectPostings,
+                10 => PageKind::Grouped,
+                _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
+            };
+            if reader.u8()? != 0 || reader.u32()? != block {
+                return Err(corrupt(7));
+            }
+            reader.u32()?;
+            self.kind = kind;
+            self.check_next()?;
+            Ok(())
+        })();
+        if result.is_err() {
+            self.block = NO_BLOCK;
+            self.kind = PageKind::Zero;
+            self.len = 0;
+        }
+        result
     }
 
     fn new(block: u32, kind: PageKind) -> Result<Self> {

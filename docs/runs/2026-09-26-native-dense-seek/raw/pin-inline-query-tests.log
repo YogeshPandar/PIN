@@ -1,0 +1,28 @@
+   Compiling pin-core v0.0.0 (/home/reing/projects/fts0/PIN/crates/pin-core)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.37s
+     Running tests/g4_query.rs (target/debug/deps/g4_query-0abf392081c54d06)
+
+running 20 tests
+test equal_owner_coordinates_with_foreign_incarnations_are_rejected ... ok
+test cursor_budget_falls_back_before_emission_without_truncating_matches ... ok
+test deep_queries_use_bounded_explicit_continuations_not_recursive_calls ... ok
+test fragmented_phrase_document_uses_index_positions ... ok
+test every_prefix_proof_agrees_with_independent_text_oracle ... ok
+test fragmented_phrase_rejects_broken_chains ... ok
+test incomplete_prefix_probe_has_a_work_bound_without_limiting_full_evaluation ... ok
+test inline_position_phrase_proofs_match_independent_text_oracle ... ok
+test intersections_use_owner_identity_not_reused_heap_coordinates ... ok
+test mutable_owner_reordering_is_rejected ... ok
+test independent_oracle_matches_are_always_covered ... ok
+test phrases_intersect_terms_but_do_not_claim_position_or_multiplicity_checks ... ok
+test positive_boolean_candidates_equal_the_oracle_without_shared_cursor_skips ... ok
+test prefix_witness_rejects_consumed_corruption_and_leaves_unused_tail_to_verifier ... ok
+test repeated_terms_share_dictionary_lookup_but_keep_independent_cursors ... ok
+test phrase_witness_reads_one_fragment_without_loading_document_tail ... ok
+test selected_position_reader_skips_unused_deltas_but_checks_consumed_data ... ok
+test fragmented_phrase_order_and_repetition_match_text_oracle ... ok
+test filtering_avoids_owner_page_reads_for_rejected_postings ... ok
+test sealed_pages_mutable_tails_and_vacuum_preserve_boolean_results ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.32s
+

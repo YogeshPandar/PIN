@@ -1,0 +1,1 @@
+psql: error: connection to server on socket "/tmp/pin-prefix-final-socket/.s.PGSQL.55495" failed: FATAL:  database "reing" does not exist

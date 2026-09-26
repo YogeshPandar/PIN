@@ -1369,3 +1369,65 @@ output atomicity, mutated bytes and the selected/skipped corruption distinction.
 Full verification is `validate_all`, not `open`. Native integration is explicitly
 pending owner/lifetime/storage recovery qualification; kernel timing must not be
 reported as SQL performance.
+
+## PAGECOPY01 / DENSESEEK01: native page moves and dense positional seeks
+
+Date: 26 September 2026. Official Rust codegen inline contract re-read:
+https://doc.rust-lang.org/reference/attributes/codegen.html#the-inline-attribute.
+The hint can increase code size or be ignored; the measured native build, not
+an assumption about LLVM, decides whether it stays. Three private page return
+wrappers receive `inline(always)`. No layout, FFI, buffer lock, or lifetime change
+is introduced. Rust slice/checked arithmetic contracts remain those pinned in
+this ledger to `48a229ceaefd4985c50990b14116b6d856af0985`.
+
+Dense seek advances 32 occurrences only when all 32 bytes are canonical delta 1,
+the stream has already consumed its first absolute position, all occurrences are
+within the declared count/budget, and their final position is below the target.
+The final position must be below the token count. Reader consumption is committed
+only after the equality proof. Exhausted complete streams still require exact
+byte consumption. Skipped occurrences are charged individually, preserving the
+256-occurrence incomplete-prefix probe cap. Other data uses the scalar reader.
+
+The generated document oracle and explicit 31/32/33 boundaries, truncated budgets,
+zero/noncanonical deltas, token overflow and trailing payload tests qualify this
+change. It preserves the prior consumed-versus-unread corruption contract. This
+is not an arbitrary block seek: sparse streams still require sequential work.
+No TIN implementation is copied. TIN's public separation of positional data from
+membership remains the architectural reference for the pending physical layout.
+Native measurements and PostgreSQL lifecycle results belong with their exact
+module revision in `docs/runs/2026-09-26-native-dense-seek/`.
+
+## PAGEREUSE01: exclusive private page reloads (2026-09-26)
+
+Re-read PostgreSQL 18 index-locking contracts and pinned 18.6 bufmgr.c at
+`724edf9bde9d356724ad384a2e196edc3c9f80f7`:
+https://www.postgresql.org/docs/18/index-locking.html and
+https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/bufmgr.c.
+The adapter still calls the same C pin_storage_read implementation: check extent,
+ReadBufferExtended, shared content lock, copy payload, UnlockReleaseBuffer.
+The existing FFI call is factored into copy_page; no new unsafe operation, PG
+pointer lifetime, WAL operation, or buffer pin is introduced.
+
+Page::reload_with requires an exclusive mutable borrow, resets image metadata
+and all bytes, then repeats the existing header parser. Errors invalidate block
+identity and expose zero bytes; callbacks cannot retain their exclusive slice.
+Successful images have the same zero-filled tail as fresh reads, so later page
+mutations cannot observe leftovers. Shared references into an old payload cannot
+coexist with reload under Rust borrowing. Publication/incarnation and page-kind
+validation remain at the same scan boundaries. Aborted operations discard their
+private state rather than use partially overwritten data.
+
+PageStore::read_into has a compatibility default. PgStore implements actual
+in-place copying through the existing guarded C call. Phrase owner caches,
+fragment traversal, and the conservative owner cache reuse their existing image.
+No new heap allocation is added. A single fragment image is retained across
+documents and charged against the remaining query budget before use; smaller
+budgets retain heap recheck. Traversal reloads this image only after copying its
+consumed payload. This removes
+return-value transfers, not the PostgreSQL-to-private copy or PD02 assembly.
+
+Review: the same live relation and full-CAPACITY exclusive extent prove the
+relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
+assert stable buffer address, exercise failures/recovery and preserve zero tails.
+The in-memory query adapter also exercises read_into, not just its default.
+Native tests and measurements must qualify the implementation before retention.
