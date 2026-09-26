@@ -1,7 +1,7 @@
 //! Bounded streaming intersections and unions over stable owner identities.
 //! Positive Boolean plans can prove membership; covers retain recheck obligations.
-//! Neither path evaluates SQL visibility. The opt-in inline phrase path proves
-//! positional membership, leaving fragmented documents for heap recheck.
+//! Neither path evaluates SQL visibility. The opt-in phrase path proves
+//! positional membership from complete inline or fragmented payloads.
 //! Contracts: docs/g4-query-execution.md and PostgreSQL 18 index-scanning.
 
 use super::document;
@@ -59,6 +59,7 @@ struct Plan<'q> {
     cursors: Vec<Cursor>,
     tasks: Vec<Task>,
     root: usize,
+    scratch_bytes: usize,
 }
 
 impl<'q> Plan<'q> {
@@ -149,6 +150,7 @@ impl<'q> Plan<'q> {
             cursors,
             tasks,
             root,
+            scratch_bytes: budget.remaining(),
         })
     }
 
@@ -608,8 +610,8 @@ pub fn scan_query_with_recheck<S: PageStore>(
     scan_query_with_options(store, query, memory_bytes, false, emit)
 }
 
-/// optionally proves a single phrase from an inline indexed positional payload.
-/// fragmented payloads retain the heap predicate recheck.
+/// optionally proves a single phrase from a complete indexed positional payload.
+/// payloads larger than the scan budget retain the heap predicate recheck.
 pub fn scan_query_with_options<S: PageStore>(
     store: &mut S,
     query: &Query,
@@ -649,6 +651,7 @@ pub fn scan_query_with_options<S: PageStore>(
         None
     };
     plan.open(store)?;
+    let mut payload = Vec::new();
     let mut previous = None;
     let mut cache: Option<Page> = None;
     let mut count = 0u64;
@@ -660,9 +663,14 @@ pub fn scan_query_with_options<S: PageStore>(
         }
         previous = Some(owner);
         if let Some(terms) = exact_phrase {
-            if let Some((root, needs_recheck)) =
-                resolve_phrase(store, &mut cache, owner, terms, memory_bytes)?
-            {
+            if let Some((root, needs_recheck)) = resolve_phrase(
+                store,
+                &mut cache,
+                owner,
+                terms,
+                plan.scratch_bytes,
+                &mut payload,
+            )? {
                 emit(root, needs_recheck)?;
                 count = count
                     .checked_add(1)
@@ -701,6 +709,7 @@ fn resolve_phrase<S: PageStore>(
     reference: OwnerRef,
     terms: &[String],
     memory_bytes: usize,
+    bytes: &mut Vec<u8>,
 ) -> Result<Option<(RootTid, bool)>> {
     let reload = match cache.as_ref() {
         Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
@@ -717,11 +726,52 @@ fn resolve_phrase<S: PageStore>(
     if !owner.live || owner.publication != crate::codec::records::Publication::Published {
         return Ok(None);
     }
-    if owner.inline.is_empty() {
+    if !owner.inline.is_empty() {
+        return Ok(document::SelectedPositions::read(
+            owner.inline,
+            owner.tokens,
+            owner.terms,
+            terms,
+        )?
+        .phrase_matches()?
+        .then_some((owner.root, false)));
+    }
+    let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
+    if total.max(bytes.capacity()) > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
         return Ok(Some((owner.root, true)));
     }
+    bytes.clear();
+    if bytes.try_reserve_exact(total).is_err() || bytes.capacity() > memory_bytes {
+        *bytes = Vec::new();
+        return Ok(Some((owner.root, true)));
+    }
+    let mut block = owner.data_head;
+    let mut offset = 0usize;
+    let mut remaining = store.blocks()?;
+    while block != NO_BLOCK {
+        remaining = remaining.checked_sub(1).ok_or(Error::InvalidState)?;
+        if offset == total {
+            return Err(Error::InvalidState);
+        }
+        let fragment = load(store, block, PageKind::Fragment)?;
+        let (reference, current, payload) = fragment.fragment_data()?;
+        let current = usize::try_from(current).map_err(|_| Error::InvalidState)?;
+        let end = current
+            .checked_add(payload.len())
+            .ok_or(Error::InvalidState)?;
+        if reference != owner.reference || current != offset || end > total {
+            return Err(Error::InvalidState);
+        }
+        bytes.extend_from_slice(payload);
+        offset = end;
+        block = fragment.next()?;
+    }
+    if offset != total {
+        return Err(Error::InvalidState);
+    }
     Ok(
-        document::phrase_matches(owner.inline, owner.tokens, owner.terms, terms, memory_bytes)?
+        document::SelectedPositions::read(bytes, owner.tokens, owner.terms, terms)?
+            .phrase_matches()?
             .then_some((owner.root, false)),
     )
 }

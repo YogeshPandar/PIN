@@ -1294,3 +1294,32 @@ syscall changes; the legacy path stayed near 79 ms. Neither CPU result supports
 retaining a new FFI and concurrency proof burden. Both changes were reverted
 before this candidate was proposed. The trace scripts and raw measurements
 remain as evidence that syscall count alone is a poor proxy for query CPU.
+
+
+## SELPOS01: selected positional views and fragmented phrase proof
+
+Contracts reviewed: PostgreSQL 18 index scanning/locking (MVCC bitmap scans
+continue through heap visibility), and the repository's pinned PostgreSQL
+`724edf9bde9d356724ad384a2e196edc3c9f80f7` contract already recorded above.
+Local `storage::with_reader` retains `pin_structure_lock(index, false)` across
+the pure scan; reclamation requires its exclusive counterpart. Views borrow
+owned page copies or a query-owned fragment buffer, never unlocked PG memory.
+No pgrx, C, WAL, AM capability or unsafe boundary changes are introduced.
+
+Rust `Vec::try_reserve_exact` can provide more capacity than requested: the
+reader checks actual capacity and falls back on allocation/budget failure.
+The existing pinned Rust allocation contracts apply. The versioned online Rust
+1.98.1 documentation was inaccessible during this review; no new foreign API
+assumption relies on it.
+
+Obligations: reject wrong owner/offset/chain/length, preserve publication and
+liveness checks, retain MVCC and bitmap lossification rechecks, charge concurrent
+plan and payload memory, retain the full integrity validator. Query validation
+now intentionally omits unused positional deltas and global cross-term
+uniqueness; `docs/g4-query-execution.md` states that policy explicitly.
+
+Local independent-oracle coverage includes inline and fragmented phrases,
+repeated terms, reversed/nonadjacent terms, selected/unselected corruption and
+budget fallback. Native lifecycle and CPU results are recorded with the run.
+This work is an A3 bridge from `pin_next.md`, not the new primary format, ranked
+SQL execution, or a claim of TIN parity.

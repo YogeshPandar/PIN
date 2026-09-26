@@ -145,7 +145,7 @@ fn inline_position_phrase_proofs_match_independent_text_oracle() {
 }
 
 #[test]
-fn fragmented_phrase_document_keeps_heap_recheck() {
+fn fragmented_phrase_document_uses_index_positions() {
     let text = "echo ".repeat(10_000);
     let mut store = seeded(&[&text]);
     let query = Query::parse("\"echo echo\"", QueryLimits::default()).unwrap();
@@ -155,7 +155,100 @@ fn fragmented_phrase_document_keeps_heap_recheck() {
         Ok(())
     })
     .unwrap();
-    assert_eq!(rows, vec![(root(0), true)]);
+    assert_eq!(rows, vec![(root(0), false)]);
+
+    let mut fallback = Vec::new();
+    mutable::scan_query_with_options(&mut store, &query, 16 << 10, true, |root, recheck| {
+        fallback.push((root, recheck));
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(fallback, vec![(root(0), true)]);
+
+    let absent = Query::parse("\"echo missing\"", QueryLimits::default()).unwrap();
+    let mut rows = Vec::new();
+    mutable::scan_query_with_options(&mut store, &absent, 1 << 20, true, |root, recheck| {
+        rows.push((root, recheck));
+        Ok(())
+    })
+    .unwrap();
+    assert!(rows.is_empty());
+}
+
+#[test]
+fn fragmented_phrase_order_and_repetition_match_text_oracle() {
+    let texts = [
+        format!("{}alpha beta", "echo ".repeat(10_000)),
+        format!("{}beta alpha", "echo ".repeat(10_000)),
+        "alpha echo beta echo ".repeat(3_000),
+    ];
+    let mut store = seeded(&texts.iter().map(String::as_str).collect::<Vec<_>>());
+    for source in [
+        "\"alpha beta\"",
+        "\"beta alpha\"",
+        "\"alpha alpha\"",
+        "\"echo echo\"",
+    ] {
+        let query = Query::parse(source, QueryLimits::default()).unwrap();
+        let expected: Vec<_> = texts
+            .iter()
+            .enumerate()
+            .filter_map(|(index, text)| {
+                let analyzed = Analyzed::analyze(text, AnalysisLimits::default()).unwrap();
+                oracle::matches(&analyzed, &query, 1 << 20, 1 << 20)
+                    .unwrap()
+                    .then_some((root(index as u32), false))
+            })
+            .collect();
+        let mut rows = Vec::new();
+        mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |root, recheck| {
+            rows.push((root, recheck));
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(rows, expected, "{source}");
+    }
+}
+
+#[test]
+fn fragmented_phrase_rejects_broken_chains() {
+    let text = "echo ".repeat(10_000);
+    let original = seeded(&[&text]);
+    let query = Query::parse("\"echo echo\"", QueryLimits::default()).unwrap();
+    let mut probe = original.clone();
+    let block = (0..probe.blocks().unwrap())
+        .find(|block| {
+            probe
+                .read(*block)
+                .unwrap()
+                .fragment_data()
+                .is_ok_and(|(_, offset, _)| offset == 0)
+        })
+        .unwrap();
+    let fragment = probe.read(block).unwrap();
+    let (owner, offset, payload) = fragment.fragment_data().unwrap();
+    for broken in [
+        Page::fragment(block, owner, owner.page, offset, payload).unwrap(),
+        Page::fragment(block, owner, fragment.next().unwrap(), offset + 1, payload).unwrap(),
+        Page::fragment(
+            block,
+            owner,
+            pin_core::mutable::page::NO_BLOCK,
+            offset,
+            payload,
+        )
+        .unwrap(),
+    ] {
+        let mut store = original.clone();
+        store.pages[block as usize] = broken.bytes().to_vec();
+        let mut emitted = false;
+        let result = mutable::scan_query_with_options(&mut store, &query, 1 << 20, true, |_, _| {
+            emitted = true;
+            Ok(())
+        });
+        assert!(result.is_err());
+        assert!(!emitted);
+    }
 }
 
 #[test]
@@ -456,4 +549,48 @@ fn deep_queries_use_bounded_explicit_continuations_not_recursive_calls() {
     })
     .unwrap();
     assert_eq!(rows, vec![root(0), root(1)]);
+}
+
+#[test]
+fn selected_position_reader_skips_unused_deltas_but_checks_consumed_data() {
+    use pin_core::mutable::document::{SelectedPositions, validate};
+    let text = format!("alpha beta {}", "echo ".repeat(10_000));
+    let document = prepared(&text);
+    let wanted = vec!["alpha".to_string(), "beta".to_string()];
+    let read = |bytes| {
+        SelectedPositions::read(
+            bytes,
+            document.token_count(),
+            document.term_count(),
+            &wanted,
+        )
+    };
+    let view = read(document.bytes()).unwrap();
+    assert_eq!(view.directory_terms, 3);
+    assert_eq!(view.selected_positions, 2);
+    assert!(view.phrase_matches().unwrap());
+    let mut corrupt = document.bytes().to_vec();
+    *corrupt.last_mut().unwrap() = 0;
+    // unrelated delta corruption belongs to the complete integrity validator.
+    assert!(validate(&corrupt, 1 << 20).is_err());
+    assert!(read(&corrupt).unwrap().phrase_matches().unwrap());
+    assert!(
+        SelectedPositions::read(
+            &corrupt,
+            document.token_count(),
+            document.term_count(),
+            &["echo".to_string()]
+        )
+        .is_err()
+    );
+    assert!(read(&document.bytes()[..document.bytes().len() - 1]).is_err());
+    assert!(
+        SelectedPositions::read(
+            document.bytes(),
+            document.token_count() + 1,
+            document.term_count(),
+            &wanted
+        )
+        .is_err()
+    );
 }
