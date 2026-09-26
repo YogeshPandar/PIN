@@ -41,6 +41,12 @@ The lifecycle script performed 24 full identity comparisons across initial
 build, HOT update, indexed text update, self-visible uncommitted insertion,
 rollback, delete, VACUUM, and REINDEX. It included repeated words, Unicode,
 and a fragmented document. The pure `g4_query` suite passed 13 tests.
+The final first-pass CPU-clock profile captured 3,795 samples with zero lost
+samples while 150 warm phrase queries ran. Flat samples included 13.99% in
+`phrase_matches`, 12.23% in posting cursor seek, 11.78% in complete document
+validation, and 11.46% in position iteration. The raw `perf.data` and full
+report are in `raw/phrase-first-perf/`. These are samples of one process and
+query shape, not an instruction count or a production CPU attribution.
 This is a warm, serial, small synthetic fixture. It does not establish
 production p95/p99, concurrent-write latency, crash recovery, standby replay,
 or direct comparability with PlanetScale's TIN benchmark.

@@ -1267,6 +1267,15 @@ update, rollback, delete, VACUUM, and REINDEX; a paired CPU run measured the
 phrase benefit. Concurrent writers, old snapshots, crash recovery, standby
 replay, and independent review remain gates before default enablement.
 
+The CPU-clock profile of the first phrase implementation showed separate
+`document::validate`, `DocumentTerm::positions`, and `phrase_matches` work on
+each candidate. The follow-up `validate_inner` callback records selected
+position views while it validates every term and every token once; the public
+`validate` API delegates to the same validation loop. The callback's selected
+views are used only after validation and expected token/term count checks
+succeed. This changes neither PD02 bytes nor the corruption rule. Native
+paired CPU and full-identity checks must establish whether it is worth keeping.
+
 ### Rejected relation-size syscall experiment
 
 Review date: 26 September 2026. Authority: pinned PostgreSQL 18.6

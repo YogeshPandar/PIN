@@ -1,0 +1,149 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 3K of event 'cpu-clock'
+# Event count (approx.): 3798798795
+#
+# Overhead  Shared Object         Symbol                                                                                                                                                                                                                                                                                              IPC   [IPC Coverage]
+# ........  ....................  ..................................................................................................................................................................................................................................................................................................  ....................
+#
+    13.99%  pin.so                [.] pin_core::mutable::document::phrase_matches                                                                                                                                                                                                                                                     -      -            
+            |          
+            |--2.98%--write<core::option::Option<pin_core::codec::positions::PositionIter>> (inlined)
+            |          push_unchecked<core::option::Option<pin_core::codec::positions::PositionIter>> (inlined)
+            |          try_from_fn_erased<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          try_from_fn<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, 64, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          from_fn<core::option::Option<pin_core::codec::positions::PositionIter>, 64, pin_core::mutable::document::phrase_matches::{closure_env#1}> (inlined)
+            |          phrase_matches (inlined)
+            |          
+            |--2.06%--phrase_matches (inlined)
+            |          
+            |--1.87%--map<pin_core::codec::positions::Positions, pin_core::codec::positions::PositionIter, fn(pin_core::codec::positions::Positions) -> pin_core::codec::positions::PositionIter> (inlined)
+            |          {closure#1} (inlined)
+            |          {closure#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}> (inlined)
+            |          try_from_fn_erased<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          try_from_fn<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, 64, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          from_fn<core::option::Option<pin_core::codec::positions::PositionIter>, 64, pin_core::mutable::document::phrase_matches::{closure_env#1}> (inlined)
+            |          phrase_matches (inlined)
+            |          
+            |--1.13%--branch<pin_core::codec::positions::Positions, pin_core::codec::Error> (inlined)
+            |          positions (inlined)
+            |          phrase_matches (inlined)
+            |          
+            |--1.05%--try_from_fn_erased<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          try_from_fn<core::ops::try_trait::NeverShortCircuit<core::option::Option<pin_core::codec::positions::PositionIter>>, 64, core::ops::try_trait::{impl#0}::wrap_mut_1::{closure_env#0}<core::option::Option<pin_core::codec::positions::PositionIter>, usize, pin_core::mutable::document::phrase_matches::{closure_env#1}>> (inlined)
+            |          from_fn<core::option::Option<pin_core::codec::positions::PositionIter>, 64, pin_core::mutable::document::phrase_matches::{closure_env#1}> (inlined)
+            |          phrase_matches (inlined)
+            |          
+             --1.05%--from_fn<core::option::Option<pin_core::codec::positions::PositionIter>, 64, pin_core::mutable::document::phrase_matches::{closure_env#1}> (inlined)
+                       phrase_matches (inlined)
+
+    12.23%  pin.so                [.] <pin_core::mutable::query::Cursor>::seek::<pin::storage_impl::PgStore>                                                                                                                                                                                                                          -      -            
+            |          
+            |--9.75%--next (inlined)
+            |          |          
+            |           --9.46%--next (inlined)
+            |                     advance<pin::storage_impl::PgStore> (inlined)
+            |                     seek<pin::storage_impl::PgStore> (inlined)
+            |          
+             --1.55%--seek<pin::storage_impl::PgStore> (inlined)
+
+    11.78%  pin.so                [.] pin_core::mutable::document::validate                                                                                                                                                                                                                                                           -      -            
+            |          
+            |--7.40%--validate (inlined)
+            |          
+             --2.19%--branch<pin_core::codec::positions::Positions, pin_core::error::Error> (inlined)
+                       validate (inlined)
+
+    11.46%  pin.so                [.] <pin_core::codec::positions::PositionIter as core::iter::traits::iterator::Iterator>::next                                                                                                                                                                                                      -      -            
+            |          
+            |--7.14%--next (inlined)
+            |          |          
+            |           --2.19%--0x7ffc0693d1c8
+            |          
+            |--1.92%--checked_add (inlined)
+            |          |          
+            |           --1.79%--take (inlined)
+            |                     array<1> (inlined)
+            |                     u8 (inlined)
+            |                     var_u32 (inlined)
+            |                     next (inlined)
+            |          
+             --1.42%--var_u32 (inlined)
+                       next (inlined)
+
+     7.09%  libc.so.6             [.] __memcmp_evex_movbe                                                                                                                                                                                                                                                                             -      -            
+            |
+            ---__memcmp_evex_movbe
+
+     6.51%  libc.so.6             [.] __memmove_avx512_unaligned_erms                                                                                                                                                                                                                                                                 -      -            
+            |
+            ---__memmove_avx512_unaligned_erms
+
+     6.40%  pin.so                [.] core::str::converts::from_utf8                                                                                                                                                                                                                                                                  -      -            
+            |          
+            |--4.51%--run_utf8_validation (inlined)
+            |          from_utf8 (inlined)
+            |          
+             --1.77%--from_utf8 (inlined)
+
+     3.87%  pin.so                [.] <pin_core::mutable::document::DocumentTerm>::positions                                                                                                                                                                                                                                          -      -            
+            |          
+             --3.14%--branch<pin_core::codec::positions::Positions, pin_core::codec::Error> (inlined)
+                       positions (inlined)
+
+     2.90%  pin.so                [.] <pin_core::codec::positions::Positions>::parse                                                                                                                                                                                                                                                  -      -            
+            |          
+             --1.19%--parse (inlined)
+
+     2.77%  pin.so                [.] pin_core::mutable::query::scan_query_with_options::<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure#0}>                                                                                                                                                        -      -            
+            |          
+             --1.16%--branch<core::option::Option<pin_core::mutable::page::OwnerRef>, pin_core::error::Error> (inlined)
+                       seek_pair_and<pin::storage_impl::PgStore> (inlined)
+                       seek<pin::storage_impl::PgStore> (inlined)
+                       scan_query_with_options<pin::storage_impl::PgStore, pin::am::bitmap::bitmap_inner::{closure#0}::{closure_env#0}> (inlined)
+
+     2.66%  pin.so                [.] <pin_core::mutable::page::Page>::validate                                                                                                                                                                                                                                                       -      -            
+            |          
+            |--1.32%--validate (inlined)
+            |          
+             --1.32%--next (inlined)
+                       validate (inlined)
+
+     2.56%  pin.so                [.] <pin_core::mutable::document::DocumentTerms as core::iter::traits::iterator::Iterator>::next                                                                                                                                                                                                    -      -            
+            |          
+             --1.03%--next (inlined)
+
+     2.45%  postgres              [.] heap_hot_search_buffer                                                                                                                                                                                                                                                                          -      -            
+            |
+            ---heap_hot_search_buffer
+               |          
+                --2.40%--0x5bcb6e3d192f
+                          0x5bcb6e3d1af1
+                          0x5bcb6e5ce2ed
+                          ExecScan
+                          0x5bcb6e5c4351
+                          0x5bcb6e5c5e63
+                          standard_ExecutorRun
+                          0x5bcb6e7d0b45
+                          PortalRun
+                          0x5bcb6e7d2c03
+                          PostgresMain
+                          0x5bcb6e7c9eb3
+                          postmaster_child_launch
+                          0x5bcb6e71cc60
+                          PostmasterMain
+                          main
+                          __libc_start_call_main
+                          call_init (inlined)
+                          __libc_start_main_impl (inlined)
+                          _start
+
+     1.48%  pin.so                [.] <pin_core::mutable::page::Page>::owner                                                                                                                                                                                                                                                          -      -            
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#

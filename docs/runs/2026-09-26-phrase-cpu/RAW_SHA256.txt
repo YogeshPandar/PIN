@@ -156,6 +156,10 @@ e6f071fe0daf337e095b30ff7e9b9f940352021bb1e00ce89780ae04a3bc6dff  docs/runs/2026
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-cache/psql.stderr
 dab937e548f022d51e38571b1572798948582a834f0f91c0704295854842db84  docs/runs/2026-09-26-phrase-cpu/raw/phrase-cache/result.json
 b7cfe035834c6ec1314b20607677755ffb8260166abfe27567f6ea624d4dadb8  docs/runs/2026-09-26-phrase-cpu/raw/phrase-cache/reversed-plans.json
+95bd6e81fd47043fb74a22167e61a1786c9e54f996061618b7839c883513fdb9  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/perf.data
+937c46e2ecf00f1fd6fc641d0175c0af756b72fa44453fdb9c195e77642ad821  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/perf.stderr
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/psql.stderr
+4e76dbf16f9601e8ec86e28c6102529d13824fd9e39d00cb5d2d40b5993723d8  docs/runs/2026-09-26-phrase-cpu/raw/phrase-first-perf/report.txt
 c538c6f061a3179e6e4270ff38a2c0e244433e87c6badee3aef900bc3775f094  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/bravo_charlie-plans.json
 eed5e27eab25040d39b826a3e6d809f9fc6c9369ae508f7b542924b465fdd1e0  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/delta_echo-plans.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  docs/runs/2026-09-26-phrase-cpu/raw/phrase-position/psql.stderr
