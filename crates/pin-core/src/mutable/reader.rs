@@ -61,6 +61,15 @@ pub fn scan<S: PageStore>(
                         .checked_add(1)
                         .ok_or(Error::Limit("candidate count"))?;
                 }
+                if let Some(second) = entry.inline_second {
+                    if let Some(root) = resolve(store, &mut cache, second)? {
+                        emit(root)?;
+                        count = count
+                            .checked_add(1)
+                            .ok_or(Error::Limit("candidate count"))?;
+                    }
+                    continue;
+                }
                 let (head, tail) = (entry.head, entry.tail);
                 if head == NO_BLOCK {
                     continue;
