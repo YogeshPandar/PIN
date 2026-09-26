@@ -4,8 +4,8 @@
 use crate::codec::bytes::{Reader, Writer};
 use crate::error::{Error, Result};
 use crate::grouped::GroupKey;
+use crate::mutable::PageStore;
 use crate::mutable::page::{CAPACITY, NO_BLOCK};
-use crate::mutable::{PageStore, page::PageKind};
 use pin_kernels::grouped::OffsetMask;
 
 const MAGIC: &[u8; 4] = b"PNP2";
@@ -319,11 +319,6 @@ pub fn read_offsets<S: PageStore>(
         return Err(Error::InvalidState);
     }
     directory.offsets(page, |extent, output| {
-        let image = store.read(extent.block)?;
-        if image.kind() != PageKind::Primary {
-            return Err(Error::InvalidState);
-        }
-        output.copy_from_slice(image.primary_extent(extent.offset, extent.len)?);
-        Ok(())
+        store.read_primary_extent(extent.block, extent.offset, output)
     })
 }

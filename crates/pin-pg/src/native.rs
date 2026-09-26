@@ -48,6 +48,13 @@ unsafe extern "C-unwind" {
         capacity: u32,
         strategy: pg_sys::BufferAccessStrategy,
     ) -> u32;
+    pub(crate) fn pin_storage_read_primary_extent(
+        index: pg_sys::Relation,
+        block: u32,
+        offset: u16,
+        out: *mut u8,
+        length: u16,
+    );
     pub(crate) fn pin_storage_remove_owners(
         index: pg_sys::Relation,
         block: u32,

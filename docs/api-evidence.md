@@ -1515,22 +1515,30 @@ the pinned PostgreSQL [`bufpage.h`](https://github.com/postgres/postgres/blob/72
 The existing `pin_storage_read` checks the standard PostgreSQL page header and
 copies its payload under a shared buffer lock. `PgStore::commit` validates each
 private page and uses the existing generic WAL operation, with a full image for
-a newly extended block. This change adds no new FFI, unsafe operation, buffer
-lock sequence, or WAL resource manager.
+a newly extended block. The new `pin_storage_read_primary_extent` uses the same
+shared buffer lock, validates the standard page and 16-byte private header, and
+copies only a checked payload subrange before unlocking. It adds one FFI call
+and one guarded unsafe call site, but no new lock order or WAL resource manager.
+The narrow reader releases its buffer lock and pin before raising a format
+error found after acquisition; PostgreSQL still handles errors from its own
+buffer acquisition and locking calls.
 
 Local obligations: `PageKind::Primary` is tag 11 under the existing 16-byte
 `PIN2` private header. It requires a nonempty payload and `NO_BLOCK` successor.
 The codec rejects malformed directories and selected containers; the reader
 checks the caller-supplied complete `GroupKey` before reading a physical block.
-The current `PageStore` boundary still copies a whole selected page on a PG
-buffer read. A v2 metapage and manifest must bind the group identity and block
+The pure `PageStore` default validates a full private image; `PgStore` overrides
+it with the narrow buffer copy. A v2 metapage and manifest must bind the group identity and block
 ownership before SQL integration. The access method must preserve complete
 candidate CTIDs, PostgreSQL MVCC/HOT checks, bitmap lossification rechecks,
 and scan lifetime rules.
 
 Review: independent read-only page/WAL review found no concrete page format or
-generic WAL defect and identified the manifest ownership gate. Focused pure
+generic WAL defect and identified the manifest ownership gate. Independent
+review of the new FFI found no bounds or pointer lifetime defect and flagged
+error cleanup and missing native execution coverage. Explicit unlock-before-error
+now addresses the local corruption checks. Focused pure
 round-trip, malformed-format, selected-block, wrong-identity, and wrong-kind
 tests plus a `pin-pg` PG18 build check qualify only this prototype. Native
-execution, crash/restart, concurrent reader/writer, and paired CPU tests remain
-unrun for v2.
+execution of the new FFI, crash/restart, concurrent reader/writer, and paired
+CPU tests remain unrun for v2.

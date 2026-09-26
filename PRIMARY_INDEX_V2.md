@@ -125,13 +125,15 @@ search speedup.
 per-page containers without PostgreSQL pointers. A prototype `Primary` page
 kind carries directories and payloads through the existing `PageStore` and
 generic WAL adapter. The selected-page reader fetches only referenced blocks
-and decodes only the selected extent. On PostgreSQL it still copies the entire
-selected PIN page from a buffer into private memory. There is no v2 metapage,
+and decodes only the selected extent. The new PostgreSQL buffer adapter copies
+only that extent under a shared content lock after checking the PostgreSQL and
+private page headers. There is no v2 metapage,
 manifest, liveness, writer, or SQL integration, and no existing index is changed
 by this branch. The caller must pass an expected group identity; this catches
 cross-directory misuse but is not a substitute for manifest ownership checks.
 The next required code step is native manifest/build integration, followed by
-paired query measurements of actual buffer reads, copied bytes, and CPU. If
+paired query measurements of actual buffer reads, copied bytes, and CPU. The
+adapter's existence alone establishes no CPU benefit. If
 selective access does not save physical work, revise allocation before building
 the rest of v2 on top of it.
 

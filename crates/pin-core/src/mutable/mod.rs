@@ -98,6 +98,14 @@ pub trait PageStore {
         *page = self.read(block)?;
         Ok(())
     }
+
+    /// copies one checked primary payload extent into a caller-owned slice.
+    fn read_primary_extent(&mut self, block: u32, offset: u16, output: &mut [u8]) -> Result<()> {
+        let length = u16::try_from(output.len()).map_err(|_| Error::InvalidParameters)?;
+        let page = self.read(block)?;
+        output.copy_from_slice(page.primary_extent(offset, length)?);
+        Ok(())
+    }
     fn extend(&mut self) -> Result<u32>;
     fn commit(&mut self, pages: &[&Page]) -> Result<()>;
 

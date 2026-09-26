@@ -51,16 +51,22 @@ pin_corrupt(void)
                     errmsg("Pin index has an invalid PostgreSQL page header")));
 }
 
+static bool
+pin_page_valid(Page page)
+{
+    PageHeader header = (PageHeader) page;
+    return PageGetPageSize(page) == BLCKSZ &&
+           PageGetPageLayoutVersion(page) == PG_PAGE_LAYOUT_VERSION &&
+           header->pd_lower >= MAXALIGN(SizeOfPageHeaderData) + 16 &&
+           header->pd_lower <= BLCKSZ && header->pd_upper == BLCKSZ &&
+           header->pd_special == BLCKSZ && header->pd_flags == 0 &&
+           header->pd_prune_xid == InvalidTransactionId;
+}
+
 static void
 pin_page_check(Page page)
 {
-    PageHeader header = (PageHeader) page;
-    if (PageGetPageSize(page) != BLCKSZ ||
-        PageGetPageLayoutVersion(page) != PG_PAGE_LAYOUT_VERSION ||
-        header->pd_lower < MAXALIGN(SizeOfPageHeaderData) + 16 ||
-        header->pd_lower > BLCKSZ || header->pd_upper != BLCKSZ ||
-        header->pd_special != BLCKSZ || header->pd_flags != 0 ||
-        header->pd_prune_xid != InvalidTransactionId)
+    if (!pin_page_valid(page))
         pin_corrupt();
 }
 
@@ -148,6 +154,43 @@ pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
     memcpy(out, PageGetContents(page), length);
     UnlockReleaseBuffer(buffer);
     return length;
+}
+
+void
+pin_storage_read_primary_extent(Relation index, uint32 block, uint16 offset,
+                                uint8 *out, uint16 length)
+{
+    Buffer buffer;
+    Page page;
+    const uint8 *data;
+    uint32 payload_length;
+    if (out == NULL || length == 0 || offset < 16 ||
+        (uint32) offset + length > PIN_PAYLOAD_BYTES ||
+        block == 0 || block >= RelationGetNumberOfBlocks(index))
+        pin_corrupt();
+    buffer = ReadBuffer(index, block);
+    LockBuffer(buffer, BUFFER_LOCK_SHARE);
+    page = BufferGetPage(buffer);
+    if (!pin_page_valid(page))
+    {
+        UnlockReleaseBuffer(buffer);
+        pin_corrupt();
+    }
+    payload_length = ((PageHeader) page)->pd_lower - MAXALIGN(SizeOfPageHeaderData);
+    data = (const uint8 *) PageGetContents(page);
+    if ((uint32) offset + length > payload_length ||
+        memcmp(data, "PIN2", 4) != 0 || data[4] != 2 || data[5] != 0 ||
+        data[6] != 11 || data[7] != 0 ||
+        data[8] != (uint8) block || data[9] != (uint8) (block >> 8) ||
+        data[10] != (uint8) (block >> 16) || data[11] != (uint8) (block >> 24) ||
+        data[12] != 0xff || data[13] != 0xff ||
+        data[14] != 0xff || data[15] != 0xff)
+    {
+        UnlockReleaseBuffer(buffer);
+        pin_corrupt();
+    }
+    memcpy(out, data + offset, length);
+    UnlockReleaseBuffer(buffer);
 }
 
 /* copy under a shared lock; retain only the owner pin through visibility. */
