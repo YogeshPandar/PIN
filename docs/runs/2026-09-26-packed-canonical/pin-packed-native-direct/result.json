@@ -1,0 +1,783 @@
+{
+  "revision": "40dfa4b41f761569199cc9eacef079515c5dc8a3",
+  "server": "PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit",
+  "terms": 2000,
+  "blocks": 5,
+  "queries": 100,
+  "builds": [
+    {
+      "corpus": "single",
+      "packed": false,
+      "rows": 2000,
+      "index_bytes": 4366336,
+      "cpu_ns": 86606926,
+      "elapsed_ns": 86730084,
+      "wal_bytes": 5175472,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 20,
+        "3": 512
+      },
+      "post_vacuum_bytes": 4366336
+    },
+    {
+      "corpus": "single",
+      "packed": true,
+      "rows": 2000,
+      "index_bytes": 4366336,
+      "cpu_ns": 79064754,
+      "elapsed_ns": 79092805,
+      "wal_bytes": 5207672,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 20,
+        "3": 512
+      },
+      "post_vacuum_bytes": 4366336
+    },
+    {
+      "corpus": "two",
+      "packed": false,
+      "rows": 4000,
+      "index_bytes": 20905984,
+      "cpu_ns": 185587538,
+      "elapsed_ns": 186728132,
+      "wal_bytes": 10421480,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 39,
+        "3": 512,
+        "7": 2000,
+        "6": 1
+      },
+      "post_vacuum_bytes": 20914176
+    },
+    {
+      "corpus": "two",
+      "packed": true,
+      "rows": 4000,
+      "index_bytes": 4521984,
+      "cpu_ns": 152782842,
+      "elapsed_ns": 153532561,
+      "wal_bytes": 10341264,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 39,
+        "3": 512
+      },
+      "post_vacuum_bytes": 4521984
+    },
+    {
+      "corpus": "dense",
+      "packed": false,
+      "rows": 4000,
+      "index_bytes": 21045248,
+      "cpu_ns": 241761331,
+      "elapsed_ns": 242832187,
+      "wal_bytes": 12047256,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 48,
+        "3": 512,
+        "6": 8,
+        "7": 2002
+      },
+      "post_vacuum_bytes": 21061632
+    },
+    {
+      "corpus": "dense",
+      "packed": true,
+      "rows": 4000,
+      "index_bytes": 4661248,
+      "cpu_ns": 219362284,
+      "elapsed_ns": 219793048,
+      "wal_bytes": 11967064,
+      "post_vacuum_census": {
+        "1": 1,
+        "2": 48,
+        "3": 512,
+        "6": 8,
+        "7": 2
+      },
+      "post_vacuum_bytes": 4677632
+    }
+  ],
+  "summary": [
+    {
+      "corpus": "single",
+      "packed": false,
+      "median_cpu_ns_per_query": 77618.12
+    },
+    {
+      "corpus": "single",
+      "packed": true,
+      "median_cpu_ns_per_query": 67428.13
+    },
+    {
+      "corpus": "two",
+      "packed": false,
+      "median_cpu_ns_per_query": 66525.91
+    },
+    {
+      "corpus": "two",
+      "packed": true,
+      "median_cpu_ns_per_query": 67230.55
+    },
+    {
+      "corpus": "dense",
+      "packed": false,
+      "median_cpu_ns_per_query": 839013.24
+    },
+    {
+      "corpus": "dense",
+      "packed": true,
+      "median_cpu_ns_per_query": 877821.56
+    }
+  ],
+  "checks": [
+    {
+      "corpus": "single",
+      "packed": false,
+      "matched": 1
+    },
+    {
+      "corpus": "single",
+      "packed": true,
+      "matched": 1
+    },
+    {
+      "corpus": "two",
+      "packed": false,
+      "matched": 2
+    },
+    {
+      "corpus": "two",
+      "packed": true,
+      "matched": 2
+    },
+    {
+      "corpus": "dense",
+      "packed": false,
+      "matched": 4000
+    },
+    {
+      "corpus": "dense",
+      "packed": true,
+      "matched": 4000
+    }
+  ],
+  "plans": {
+    "pin_pc_single_off": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 2173.25,
+          "Total Cost": 2173.26,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_single_off",
+              "Alias": "pin_pc_single_off",
+              "Startup Cost": 2147.25,
+              "Total Cost": 2170.75,
+              "Plan Rows": 1000,
+              "Plan Width": 0,
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 1,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 7,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_single_off_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 2147.0,
+                  "Plan Rows": 1000,
+                  "Plan Width": 0,
+                  "Actual Rows": 1.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 6,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 14,
+          "Shared Read Blocks": 3,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.144,
+        "Triggers": [],
+        "Execution Time": 0.068
+      }
+    ],
+    "pin_pc_single_on": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 2173.25,
+          "Total Cost": 2173.26,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 4,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_single_on",
+              "Alias": "pin_pc_single_on",
+              "Startup Cost": 2147.25,
+              "Total Cost": 2170.75,
+              "Plan Rows": 1000,
+              "Plan Width": 0,
+              "Actual Rows": 1.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 1,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 4,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_single_on_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 2147.0,
+                  "Plan Rows": 1000,
+                  "Plan Width": 0,
+                  "Actual Rows": 1.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 3,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 9,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.054,
+        "Triggers": [],
+        "Execution Time": 0.04
+      }
+    ],
+    "pin_pc_two_off": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 10294.5,
+          "Total Cost": 10294.51,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 7,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_two_off",
+              "Alias": "pin_pc_two_off",
+              "Startup Cost": 10242.5,
+              "Total Cost": 10289.5,
+              "Plan Rows": 2000,
+              "Plan Width": 0,
+              "Actual Rows": 2.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 2,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 7,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_two_off_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 10242.0,
+                  "Plan Rows": 2000,
+                  "Plan Width": 0,
+                  "Actual Rows": 2.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 5,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 9,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.103,
+        "Triggers": [],
+        "Execution Time": 0.104
+      }
+    ],
+    "pin_pc_two_on": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 2290.5,
+          "Total Cost": 2290.51,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 6,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_two_on",
+              "Alias": "pin_pc_two_on",
+              "Startup Cost": 2238.5,
+              "Total Cost": 2285.5,
+              "Plan Rows": 2000,
+              "Plan Width": 0,
+              "Actual Rows": 2.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 2,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 6,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_two_on_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 2238.0,
+                  "Plan Rows": 2000,
+                  "Plan Width": 0,
+                  "Actual Rows": 2.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e31050001000000000015000000010000000100000009000000776f72643030303031'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 4,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 9,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.082,
+        "Triggers": [],
+        "Execution Time": 0.055
+      }
+    ],
+    "pin_pc_dense_off": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 10370.5,
+          "Total Cost": 10370.51,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 78,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_dense_off",
+              "Alias": "pin_pc_dense_off",
+              "Startup Cost": 10314.5,
+              "Total Cost": 10365.5,
+              "Plan Rows": 2000,
+              "Plan Width": 0,
+              "Actual Rows": 4000.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e310500010000000000100000000100000001000000040000006563686f'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 26,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 78,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_dense_off_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 10314.0,
+                  "Plan Rows": 2000,
+                  "Plan Width": 0,
+                  "Actual Rows": 4000.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e310500010000000000100000000100000001000000040000006563686f'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 52,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 9,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.139,
+        "Triggers": [],
+        "Execution Time": 0.856
+      }
+    ],
+    "pin_pc_dense_on": [
+      {
+        "Plan": {
+          "Node Type": "Aggregate",
+          "Strategy": "Plain",
+          "Partial Mode": "Simple",
+          "Parallel Aware": false,
+          "Async Capable": false,
+          "Startup Cost": 2370.5,
+          "Total Cost": 2370.51,
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Actual Rows": 1.0,
+          "Actual Loops": 1,
+          "Disabled": false,
+          "Shared Hit Blocks": 78,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0,
+          "Plans": [
+            {
+              "Node Type": "Bitmap Heap Scan",
+              "Parent Relationship": "Outer",
+              "Parallel Aware": false,
+              "Async Capable": false,
+              "Relation Name": "pin_pc_dense_on",
+              "Alias": "pin_pc_dense_on",
+              "Startup Cost": 2314.5,
+              "Total Cost": 2365.5,
+              "Plan Rows": 2000,
+              "Plan Width": 0,
+              "Actual Rows": 4000.0,
+              "Actual Loops": 1,
+              "Disabled": false,
+              "Recheck Cond": "(body OPERATOR(pin.@@@) '\\x50494e310500010000000000100000000100000001000000040000006563686f'::pin.query)",
+              "Rows Removed by Index Recheck": 0,
+              "Exact Heap Blocks": 26,
+              "Lossy Heap Blocks": 0,
+              "Shared Hit Blocks": 78,
+              "Shared Read Blocks": 0,
+              "Shared Dirtied Blocks": 0,
+              "Shared Written Blocks": 0,
+              "Local Hit Blocks": 0,
+              "Local Read Blocks": 0,
+              "Local Dirtied Blocks": 0,
+              "Local Written Blocks": 0,
+              "Temp Read Blocks": 0,
+              "Temp Written Blocks": 0,
+              "Plans": [
+                {
+                  "Node Type": "Bitmap Index Scan",
+                  "Parent Relationship": "Outer",
+                  "Parallel Aware": false,
+                  "Async Capable": false,
+                  "Index Name": "pin_pc_dense_on_pin",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 2314.0,
+                  "Plan Rows": 2000,
+                  "Plan Width": 0,
+                  "Actual Rows": 4000.0,
+                  "Actual Loops": 1,
+                  "Disabled": false,
+                  "Index Cond": "(body OPERATOR(pin.@@@) '\\x50494e310500010000000000100000000100000001000000040000006563686f'::pin.query)",
+                  "Index Searches": 0,
+                  "Shared Hit Blocks": 52,
+                  "Shared Read Blocks": 0,
+                  "Shared Dirtied Blocks": 0,
+                  "Shared Written Blocks": 0,
+                  "Local Hit Blocks": 0,
+                  "Local Read Blocks": 0,
+                  "Local Dirtied Blocks": 0,
+                  "Local Written Blocks": 0,
+                  "Temp Read Blocks": 0,
+                  "Temp Written Blocks": 0
+                }
+              ]
+            }
+          ]
+        },
+        "Planning": {
+          "Shared Hit Blocks": 9,
+          "Shared Read Blocks": 0,
+          "Shared Dirtied Blocks": 0,
+          "Shared Written Blocks": 0,
+          "Local Hit Blocks": 0,
+          "Local Read Blocks": 0,
+          "Local Dirtied Blocks": 0,
+          "Local Written Blocks": 0,
+          "Temp Read Blocks": 0,
+          "Temp Written Blocks": 0
+        },
+        "Planning Time": 0.104,
+        "Triggers": [],
+        "Execution Time": 1.163
+      }
+    ]
+  }
+}

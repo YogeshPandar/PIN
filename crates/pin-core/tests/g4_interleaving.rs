@@ -2,6 +2,7 @@ use pin_core::analysis::{AnalysisLimits, Analyzed};
 use pin_core::candidate::CandidatePlan;
 use pin_core::error::{Error, Result};
 use pin_core::identity::{HeapLayout, RootTid};
+use pin_core::mutable::grouped::{self, GroupSort, SortRecord};
 use pin_core::mutable::page::{Page, PageKind};
 use pin_core::mutable::{self, PageStore, document::PreparedDocument};
 use pin_core::query::{Query, QueryLimits};
@@ -33,7 +34,33 @@ struct AppendStore {
     armed: bool,
 }
 
+#[derive(Default)]
+struct Sort {
+    records: Vec<SortRecord>,
+    position: usize,
+}
+
+impl GroupSort for Sort {
+    fn put(&mut self, records: &[SortRecord]) -> Result<()> {
+        self.records.extend_from_slice(records);
+        Ok(())
+    }
+    fn finish(&mut self) -> Result<()> {
+        self.records.sort_unstable();
+        Ok(())
+    }
+    fn read(&mut self, output: &mut [SortRecord]) -> Result<usize> {
+        let count = output.len().min(self.records.len() - self.position);
+        output[..count].copy_from_slice(&self.records[self.position..self.position + count]);
+        self.position += count;
+        Ok(count)
+    }
+}
+
 impl PageStore for AppendStore {
+    fn frontier_anchors(&self) -> bool {
+        self.inner.frontier_anchors
+    }
     fn layout(&self) -> HeapLayout {
         self.inner.layout()
     }
@@ -57,6 +84,9 @@ impl PageStore for AppendStore {
     }
     fn commit(&mut self, pages: &[&Page]) -> Result<()> {
         self.inner.commit(pages)
+    }
+    fn event(&mut self, stage: mutable::Stage) -> Result<()> {
+        self.inner.event(stage)
     }
 }
 
@@ -140,4 +170,63 @@ fn refresh_does_not_hide_a_genuinely_missing_owner_slot() {
         Err(Error::Codec(_)) | Err(Error::InvalidState)
     ));
     assert_eq!(store.owner_reads, 2);
+}
+
+#[test]
+fn packed_head_survives_promotion_after_dictionary_capture() {
+    let mut store = store(2, 3, PageKind::Dictionary);
+    store.inner = MemoryStore {
+        packed_postings: true,
+        ..MemoryStore::default()
+    };
+    mutable::initialize(&mut store.inner).unwrap();
+    for index in 0..2 {
+        mutable::insert(&mut store.inner, root(index), &document()).unwrap();
+    }
+    let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
+    let mut rows = Vec::new();
+    mutable::scan_query(&mut store, &query, 1 << 20, |root| {
+        rows.push(root);
+        Ok(())
+    })
+    .unwrap();
+    assert!(!store.armed);
+    assert_eq!(rows, vec![root(0), root(1)]);
+    rows.clear();
+    mutable::scan_query(&mut store, &query, 1 << 20, |root| {
+        rows.push(root);
+        Ok(())
+    })
+    .unwrap();
+    assert_eq!(rows, vec![root(0), root(1), root(2)]);
+}
+
+#[test]
+fn captured_grouped_anchor_falls_back_after_packed_promotion() {
+    let mut store = store(2, 3, PageKind::Dictionary);
+    store.inner = MemoryStore {
+        packed_postings: true,
+        frontier_anchors: true,
+        ..MemoryStore::default()
+    };
+    mutable::initialize(&mut store.inner).unwrap();
+    for index in 0..2 {
+        mutable::insert(&mut store.inner, root(index), &document()).unwrap();
+    }
+    grouped::rebuild(&mut store.inner, &mut Sort::default(), 8 << 20).unwrap();
+    let query = Query::parse("a AND b", QueryLimits::default()).unwrap();
+    let mut rows = Vec::new();
+    grouped::scan_query(&mut store, &query, 8 << 20, |root, _| {
+        rows.push(root);
+        Ok(())
+    })
+    .unwrap();
+    assert!(!store.armed);
+    assert_eq!(rows, vec![root(0), root(1)]);
+    assert!(
+        store
+            .inner
+            .events
+            .contains(&mutable::Stage::FrontierInvalidated)
+    );
 }
