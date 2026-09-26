@@ -1482,3 +1482,26 @@ VACUUM liveness handling already present. Build compaction must complete before
 the index becomes searchable. Performance qualification must count the extra
 build CPU, WAL and pages, and compare warm exact Boolean scans before/after
 VACUUM and across lifecycle changes. This is not an MVCC visibility shortcut.
+
+## PRIMARYV2-01: physical page-container directory prototype (2026-09-26)
+
+Module: `crates/pin-core/src/primary/mod.rs`. Authority: PostgreSQL 18
+[database page layout](https://www.postgresql.org/docs/18/storage-page-layout.html)
+and [index AM scan contract](https://www.postgresql.org/docs/18/index-functions.html),
+Rust 1.98.1 [`Vec::try_reserve_exact`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact)
+and [`u16::from_le_bytes`](https://doc.rust-lang.org/std/primitive.u16.html#method.from_le_bytes),
+and Cargo [workspace contract](https://doc.rust-lang.org/cargo/reference/workspaces.html).
+The heap offset maximum still comes from PIN's checked server ABI at the host
+boundary; the pure codec accepts that value through `HeapLayout`.
+
+This safe-Rust prototype encodes a bounded term/group directory and separate
+page offset extents. It validates version, identity, sorted pages, page-mask
+agreement, extent bounds, sparse ordering and dense unused bits. A caller
+fetches only a selected heap page container; the callback receives a private
+64-byte scratch slice and no PostgreSQL pointer. The module is not yet mapped
+to buffers, WAL, a manifest, or SQL. Physical read savings, page ownership,
+crash behavior, and MVCC correctness remain explicit integration gates.
+
+Review status: focused independent set and malformed-format tests passed;
+`pin-core` Clippy passed with warnings denied. No unsafe code or host boundary
+was added. Native performance is unmeasured.

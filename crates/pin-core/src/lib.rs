@@ -15,6 +15,7 @@ mod memory;
 pub mod mutable;
 mod normalize;
 pub mod oracle;
+pub mod primary;
 pub mod query;
 pub mod rank;
 pub mod recheck;
