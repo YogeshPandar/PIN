@@ -1,0 +1,50 @@
+CREATE EXTENSION
+SET
+SET
+SET
+SET
+SET
+SET
+DEBUG:  building index "pg_toast_16404_index" on table "pg_toast_16404" serially
+DEBUG:  index "pg_toast_16404_index" can safely use deduplication
+SELECT 12000
+DEBUG:  building index "pg_toast_16409_index" on table "pg_toast_16409" serially
+DEBUG:  index "pg_toast_16409_index" can safely use deduplication
+SELECT 12000
+CREATE FUNCTION
+DEBUG:  building index "direct_docs_pin" on table "direct_docs" serially
+DEBUG:  Pin direct grouped build: documents=12000 postings=48000 groups=1 written_pages=334 sort_spilled=false
+NOTICE:  direct_docs build: cpu_ms=1105.6644800000000000, wall_ms=1110.011000
+ build_case 
+------------
+ 
+(1 row)
+
+DEBUG:  building index "legacy_docs_pin" on table "legacy_docs" serially
+DEBUG:  Pin grouped snapshot: documents=12000 groups=1 written_pages=334 reclaimed_pages=0 sort_spilled=false frontier_terms=0
+NOTICE:  legacy_docs build: cpu_ms=1133.6911770000000000, wall_ms=1138.325000
+ build_case 
+------------
+ 
+(1 row)
+
+SET
+DO
+ legacy_bytes | direct_bytes 
+--------------+--------------
+      9658368 |      9658368
+(1 row)
+
+INSERT 0 1
+INSERT 0 1
+UPDATE 1
+UPDATE 1
+DELETE 1
+DELETE 1
+DEBUG:  Pin grouped snapshot: documents=12002 groups=1 written_pages=334 reclaimed_pages=334 sort_spilled=false frontier_terms=0
+DEBUG:  Pin compaction: retained_pages=0 written_pages=650 reclaimed_pages=706 reused_pages=372
+VACUUM
+DEBUG:  Pin grouped snapshot: documents=12002 groups=1 written_pages=334 reclaimed_pages=334 sort_spilled=false frontier_terms=0
+DEBUG:  Pin compaction: retained_pages=0 written_pages=650 reclaimed_pages=706 reused_pages=372
+VACUUM
+DO

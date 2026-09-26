@@ -3,7 +3,9 @@
 //! admits a document to scans; transaction visibility remains the host's job.
 
 use super::document::PreparedDocument;
-use super::page::{FRAGMENT_BYTES, INLINE_BYTES, NO_BLOCK, OwnerChange, OwnerRef, Page, PageKind};
+use super::page::{
+    FRAGMENT_BYTES, INLINE_BYTES, NO_BLOCK, OwnerChange, OwnerRef, Page, PageKind, TermRef,
+};
 use super::{PageStore, Stage, allocate, find_term, load, load_posting};
 use crate::error::{Error, Result};
 use crate::identity::RootTid;
@@ -30,6 +32,17 @@ pub fn insert<S: PageStore>(
     store: &mut S,
     root: RootTid,
     document: &PreparedDocument,
+) -> Result<OwnerRef> {
+    insert_with_emit(store, root, document, &mut |_, _, _| Ok(()))
+}
+
+/// emits direct grouped build records while fresh canonical references are available.
+/// the caller must abort the whole index build if the emitter fails.
+pub fn insert_with_emit<S: PageStore>(
+    store: &mut S,
+    root: RootTid,
+    document: &PreparedDocument,
+    emit: &mut impl FnMut(u64, RootTid, OwnerRef) -> Result<()>,
 ) -> Result<OwnerRef> {
     let mut meta = load(store, 0, PageKind::Meta)?;
     let owner = reserve_owner(store, &mut meta, root, document)?;
@@ -70,7 +83,12 @@ pub fn insert<S: PageStore>(
     store.commit(&[&owners])?;
     store.event(Stage::PayloadReady)?;
     for term in document.terms() {
-        link_term(store, &mut meta, term?.term, owner)?;
+        let reference = link_term(store, &mut meta, term?.term, owner)?;
+        emit(
+            (u64::from(reference.page) << 16) | u64::from(reference.offset),
+            root,
+            owner,
+        )?;
         store.event(Stage::TermLinked)?;
     }
     // reload after all preparation; no page borrow crosses host I/O.
@@ -78,6 +96,7 @@ pub fn insert<S: PageStore>(
     owners.change_owner(owner, OwnerChange::Publish, store.layout())?;
     store.commit(&[&owners])?;
     store.event(Stage::Published)?;
+    emit(0, root, owner)?;
     Ok(owner)
 }
 
@@ -136,7 +155,7 @@ fn link_term<S: PageStore>(
     meta: &mut Page,
     text: &str,
     owner: OwnerRef,
-) -> Result<()> {
+) -> Result<TermRef> {
     if let Some((mut dictionary, reference)) = find_term(store, meta, text)? {
         let term = dictionary.term(reference)?;
         let (head, tail) = (term.head, term.tail);
@@ -147,12 +166,14 @@ fn link_term<S: PageStore>(
                 return Err(Error::InvalidState);
             }
             dictionary.promote_inline_second(reference, page.block())?;
-            return store.commit(&[&dictionary, &page]);
+            store.commit(&[&dictionary, &page])?;
+            return Ok(reference);
         }
         if head == NO_BLOCK {
             if dictionary.packed_dictionary_format() {
                 dictionary.set_inline_second(reference, Some(owner))?;
-                return store.commit(&[&dictionary]);
+                store.commit(&[&dictionary])?;
+                return Ok(reference);
             }
             let mut page = Page::postings(allocate(store)?, reference)?;
             if !page.append_posting(owner)? {
@@ -160,14 +181,15 @@ fn link_term<S: PageStore>(
             }
             dictionary.set_posting_chain(reference, page.block(), page.block())?;
             store.commit(&[&dictionary, &page])?;
-            return Ok(());
+            return Ok(reference);
         }
         let mut page = load_posting(store, tail, reference)?;
         if page.next()? != NO_BLOCK {
             return Err(Error::InvalidState);
         }
         if page.kind() == PageKind::Postings && page.append_posting(owner)? {
-            return store.commit(&[&page]);
+            store.commit(&[&page])?;
+            return Ok(reference);
         }
         let mut next = Page::postings(allocate(store)?, reference)?;
         if !next.append_posting(owner)? {
@@ -175,7 +197,8 @@ fn link_term<S: PageStore>(
         }
         page.set_next(next.block())?;
         dictionary.set_posting_chain(reference, head, next.block())?;
-        return store.commit(&[&dictionary, &page, &next]);
+        store.commit(&[&dictionary, &page, &next])?;
+        return Ok(reference);
     }
     let bucket = super::page::bucket_for(text);
     let (head, tail) = meta.bucket(bucket)?;
@@ -185,21 +208,24 @@ fn link_term<S: PageStore>(
         } else {
             Page::dictionary(allocate(store)?)?
         };
-        page.append_term(text, owner)?.ok_or(Error::InvalidState)?;
+        let reference = page.append_term(text, owner)?.ok_or(Error::InvalidState)?;
         meta.set_bucket(bucket, page.block(), page.block())?;
-        return store.commit(&[meta, &page]);
+        store.commit(&[meta, &page])?;
+        return Ok(reference);
     }
     let mut page = load(store, tail, PageKind::Dictionary)?;
-    if page.append_term(text, owner)?.is_some() {
-        return store.commit(&[&page]);
+    if let Some(reference) = page.append_term(text, owner)? {
+        store.commit(&[&page])?;
+        return Ok(reference);
     }
     let mut next = if meta.packed_postings()? {
         Page::packed_dictionary(allocate(store)?)?
     } else {
         Page::dictionary(allocate(store)?)?
     };
-    next.append_term(text, owner)?.ok_or(Error::InvalidState)?;
+    let reference = next.append_term(text, owner)?.ok_or(Error::InvalidState)?;
     page.set_next(next.block())?;
     meta.set_bucket(bucket, head, next.block())?;
-    store.commit(&[meta, &page, &next])
+    store.commit(&[meta, &page, &next])?;
+    Ok(reference)
 }

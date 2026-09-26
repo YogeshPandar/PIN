@@ -23,7 +23,7 @@ pub const SORT_BATCH: usize = 256;
 pub struct SortRecord(pub [u8; 32]);
 
 impl SortRecord {
-    fn new(term: u64, root: RootTid, owner: OwnerRef) -> Self {
+    pub fn new(term: u64, root: RootTid, owner: OwnerRef) -> Self {
         let mut bytes = [0; 32];
         for (chunk, value) in bytes.as_chunks_mut::<8>().0.iter_mut().zip([
             term,
@@ -101,6 +101,70 @@ impl Batch {
             self.len = 0;
         }
         Ok(())
+    }
+}
+
+/// records one sequential heap build without rereading canonical posting chains.
+pub struct DirectCapture<T: GroupSort> {
+    sort: T,
+    batch: Batch,
+    stats: BuildStats,
+    after: Option<OwnerRef>,
+}
+
+impl<T: GroupSort> DirectCapture<T> {
+    pub fn new(sort: T) -> Self {
+        Self {
+            sort,
+            batch: Batch::new(),
+            stats: BuildStats::default(),
+            after: None,
+        }
+    }
+
+    pub fn emit(&mut self, term: u64, root: RootTid, owner: OwnerRef) -> Result<()> {
+        if term == 0 {
+            if self
+                .after
+                .is_some_and(|previous| previous.incarnation >= owner.incarnation)
+            {
+                return Err(Error::InvalidState);
+            }
+            self.after = Some(owner);
+            self.stats.documents = self
+                .stats
+                .documents
+                .checked_add(1)
+                .ok_or(Error::Limit("group documents"))?;
+        } else {
+            self.stats.postings = self
+                .stats
+                .postings
+                .checked_add(1)
+                .ok_or(Error::Limit("group postings"))?;
+        }
+        self.batch
+            .push(&mut self.sort, SortRecord::new(term, root, owner))
+    }
+
+    pub fn publish<S: PageStore>(
+        &mut self,
+        store: &mut S,
+        memory_bytes: usize,
+    ) -> Result<BuildStats> {
+        if store.frontier_anchors() || memory_bytes < build_memory(store.layout()) {
+            return Err(Error::Limit("direct grouped build scratch"));
+        }
+        self.batch.flush(&mut self.sort)?;
+        let recovered = storage::recover(store)?
+            .checked_add(super::super::recover_compaction(store)?)
+            .ok_or(Error::Limit("group recovery pages"))?;
+        self.stats.reclaimed_pages = recovered;
+        write_sorted(store, &mut self.sort, self.stats, self.after, false, None)
+    }
+
+    pub fn into_sort(self) -> T {
+        self.sort
     }
 }
 

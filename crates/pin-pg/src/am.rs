@@ -113,23 +113,32 @@ unsafe extern "C-unwind" fn build(
     let mut heap_tuples = 0.0;
     let mut documents = 0u64;
     let participant_memory = matching::stored(matching::build_participant_memory());
-    // safety: core owns the live build descriptor and requested worker count.
-    // PostgreSQL restores worker transaction state; Pin bounds participant memory.
-    let parallel = unsafe {
-        native::call(|| {
-            native::pin_parallel_build(
-                heap,
-                index,
-                info,
-                matching::PREPARE_MEMORY as u64,
-                participant_memory as u64,
-                &mut heap_tuples,
-                &mut documents,
-            )
-        })
+    let mut direct_grouped = crate::grouped::DirectBuild::begin();
+    let parallel = if direct_grouped.is_some() {
+        false
+    } else {
+        // safety: core owns the live build descriptor and requested worker count.
+        // PostgreSQL restores worker transaction state; Pin bounds participant memory.
+        unsafe {
+            native::call(|| {
+                native::pin_parallel_build(
+                    heap,
+                    index,
+                    info,
+                    matching::PREPARE_MEMORY as u64,
+                    participant_memory as u64,
+                    &mut heap_tuples,
+                    &mut documents,
+                )
+            })
+        }
     };
     if !parallel {
-        let mut state = BuildState { heap, documents: 0 };
+        let mut state = BuildState {
+            heap,
+            documents: 0,
+            direct_grouped: direct_grouped.take(),
+        };
         let state_ptr = std::ptr::from_mut(&mut state).cast::<c_void>();
         // safety: the core scan maps HOT roots and evaluates index expressions/predicates.
         // state lives through all sequential, guarded callback invocations.
@@ -139,6 +148,7 @@ unsafe extern "C-unwind" fn build(
             })
         };
         documents = state.documents;
+        direct_grouped = state.direct_grouped;
     }
     if crate::maintenance::direct_build_enabled() {
         // The heap build scan has finished, and PostgreSQL still holds the
@@ -150,7 +160,21 @@ unsafe extern "C-unwind" fn build(
             })
         });
     }
-    if crate::grouped::storage_enabled() {
+    if let Some(mut direct) = direct_grouped {
+        // safety: the build relation remains locked after the heap scan and compaction.
+        let result =
+            unsafe { crate::storage_impl::with_maintenance(index, |store| direct.publish(store)) };
+        let spilled = direct.close();
+        let stats = matching::stored(result);
+        pgrx::pg_sys::debug1!(
+            "Pin direct grouped build: documents={} postings={} groups={} written_pages={} sort_spilled={}",
+            stats.documents,
+            stats.postings,
+            stats.groups,
+            stats.written_pages,
+            spilled,
+        );
+    } else if crate::grouped::storage_enabled() {
         // safety: heap participants have finished; acquire structure before writer.
         matching::stored(unsafe {
             crate::storage_impl::with_maintenance(index, |store| crate::grouped::rebuild(store))
@@ -171,6 +195,7 @@ unsafe extern "C-unwind" fn build(
 struct BuildState {
     heap: pg_sys::Relation,
     documents: u64,
+    direct_grouped: Option<crate::grouped::DirectBuild>,
 }
 
 #[pg_guard]
@@ -194,6 +219,7 @@ unsafe extern "C-unwind" fn build_tuple(
             tid,
             matching::PREPARE_MEMORY,
             std::ptr::null_mut(),
+            state.direct_grouped.as_mut(),
         )
         .0
     } {
@@ -216,6 +242,7 @@ unsafe fn insert_value(
     tid: pg_sys::ItemPointer,
     memory_bytes: usize,
     parallel_writer: *mut c_void,
+    direct_grouped: Option<&mut crate::grouped::DirectBuild>,
 ) -> (bool, bool) {
     storage::interrupt();
     // safety: core supplies initialized one-element key and null arrays.
@@ -239,7 +266,13 @@ unsafe fn insert_value(
     // safety: the relation and prepared document stay live through this synchronous insert.
     let result = unsafe {
         storage::with_writer(index, |store| {
-            mutable::insert(store, root, &document)?;
+            if let Some(direct) = direct_grouped {
+                mutable::insert_with_emit(store, root, &document, &mut |term, root, owner| {
+                    direct.emit(term, root, owner)
+                })?;
+            } else {
+                mutable::insert(store, root, &document)?;
+            }
             if parallel_writer.is_null() && crate::grouped::delta_seal_enabled() {
                 crate::grouped::delta_due(store)
             } else {
@@ -285,7 +318,19 @@ pub unsafe extern "C-unwind" fn pin_parallel_build_tuple(
         matching::stored::<()>(Err(Error::InvalidState));
     }
     // safety: C forwards callback arguments and an opaque DSM LWLock pointer.
-    unsafe { insert_value(index, heap, values, nulls, tid, memory_bytes, writer_lock).0 }
+    unsafe {
+        insert_value(
+            index,
+            heap,
+            values,
+            nulls,
+            tid,
+            memory_bytes,
+            writer_lock,
+            None,
+        )
+        .0
+    }
 }
 
 #[pg_guard]
@@ -321,6 +366,7 @@ unsafe extern "C-unwind" fn insert(
             heap_tid,
             matching::PREPARE_MEMORY,
             std::ptr::null_mut(),
+            None,
         )
     };
     if inserted && delta_due {

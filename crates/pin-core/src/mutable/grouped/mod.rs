@@ -8,7 +8,7 @@ mod storage;
 mod vacuum;
 
 pub use build::{
-    BuildStats, DeltaMaintenance, GroupSort, SORT_BATCH, SortRecord, build_memory,
+    BuildStats, DeltaMaintenance, DirectCapture, GroupSort, SORT_BATCH, SortRecord, build_memory,
     build_memory_with_anchors, delta_build_memory, delta_maintenance, needs_rebuild, rebuild,
     seal_delta,
 };

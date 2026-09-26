@@ -1,5 +1,32 @@
 # API evidence and local obligations
 
+## DG01: sequential grouped sort capture during PostgreSQL index build
+
+Modules: `crates/pin-pg/src/am.rs`, `crates/pin-pg/src/grouped.rs`, and
+`crates/pin-core/src/mutable/{writer.rs,grouped/build.rs}`.
+
+Authority: PostgreSQL 18 [ambuild and parallel-build contract](https://www.postgresql.org/docs/18/index-functions.html), pinned PostgreSQL [tuplesort API](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/utils/tuplesort.h), pinned pgrx [GUC API](https://github.com/pgcentralfoundation/pgrx/blob/70383e884582d1bcc7cd681d10886b995a2830cb/pgrx/src/guc.rs), Rust 1.98.1 [closure traits](https://doc.rust-lang.org/1.98.1/book/ch13-01-closures.html), and Cargo [workspace contract](https://doc.rust-lang.org/cargo/reference/workspaces.html). Reviewed on 26 September 2026 against installed PostgreSQL 18.6 and pgrx 0.19.2 sources.
+
+The AM's sequential heap build callback emits fixed-width term and owner sort
+records while their canonical references are freshly available. The host sort
+copies each record, spills under `maintenance_work_mem`, and stays owned by the
+same guarded `ambuild` invocation. Grouped publication still occurs after the
+heap scan and optional direct-TID compaction, under the existing maintenance
+barrier. A failed build aborts the PostgreSQL transaction; error cleanup owns
+sort tapes and relation state. The feature is default off and falls back to the
+existing rebuild when frontier anchors are enabled or sort memory is too small.
+Parallel build is bypassed only while direct capture is active. No storage
+format, visibility rule, query result, or normal insert callback changes.
+
+Evidence: core direct/legacy page-image equality for empty, single, and
+300-document builds with both dictionary formats; full grouped core tests;
+compiled pgrx adapter and Clippy; two isolated PostgreSQL 18.6 builds in
+opposite orders with equal index size, matching query results, and successful
+insert/update/delete/VACUUM lifecycle checks. Raw output and the runner are in
+`docs/runs/2026-09-26-direct-grouped-build/`. These tests cover the opt-in
+sequential build only. Crash recovery, concurrent builds, standby replay, and
+independent unsafe review remain open.
+
 Verified against PostgreSQL 18.6 (`724edf9bde9d356724ad384a2e196edc3c9f80f7`),
 pgrx 0.19.2 (`70383e884582d1bcc7cd681d10886b995a2830cb`), and Rust 1.98.1.
 Review date: 18 September 2026. G0 boundary run 62 passed on code head

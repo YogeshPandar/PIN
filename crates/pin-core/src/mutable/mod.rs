@@ -23,7 +23,7 @@ pub use count::{CountCandidate, scan_count};
 pub use query::{scan_query, scan_query_with_options, scan_query_with_recheck};
 pub use reader::scan;
 pub use vacuum::{VacuumStats, vacuum};
-pub use writer::{initialize, insert};
+pub use writer::{initialize, insert, insert_with_emit};
 
 use crate::error::{Error, Result};
 use crate::identity::HeapLayout;

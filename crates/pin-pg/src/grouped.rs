@@ -4,8 +4,10 @@
 use crate::native;
 use pgrx::guc::{GucContext, GucFlags, GucRegistry, GucSetting};
 use pin_core::error::{Error, Result};
-use pin_core::identity::RootTid;
-use pin_core::mutable::grouped::{self, BuildStats, GroupSort, SORT_BATCH, SortRecord};
+use pin_core::identity::{HeapLayout, RootTid};
+use pin_core::mutable::grouped::{
+    self, BuildStats, DirectCapture, GroupSort, SORT_BATCH, SortRecord,
+};
 use pin_core::mutable::{self, PageStore};
 use pin_core::query::Query;
 use std::ffi::c_void;
@@ -17,6 +19,7 @@ static ENABLE_FRONTIER_ANCHORS: GucSetting<bool> = GucSetting::<bool>::new(false
 static ENABLE_OWNER_FRONTIER: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_DELTA_SEAL: GucSetting<bool> = GucSetting::<bool>::new(false);
 static ENABLE_PHRASE_POSITIONS: GucSetting<bool> = GucSetting::<bool>::new(false);
+static ENABLE_DIRECT_GROUPED_BUILD: GucSetting<bool> = GucSetting::<bool>::new(false);
 
 const DELTA_SEAL_OWNERS: u64 = 512;
 
@@ -25,6 +28,14 @@ const _: () = assert!(core::mem::align_of::<SortRecord>() == 1);
 const _: () = assert!(SORT_BATCH == 256);
 
 pub(crate) fn initialize() {
+    GucRegistry::define_bool_guc(
+        c"pin.enable_direct_grouped_build",
+        c"Feed grouped sort records during a sequential index build.",
+        c"Requires grouped storage without frontier anchors. Off rebuilds from canonical postings.",
+        &ENABLE_DIRECT_GROUPED_BUILD,
+        GucContext::Suset,
+        GucFlags::default(),
+    );
     GucRegistry::define_bool_guc(
         c"pin.enable_phrase_positions",
         c"Prove short phrase matches from indexed positions when inline.",
@@ -152,6 +163,43 @@ impl GroupSort for PgSort {
             return Err(Error::InvalidState);
         }
         Ok(count as usize)
+    }
+}
+
+pub(crate) struct DirectBuild {
+    capture: DirectCapture<PgSort>,
+    memory: usize,
+}
+
+impl DirectBuild {
+    pub(crate) fn begin() -> Option<Self> {
+        if !storage_enabled() || !ENABLE_DIRECT_GROUPED_BUILD.get() || frontier_anchors_enabled() {
+            return None;
+        }
+        let layout = HeapLayout::new(crate::abi::constant(9) as u16).ok()?;
+        let memory = grouped::build_memory(layout);
+        let sort = PgSort::begin(memory)?;
+        Some(Self {
+            capture: DirectCapture::new(sort),
+            memory,
+        })
+    }
+
+    pub(crate) fn emit(
+        &mut self,
+        term: u64,
+        root: RootTid,
+        owner: pin_core::mutable::page::OwnerRef,
+    ) -> Result<()> {
+        self.capture.emit(term, root, owner)
+    }
+
+    pub(crate) fn publish<S: PageStore>(&mut self, store: &mut S) -> Result<BuildStats> {
+        self.capture.publish(store, self.memory)
+    }
+
+    pub(crate) fn close(self) -> bool {
+        self.capture.into_sort().close()
     }
 }
 
