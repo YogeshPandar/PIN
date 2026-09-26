@@ -1,0 +1,25 @@
+2026-09-26 12:53:25.452 UTC [181371] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 12:53:25.452 UTC [181371] LOG:  listening on Unix socket "/tmp/pin-direct-recovery.PjrspFwN/socket/.s.PGSQL.55507"
+2026-09-26 12:53:25.455 UTC [181377] LOG:  database system was shut down at 2026-09-26 12:53:25 UTC
+2026-09-26 12:53:25.457 UTC [181371] LOG:  database system is ready to accept connections
+2026-09-26 12:53:25.758 UTC [181371] LOG:  received immediate shutdown request
+2026-09-26 12:53:25.761 UTC [181371] LOG:  database system is shut down
+2026-09-26 12:53:25.887 UTC [181392] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 12:53:25.887 UTC [181392] LOG:  listening on Unix socket "/tmp/pin-direct-recovery.PjrspFwN/socket/.s.PGSQL.55507"
+2026-09-26 12:53:25.889 UTC [181398] LOG:  database system was interrupted; last known up at 2026-09-26 12:53:25 UTC
+2026-09-26 12:53:25.893 UTC [181398] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-26 12:53:25.893 UTC [181398] LOG:  redo starts at 0/1765D98
+2026-09-26 12:53:25.905 UTC [181398] LOG:  invalid record length at 0/1DC4200: expected at least 24, got 0
+2026-09-26 12:53:25.905 UTC [181398] LOG:  redo done at 0/1DC41D8 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.01 s
+2026-09-26 12:53:25.911 UTC [181396] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-26 12:53:25.913 UTC [181396] LOG:  checkpoint complete: wrote 160 buffers (1.0%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.002 s, sync=0.001 s, total=0.002 s; sync files=76, longest=0.001 s, average=0.000 s; distance=6521 kB, estimate=6521 kB; lsn=0/1DC4200, redo lsn=0/1DC4200
+2026-09-26 12:53:25.914 UTC [181392] LOG:  database system is ready to accept connections
+2026-09-26 12:53:25.995 UTC [181396] LOG:  checkpoint starting: immediate force wait
+2026-09-26 12:53:25.995 UTC [181396] LOG:  checkpoint complete: wrote 31 buffers (0.2%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=15, longest=0.001 s, average=0.000 s; distance=190 kB, estimate=5888 kB; lsn=0/1DF3AB0, redo lsn=0/1DF3A58
+2026-09-26 12:53:26.033 UTC [181392] LOG:  received fast shutdown request
+2026-09-26 12:53:26.033 UTC [181392] LOG:  aborting any active transactions
+2026-09-26 12:53:26.034 UTC [181392] LOG:  background worker "logical replication launcher" (PID 181400) exited with exit code 1
+2026-09-26 12:53:26.035 UTC [181396] LOG:  shutting down
+2026-09-26 12:53:26.035 UTC [181396] LOG:  checkpoint starting: shutdown immediate
+2026-09-26 12:53:26.035 UTC [181396] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=5299 kB; lsn=0/1DF3B28, redo lsn=0/1DF3B28
+2026-09-26 12:53:26.040 UTC [181392] LOG:  database system is shut down
