@@ -1,0 +1,25 @@
+Traceback (most recent call last):
+  File "/home/reing/projects/fts0/PIN-packed-direct/tools/direct_build_bench.py", line 69, in main
+    execute(f"CREATE INDEX {name}_pin ON {name} USING pin(body)")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/reing/projects/fts0/PIN-packed-direct/tools/direct_build_bench.py", line 41, in execute
+    cur.execute(sql)
+    ~~~~~~~~~~~^^^^^
+psycopg2.OperationalError: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/reing/projects/fts0/PIN-packed-direct/tools/direct_build_bench.py", line 165, in <module>
+    main()
+    ~~~~^^
+  File "/home/reing/projects/fts0/PIN-packed-direct/tools/direct_build_bench.py", line 149, in main
+    execute(f"DROP TABLE IF EXISTS pin_direct_build_{'on' if direct else 'off'}")
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/reing/projects/fts0/PIN-packed-direct/tools/direct_build_bench.py", line 41, in execute
+    cur.execute(sql)
+    ~~~~~~~~~~~^^^^^
+psycopg2.InterfaceError: cursor already closed

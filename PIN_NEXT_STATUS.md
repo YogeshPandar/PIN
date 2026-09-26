@@ -152,3 +152,17 @@ Shared posting arenas, an authoritative packed primary index, direct bulk
 construction and native SQL BM25/top-k remain open. The published TINQL spec
 also has much broader syntax than PIN. This branch stays draft until its
 concurrency and release gates are resolved.
+
+## Packed plus direct-build checkpoint
+
+The two default-off draft changes were combined and tested together on
+PostgreSQL 18.6. With 16,000 rows and 8,000 two-occurrence terms, packing
+reduced the grouped index from 72.49 MB to 6.96 MB. Direct build plus packing
+measured 1,159 microseconds for a broad grouped count and 99 microseconds for
+selective AND, versus 1,871 and 118 microseconds for the stored-vector GIN
+control in that run. The grouped direct-build effect was small; the index
+remains far from a general 10x GIN advantage. Full core tests, 33 native
+lifecycle comparisons, immediate-crash replay, and adapter Clippy passed.
+The [raw results and limits](docs/runs/2026-09-26-packed-direct-combined/README.md)
+record the exact binary. Both format/build switches remain off by default;
+concurrency, standby and broader workload gates remain open.
