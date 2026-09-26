@@ -399,6 +399,12 @@ impl Query {
     pub fn is_single_term(&self) -> bool {
         matches!(&self.nodes[self.root].kind, Kind::Term(_))
     }
+    pub fn single_term(&self) -> Option<&str> {
+        match &self.nodes[self.root].kind {
+            Kind::Term(term) => Some(term),
+            _ => None,
+        }
+    }
     pub const fn retained_bytes(&self) -> usize {
         self.retained_bytes
     }
