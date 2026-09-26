@@ -18,6 +18,8 @@ mod maintenance;
 mod matching;
 mod native;
 mod parallel;
+#[cfg(feature = "test-hooks")]
+mod primary_sort;
 #[path = "storage.rs"]
 mod storage_impl;
 mod storage {

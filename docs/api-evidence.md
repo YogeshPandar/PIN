@@ -1614,11 +1614,23 @@ big-endian `RootTid::key()`. PostgreSQL text cannot contain NUL and the codec
 rejects one explicitly. The term byte limit is 1,024; malformed lengths, roots,
 and UTF-8 fail closed. Independent tuple-order and malformed-input tests pass.
 
-This is a build-input codec, not a sort implementation. The C host sorter,
-catalogue, build callback dispatch, DML rejection for a static prototype,
+This is a build-input codec. The catalogue, build callback dispatch, DML rejection for a static prototype,
 manifest publication, and SQL bitmap scan remain unimplemented. The record
 omits TF and positions to avoid repeating every token in a document; those
 streams are required before full TIN-like feature coverage.
+
+The host sorter is now implemented in `pin_primary_sort.c`. The pinned
+PostgreSQL 18.6 [`tuplesort.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/utils/sort/tuplesort.c)
+copies pass-by-reference inputs on `tuplesort_putdatum`, and a noncopying
+`tuplesort_getdatum` result remains sort-owned until the next read. The guarded
+Rust adapter sends stack-owned encoded keys, copies each output into a bounded
+caller array, and then validates the root and UTF-8 before use. The native
+[PG18 sorter qualification](runs/2026-09-26-primary-v2-sort/README.md) checked
+200,007 unsorted variable-length records against an independent bytewise sort,
+including duplicate terms, distinct roots, EOF and disk spill with 1 MB work
+memory. `cargo clippy` with `pg18 test-hooks` and denied warnings passes.
+This qualifies the sorter API only. It does not establish v2 SQL build, WAL
+publication, crash safety, scan correctness, or query CPU improvement.
 
 The pure `BuildReducer` takes sorted term/root records, checks their order and
 heap layout, and emits one page's sorted offsets at a time. A failed callback

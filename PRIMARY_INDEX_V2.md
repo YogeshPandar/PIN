@@ -160,9 +160,12 @@ distinct normalized term and heap root per document. A NUL terminator separates
 UTF-8 lexeme bytes from the big-endian root coordinate, so PostgreSQL's binary
 bytea sort can order term groups and roots without canonical dictionary page
 references. Term frequencies and positions need separate streams; this record
-does not repeat a long document's lexeme for every occurrence. The host sorter,
-exact vocabulary catalogue, immutable manifest publication, and read-only SQL
+does not repeat a long document's lexeme for every occurrence. The exact
+vocabulary catalogue, immutable manifest publication, and read-only SQL
 prototype are still to be implemented and measured.
+The PostgreSQL bytea sorter now passes a native 200,007-record ordering and
+disk-spill qualification. It still needs the direct build callback and durable
+v2 catalogue before any query benchmark is possible.
 The checked reducer consumes that sorted stream with one heap page's offsets
 resident at a time, rejects out-of-order roots, coalesces duplicate term/root
 pairs, and emits `(term, 256-page group, heap page, offsets)` runs. The host
