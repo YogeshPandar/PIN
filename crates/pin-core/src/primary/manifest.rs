@@ -561,7 +561,7 @@ impl Manifest {
         key: &[u8],
         prefix: bool,
     ) -> Result<Vec<u32>> {
-        if key.is_empty() {
+        if key.is_empty() || key.len() > crate::mutable::document::MAX_TERM_BYTES {
             return Err(Error::InvalidParameters);
         }
         let mut blocks = Vec::new();
@@ -611,10 +611,25 @@ impl Manifest {
                 if overlaps(&fence.first_lexeme, &fence.last_lexeme, key, prefix) {
                     let catalogue_page = store.read(fence.block)?;
                     catalogue_page.validate(self.layout)?;
-                    if catalogue_page.block() != fence.block
-                        || CataloguePage::open(catalogue_page.primary_payload()?)?.block()
-                            != fence.block
+                    if catalogue_page.block() != fence.block {
+                        return Err(Error::InvalidState);
+                    }
+                    let catalogue = CataloguePage::open(catalogue_page.primary_payload()?)?;
+                    if catalogue.block() != fence.block || catalogue.is_empty() {
+                        return Err(Error::InvalidState);
+                    }
+                    let mut scratch = [0u8; crate::mutable::document::MAX_TERM_BYTES];
+                    let (first, first_entry) = catalogue.entry(0, &mut scratch)?;
+                    if first != fence.first_lexeme
+                        || first_entry.term_ordinal != fence.first_ordinal
                     {
+                        return Err(Error::InvalidState);
+                    }
+                    let (last, _) = catalogue.entry(
+                        u16::try_from(catalogue.len() - 1).map_err(|_| Error::InvalidState)?,
+                        &mut scratch,
+                    )?;
+                    if last != fence.last_lexeme {
                         return Err(Error::InvalidState);
                     }
                     blocks.push(fence.block);
