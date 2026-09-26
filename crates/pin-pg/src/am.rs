@@ -231,11 +231,8 @@ unsafe fn insert_value(
         storage::with_writer(index, |store| {
             mutable::insert_with_format(store, root, |blocked| {
                 if blocked && document.has_block_candidate()? {
-                    // experimental re-encoding follows the persisted capability.
-                    // release the provisional pd02 allocation before preparing pd03.
-                    drop(document);
-                    let analyzed = Analyzed::analyze(text, AnalysisLimits::default())?;
-                    PreparedDocument::prepare_blocked(&analyzed, memory_bytes)
+                    // convert the already analyzed and sorted document under the index format.
+                    document.into_blocked(memory_bytes)
                 } else {
                     Ok(document)
                 }

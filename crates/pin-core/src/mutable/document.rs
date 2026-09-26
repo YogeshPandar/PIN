@@ -121,6 +121,83 @@ impl PreparedDocument {
         })
     }
 
+    /// Converts a validated PD02 payload without repeating analysis or token sorting.
+    /// The input, output and largest term scratch are charged together.
+    pub fn into_blocked(self, memory_bytes: usize) -> Result<Self> {
+        if self.bytes.starts_with(b"PD03") || !self.has_block_candidate()? {
+            return Ok(self);
+        }
+        let mut budget = MemoryBudget::new(memory_bytes);
+        budget.charge(self.bytes.capacity())?;
+        let mut length = HEADER;
+        let (mut largest_count, mut largest_payload) = (0, 0);
+        for item in self.terms() {
+            let item = item?;
+            let view = item.positions()?;
+            let size = if view.len() >= 256 {
+                let size = block_encoded_bytes(view)?;
+                largest_count = largest_count.max(view.len() as usize);
+                largest_payload = largest_payload.max(size);
+                size
+            } else {
+                item.positions.len()
+            };
+            length = length
+                .checked_add(8 + item.term.len())
+                .and_then(|n| n.checked_add(size))
+                .ok_or(Error::Limit("document payload"))?;
+        }
+        if length > MAX_DOCUMENT_BYTES {
+            return Err(Error::Limit("document payload"));
+        }
+        let mut positions: Vec<u32> = vector(largest_count, &mut budget)?;
+        let mut encoded: Vec<u8> = vector(largest_payload, &mut budget)?;
+        encoded.resize(largest_payload, 0);
+        let mut bytes: Vec<u8> = vector(length, &mut budget)?;
+        bytes.resize(length, 0);
+        let mut writer = Writer::new(&mut bytes);
+        writer.put(b"PD03")?;
+        writer.u32(PROFILE_ID)?;
+        writer.u32(self.tokens)?;
+        writer.u32(self.terms)?;
+        for item in self.terms() {
+            let item = item?;
+            let view = item.positions()?;
+            let blocked = view.len() >= 256;
+            let size = if blocked {
+                block_encoded_bytes(view)?
+            } else {
+                item.positions.len()
+            };
+            writer.u16(item.term.len() as u16)?;
+            writer.u16(u16::from(blocked))?;
+            writer.u32(size as u32)?;
+            writer.put(item.term.as_bytes())?;
+            if blocked {
+                positions.clear();
+                for position in view.iter() {
+                    positions.push(position?);
+                }
+                let written = crate::codec::position_blocks::encode(
+                    &positions,
+                    &mut encoded,
+                    MAX_DOCUMENT_TOKENS,
+                )?;
+                if written != size {
+                    return Err(Error::InvalidDocument);
+                }
+                writer.put(&encoded[..written])?;
+            } else {
+                writer.put(item.positions)?;
+            }
+        }
+        Ok(Self {
+            bytes,
+            tokens: self.tokens,
+            terms: self.terms,
+        })
+    }
+
     /// Copies and validates one complete prepared payload.
     ///
     /// # Errors
@@ -637,4 +714,21 @@ mod blocked_membership_tests {
             assert_eq!(names, ["alpha", "beta", "zulu"]);
         }
     }
+}
+
+fn block_encoded_bytes(view: Positions<'_>) -> Result<usize> {
+    let mut size = 8usize
+        .checked_add((view.len() as usize).div_ceil(128) * 16)
+        .ok_or(Error::InvalidDocument)?;
+    let mut previous = 0;
+    for (index, position) in view.iter().enumerate() {
+        let position = position?;
+        if index % 128 != 0 {
+            size = size
+                .checked_add(var_u32_len(position - previous))
+                .ok_or(Error::InvalidDocument)?;
+        }
+        previous = position;
+    }
+    Ok(size)
 }

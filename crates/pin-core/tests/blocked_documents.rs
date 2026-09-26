@@ -301,3 +301,21 @@ fn blocked_index_keeps_small_documents_in_pd02_without_reencoding() {
     let dense = prepare(&"echo ".repeat(300), true);
     assert!(dense.bytes().starts_with(b"PD03"));
 }
+
+#[test]
+fn pd02_conversion_matches_direct_pd03_encoding_without_reanalysis() {
+    for count in [0, 1, 255, 256, 257, 1000, 60_000] {
+        let text = format!("{}omega zulu", "echo ".repeat(count));
+        let analyzed = Analyzed::analyze(&text, AnalysisLimits::default()).unwrap();
+        let direct = PreparedDocument::prepare_blocked(&analyzed, 64 << 20).unwrap();
+        let from_pd02 = PreparedDocument::prepare(&analyzed, 64 << 20)
+            .unwrap()
+            .into_blocked(64 << 20)
+            .unwrap();
+        assert_eq!(from_pd02.bytes(), direct.bytes(), "occurrences={count}");
+        assert_eq!(
+            document::validate(from_pd02.bytes(), 64 << 20).unwrap(),
+            (from_pd02.token_count(), from_pd02.term_count())
+        );
+    }
+}
