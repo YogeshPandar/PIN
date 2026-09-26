@@ -9,7 +9,7 @@ use crate::error::{Error, Result};
 struct Input<'a, S> {
     store: &'a mut S,
     directory: DocumentDirectory<'a>,
-    cache: Option<Page>,
+    cache: &'a mut Option<Page>,
 }
 
 impl<S: PageStore> Input<'_, S> {
@@ -31,7 +31,7 @@ impl<S: PageStore> Input<'_, S> {
                     if let Some(page) = self.cache.as_mut() {
                         load_into(self.store, block, PageKind::Fragment, page)?;
                     } else {
-                        self.cache = Some(load(self.store, block, PageKind::Fragment)?);
+                        *self.cache = Some(load(self.store, block, PageKind::Fragment)?);
                     }
                 }
                 let page = self.cache.as_ref().ok_or(Error::InvalidState)?;
@@ -76,7 +76,7 @@ pub(super) fn copy_all<S: PageStore>(
     Input {
         store,
         directory,
-        cache: None,
+        cache: &mut None,
     }
     .read(0, output)
 }
@@ -95,6 +95,7 @@ pub(super) fn matches<S: PageStore>(
     wanted: &[String],
     memory_bytes: usize,
     bytes: &mut Vec<u8>,
+    cache: &mut Option<Page>,
 ) -> Result<Option<bool>> {
     let directory = head.document_directory_data()?;
     if directory.owner != owner.reference
@@ -105,8 +106,11 @@ pub(super) fn matches<S: PageStore>(
     {
         return Err(Error::InvalidDocument);
     }
-    let fixed = std::mem::size_of::<Page>()
-        + std::mem::size_of::<[Range; 64]>()
+    let fixed = if cache.is_none() {
+        std::mem::size_of::<Page>()
+    } else {
+        0
+    } + std::mem::size_of::<[Range; 64]>()
         + std::mem::size_of::<[usize; 64]>()
         + MAX_TERM_BYTES * 2;
     let Some(budget) = memory_bytes.checked_sub(fixed) else {
@@ -118,7 +122,7 @@ pub(super) fn matches<S: PageStore>(
     let mut input = Input {
         store,
         directory,
-        cache: None,
+        cache,
     };
     let mut header = [0; 16];
     input.read(0, &mut header)?;

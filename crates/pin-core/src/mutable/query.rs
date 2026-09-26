@@ -654,8 +654,7 @@ pub fn scan_query_with_options<S: PageStore>(
         None
     };
     plan.open(store)?;
-    let mut payload = Vec::new();
-    let mut fragment_cache = None;
+    let mut buffers = PhraseBuffers::default();
     let mut previous = None;
     let mut cache: Option<Page> = None;
     let mut count = 0u64;
@@ -673,8 +672,7 @@ pub fn scan_query_with_options<S: PageStore>(
                 owner,
                 terms,
                 plan.scratch_bytes,
-                &mut payload,
-                &mut fragment_cache,
+                &mut buffers,
             )? {
                 emit(root, needs_recheck)?;
                 count = count
@@ -708,14 +706,20 @@ pub fn scan_query_with_options<S: PageStore>(
     Ok(count)
 }
 
+#[derive(Default)]
+struct PhraseBuffers {
+    bytes: Vec<u8>,
+    head: Option<Page>,
+    tail: Option<Page>,
+}
+
 fn resolve_phrase<S: PageStore>(
     store: &mut S,
     cache: &mut Option<Page>,
     reference: OwnerRef,
     terms: &[String],
     memory_bytes: usize,
-    bytes: &mut Vec<u8>,
-    fragment_cache: &mut Option<Page>,
+    buffers: &mut PhraseBuffers,
 ) -> Result<Option<(RootTid, bool)>> {
     let reload = match cache.as_ref() {
         Some(page) if page.block() == reference.page => reference.slot >= page.owner_count()?,
@@ -747,8 +751,15 @@ fn resolve_phrase<S: PageStore>(
         .ok_or(Error::InvalidState)?
         .then_some((owner.root, false)));
     }
+    let PhraseBuffers {
+        bytes,
+        head: fragment_cache,
+        tail,
+    } = buffers;
+    let retained_pages = 1 + usize::from(tail.is_some());
     let total = usize::try_from(owner.data_bytes).map_err(|_| Error::InvalidState)?;
-    let Some(memory_bytes) = memory_bytes.checked_sub(std::mem::size_of::<Page>()) else {
+    let Some(memory_bytes) = memory_bytes.checked_sub(retained_pages * std::mem::size_of::<Page>())
+    else {
         return Ok(Some((owner.root, true)));
     };
     if bytes.capacity() > memory_bytes || total > document::MAX_DOCUMENT_BYTES {
@@ -775,8 +786,15 @@ fn resolve_phrase<S: PageStore>(
         return Ok(matched.then_some((owner.root, false)));
     }
     if first.kind() == PageKind::DocumentDirectory {
-        return match super::document_seek::matches(store, first, owner, terms, memory_bytes, bytes)?
-        {
+        return match super::document_seek::matches(
+            store,
+            first,
+            owner,
+            terms,
+            memory_bytes,
+            bytes,
+            tail,
+        )? {
             Some(matched) => Ok(matched.then_some((owner.root, false))),
             None => Ok(Some((owner.root, true))),
         };
