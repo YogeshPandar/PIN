@@ -168,9 +168,17 @@ disk-spill qualification. It still needs the direct build callback and durable
 v2 catalogue before any query benchmark is possible.
 The checked reducer consumes that sorted stream with one heap page's offsets
 resident at a time, rejects out-of-order roots, coalesces duplicate term/root
-pairs, and emits `(term, 256-page group, heap page, offsets)` runs. The host
-writer still needs to pack those runs into durable containers and publish their
-directory only after every referenced extent exists.
+pairs, and emits `(term, 256-page group, heap page, offsets)` runs. The
+PostgreSQL build still needs to feed these stages and publish a completed
+manifest after all referenced extents exist.
+The pure direct writer now packs posting payloads across groups, then packs
+their directories and emits catalogue addresses only after their containing
+pages are committed. In a focused fixture of 220 rare two-posting terms it
+uses five pages including the root, versus 222 for a naive one-directory-page
+allocation. Its bounded queue needs roughly 8.6 MiB at the worst supported
+shape, plus metadata and reducer scratch; the PostgreSQL build must reserve
+that memory before use. This is physical allocation evidence, not measured SQL
+latency or CPU.
 A checked `PrimaryArena` can pack multiple container byte strings into one
 PostgreSQL page and returns exact local extents. It leaves the packing policy
 to the builder; the CPU, cache, and index-size tradeoff of mixing terms on a

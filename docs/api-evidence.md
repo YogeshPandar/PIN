@@ -1688,3 +1688,29 @@ four focused tests and `pin-core` Clippy pass. The catalogue is not yet
 connected to PostgreSQL or a published manifest. The caller must validate
 the decoded directory against the expected relation, segment, and group
 identity before using any posting extent.
+
+## Primary v2 packed direct writer (2026-09-26)
+
+The pure `PrimaryBuildWriter` consumes ordered page runs from `BuildReducer`,
+checks an initialized empty v2 root and relation generation, and packs posting
+payloads and directory records into separate `PrimaryArena` pages. Singleton
+offsets remain inline. It commits a posting arena before any directory that
+references it, then invokes the streamed catalogue callback only after that
+directory page is committed. The callback receives the same `PageStore` with
+no outstanding extension, so it can persist a catalogue page without
+collecting the full vocabulary in memory. Generic WAL commits use one page,
+within the existing PostgreSQL adapter's three-page limit. The shared
+`PageStore` abstraction adds no new FFI or WAL boundary.
+
+The writer queues at most 2,038 group records while filling one posting page.
+Its conservative worst-case queued records need about 8.6 MiB plus metadata
+and reducer scratch; the host must reserve this against
+`maintenance_work_mem` before enabling the direct AM build. Five focused
+tests and Clippy pass, including a `PageStore` that enforces PostgreSQL's
+one-outstanding-extension rule and lets the callback allocate a catalogue
+page. In a pure 220-term fixture with two offsets per term, the writer uses
+one root, one posting page, and three packed directory pages. A naive
+one-directory-page-per-group layout would use one root, one posting page, and
+220 directory pages. This is an allocation result, not an SQL CPU result.
+The manifest, crash/restart proof, reclaim protocol, and query path remain
+unimplemented.
