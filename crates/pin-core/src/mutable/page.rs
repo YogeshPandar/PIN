@@ -21,6 +21,7 @@ use crate::identity::{HeapLayout, Incarnation, RootTid};
 
 pub const NO_BLOCK: u32 = u32::MAX;
 pub const CAPACITY: usize = 8192 - 24;
+pub const PRIMARY_PAYLOAD_BYTES: usize = CAPACITY - HEADER;
 pub const BUCKETS: usize = 512;
 pub const MAX_WAL_PAGES: usize = 3;
 const HEADER: usize = 16;

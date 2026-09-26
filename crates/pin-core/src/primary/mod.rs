@@ -1,9 +1,11 @@
 //! candidate primary format with independently addressable heap-page membership.
 //! this codec does not establish publication, liveness, or sql visibility.
 
+mod arena;
 mod build_record;
 mod build_reduce;
 mod root;
+pub use arena::PrimaryArena;
 pub use build_record::{MAX_SORT_RECORD_BYTES, TermSortRecord, decode_sort_record};
 pub use build_reduce::{BuildReducer, ReduceWork};
 pub use root::{PrimaryRoot, ROOT_BYTES};

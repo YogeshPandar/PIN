@@ -163,6 +163,10 @@ resident at a time, rejects out-of-order roots, coalesces duplicate term/root
 pairs, and emits `(term, 256-page group, heap page, offsets)` runs. The host
 writer still needs to pack those runs into durable containers and publish their
 directory only after every referenced extent exists.
+A checked `PrimaryArena` can pack multiple container byte strings into one
+PostgreSQL page and returns exact local extents. It leaves the packing policy
+to the builder; the CPU, cache, and index-size tradeoff of mixing terms on a
+page must be measured on native queries.
 
 For `amgetbitmap`, v2 must emit every candidate CTID for a supported predicate.
 It may clear a predicate recheck only after exact membership proof for every

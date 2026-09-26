@@ -1626,3 +1626,11 @@ poisons the reducer; callers must abort the build rather than publish an
 incomplete directory. Duplicate term/root inputs coalesce. Focused stream,
 wrong-order, wrong-layout and callback-failure tests plus Clippy qualify this
 pure stage. Physical page packing and PostgreSQL build publication remain open.
+
+The pure `PrimaryArena` bounds payloads by the existing 8,152-byte private
+page capacity and returns checked 16-bit local extents. A full arena refuses
+the next payload without modifying its bytes. `finish` creates the existing
+validated Primary page for the host WAL adapter. This adds no FFI or new WAL
+call; the builder must choose when to allocate and commit each page, and it
+must publish references only after those pages are durable. Focused packing,
+capacity, and readback tests pass. Native packing policy remains unmeasured.
