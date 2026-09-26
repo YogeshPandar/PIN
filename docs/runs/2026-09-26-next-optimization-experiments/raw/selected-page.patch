@@ -1,0 +1,237 @@
+diff --git a/crates/pin-core/src/grouped/bitmap.rs b/crates/pin-core/src/grouped/bitmap.rs
+index 784738f..60b2aa0 100644
+--- a/crates/pin-core/src/grouped/bitmap.rs
++++ b/crates/pin-core/src/grouped/bitmap.rs
+@@ -141,7 +141,7 @@ impl<'a> Bitmap<'a> {
+         Ok(())
+     }
+ 
+-    pub(super) fn span(&self, page: u8) -> Option<(usize, usize)> {
++    pub(crate) fn span(&self, page: u8) -> Option<(usize, usize)> {
+         if !contains(&self.header.mask, page) {
+             return None;
+         }
+diff --git a/crates/pin-core/src/mutable/grouped/scan.rs b/crates/pin-core/src/mutable/grouped/scan.rs
+index 31cdd7f..3bc8d24 100644
+--- a/crates/pin-core/src/mutable/grouped/scan.rs
++++ b/crates/pin-core/src/mutable/grouped/scan.rs
+@@ -282,15 +282,22 @@ fn scan_snapshot<S: PageStore, T: ExactSink>(
+             scratch,
+         )?;
+         if candidate_pages != [0; 4] {
+-            let (_, live) = storage::read_bitmap_view(store, snapshot, live_entry, live_bytes)?;
++            let (_, live) = storage::read_bitmap_view_selected(
++                store,
++                snapshot,
++                live_entry,
++                live_bytes,
++                candidate_pages,
++            )?;
+             let mut parsed = [None; NODES];
+             for (index, chunk) in bytes.chunks_mut(BITMAP_BYTES).enumerate() {
+                 if needed & (1 << index) != 0 {
+-                    let (_, view) = storage::read_bitmap_view(
++                    let (_, view) = storage::read_bitmap_view_selected(
+                         store,
+                         snapshot,
+                         entries[index].ok_or(Error::InvalidState)?,
+                         chunk,
++                        candidate_pages,
+                     )?;
+                     parsed[index] = Some(view);
+                 }
+diff --git a/crates/pin-core/src/mutable/grouped/storage.rs b/crates/pin-core/src/mutable/grouped/storage.rs
+index 82654e9..fab0523 100644
+--- a/crates/pin-core/src/mutable/grouped/storage.rs
++++ b/crates/pin-core/src/mutable/grouped/storage.rs
+@@ -10,7 +10,7 @@ use super::super::{PageStore, Stage, allocate, load, posting_next};
+ use crate::error::{Error, Result};
+ use crate::grouped::{Bitmap, BitmapKind, GroupKey, PageOffsets, encode_bitmap};
+ use crate::identity::{Generation, HeapLayout, SegmentId};
+-use pin_kernels::grouped::PageMask;
++use pin_kernels::grouped::{PageMask, Pages};
+ 
+ pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
+ pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
+@@ -467,6 +467,98 @@ pub(super) fn read_bitmap_view<'a, S: PageStore>(
+     Ok((value, view))
+ }
+ 
++/// Reads the directory first, then only physical extents that contain wanted
++/// heap-page offsets. Unvisited offset payloads are never interpreted.
++pub(super) fn read_bitmap_view_selected<'a, S: PageStore>(
++    store: &mut S,
++    snapshot: GroupSnapshot,
++    entry: CatalogEntry,
++    output: &'a mut [u8],
++    wanted: PageMask,
++) -> Result<(Value, Bitmap<'a>)> {
++    let value = Value::read(entry)?;
++    if value.len == 0 {
++        return read_bitmap_view(store, snapshot, entry, output);
++    }
++    let output = output
++        .get_mut(..value.len as usize)
++        .ok_or(Error::Limit("group bitmap scratch"))?;
++    let kind = if entry.key[0] == 0 {
++        GroupPageKind::Liveness
++    } else {
++        GroupPageKind::Posting
++    };
++    let used = output.len().div_ceil(GROUP_DATA_BYTES);
++    read_bitmap_part(store, snapshot, entry.key, kind, value.blocks, output, 0)?;
++    // Header and at most 256 four-byte directory entries fit in one record
++    // page. Bitmap::open validates that directory without reading payloads.
++    let view = Bitmap::open(output)?;
++    let expected = if entry.key[0] == 0 {
++        BitmapKind::Liveness
++    } else {
++        BitmapKind::Posting
++    };
++    if view.key() != key(snapshot, entry.key[1] as u32, store.layout())?
++        || view.kind() != expected
++        || *view.pages() != value.pages
++    {
++        return Err(Error::InvalidState);
++    }
++    let mut needed = [false; 3];
++    for heap_page in Pages::new(wanted) {
++        if let Some((start, len)) = view.span(heap_page) {
++            let first = start / GROUP_DATA_BYTES;
++            let last = (start + len - 1) / GROUP_DATA_BYTES;
++            for slot in &mut needed[first..=last] {
++                *slot = true;
++            }
++        }
++    }
++    for (index, &fetch) in needed.iter().enumerate().take(used).skip(1) {
++        if fetch {
++            read_bitmap_part(
++                store,
++                snapshot,
++                entry.key,
++                kind,
++                value.blocks,
++                output,
++                index,
++            )?;
++        }
++    }
++    Ok((value, Bitmap::open(output)?))
++}
++
++fn read_bitmap_part<S: PageStore>(
++    store: &mut S,
++    snapshot: GroupSnapshot,
++    key: [u64; 2],
++    kind: GroupPageKind,
++    blocks: [u32; 3],
++    output: &mut [u8],
++    index: usize,
++) -> Result<()> {
++    let block = *blocks.get(index).ok_or(Error::InvalidState)?;
++    let page = load(store, block, PageKind::Grouped)?;
++    let data = page.group_data()?;
++    let start = index * GROUP_DATA_BYTES;
++    let end = (start + GROUP_DATA_BYTES).min(output.len());
++    let used = output.len().div_ceil(GROUP_DATA_BYTES);
++    if data.id != snapshot.id
++        || data.kind != kind
++        || data.key != key
++        || data.total as usize != output.len()
++        || data.offset as usize != start
++        || data.bytes.len() != end - start
++        || (index + 1 < used && page.next()? != blocks[index + 1])
++    {
++        return Err(Error::InvalidState);
++    }
++    output[start..end].copy_from_slice(data.bytes);
++    Ok(())
++}
++
+ fn verify_build<S: PageStore>(
+     store: &mut S,
+     state: GroupState,
+diff --git a/crates/pin-core/tests/g9_storage.rs b/crates/pin-core/tests/g9_storage.rs
+index 5ea90d6..6d9ab2b 100644
+--- a/crates/pin-core/tests/g9_storage.rs
++++ b/crates/pin-core/tests/g9_storage.rs
+@@ -542,6 +542,43 @@ impl PageStore for Measured {
+     }
+ }
+ 
++#[test]
++fn selective_and_reads_only_first_physical_bitmap_pages() {
++    let mut inner = MemoryStore::default();
++    mutable::initialize(&mut inner).unwrap();
++    for block in 0..256 {
++        insert(
++            &mut inner,
++            root(block, 291),
++            if block == 0 { "wide rare" } else { "wide" },
++        );
++    }
++    build(&mut inner).unwrap();
++    let mut liveness_pages = 0;
++    let mut posting_pages = 0;
++    for block in 0..inner.pages.len() {
++        let page = inner.read(block as u32).unwrap();
++        if page.kind() == PageKind::Grouped {
++            match page.group_identity().unwrap().1 {
++                GroupPageKind::Liveness => liveness_pages += 1,
++                GroupPageKind::Posting => posting_pages += 1,
++                _ => {}
++            }
++        }
++    }
++    assert_eq!((liveness_pages, posting_pages), (2, 2));
++    let mut store = Measured {
++        inner,
++        reads: Reads::default(),
++    };
++    assert_eq!(
++        raw(&mut store, "wide AND rare", 8 << 20).unwrap(),
++        vec![(root(0, 291), false)]
++    );
++    assert_eq!(store.reads.liveness, 1);
++    assert_eq!(store.reads.postings, 1);
++}
++
+ #[test]
+ fn selective_and_seeks_past_common_groups_in_both_operand_orders() {
+     let mut inner = MemoryStore::default();
+diff --git a/docs/api-evidence.md b/docs/api-evidence.md
+index a39c4c1..3d27b89 100644
+--- a/docs/api-evidence.md
++++ b/docs/api-evidence.md
+@@ -1426,6 +1426,30 @@ budgets retain heap recheck. Traversal reloads this image only after copying its
+ consumed payload. This removes
+ return-value transfers, not the PostgreSQL-to-private copy or PD02 assembly.
+ 
++## SELECTPAGE01: selected grouped bitmap record pages (2026-09-26)
++
++Official PostgreSQL 18 index locking and generic WAL contracts re-read:
++https://www.postgresql.org/docs/18/index-locking.html and
++https://www.postgresql.org/docs/18/generic-wal.html. The indexed read still uses
++the existing PageStore/PG buffer-manager path. No FFI, buffer lock, WAL write,
++on-disk format, snapshot, or heap visibility boundary changes. The access
++method remains responsible for concurrent index changes; a bitmap index scan
++is only used with a qualifying MVCC snapshot under PostgreSQL's contract.
++
++The catalog descriptor identifies up to three physical pages per bitmap. The
++first page contains the complete header and directory. The reader validates
++that directory, key, kind, page mask, and every fetched physical page identity,
++extent, length, and following intra-record link. It then fetches only extents
++that contain candidate heap-page offsets. Unvisited payloads are neither read
++nor validated, matching Bitmap::open's established lazy offset contract.
++Build verification still reads and validates complete records. Every returned
++offset is decoded and checked before candidate emission.
++
++The in-memory exact-row test creates two liveness and two posting record pages,
++then proves a selective AND reads one of each. The grouped oracle and native
++SQL lifecycle/CPU qualification are separate gates. Native evidence and final
++review status will be recorded with the tested module revision.
++
+ Review: the same live relation and full-CAPACITY exclusive extent prove the
+ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
+ assert stable buffer address, exercise failures/recovery and preserve zero tails.

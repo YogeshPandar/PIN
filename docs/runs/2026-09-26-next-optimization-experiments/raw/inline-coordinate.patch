@@ -1,0 +1,160 @@
+diff --git a/crates/pin-core/src/mutable/grouped/scan.rs b/crates/pin-core/src/mutable/grouped/scan.rs
+index 31cdd7f..ea8f715 100644
+--- a/crates/pin-core/src/mutable/grouped/scan.rs
++++ b/crates/pin-core/src/mutable/grouped/scan.rs
+@@ -3,7 +3,7 @@
+ 
+ use super::super::page::{CatalogEntry, GroupSnapshot, NO_BLOCK, PageKind};
+ use super::super::{PageStore, find_term, load, load_posting};
+-use super::storage::{self, BITMAP_BYTES, Cursor, Value};
++use super::storage::{self, BITMAP_BYTES, Cursor, INLINE_POSTINGS, Value};
+ use crate::error::{Error, Result};
+ use crate::grouped::{
+     Bitmap, GroupKey, Node, QueryScratch, QueryStats, Source, evaluate_source, needed_terms,
+@@ -74,7 +74,15 @@ struct Loaded<'a, 'b, S> {
+     key: GroupKey,
+     live: Bitmap<'b>,
+     masks: &'a [PageMask],
+-    terms: &'a [Option<Bitmap<'b>>],
++    terms: &'a [Option<TermBitmap<'b>>],
++}
++
++enum TermBitmap<'a> {
++    Record(Bitmap<'a>),
++    Inline {
++        coordinates: [u32; INLINE_POSTINGS],
++        count: usize,
++    },
+ }
+ 
+ impl<S: PageStore> Source for Loaded<'_, '_, S> {
+@@ -94,8 +102,25 @@ impl<S: PageStore> Source for Loaded<'_, '_, S> {
+         self.live.offsets(page)
+     }
+     fn term_offsets(&mut self, term: usize, page: u8) -> Result<(OffsetMask, usize)> {
+-        let view = self.terms[term].ok_or(Error::InvalidState)?;
+-        Ok((view.offsets(page)?, view.payload_bytes(page)))
++        match self.terms[term].as_ref().ok_or(Error::InvalidState)? {
++            TermBitmap::Record(view) => Ok((view.offsets(page)?, view.payload_bytes(page))),
++            TermBitmap::Inline { coordinates, count } => {
++                let mut offsets = [0; 8];
++                let mut last = 0usize;
++                for &coordinate in &coordinates[..*count] {
++                    let coordinate_page = (coordinate >> 9) as u8;
++                    if coordinate_page > page {
++                        break;
++                    }
++                    if coordinate_page == page {
++                        let offset = (coordinate & 511) as usize;
++                        offsets[offset / 64] |= 1 << (offset % 64);
++                        last = offset + 1;
++                    }
++                }
++                Ok((offsets, last.div_ceil(8)))
++            }
++        }
+     }
+     fn interrupt(&mut self) -> Result<()> {
+         self.store.interrupt()
+@@ -283,16 +308,19 @@ fn scan_snapshot<S: PageStore, T: ExactSink>(
+         )?;
+         if candidate_pages != [0; 4] {
+             let (_, live) = storage::read_bitmap_view(store, snapshot, live_entry, live_bytes)?;
+-            let mut parsed = [None; NODES];
++            let mut parsed: [Option<TermBitmap<'_>>; NODES] = core::array::from_fn(|_| None);
+             for (index, chunk) in bytes.chunks_mut(BITMAP_BYTES).enumerate() {
+                 if needed & (1 << index) != 0 {
+-                    let (_, view) = storage::read_bitmap_view(
+-                        store,
+-                        snapshot,
+-                        entries[index].ok_or(Error::InvalidState)?,
+-                        chunk,
+-                    )?;
+-                    parsed[index] = Some(view);
++                    let entry = entries[index].ok_or(Error::InvalidState)?;
++                    let value = Value::read(entry)?;
++                    parsed[index] = Some(if value.len == 0 {
++                        let (coordinates, count) =
++                            value.inline_coordinates(store.layout().max_offset())?;
++                        TermBitmap::Inline { coordinates, count }
++                    } else {
++                        let (_, view) = storage::read_bitmap_view(store, snapshot, entry, chunk)?;
++                        TermBitmap::Record(view)
++                    });
+                 }
+             }
+             let layout = store.layout();
+diff --git a/crates/pin-core/src/mutable/grouped/storage.rs b/crates/pin-core/src/mutable/grouped/storage.rs
+index 82654e9..e6069a8 100644
+--- a/crates/pin-core/src/mutable/grouped/storage.rs
++++ b/crates/pin-core/src/mutable/grouped/storage.rs
+@@ -15,7 +15,7 @@ use pin_kernels::grouped::PageMask;
+ pub(super) const BITMAP_BYTES: usize = 72 + 256 * 68;
+ pub(super) const MEMBER_BYTES: usize = 72 + 256 * 512 * 16;
+ const LEVELS: usize = MAX_CATALOG_LEVEL as usize + 1;
+-const INLINE_POSTINGS: usize = 18;
++pub(super) const INLINE_POSTINGS: usize = 18;
+ pub(super) const CATALOG_MEMORY: usize =
+     LEVELS * CATALOG_ENTRIES * core::mem::size_of::<CatalogEntry>();
+ 
+@@ -44,7 +44,10 @@ impl Value {
+         bytes
+     }
+ 
+-    fn inline_pages(self, max_offset: u16) -> Result<([PageOffsets; INLINE_POSTINGS], usize)> {
++    pub(super) fn inline_pages(
++        self,
++        max_offset: u16,
++    ) -> Result<([PageOffsets; INLINE_POSTINGS], usize)> {
+         let count = usize::try_from(self.count).map_err(|_| Error::InvalidState)?;
+         if self.len != 0 || count == 0 || count > self.inline.map_or(6, |_| INLINE_POSTINGS) {
+             return Err(Error::InvalidState);
+@@ -83,6 +86,21 @@ impl Value {
+         Ok((pages, used))
+     }
+ 
++    pub(super) fn inline_coordinates(
++        self,
++        max_offset: u16,
++    ) -> Result<([u32; INLINE_POSTINGS], usize)> {
++        self.inline_pages(max_offset)?;
++        let count = self.count as usize;
++        let bytes = self.inline_bytes();
++        let mut coordinates = [0; INLINE_POSTINGS];
++        for (index, chunk) in bytes[..count * 3].as_chunks::<3>().0.iter().enumerate() {
++            coordinates[index] =
++                u32::from(chunk[0]) | (u32::from(chunk[1]) << 8) | (u32::from(chunk[2]) << 16);
++        }
++        Ok((coordinates, count))
++    }
++
+     pub fn entry(self, key: [u64; 2]) -> CatalogEntry {
+         let mut value = [0; 64];
+         value[..4].copy_from_slice(&self.len.to_le_bytes());
+diff --git a/docs/api-evidence.md b/docs/api-evidence.md
+index a39c4c1..f77b98f 100644
+--- a/docs/api-evidence.md
++++ b/docs/api-evidence.md
+@@ -1426,6 +1426,22 @@ budgets retain heap recheck. Traversal reloads this image only after copying its
+ consumed payload. This removes
+ return-value transfers, not the PostgreSQL-to-private copy or PD02 assembly.
+ 
++## INLINEGROUP01: direct scan of inline grouped postings (2026-09-26)
++
++Official PostgreSQL 18 index locking contract re-read:
++https://www.postgresql.org/docs/18/index-locking.html. This change stays in
++pin-core's grouped scan. It changes no PG binding, buffer lock, WAL write,
++on-disk format, snapshot, or visibility operation. The existing bitmap scan
++continues to return heap candidates under PostgreSQL's MVCC rules.
++
++Catalog inline postings are already parsed and checked by Value::read. The
++reader checks the actual heap layout's maximum offset again before constructing
++fixed-size page masks. The scan uses these masks directly, avoiding temporary
++bitmap encoding and decoding. Record-backed postings retain the original path.
++No inline coordinate is emitted without the same group mask and offset checks.
++The existing grouped storage and query oracle tests cover inline and record
++entries; native SQL identity and paired backend CPU are required to retain it.
++
+ Review: the same live relation and full-CAPACITY exclusive extent prove the
+ relocated FFI call. New oracle tests compare fresh/reloaded images across kinds,
+ assert stable buffer address, exercise failures/recovery and preserve zero tails.
