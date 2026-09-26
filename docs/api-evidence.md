@@ -1479,3 +1479,9 @@ bitmap/scalar identity scenario passes on 81041007. Evidence is under
 `docs/runs/2026-09-26-document-extents/long-documents/pin-extent-recovery/`.
 This adds native evidence to the existing GenericXLog contract, not a new storage
 API or a blanket ACID certification. Wider concurrent/crash-point gates remain.
+
+Dense seek width follow-up (`604dc802`): pure safe-Rust slice comparisons widen
+existing canonical +1 runs from 32 to an additional 256-position case. No host
+API, storage format or lock/WAL boundary changes. Scalar differential tests cover
+mixed deltas, target and budget edges; malformed consumed deltas remain rejected.
+Native evidence and limitations are in docs/runs/2026-09-26-wide-position-seek/.

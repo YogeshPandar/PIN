@@ -138,3 +138,14 @@ CPU regresses 15.7%; repeated early phrase is approximately unchanged. GIN is
 excluded beyond comparable tsvector positional limits. Raw software CPU profiles
 and one successful committed/uncommitted WAL replay are now archived. This
 supports physical skipping for selected workloads, not universal performance.
+
+## Dense-stream follow-up
+
+Checked 256-position skips reduce the 60K negative phrase CPU from 4.212 to
+2.881 ms on legacy storage and 4.874 to 3.544 ms on mapped storage. Mapped late
+rare matches retain the selective-read gain (0.863 versus legacy 2.285 ms).
+Short matching controls are 2–3% slower; all raw regressions are retained.
+[Measurements and scalar differential coverage](docs/runs/2026-09-26-wide-position-seek/README.md).
+This still scans dense bytes. Native addressable position blocks and packed
+primary postings remain the architectural next steps; the experimental PB01
+codec is not integrated and SQL BM25 remains missing.
