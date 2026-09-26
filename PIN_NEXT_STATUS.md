@@ -149,3 +149,12 @@ Short matching controls are 2–3% slower; all raw regressions are retained.
 This still scans dense bytes. Native addressable position blocks and packed
 primary postings remain the architectural next steps; the experimental PB01
 codec is not integrated and SQL BM25 remains missing.
+
+## Addressable positional reader API
+
+PB01 metadata can now be validated separately from external positional bytes.
+The callback reader fetches at most one selected block (635 bytes), with no
+payload fetch for a past-end target. Eight codec tests and all-target Clippy pass.
+[Contract and native integration requirements](docs/addressable-position-reader.md).
+This is an implemented interface, not native PB01 storage or a measured SQL
+speedup. Native document format, all consumers and lifecycle integration remain.

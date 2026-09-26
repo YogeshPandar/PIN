@@ -8,19 +8,27 @@ const HEADER: usize = 8;
 const ENTRY: usize = 16;
 const MAGIC: &[u8; 4] = b"PB01";
 
+/// Checked metadata independent of the positional payload's physical location.
 #[derive(Clone, Copy, Debug)]
-pub struct PositionBlocks<'a> {
-    directory: &'a [u8],
-    payload: &'a [u8],
+pub struct PositionDirectory<'a> {
+    entries: &'a [u8],
     count: u32,
 }
 
-#[derive(Clone, Copy)]
-struct Block {
+#[derive(Clone, Copy, Debug)]
+pub struct PositionBlocks<'a> {
+    directory: PositionDirectory<'a>,
+    payload: &'a [u8],
+}
+
+/// A directory-validated request; offsets are relative to the payload start.
+#[derive(Clone, Copy, Debug)]
+pub struct PositionBlockRequest {
     first: u32,
     last: u32,
     start: usize,
     end: usize,
+    count: usize,
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -30,93 +38,21 @@ pub struct SeekResult {
     pub decoded_bytes: usize,
 }
 
-impl<'a> PositionBlocks<'a> {
-    // checks all directory extents and bounds, without reading delta payloads.
-    pub fn open(bytes: &'a [u8], max_positions: u32) -> Result<Self> {
+impl PositionBlockRequest {
+    pub fn byte_range(self) -> std::ops::Range<usize> {
+        self.start..self.end
+    }
+
+    // the caller supplies exactly the selected bytes, not the complete stream.
+    // all selected deltas are validated even if the first position is a match.
+    pub fn seek_ge(self, bytes: &[u8], target: u32) -> Result<SeekResult> {
+        if bytes.len() != self.end - self.start {
+            return Err(Error::new(self.start, ErrorKind::InvalidValue));
+        }
         let mut reader = Reader::new(bytes);
-        if reader.take(4)? != MAGIC {
-            return Err(Error::new(0, ErrorKind::BadMagic));
-        }
-        let count = reader.u32()?;
-        if count > max_positions {
-            return Err(Error::new(4, ErrorKind::LimitExceeded));
-        }
-        let blocks = (count as usize).div_ceil(BLOCK_POSITIONS);
-        let directory_len = blocks
-            .checked_mul(ENTRY)
-            .ok_or(Error::new(4, ErrorKind::Overflow))?;
-        let directory = reader.take(directory_len)?;
-        let payload = reader.take(reader.remaining())?;
-        let view = Self {
-            directory,
-            payload,
-            count,
-        };
-        let mut end = 0;
-        let mut previous_last = None;
-        for index in 0..blocks {
-            let block = view.block(index)?;
-            let n = view.block_len(index);
-            let length = block
-                .end
-                .checked_sub(block.start)
-                .ok_or(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidValue))?;
-            if block.start != end
-                || block.end > payload.len()
-                || length < n - 1
-                || length > (n - 1) * 5
-                || block.first > block.last
-                || (n == 1 && block.first != block.last)
-                || u64::from(block.last) - u64::from(block.first) < (n - 1) as u64
-            {
-                return Err(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidValue));
-            }
-            if previous_last.is_some_and(|last| last >= block.first) {
-                return Err(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidOrder));
-            }
-            end = block.end;
-            previous_last = Some(block.last);
-        }
-        if end != payload.len() {
-            return Err(Error::new(
-                HEADER + directory_len + end,
-                ErrorKind::TrailingBytes,
-            ));
-        }
-        Ok(view)
-    }
-
-    pub const fn len(self) -> u32 {
-        self.count
-    }
-    pub const fn is_empty(self) -> bool {
-        self.count == 0
-    }
-    pub fn blocks(self) -> usize {
-        self.directory.len() / ENTRY
-    }
-
-    fn block_len(self, index: usize) -> usize {
-        (self.count as usize - index * BLOCK_POSITIONS).min(BLOCK_POSITIONS)
-    }
-
-    fn block(self, index: usize) -> Result<Block> {
-        let mut reader = Reader::new(&self.directory[index * ENTRY..(index + 1) * ENTRY]);
-        Ok(Block {
-            first: reader.u32()?,
-            last: reader.u32()?,
-            start: reader.u32()? as usize,
-            end: reader.u32()? as usize,
-        })
-    }
-
-    // validates the whole selected block, even when the answer appears early.
-    fn decode(self, index: usize, target: u32) -> Result<SeekResult> {
-        let block = self.block(index)?;
-        let mut reader = Reader::new(&self.payload[block.start..block.end]);
-        let mut position = block.first;
+        let mut position = self.first;
         let mut found = (position >= target).then_some(position);
-        for _ in 1..self.block_len(index) {
+        for _ in 1..self.count {
             let offset = reader.offset();
             let delta = reader.var_u32()?;
             if delta == 0 {
@@ -130,18 +66,121 @@ impl<'a> PositionBlocks<'a> {
             }
         }
         reader.finish()?;
-        if position != block.last {
-            return Err(Error::new(block.start, ErrorKind::InvalidValue));
+        if position != self.last {
+            return Err(Error::new(self.start, ErrorKind::InvalidValue));
         }
         Ok(SeekResult {
             position: found,
-            decoded_positions: self.block_len(index),
-            decoded_bytes: block.end - block.start,
+            decoded_positions: self.count,
+            decoded_bytes: bytes.len(),
+        })
+    }
+}
+
+impl<'a> PositionDirectory<'a> {
+    /// Reads the fixed header to bound the following directory read.
+    pub fn encoded_len(header: &[u8], max_positions: u32) -> Result<usize> {
+        let mut reader = Reader::new(header);
+        if reader.take(4)? != MAGIC {
+            return Err(Error::new(0, ErrorKind::BadMagic));
+        }
+        let count = reader.u32()?;
+        reader.finish()?;
+        if count > max_positions {
+            return Err(Error::new(4, ErrorKind::LimitExceeded));
+        }
+        (count as usize)
+            .div_ceil(BLOCK_POSITIONS)
+            .checked_mul(ENTRY)
+            .and_then(|n| n.checked_add(HEADER))
+            .ok_or(Error::new(4, ErrorKind::Overflow))
+    }
+
+    /// Checks the whole directory against an external payload's known byte length.
+    /// This does not read or certify skipped positional bytes.
+    pub fn open(bytes: &'a [u8], payload_bytes: usize, max_positions: u32) -> Result<Self> {
+        let mut reader = Reader::new(bytes);
+        let header = reader.take(HEADER)?;
+        let size = Self::encoded_len(header, max_positions)?;
+        let count = Reader::new(&header[4..]).u32()?;
+        let entries = reader.take(size - HEADER)?;
+        reader.finish()?;
+        let view = Self { entries, count };
+        let mut end = 0;
+        let mut previous_last = None;
+        for index in 0..view.blocks() {
+            let block = view.block(index)?;
+            let length = block
+                .end
+                .checked_sub(block.start)
+                .ok_or(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidValue))?;
+            if block.start != end
+                || block.end > payload_bytes
+                || length < block.count - 1
+                || length > (block.count - 1) * 5
+                || block.first > block.last
+                || (block.count == 1 && block.first != block.last)
+                || u64::from(block.last) - u64::from(block.first) < (block.count - 1) as u64
+            {
+                return Err(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidValue));
+            }
+            if previous_last.is_some_and(|last| last >= block.first) {
+                return Err(Error::new(HEADER + index * ENTRY, ErrorKind::InvalidOrder));
+            }
+            end = block.end;
+            previous_last = Some(block.last);
+        }
+        if end != payload_bytes {
+            return Err(Error::new(
+                size.saturating_add(end),
+                ErrorKind::TrailingBytes,
+            ));
+        }
+        Ok(view)
+    }
+
+    pub const fn len(self) -> u32 {
+        self.count
+    }
+    pub const fn is_empty(self) -> bool {
+        self.count == 0
+    }
+    pub fn blocks(self) -> usize {
+        self.entries.len() / ENTRY
+    }
+
+    fn block(self, index: usize) -> Result<PositionBlockRequest> {
+        let mut reader = Reader::new(&self.entries[index * ENTRY..(index + 1) * ENTRY]);
+        Ok(PositionBlockRequest {
+            first: reader.u32()?,
+            last: reader.u32()?,
+            start: reader.u32()? as usize,
+            end: reader.u32()? as usize,
+            count: (self.count as usize - index * BLOCK_POSITIONS).min(BLOCK_POSITIONS),
         })
     }
 
-    // binary search uses checked directory bounds; skipped payloads are not certified.
-    pub fn seek_ge(self, target: u32) -> Result<SeekResult> {
+    /// Fetches at most one selected block into bounded scratch, preserving reader errors.
+    /// The callback must fill the exact range from the directory's immutable source.
+    pub fn seek_with<E: From<Error>>(
+        self,
+        target: u32,
+        read: impl FnOnce(std::ops::Range<usize>, &mut [u8]) -> std::result::Result<(), E>,
+    ) -> std::result::Result<SeekResult, E> {
+        let Some(block) = self.select(target)? else {
+            return Ok(SeekResult::default());
+        };
+        let range = block.byte_range();
+        let mut scratch = [0; (BLOCK_POSITIONS - 1) * 5];
+        let bytes = &mut scratch[..range.len()];
+        if !bytes.is_empty() {
+            read(range, bytes)?;
+        }
+        Ok(block.seek_ge(bytes, target)?)
+    }
+
+    /// Finds at most one block to read, or proves the target exceeds all blocks.
+    pub fn select(self, target: u32) -> Result<Option<PositionBlockRequest>> {
         let mut lo = 0;
         let mut hi = self.blocks();
         while lo < hi {
@@ -153,14 +192,42 @@ impl<'a> PositionBlocks<'a> {
             }
         }
         if lo == self.blocks() {
-            return Ok(SeekResult::default());
+            Ok(None)
+        } else {
+            self.block(lo).map(Some)
         }
-        self.decode(lo, target)
+    }
+}
+
+impl<'a> PositionBlocks<'a> {
+    pub fn open(bytes: &'a [u8], max_positions: u32) -> Result<Self> {
+        let mut reader = Reader::new(bytes);
+        let size = PositionDirectory::encoded_len(reader.take(HEADER)?, max_positions)?;
+        reader.take(size - HEADER)?;
+        let payload = reader.take(reader.remaining())?;
+        let directory = PositionDirectory::open(&bytes[..size], payload.len(), max_positions)?;
+        Ok(Self { directory, payload })
+    }
+    pub const fn len(self) -> u32 {
+        self.directory.len()
+    }
+    pub const fn is_empty(self) -> bool {
+        self.directory.is_empty()
+    }
+    pub fn blocks(self) -> usize {
+        self.directory.blocks()
     }
 
+    pub fn seek_ge(self, target: u32) -> Result<SeekResult> {
+        match self.directory.select(target)? {
+            Some(block) => block.seek_ge(&self.payload[block.byte_range()], target),
+            None => Ok(SeekResult::default()),
+        }
+    }
     pub fn validate_all(self) -> Result<()> {
         for index in 0..self.blocks() {
-            self.decode(index, 0)?;
+            let block = self.directory.block(index)?;
+            block.seek_ge(&self.payload[block.byte_range()], 0)?;
         }
         Ok(())
     }

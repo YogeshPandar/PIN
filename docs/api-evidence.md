@@ -1485,3 +1485,9 @@ existing canonical +1 runs from 32 to an additional 256-position case. No host
 API, storage format or lock/WAL boundary changes. Scalar differential tests cover
 mixed deltas, target and budget edges; malformed consumed deltas remain rejected.
 Native evidence and limitations are in docs/runs/2026-09-26-wide-position-seek/.
+
+PB01 external-reader interface: `PositionDirectory` validates metadata separately
+from externally located positional bytes, and checked block requests decode exact
+selected slices. PB01 wire encoding is unchanged. No native reader, unsafe call,
+PostgreSQL buffer, WAL or publication boundary changes. The adapter contract and
+remaining native integration obligations are in docs/addressable-position-reader.md.
