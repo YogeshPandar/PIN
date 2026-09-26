@@ -1,0 +1,122 @@
+[
+  {
+    "stage": "built",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,1)\n3|(0,3)"
+  },
+  {
+    "stage": "built",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,4)\n6|(0,6)"
+  },
+  {
+    "stage": "built",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,7)\n3|(0,3)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "hot_update",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,7)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "indexed_update",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,7)\n7|(0,11)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "uncommitted_self_visible",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"alpha beta\"",
+    "rows": "1|(0,7)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "aborted_insert",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "deleted",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "vacuum",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"alpha beta\"",
+    "rows": ""
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"echo echo\"",
+    "rows": "4|(0,8)\n6|(0,9)"
+  },
+  {
+    "stage": "reindex",
+    "phrase": "\"\u00e9clair caf\u00e9\"",
+    "rows": "5|(0,5)"
+  }
+]

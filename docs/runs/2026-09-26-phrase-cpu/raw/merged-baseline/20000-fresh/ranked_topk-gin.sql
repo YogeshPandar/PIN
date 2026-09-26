@@ -1,0 +1,1 @@
+SELECT id,ts_rank_cd(to_tsvector('simple',body),to_tsquery('simple','alpha | bravo'),0) AS score FROM ONLY pin_grouped_count_bench.documents WHERE to_tsvector('simple',body) @@ to_tsquery('simple','alpha | bravo') ORDER BY score DESC,id LIMIT 20;

@@ -29,7 +29,6 @@ pub(crate) struct PgStore<'rel> {
     index: pg_sys::Relation,
     layout: HeapLayout,
     extended: Option<u32>,
-    cached_blocks: Option<u32>,
     writer: bool,
     relation: PhantomData<&'rel pg_sys::RelationData>,
 }
@@ -44,7 +43,6 @@ impl PgStore<'_> {
             layout: HeapLayout::new(crate::abi::constant(9) as u16)
                 .map_err(|_| Error::InvalidState)?,
             extended: None,
-            cached_blocks: None,
             writer: false,
             relation: PhantomData,
         })
@@ -139,32 +137,23 @@ impl PageStore for PgStore<'_> {
     }
 
     fn blocks(&mut self) -> Result<u32> {
-        if let Some(blocks) = self.cached_blocks {
-            return Ok(blocks);
-        }
         let index = self.index;
         // safety: the store retains its caller's live relation for this trivial C call.
-        let blocks = unsafe { native::call(|| native::pin_storage_blocks(index)) };
-        self.cached_blocks = Some(blocks);
-        Ok(blocks)
+        Ok(unsafe { native::call(|| native::pin_storage_blocks(index)) })
     }
 
     fn read(&mut self, block: u32) -> Result<Page> {
-        let bound = self.blocks()?;
-        if block >= bound {
-            return Err(Error::InvalidState);
-        }
         let index = self.index;
         Page::read_with(block, |output| {
             let pointer = output.as_mut_ptr();
             let capacity = output.len() as u32;
             // safety: one exclusive output slice covers capacity bytes; C copies under
             // a shared buffer lock and retains no pointer after releasing the buffer.
-            Ok(unsafe {
-                native::call(|| {
-                    native::pin_storage_read_bounded(index, block, bound, pointer, capacity)
-                })
-            } as usize)
+            Ok(
+                unsafe {
+                    native::call(|| native::pin_storage_read(index, block, pointer, capacity))
+                } as usize,
+            )
         })
     }
 
@@ -175,12 +164,6 @@ impl PageStore for PgStore<'_> {
         let index = self.index;
         // safety: the writer interlock serializes allocation; C releases its buffer pin.
         let block = unsafe { native::call(|| native::pin_storage_extend(index)) };
-        if let Some(blocks) = self.cached_blocks {
-            if block != blocks {
-                return Err(Error::InvalidState);
-            }
-            self.cached_blocks = Some(blocks.checked_add(1).ok_or(Error::InvalidState)?);
-        }
         self.extended = Some(block);
         Ok(block)
     }

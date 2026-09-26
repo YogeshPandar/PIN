@@ -1261,33 +1261,25 @@ equal the SQL `pin.matches` phrase oracle; owner publication and incarnation
 must prevent a cross-version positional proof; every emitted exact root must
 match the whole predicate; and every unproven path must retain a heap recheck.
 Pure tests compare the indexed proof with the independent text oracle,
-including repeated terms and Unicode, and cover fragmented fallback. Native
-PostgreSQL lifecycle, recovery, and paired CPU measurements remain release
-gates. This change is experimental until those gates and review are complete.
+including repeated terms and Unicode, and cover fragmented fallback. The
+26 September native run compared full heap identities across HOT, indexed
+update, rollback, delete, VACUUM, and REINDEX; a paired CPU run measured the
+phrase benefit. Concurrent writers, old snapshots, crash recovery, standby
+replay, and independent review remain gates before default enablement.
 
-### Callback-local relation size cache
+### Rejected relation-size syscall experiment
 
 Review date: 26 September 2026. Authority: pinned PostgreSQL 18.6
 [`md.c`, `mdnblocks`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/smgr/md.c),
 [`bufmgr.c`, `ReadBufferExtended`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/storage/buffer/bufmgr.c),
 and [index locking](https://www.postgresql.org/docs/18/index-locking.html).
 A trace of 40 warm phrase queries on the merged baseline showed 50,320
-`lseek` calls and no file reads in the backend. PIN calls
-`RelationGetNumberOfBlocks` repeatedly through `PageStore::blocks`; the C page
-reader also checks the relation size. `mdnblocks` obtains file length through
-the storage manager, so the first change caches the block count inside one
-`PgStore` callback and advances it only after that callback extends the index.
-
-The reader's existing structural barrier prevents page reclamation or index
-truncation while it uses a captured bound. Concurrent append is permitted, but
-a scan follows captured page references and need not include a later append;
-PostgreSQL index scanning explicitly permits this. The writer interlock makes
-allocation serial. The cache never survives a callback or transaction. A
-separate bounded C read entry receives that captured extent, checks the block
-against it before `ReadBufferExtended`, and retains the same page and buffer
-validation. The existing generic read and WAL commit continue to query the
-relation size independently. This adds one FFI declaration and call path, so
-the extent and error boundary require independent review before default use.
-The observed syscall count is a hypothesis for the specific call path; paired
-traces and CPU measurements are required to attribute the effect before a
-speedup claim.
+`lseek` calls and no file reads in the backend. `RelationGetNumberOfBlocks`
+calls from the Rust page bound and C page reader were the cause. A callback
+size cache followed by a bounded C page-read entry reduced the traced `lseek`
+count to 200 for 40 queries. Paired backend CPU for `"bravo charlie"` was
+27.53 ms with positional proof before the cache versus 27.59 ms with both
+syscall changes; the legacy path stayed near 79 ms. Neither CPU result supports
+retaining a new FFI and concurrency proof burden. Both changes were reverted
+before this candidate was proposed. The trace scripts and raw measurements
+remain as evidence that syscall count alone is a poor proxy for query CPU.

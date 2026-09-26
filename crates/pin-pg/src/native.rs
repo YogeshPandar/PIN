@@ -48,15 +48,6 @@ unsafe extern "C-unwind" {
         capacity: u32,
         strategy: pg_sys::BufferAccessStrategy,
     ) -> u32;
-    #[link_name = "pin_storage_read_bounded"]
-    fn pin_storage_read_bounded_raw(
-        index: pg_sys::Relation,
-        block: u32,
-        bound: u32,
-        out: *mut u8,
-        capacity: u32,
-        strategy: pg_sys::BufferAccessStrategy,
-    ) -> u32;
     pub(crate) fn pin_storage_remove_owners(
         index: pg_sys::Relation,
         block: u32,
@@ -145,22 +136,18 @@ unsafe extern "C-unwind" {
     );
 }
 
-/// Reads under one callback-local relation extent captured by the caller.
+/// Reads through the default PostgreSQL buffer strategy.
 ///
 /// # Safety
-/// The caller holds the structural barrier, supplies a current bound for the
-/// live relation, and provides one exclusive output extent.
-pub(crate) unsafe fn pin_storage_read_bounded(
+/// The caller supplies a live relation and one exclusive output extent.
+pub(crate) unsafe fn pin_storage_read(
     index: pg_sys::Relation,
     block: u32,
-    bound: u32,
     out: *mut u8,
     capacity: u32,
 ) -> u32 {
-    // safety: the guarded caller owns the relation, bound and output extent.
-    unsafe {
-        pin_storage_read_bounded_raw(index, block, bound, out, capacity, std::ptr::null_mut())
-    }
+    // safety: the caller proves the raw FFI extent and relation contract.
+    unsafe { pin_storage_read_raw(index, block, out, capacity, std::ptr::null_mut()) }
 }
 
 /// Reads through a callback-owned PostgreSQL buffer strategy.

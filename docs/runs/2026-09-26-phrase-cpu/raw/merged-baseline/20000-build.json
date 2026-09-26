@@ -1,0 +1,26 @@
+[
+  {
+    "engine": "pin",
+    "backend_cpu": {
+      "cpu_ns": 2798353587,
+      "runqueue_ns": 94156,
+      "cpu_us_per_query": 2798353.587,
+      "short_batch_warning": false
+    },
+    "wall_ns": 2806546150,
+    "cluster_wal_bytes": 81442240,
+    "sql": "CREATE INDEX documents_pin ON pin_grouped_count_bench.documents USING pin(body);"
+  },
+  {
+    "engine": "gin",
+    "backend_cpu": {
+      "cpu_ns": 207211632,
+      "runqueue_ns": 38609,
+      "cpu_us_per_query": 207211.632,
+      "short_batch_warning": false
+    },
+    "wall_ns": 207491465,
+    "cluster_wal_bytes": 424168,
+    "sql": "CREATE INDEX documents_gin ON pin_grouped_count_bench.documents USING gin(to_tsvector('simple',body));"
+  }
+]

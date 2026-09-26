@@ -1,0 +1,1217 @@
+[
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "broad_rows",
+    "mode": "gin",
+    "median_batch_cpu_us": 6518.67255,
+    "batch_cpu_us": [
+      6672.7807,
+      6333.559,
+      7128.4935,
+      6364.5644,
+      6811.9046,
+      6321.4179
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.488258,
+      "p95_ms": 8.463572,
+      "p99_ms": 8.628018,
+      "min_ms": 7.159382,
+      "max_ms": 8.628018
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "broad_rows",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 5234.1991,
+    "batch_cpu_us": [
+      5133.3138,
+      5416.5285,
+      5365.540400000001,
+      5225.6857,
+      5168.7833,
+      5242.7125
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 6.258781,
+      "p95_ms": 6.687653,
+      "p99_ms": 7.12317,
+      "min_ms": 6.002235,
+      "max_ms": 7.12317
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "broad_rows",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 5294.43365,
+    "batch_cpu_us": [
+      5189.8186,
+      5576.8741,
+      5381.9919,
+      5245.1409,
+      5317.6512,
+      5271.2161
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 6.337823,
+      "p95_ms": 7.042875,
+      "p99_ms": 7.247251,
+      "min_ms": 6.032444,
+      "max_ms": 7.247251
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "phrase_count",
+    "mode": "gin",
+    "median_batch_cpu_us": 186524.1165,
+    "batch_cpu_us": [
+      185450.8871,
+      188054.138,
+      186471.0136,
+      186249.50069999998,
+      187224.0072,
+      186577.2194
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 186.251214,
+      "p95_ms": 194.274007,
+      "p99_ms": 196.540354,
+      "min_ms": 184.787172,
+      "max_ms": 196.540354
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "phrase_count",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 67015.66235,
+    "batch_cpu_us": [
+      67076.8537,
+      67026.414,
+      67043.82729999999,
+      67004.91070000001,
+      66640.7759,
+      66854.2139
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 67.165814,
+      "p95_ms": 68.165318,
+      "p99_ms": 68.834948,
+      "min_ms": 66.431936,
+      "max_ms": 68.834948
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "phrase_count",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 66972.44339999999,
+    "batch_cpu_us": [
+      67046.5153,
+      66899.8125,
+      67045.0743,
+      67724.9366,
+      66679.5662,
+      66822.4395
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 67.068316,
+      "p95_ms": 68.46361,
+      "p99_ms": 72.309767,
+      "min_ms": 66.32424,
+      "max_ms": 72.309767
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "ranked_topk",
+    "mode": "gin",
+    "median_batch_cpu_us": 230455.2008,
+    "batch_cpu_us": [
+      231501.9408,
+      230804.2728,
+      229943.3549,
+      230754.7348,
+      230155.6668,
+      229723.21409999998
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 230.119921,
+      "p95_ms": 235.636149,
+      "p99_ms": 238.821437,
+      "min_ms": 228.653127,
+      "max_ms": 238.821437
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "ranked_topk",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 229935.95275,
+    "batch_cpu_us": [
+      229174.8925,
+      229719.7439,
+      231720.66340000002,
+      228905.0607,
+      230152.1616,
+      230287.11669999998
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 229.665006,
+      "p95_ms": 234.576461,
+      "p99_ms": 242.960779,
+      "min_ms": 227.470611,
+      "max_ms": 242.960779
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "fresh",
+    "case": "ranked_topk",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 229414.03814999998,
+    "batch_cpu_us": [
+      230968.16280000002,
+      228672.9843,
+      229406.1466,
+      229650.094,
+      229421.92969999998,
+      229254.2285
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 229.456841,
+      "p95_ms": 232.643173,
+      "p99_ms": 236.504913,
+      "min_ms": 228.037538,
+      "max_ms": 236.504913
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "broad_rows",
+    "mode": "gin",
+    "median_batch_cpu_us": 8404.28895,
+    "batch_cpu_us": [
+      8621.3145,
+      8081.752,
+      8234.9951,
+      8818.3083,
+      8274.8567,
+      8533.7212
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 9.50296,
+      "p95_ms": 10.448608,
+      "p99_ms": 11.112215,
+      "min_ms": 9.064604,
+      "max_ms": 11.112215
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "broad_rows",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 6271.15825,
+    "batch_cpu_us": [
+      6894.0684,
+      6271.1311,
+      6249.0975,
+      6262.0461,
+      6862.7361,
+      6271.1854
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.52408,
+      "p95_ms": 8.669649,
+      "p99_ms": 8.947834,
+      "min_ms": 7.305199,
+      "max_ms": 8.947834
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "broad_rows",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 6384.7482,
+    "batch_cpu_us": [
+      6305.624400000001,
+      6171.6377,
+      6486.5783,
+      6642.9136,
+      6463.872,
+      6227.7518
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.525935,
+      "p95_ms": 8.284943,
+      "p99_ms": 8.822705,
+      "min_ms": 7.240364,
+      "max_ms": 8.822705
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "phrase_count",
+    "mode": "gin",
+    "median_batch_cpu_us": 223126.3874,
+    "batch_cpu_us": [
+      222757.80080000003,
+      223092.04080000002,
+      223070.2169,
+      223160.734,
+      223250.36909999998,
+      223607.1352
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 223.075951,
+      "p95_ms": 225.302806,
+      "p99_ms": 229.429051,
+      "min_ms": 221.609094,
+      "max_ms": 229.429051
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "phrase_count",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 80843.01335,
+    "batch_cpu_us": [
+      80738.79729999999,
+      81632.3765,
+      80752.7527,
+      81001.3757,
+      80866.43029999999,
+      80819.59640000001
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 81.186691,
+      "p95_ms": 82.27421,
+      "p99_ms": 85.853214,
+      "min_ms": 79.99598,
+      "max_ms": 85.853214
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "phrase_count",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 80649.08175,
+    "batch_cpu_us": [
+      80517.854,
+      80556.5838,
+      80230.1258,
+      80875.62340000001,
+      81215.96990000001,
+      80741.5797
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 80.934654,
+      "p95_ms": 81.875968,
+      "p99_ms": 82.471879,
+      "min_ms": 79.734122,
+      "max_ms": 82.471879
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "ranked_topk",
+    "mode": "gin",
+    "median_batch_cpu_us": 278680.6555,
+    "batch_cpu_us": [
+      277731.51210000005,
+      279008.3443,
+      279472.152,
+      278614.3976,
+      278746.91339999996,
+      278168.0222
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 278.498509,
+      "p95_ms": 283.578855,
+      "p99_ms": 288.821409,
+      "min_ms": 276.09671,
+      "max_ms": 288.821409
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "ranked_topk",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 277862.95895,
+    "batch_cpu_us": [
+      277812.4205,
+      277181.8031,
+      277461.4155,
+      277913.4974,
+      278559.89739999996,
+      278412.31669999997
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 277.206409,
+      "p95_ms": 285.207536,
+      "p99_ms": 294.144069,
+      "min_ms": 274.993895,
+      "max_ms": 294.144069
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "long_delta",
+    "case": "ranked_topk",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 277755.2475,
+    "batch_cpu_us": [
+      277836.4707,
+      277674.0243,
+      277265.09130000003,
+      275529.8592,
+      280902.9532,
+      278728.77339999995
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 276.41024,
+      "p95_ms": 288.143074,
+      "p99_ms": 311.855218,
+      "min_ms": 274.543458,
+      "max_ms": 311.855218
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "broad_rows",
+    "mode": "gin",
+    "median_batch_cpu_us": 8079.56165,
+    "batch_cpu_us": [
+      7567.608,
+      7534.6835,
+      8414.5886,
+      7744.5347,
+      8771.956900000001,
+      8647.114099999999
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 9.096953,
+      "p95_ms": 10.224698,
+      "p99_ms": 10.477332,
+      "min_ms": 8.553447,
+      "max_ms": 10.477332
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "broad_rows",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 6472.71855,
+    "batch_cpu_us": [
+      6296.5299,
+      6444.0328,
+      6491.8493,
+      7493.3061,
+      7300.7761,
+      6453.5878
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.688358,
+      "p95_ms": 8.931672,
+      "p99_ms": 9.311769,
+      "min_ms": 7.183846,
+      "max_ms": 9.311769
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "broad_rows",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 6437.1787,
+    "batch_cpu_us": [
+      6175.039900000001,
+      6233.8467,
+      7075.7486,
+      6640.5107,
+      7618.3478,
+      6204.7053
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.528272,
+      "p95_ms": 8.91108,
+      "p99_ms": 9.578262,
+      "min_ms": 7.226278,
+      "max_ms": 9.578262
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "phrase_count",
+    "mode": "gin",
+    "median_batch_cpu_us": 218070.60504999998,
+    "batch_cpu_us": [
+      218059.87459999998,
+      217771.3124,
+      218081.3355,
+      218723.9923,
+      217667.9794,
+      218425.71680000002
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 218.275847,
+      "p95_ms": 219.645966,
+      "p99_ms": 220.161,
+      "min_ms": 217.416144,
+      "max_ms": 220.161
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "phrase_count",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 79571.69454999999,
+    "batch_cpu_us": [
+      79712.603,
+      79462.55309999999,
+      79590.66709999999,
+      79563.8005,
+      79321.5084,
+      79579.58859999999
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 79.848923,
+      "p95_ms": 80.421657,
+      "p99_ms": 81.058825,
+      "min_ms": 78.87994,
+      "max_ms": 81.058825
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "phrase_count",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 79789.23180000001,
+    "batch_cpu_us": [
+      80435.843,
+      80023.5605,
+      79547.0138,
+      80098.09,
+      79264.08559999999,
+      79554.9031
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 79.993566,
+      "p95_ms": 81.189835,
+      "p99_ms": 81.99752,
+      "min_ms": 79.041501,
+      "max_ms": 81.99752
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "ranked_topk",
+    "mode": "gin",
+    "median_batch_cpu_us": 273168.58070000005,
+    "batch_cpu_us": [
+      272884.1953,
+      272607.3997,
+      274089.5175,
+      272673.185,
+      275150.60189999995,
+      273452.9661
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 273.356106,
+      "p95_ms": 276.150096,
+      "p99_ms": 291.156095,
+      "min_ms": 271.8074,
+      "max_ms": 291.156095
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "ranked_topk",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 272028.717,
+    "batch_cpu_us": [
+      271754.5195,
+      270981.632,
+      270995.9035,
+      273240.588,
+      272737.263,
+      272302.9145
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 271.415929,
+      "p95_ms": 274.936967,
+      "p99_ms": 291.306038,
+      "min_ms": 270.037026,
+      "max_ms": 291.306038
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "rebuilt",
+    "case": "ranked_topk",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 271380.9369,
+    "batch_cpu_us": [
+      271325.20739999996,
+      271237.8084,
+      272187.2795,
+      271436.6664,
+      271554.432,
+      271133.3506
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 271.630915,
+      "p95_ms": 273.024152,
+      "p99_ms": 280.118626,
+      "min_ms": 270.340376,
+      "max_ms": 280.118626
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "broad_rows",
+    "mode": "gin",
+    "median_batch_cpu_us": 6583.96355,
+    "batch_cpu_us": [
+      7355.589,
+      6279.124900000001,
+      6424.9160999999995,
+      6501.8633,
+      6759.9557,
+      6666.0638
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.552221,
+      "p95_ms": 8.493814,
+      "p99_ms": 8.868555,
+      "min_ms": 7.188293,
+      "max_ms": 8.868555
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "broad_rows",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 5664.382250000001,
+    "batch_cpu_us": [
+      5322.485299999999,
+      5729.6795999999995,
+      6139.5338,
+      5907.8652999999995,
+      5250.5376,
+      5599.084900000001
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 6.50277,
+      "p95_ms": 7.322115,
+      "p99_ms": 7.587224,
+      "min_ms": 6.121952,
+      "max_ms": 7.587224
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "broad_rows",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 5627.97595,
+    "batch_cpu_us": [
+      6163.8992,
+      5367.3601,
+      5781.835,
+      5432.754599999999,
+      5474.1169,
+      5985.1576
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 6.826291,
+      "p95_ms": 7.364081,
+      "p99_ms": 7.465188,
+      "min_ms": 6.155572,
+      "max_ms": 7.465188
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "phrase_count",
+    "mode": "gin",
+    "median_batch_cpu_us": 185844.48859999998,
+    "batch_cpu_us": [
+      184756.9336,
+      185692.70609999998,
+      186080.0044,
+      185479.61990000002,
+      185996.27109999998,
+      186173.3406
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 185.612371,
+      "p95_ms": 188.439177,
+      "p99_ms": 192.040628,
+      "min_ms": 184.050661,
+      "max_ms": 192.040628
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "phrase_count",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 67541.1403,
+    "batch_cpu_us": [
+      67200.3893,
+      68236.9576,
+      67536.6483,
+      67545.6323,
+      67235.8003,
+      68480.81970000001
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 67.510907,
+      "p95_ms": 70.454333,
+      "p99_ms": 75.664198,
+      "min_ms": 66.744504,
+      "max_ms": 75.664198
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "phrase_count",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 67233.451,
+    "batch_cpu_us": [
+      67240.4136,
+      67018.9243,
+      67226.4884,
+      66870.4166,
+      67848.78090000001,
+      68018.9411
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 67.350988,
+      "p95_ms": 69.357593,
+      "p99_ms": 73.111792,
+      "min_ms": 66.569612,
+      "max_ms": 73.111792
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "ranked_topk",
+    "mode": "gin",
+    "median_batch_cpu_us": 230345.4924,
+    "batch_cpu_us": [
+      229232.6961,
+      230889.4685,
+      231110.386,
+      229381.0461,
+      230912.17469999997,
+      229801.51630000002
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 230.16463,
+      "p95_ms": 232.831915,
+      "p99_ms": 235.743933,
+      "min_ms": 228.789286,
+      "max_ms": 235.743933
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "ranked_topk",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 229715.36609999998,
+    "batch_cpu_us": [
+      229808.1048,
+      229263.7943,
+      228669.515,
+      229622.6274,
+      231275.7215,
+      233991.6251
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 229.790014,
+      "p95_ms": 236.192467,
+      "p99_ms": 253.184636,
+      "min_ms": 228.170337,
+      "max_ms": 253.184636
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "short_delta",
+    "case": "ranked_topk",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 229370.0668,
+    "batch_cpu_us": [
+      230877.17119999998,
+      229128.7231,
+      228364.2999,
+      229611.4105,
+      230511.2593,
+      228917.8589
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 229.471936,
+      "p95_ms": 232.309992,
+      "p99_ms": 237.78177,
+      "min_ms": 227.486752,
+      "max_ms": 237.78177
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "broad_rows",
+    "mode": "gin",
+    "median_batch_cpu_us": 8195.8756,
+    "batch_cpu_us": [
+      8577.0789,
+      7890.8276,
+      8540.2511,
+      8267.3638,
+      7966.2077,
+      8124.3874000000005
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 9.341508,
+      "p95_ms": 10.453482,
+      "p99_ms": 10.823619,
+      "min_ms": 8.921657,
+      "max_ms": 10.823619
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "broad_rows",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 6853.816199999999,
+    "batch_cpu_us": [
+      6406.4605,
+      7538.263,
+      7278.5966,
+      6429.0358,
+      7614.303,
+      6420.4817
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.760873,
+      "p95_ms": 9.290116,
+      "p99_ms": 11.380455,
+      "min_ms": 7.444843,
+      "max_ms": 11.380455
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "broad_rows",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 6552.7579,
+    "batch_cpu_us": [
+      6530.6374000000005,
+      6380.0822,
+      7020.9456,
+      6541.119299999999,
+      6795.459,
+      6564.3965
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 7.642113,
+      "p95_ms": 9.02087,
+      "p99_ms": 9.087594,
+      "min_ms": 7.412674,
+      "max_ms": 9.087594
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "phrase_count",
+    "mode": "gin",
+    "median_batch_cpu_us": 219869.72960000002,
+    "batch_cpu_us": [
+      221172.4773,
+      220809.7475,
+      219103.6374,
+      220635.8218,
+      218911.64469999998,
+      218980.9763
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 219.239076,
+      "p95_ms": 228.059415,
+      "p99_ms": 231.681982,
+      "min_ms": 217.733131,
+      "max_ms": 231.681982
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "phrase_count",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 80126.2674,
+    "batch_cpu_us": [
+      79619.6326,
+      80183.682,
+      80132.1967,
+      80467.5501,
+      80120.3381,
+      79708.1586
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 80.229981,
+      "p95_ms": 81.473273,
+      "p99_ms": 83.252652,
+      "min_ms": 79.146782,
+      "max_ms": 83.252652
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "phrase_count",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 79935.313,
+    "batch_cpu_us": [
+      79783.8308,
+      80502.5992,
+      79486.09879999999,
+      79941.0027,
+      79929.62329999999,
+      80031.41279999999
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 80.031447,
+      "p95_ms": 81.370974,
+      "p99_ms": 86.842681,
+      "min_ms": 79.323051,
+      "max_ms": 86.842681
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "ranked_topk",
+    "mode": "gin",
+    "median_batch_cpu_us": 274233.4135,
+    "batch_cpu_us": [
+      273131.99710000004,
+      302010.9621,
+      274510.7264,
+      276078.7889,
+      272552.80110000004,
+      273956.1006
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 273.479311,
+      "p95_ms": 288.790667,
+      "p99_ms": 404.964887,
+      "min_ms": 271.606462,
+      "max_ms": 404.964887
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "ranked_topk",
+    "mode": "pin_grouped",
+    "median_batch_cpu_us": 272262.6112,
+    "batch_cpu_us": [
+      273559.7453,
+      272400.45519999997,
+      350983.83989999996,
+      272124.7672,
+      271946.9483,
+      272041.9193
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 272.441562,
+      "p95_ms": 414.711686,
+      "p99_ms": 490.384645,
+      "min_ms": 270.276563,
+      "max_ms": 490.384645
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  },
+  {
+    "rows": 20000,
+    "stage": "updated_deleted",
+    "case": "ranked_topk",
+    "mode": "pin_previous",
+    "median_batch_cpu_us": 278503.5709,
+    "batch_cpu_us": [
+      272957.6531,
+      315940.397,
+      286071.1809,
+      284049.4887,
+      271604.5379,
+      271384.6523
+    ],
+    "client_latency": {
+      "n": 60,
+      "p50_ms": 272.159928,
+      "p95_ms": 384.997446,
+      "p99_ms": 457.985227,
+      "min_ms": 269.919154,
+      "max_ms": 457.985227
+    },
+    "execution_paths": [
+      "ordinary_postgres"
+    ],
+    "tail_sample_warning": true
+  }
+]
