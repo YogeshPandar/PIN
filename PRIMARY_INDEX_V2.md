@@ -141,6 +141,9 @@ on each selected page and stops loading later terms when the offset result is
 empty. One focused three-term fixture selected two of five heap pages for AND,
 read five containers, and emitted one matching page. This is a work-count
 oracle, not a PostgreSQL CPU result.
+The [PG18 extent qualification](docs/runs/2026-09-26-primary-v2-native/README.md)
+passed for an 8,152-byte payload and 13-byte selected copy, including a
+caught wrong-kind error followed by a successful read in the same backend.
 The next required code step is native manifest/build integration, followed by
 paired query measurements of actual buffer reads, copied bytes, and CPU. The
 adapter's existence alone establishes no CPU benefit. If

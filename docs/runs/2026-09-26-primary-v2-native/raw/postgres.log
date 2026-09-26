@@ -1,0 +1,6 @@
+2026-09-26 15:07:31.812 UTC [26940] LOG:  starting PostgreSQL 18.6 (Ubuntu 18.6-0ubuntu0.26.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0, 64-bit
+2026-09-26 15:07:31.812 UTC [26940] LOG:  listening on Unix socket "/tmp/pin-v2-extent.aW2huTYI/socket/.s.PGSQL.55491"
+2026-09-26 15:07:31.816 UTC [26946] LOG:  database system was shut down at 2026-09-26 15:07:31 UTC
+2026-09-26 15:07:31.819 UTC [26940] LOG:  database system is ready to accept connections
+2026-09-26 15:07:31.946 UTC [26940] LOG:  received immediate shutdown request
+2026-09-26 15:07:31.951 UTC [26940] LOG:  database system is shut down

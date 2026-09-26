@@ -1528,8 +1528,8 @@ Local obligations: `PageKind::Primary` is tag 11 under the existing 16-byte
 The codec rejects malformed directories and selected containers; the reader
 checks the caller-supplied complete `GroupKey` before reading a physical block.
 The pure `PageStore` default validates a full private image; `PgStore` overrides
-it with the narrow buffer copy. A v2 metapage and manifest must bind the group identity and block
-ownership before SQL integration. The access method must preserve complete
+it with the narrow buffer copy. The v2 root exists, but a manifest must bind
+the group identity and block ownership before SQL integration. The access method must preserve complete
 candidate CTIDs, PostgreSQL MVCC/HOT checks, bitmap lossification rechecks,
 and scan lifetime rules.
 
@@ -1537,11 +1537,14 @@ Review: independent read-only page/WAL review found no concrete page format or
 generic WAL defect and identified the manifest ownership gate. Independent
 review of the new FFI found no bounds or pointer lifetime defect and flagged
 error cleanup and missing native execution coverage. Explicit unlock-before-error
-now addresses the local corruption checks. Focused pure
+addresses the local corruption checks. Focused pure
 round-trip, malformed-format, selected-block, wrong-identity, and wrong-kind
-tests plus a `pin-pg` PG18 build check qualify only this prototype. Native
-execution of the new FFI, crash/restart, concurrent reader/writer, and paired
-CPU tests remain unrun for v2.
+tests plus a `pin-pg` PG18 build check qualify the pure prototype. The
+[native PG18 qualification](runs/2026-09-26-primary-v2-native/README.md)
+exercised an 8,152-byte page with a 13-byte selected copy and a caught
+`XX002` wrong-kind error followed by another successful read in the same
+backend. V2 crash/restart, concurrent reader/writer, SQL scans, and paired CPU
+tests remain unrun.
 
 ## Primary v2 Boolean page consumers (2026-09-26)
 
@@ -1578,3 +1581,23 @@ Review status: pure round-trip and corrupted-version tests, wrong relation
 generation rejection, layout mismatch, duplicate initialization rejection,
 and PG18 compilation are local gates. Native WAL/restart and concurrent
 publication remain unrun. The v2 SQL access method remains disabled.
+
+## Primary v2 disposable PostgreSQL probe (2026-09-26)
+
+Contracts read for the test-only unsafe boundary: pinned PostgreSQL 18.6
+[`index_open` and `index_close`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/index/indexam.c),
+pgrx 0.19.2 [`pg_extern`](https://docs.rs/pgrx/0.19.2/pgrx/attr.pg_extern.html)
+and [`Spi::get_one`](https://docs.rs/pgrx/0.19.2/pgrx/spi/struct.Spi.html#method.get_one),
+and the existing guarded `native::call`, `PgStore::with_writer`, and
+`PgStore::read_primary_extent` adapters. The hooks compile only with
+`test-hooks`, require superuser, and revoke PUBLIC execution. On ordinary
+return each `index_open` has one matching `index_close`; PostgreSQL transaction
+error cleanup handles the intentionally raised corruption error in the negative
+probe. The disposable harness supplies a real PIN index OID.
+
+[Raw native run](runs/2026-09-26-primary-v2-native/README.md): PG18.6 package
+and cluster, 8,152-byte private payload, 13-byte selected extent, output
+sentinels, wrong-kind `XX002`, and successful read afterward in one backend.
+The run proves the narrow copy and error recovery on this fixture. It does not
+prove a query CPU gain, crash replay, or v2 index publication. The package
+included local test-hook changes not yet committed when it was built.

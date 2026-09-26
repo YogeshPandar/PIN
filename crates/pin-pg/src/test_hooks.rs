@@ -4,6 +4,10 @@
 use pgrx::prelude::*;
 use std::cell::Cell;
 
+use pin_core::error::{Error, Result};
+use pin_core::mutable::PageStore;
+use pin_core::mutable::page::{CAPACITY, Page, PageKind};
+
 thread_local! {
     static DROPS: Cell<u32> = const { Cell::new(0) };
 }
@@ -57,6 +61,127 @@ pgrx::extension_sql!(
         g0_raise_panic,
         g0_raise_pg_error
     ]
+);
+
+fn v2_hook_superuser() {
+    // safety: this test-only SQL entry runs on PostgreSQL's backend thread.
+    if !unsafe { pg_sys::superuser() } {
+        pgrx::ereport!(
+            ERROR,
+            PgSqlErrorCode::ERRCODE_INSUFFICIENT_PRIVILEGE,
+            "Pin v2 extent probes require a superuser"
+        );
+    }
+}
+
+/// exercises the pg store fast path against a fresh wal initialized page.
+#[pg_extern(volatile, parallel_unsafe)]
+fn v2_primary_extent_roundtrip(index_oid: pg_sys::Oid) -> bool {
+    crate::compatibility::database();
+    v2_hook_superuser();
+    let is_pin = Spi::get_one::<bool>(&format!(
+        "SELECT c.relam = a.oid FROM pg_catalog.pg_class c \
+         JOIN pg_catalog.pg_am a ON a.amname = 'pin' WHERE c.oid = {}",
+        index_oid.to_u32()
+    ))
+    .ok()
+    .flatten()
+    .unwrap_or(false);
+    if !is_pin {
+        pgrx::ereport!(
+            ERROR,
+            PgSqlErrorCode::ERRCODE_INVALID_PARAMETER_VALUE,
+            "v2 extent probe requires a PIN index"
+        );
+    }
+
+    // index_open acquires the relation lock; index_close releases it on success.
+    // pgrx guards the throwing c call.
+    // safety: the OID was resolved as an extant PIN index immediately above.
+    let index = unsafe {
+        crate::native::call(|| {
+            pg_sys::index_open(index_oid, pg_sys::AccessExclusiveLock as pg_sys::LOCKMODE)
+        })
+    };
+    // safety: the relation stays open and exclusively locked for the complete store operation.
+    let result = unsafe {
+        crate::storage::with_writer(index, |store| -> Result<bool> {
+            let offset = 32u16;
+            let expected: Vec<u8> = (0..CAPACITY - 16)
+                .map(|n| (n as u8).wrapping_mul(37) ^ 0x6d)
+                .collect();
+            let block = store.extend()?;
+            let page = Page::primary(block, &expected)?;
+            store.commit(&[&page])?;
+
+            let full = store.read(block)?;
+            if full.kind() != PageKind::Primary || full.primary_payload()? != expected {
+                return Ok(false);
+            }
+            let length = 13usize;
+            let mut guarded = [0xa5u8; 17];
+            store.read_primary_extent(block, offset, &mut guarded[2..2 + length])?;
+            let selected = full.primary_extent(offset, length as u16)?;
+            Ok(guarded[..2] == [0xa5, 0xa5]
+                && guarded[2 + length..] == [0xa5, 0xa5]
+                && &guarded[2..2 + length] == selected)
+        })
+    };
+    // safety: this exact index_open acquisition is paired once on ordinary return.
+    unsafe {
+        crate::native::call(|| {
+            pg_sys::index_close(index, pg_sys::AccessExclusiveLock as pg_sys::LOCKMODE)
+        })
+    };
+    match result {
+        Ok(true) => true,
+        Ok(false) => pgrx::error!("v2 extent copy did not match the full private page"),
+        Err(error) => pgrx::error!("v2 extent probe failed: {error}"),
+    }
+}
+
+/// triggers the fast reader's wrong-page-type check on an ordinary pin page.
+#[pg_extern(volatile, parallel_unsafe)]
+fn v2_primary_extent_wrong_tag(index_oid: pg_sys::Oid) {
+    crate::compatibility::database();
+    v2_hook_superuser();
+    // safety: the disposable harness supplies an existing PIN index OID.
+    let index = unsafe {
+        crate::native::call(|| {
+            pg_sys::index_open(index_oid, pg_sys::AccessExclusiveLock as pg_sys::LOCKMODE)
+        })
+    };
+    // safety: the relation remains open and locked during the intentional ERROR.
+    let result = unsafe {
+        crate::storage::with_writer(index, |store| -> Result<()> {
+            let blocks = store.blocks()?;
+            let mut candidate = None;
+            for block in 1..blocks {
+                let image = store.read(block)?;
+                if image.kind() != PageKind::Primary {
+                    candidate = Some(block);
+                    break;
+                }
+            }
+            let block = candidate.ok_or(Error::InvalidState)?;
+            let mut output = [0u8; 1];
+            store.read_primary_extent(block, 16, &mut output)
+        })
+    };
+    // successful return means the negative control missed the c error.
+    match result {
+        Ok(()) => pgrx::error!("wrong-tag extent probe unexpectedly succeeded"),
+        Err(error) => {
+            pgrx::error!("wrong-tag extent probe failed before the native error: {error}")
+        }
+    }
+}
+
+pgrx::extension_sql!(
+    "REVOKE ALL ON FUNCTION pin.v2_primary_extent_roundtrip(oid), \
+     pin.v2_primary_extent_wrong_tag(oid) FROM PUBLIC;",
+    name = "pin_v2_extent_hook_permissions",
+    requires = [v2_primary_extent_roundtrip, v2_primary_extent_wrong_tag]
 );
 
 thread_local! {
