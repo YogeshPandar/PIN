@@ -1542,3 +1542,21 @@ round-trip, malformed-format, selected-block, wrong-identity, and wrong-kind
 tests plus a `pin-pg` PG18 build check qualify only this prototype. Native
 execution of the new FFI, crash/restart, concurrent reader/writer, and paired
 CPU tests remain unrun for v2.
+
+## Primary v2 Boolean page consumers (2026-09-26)
+
+No new PostgreSQL, pgrx, FFI, unsafe, or WAL boundary is added. The immutable
+page-summary and checked-container codec above remain the contract. Pure
+`scan_and` intersects presence masks before reading payloads, chooses the
+smallest count as each page's lead, and stops after an empty offset result.
+`scan_or` unions presence masks and reads only terms present on a page. Both
+limit the term fan-in to 32, check the complete expected group identity and
+heap layout before any read, reject invalid final heap block coordinates,
+check interrupts at each selected page, and return work counts only on success.
+Callbacks must discard partial output on error; PostgreSQL SQL integration
+must abort a failed bitmap build rather than publish a partial result.
+
+Review status: focused independent hand-set oracle checks page and offset
+results, read counts, identity rejection, and early stop. `pin-core` tests and
+Clippy qualify the pure functions. Native execution and paired CPU still remain
+open because the access method does not invoke these consumers.

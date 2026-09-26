@@ -133,6 +133,12 @@ no v2 metapage,
 manifest, liveness, writer, or SQL integration, and no existing index is changed
 by this branch. The caller must pass an expected group identity; this catches
 cross-directory misuse but is not a substitute for manifest ownership checks.
+The pure `scan_and` and `scan_or` consumers combine page summaries first and
+emit exact per-page offset masks; AND starts with the smallest container count
+on each selected page and stops loading later terms when the offset result is
+empty. One focused three-term fixture selected two of five heap pages for AND,
+read five containers, and emitted one matching page. This is a work-count
+oracle, not a PostgreSQL CPU result.
 The next required code step is native manifest/build integration, followed by
 paired query measurements of actual buffer reads, copied bytes, and CPU. The
 adapter's existence alone establishes no CPU benefit. If

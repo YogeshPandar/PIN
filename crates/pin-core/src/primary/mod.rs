@@ -322,3 +322,141 @@ pub fn read_offsets<S: PageStore>(
         store.read_primary_extent(extent.block, extent.offset, output)
     })
 }
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct ScanWork {
+    pub selected_pages: u32,
+    pub containers_read: u32,
+    pub emitted_pages: u32,
+    pub candidate_offsets: u32,
+}
+
+/// intersects page summaries before loading any offset container.
+/// the caller owns directory/manifest lifetimes and discards output on error.
+pub fn scan_and<S: PageStore>(
+    store: &mut S,
+    expected: GroupKey,
+    directories: &[Directory<'_>],
+    mut emit: impl FnMut(u32, OffsetMask) -> Result<()>,
+) -> Result<ScanWork> {
+    if directories.is_empty()
+        || directories.len() > 32
+        || expected.layout() != store.layout()
+        || directories
+            .iter()
+            .any(|directory| directory.key() != expected)
+    {
+        return Err(Error::InvalidParameters);
+    }
+    let mut pages = [u64::MAX; 4];
+    for directory in directories {
+        let mask = directory.pages();
+        for (word, other) in pages.iter_mut().zip(mask) {
+            *word &= other;
+        }
+    }
+    let mut work = ScanWork::default();
+    for (word_index, mut word) in pages.into_iter().enumerate() {
+        while word != 0 {
+            let bit = word.trailing_zeros() as usize;
+            word &= word - 1;
+            let page = (word_index * 64 + bit) as u8;
+            let block = expected.base() | u32::from(page);
+            if block == u32::MAX {
+                return Err(Error::InvalidState);
+            }
+            work.selected_pages += 1;
+            store.interrupt()?;
+            let mut lead = 0;
+            let mut smallest = u16::MAX;
+            for (index, directory) in directories.iter().enumerate() {
+                let count = directory.page(page)?.ok_or(Error::InvalidState)?.count;
+                if count < smallest {
+                    smallest = count;
+                    lead = index;
+                }
+            }
+            let mut offsets = read_offsets(store, expected, directories[lead], page)?
+                .ok_or(Error::InvalidState)?;
+            work.containers_read += 1;
+            for (index, directory) in directories.iter().enumerate() {
+                if index == lead {
+                    continue;
+                }
+                let other =
+                    read_offsets(store, expected, *directory, page)?.ok_or(Error::InvalidState)?;
+                work.containers_read += 1;
+                for (word, rhs) in offsets.iter_mut().zip(other) {
+                    *word &= rhs;
+                }
+                if offsets.iter().all(|word| *word == 0) {
+                    break;
+                }
+            }
+            let count = offsets.iter().map(|word| word.count_ones()).sum::<u32>();
+            if count != 0 {
+                emit(block, offsets)?;
+                work.emitted_pages += 1;
+                work.candidate_offsets += count;
+            }
+        }
+    }
+    Ok(work)
+}
+
+/// unions page summaries before loading only the terms present on each page.
+/// the caller owns directory/manifest lifetimes and discards output on error.
+pub fn scan_or<S: PageStore>(
+    store: &mut S,
+    expected: GroupKey,
+    directories: &[Directory<'_>],
+    mut emit: impl FnMut(u32, OffsetMask) -> Result<()>,
+) -> Result<ScanWork> {
+    if directories.is_empty()
+        || directories.len() > 32
+        || expected.layout() != store.layout()
+        || directories
+            .iter()
+            .any(|directory| directory.key() != expected)
+    {
+        return Err(Error::InvalidParameters);
+    }
+    let mut pages = [0u64; 4];
+    for directory in directories {
+        let mask = directory.pages();
+        for (word, other) in pages.iter_mut().zip(mask) {
+            *word |= other;
+        }
+    }
+    let mut work = ScanWork::default();
+    for (word_index, mut word) in pages.into_iter().enumerate() {
+        while word != 0 {
+            let bit = word.trailing_zeros() as usize;
+            word &= word - 1;
+            let page = (word_index * 64 + bit) as u8;
+            let block = expected.base() | u32::from(page);
+            if block == u32::MAX {
+                return Err(Error::InvalidState);
+            }
+            work.selected_pages += 1;
+            store.interrupt()?;
+            let mut offsets = [0u64; 8];
+            for directory in directories {
+                if let Some(other) = read_offsets(store, expected, *directory, page)? {
+                    work.containers_read += 1;
+                    for (word, rhs) in offsets.iter_mut().zip(other) {
+                        *word |= rhs;
+                    }
+                }
+            }
+            let count = offsets.iter().map(|word| word.count_ones()).sum::<u32>();
+            if count == 0 {
+                return Err(Error::InvalidState);
+            }
+            emit(block, offsets)?;
+            work.emitted_pages += 1;
+            work.candidate_offsets += count;
+        }
+    }
+    Ok(work)
+}
