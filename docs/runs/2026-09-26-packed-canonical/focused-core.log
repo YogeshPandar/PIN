@@ -1,0 +1,11 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.03s
+     Running tests/packed_canonical.rs (target/debug/deps/packed_canonical-01d8f9afbdd8d207)
+
+running 4 tests
+test malformed_packed_states_fail_before_a_scan ... ok
+test third_owner_promotes_and_dead_second_is_reusable ... ok
+test grouped_build_reads_inline_second_and_promoted_suffix ... ok
+test two_document_vocabulary_has_no_dedicated_posting_pages ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.74s
+

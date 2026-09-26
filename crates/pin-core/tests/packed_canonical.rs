@@ -8,7 +8,7 @@ use pin_core::error::Result;
 use pin_core::identity::RootTid;
 use pin_core::mutable::document::PreparedDocument;
 use pin_core::mutable::grouped::{self, GroupSort, SortRecord};
-use pin_core::mutable::page::PageKind;
+use pin_core::mutable::page::{Page, PageKind};
 use pin_core::mutable::{self, PageStore};
 use pin_core::query::{Query, QueryLimits};
 use std::collections::BTreeSet;
@@ -170,4 +170,37 @@ fn grouped_build_reads_inline_second_and_promoted_suffix() {
         after,
         BTreeSet::from([root(&store, 0), root(&store, 1), root(&store, 2)])
     );
+}
+
+#[test]
+fn malformed_packed_states_fail_before_a_scan() {
+    let mut store = MemoryStore {
+        packed_postings: true,
+        ..MemoryStore::default()
+    };
+    mutable::initialize(&mut store).unwrap();
+    insert(&mut store, 0, "alpha");
+    insert(&mut store, 1, "alpha");
+    let (block, offset) = (1..store.blocks().unwrap())
+        .find_map(|block| {
+            let page = store.read(block).unwrap();
+            if page.packed_dictionary_format() {
+                page.terms().unwrap().find_map(|term| {
+                    let term = term.unwrap();
+                    (term.term == "alpha").then_some((block, usize::from(term.reference.offset)))
+                })
+            } else {
+                None
+            }
+        })
+        .unwrap();
+    for (position, value) in [(7, 2), (offset + 28, 3), (offset + 32 + 5 + 6, 1)] {
+        let mut corrupt = store.pages[block as usize].clone();
+        corrupt[position] = value;
+        let result = Page::read_with(block, |out| {
+            out[..corrupt.len()].copy_from_slice(&corrupt);
+            Ok(corrupt.len())
+        });
+        assert!(result.is_err() || result.unwrap().validate(store.layout()).is_err());
+    }
 }

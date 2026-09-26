@@ -116,3 +116,21 @@ The plan remains useful and incomplete: A1 packed canonical postings, A2 SQL
 BM25, B1 physical position directories and subsequent ranked/span execution are
 still substantial work. Recent bridge optimizations do not establish final
 production readiness or TIN parity.
+
+## Packed canonical dictionary, draft
+
+An opt-in A1 bridge now keeps the second owner in a packed dictionary entry
+and retains a shadow when a third insert promotes the term to a normal posting
+page. The persisted format uses a default-off superuser creation setting.
+The paired 2,000-term native fixture drops 2,000 sealed posting pages and cuts
+index size from 20.9 MB to 4.5 MB. Query CPU is only modestly different and
+varies across repeats; this is not a TIN-level read result. Full core,
+PostgreSQL lifecycle and immediate-crash replay checks pass on bounded tests.
+[Format and limits](docs/packed-canonical.md),
+[raw native results](docs/runs/2026-09-26-packed-canonical/README.md),
+and [feature parity target](TIN_PARITY.md).
+
+Shared posting arenas, an authoritative packed primary index, direct bulk
+construction and native SQL BM25/top-k remain open. The published TINQL spec
+also has much broader syntax than PIN. This branch stays draft until its
+concurrency and release gates are resolved.

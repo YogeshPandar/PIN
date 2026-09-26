@@ -1,0 +1,4 @@
+    Blocking waiting for file lock on build directory
+    Checking pin-core v0.0.0 (/home/reing/projects/fts0/PIN-packed/crates/pin-core)
+    Checking pin-pg v0.0.0 (/home/reing/projects/fts0/PIN-packed/crates/pin-pg)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.39s
