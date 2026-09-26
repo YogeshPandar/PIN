@@ -5,10 +5,11 @@ use pin_core::mutable::document::MAX_TERM_BYTES;
 use pin_core::mutable::page::Page;
 use pin_core::mutable::{PageStore, Stage};
 use pin_core::primary::{
-    BuildReducer, CatalogueBuilder, CataloguePage, Directory, EncodedCataloguePage, GroupAddress,
-    MAX_SORT_RECORD_BYTES, PrimaryBuildWriter, TermSortRecord, decode_sort_record, read_offsets,
+    BuildReducer, CatalogueBuilder, CatalogueFence, CataloguePage, Directory, EncodedCataloguePage,
+    GroupAddress, MAX_SORT_RECORD_BYTES, ManifestRootBuilder, PrimaryBuildWriter, TermSortRecord,
+    decode_sort_record, encode_manifest_leaf, read_offsets, scan_term,
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Default)]
 struct SerialStore {
@@ -44,12 +45,17 @@ impl PageStore for SerialStore {
         Ok(block)
     }
     fn commit(&mut self, pages: &[&Page]) -> Result<()> {
-        if pages.len() != 1 || Some(pages[0].block()) != self.outstanding {
+        if pages.len() != 1
+            || (Some(pages[0].block()) != self.outstanding
+                && (self.outstanding.is_some() || pages[0].block() != 0))
+        {
             return Err(Error::InvalidState);
         }
         pages[0].validate(self.layout())?;
         self.pages[pages[0].block() as usize] = pages[0].bytes().to_vec();
-        self.outstanding = None;
+        if self.outstanding == Some(pages[0].block()) {
+            self.outstanding = None;
+        }
         Ok(())
     }
     fn interrupt(&mut self) -> Result<()> {
@@ -128,7 +134,7 @@ fn sorted_records_reduce_into_persisted_posting_directory_and_catalogue_pages() 
         layout: Some(layout),
         ..SerialStore::default()
     };
-    pin_core::primary::initialize(&mut store, relation).unwrap();
+    let mut root = pin_core::primary::initialize(&mut store, relation).unwrap();
 
     // The independent source oracle is term -> group base -> heap page -> offsets.
     let mut oracle: BTreeMap<(String, u32, u8), Vec<u16>> = BTreeMap::new();
@@ -217,6 +223,53 @@ fn sorted_records_reduce_into_persisted_posting_directory_and_catalogue_pages() 
         "fixture must roll over the catalogue page"
     );
 
+    let publication_epoch = root.epoch.checked_add(1).unwrap();
+    let mut manifest_builder =
+        ManifestRootBuilder::new(relation, layout, publication_epoch).unwrap();
+    for &catalogue_block in &catalogue_blocks {
+        let page = store.read(catalogue_block).unwrap();
+        let catalogue_page = CataloguePage::open(page.primary_payload().unwrap()).unwrap();
+        let mut scratch = [0u8; MAX_TERM_BYTES];
+        let (first, first_entry) = catalogue_page.entry(0, &mut scratch).unwrap();
+        let first = first.to_vec();
+        let first_ordinal = first_entry.term_ordinal;
+        let (last, _) = catalogue_page
+            .entry(
+                u16::try_from(catalogue_page.len() - 1).unwrap(),
+                &mut scratch,
+            )
+            .unwrap();
+        let fence = CatalogueFence {
+            first_lexeme: first,
+            last_lexeme: last.to_vec(),
+            first_ordinal,
+            block: catalogue_block,
+        };
+        let leaf_block = store.extend().unwrap();
+        let leaf = encode_manifest_leaf(
+            relation,
+            layout,
+            publication_epoch,
+            segment,
+            leaf_block,
+            &[fence],
+        )
+        .unwrap();
+        let leaf_page = Page::primary(leaf_block, &leaf.payload).unwrap();
+        store.commit(&[&leaf_page]).unwrap();
+        manifest_builder.push_leaf(leaf).unwrap();
+    }
+    let manifest_block = store.extend().unwrap();
+    let manifest = manifest_builder.finish(manifest_block).unwrap();
+    let manifest_page = Page::primary(manifest_block, &manifest.root_payload).unwrap();
+    store.commit(&[&manifest_page]).unwrap();
+    root.epoch = publication_epoch;
+    root.manifest_block = manifest_block;
+    root.segment_count = 1;
+    let root_page = Page::primary_metadata(root).unwrap();
+    store.commit(&[&root_page]).unwrap();
+    assert_eq!(store.outstanding, None);
+
     // Cross-check every catalogue row against its persisted group directory and offsets.
     let mut observed: BTreeMap<(String, u32, u8), Vec<u16>> = BTreeMap::new();
     let mut last_fence: Option<(Vec<u8>, Vec<u8>)> = None;
@@ -297,6 +350,27 @@ fn sorted_records_reduce_into_persisted_posting_directory_and_catalogue_pages() 
         }
     }
     assert_eq!(observed, oracle);
+
+    for term in [b"alpha".as_slice(), b"beta", b"gamma", b"missing"] {
+        let expected = oracle
+            .iter()
+            .filter(|((found, _, _), _)| found.as_bytes() == term)
+            .flat_map(|((_, base, page), offsets)| {
+                offsets.iter().map(move |offset| {
+                    RootTid::new(base + u32::from(*page), *offset, layout).unwrap()
+                })
+            })
+            .collect::<BTreeSet<_>>();
+        let mut actual = Vec::new();
+        let count = scan_term(&mut store, root, segment, term, |tid| {
+            actual.push(tid);
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(usize::try_from(count).unwrap(), actual.len());
+        actual.sort_unstable();
+        assert_eq!(actual, expected.into_iter().collect::<Vec<_>>());
+    }
 }
 
 fn encode_record(term: &str, root: RootTid) -> Vec<u8> {
