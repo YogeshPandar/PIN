@@ -174,6 +174,20 @@ impl PageStore for PgStore<'_> {
         page.reload_with(block, |output| self.copy_page(block, output))
     }
 
+    fn read_primary_extent(&mut self, block: u32, offset: u16, output: &mut [u8]) -> Result<()> {
+        let length = u16::try_from(output.len()).map_err(|_| Error::InvalidParameters)?;
+        let index = self.index;
+        let pointer = output.as_mut_ptr();
+        // safety: the caller owns the exclusive output slice for length bytes;
+        // the relation lives through this guarded call and C releases its buffer.
+        unsafe {
+            native::call(|| {
+                native::pin_storage_read_primary_extent(index, block, offset, pointer, length)
+            })
+        };
+        Ok(())
+    }
+
     fn extend(&mut self) -> Result<u32> {
         if !self.writer || self.extended.is_some() {
             return Err(Error::InvalidState);

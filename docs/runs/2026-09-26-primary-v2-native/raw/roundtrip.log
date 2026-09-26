@@ -1,0 +1,8 @@
+CREATE TABLE
+INSERT 0 32
+CREATE INDEX
+ v2_primary_extent_roundtrip 
+-----------------------------
+ t
+(1 row)
+

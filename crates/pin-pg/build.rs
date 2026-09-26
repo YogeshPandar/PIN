@@ -56,6 +56,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         "cshim/pin_parallel.h",
         "cshim/pin_grouped.c",
         "cshim/pin_grouped.h",
+        "cshim/pin_primary_sort.c",
+        "cshim/pin_primary_sort.h",
     ] {
         println!("cargo:rerun-if-changed={name}");
     }
@@ -107,6 +109,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         "pin_count",
         "pin_parallel",
         "pin_grouped",
+        "pin_primary_sort",
     ] {
         let object = out.join(format!("{source}.o"));
         let mut compile = Command::new(&cc);

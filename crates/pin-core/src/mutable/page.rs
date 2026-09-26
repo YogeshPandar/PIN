@@ -21,6 +21,7 @@ use crate::identity::{HeapLayout, Incarnation, RootTid};
 
 pub const NO_BLOCK: u32 = u32::MAX;
 pub const CAPACITY: usize = 8192 - 24;
+pub const PRIMARY_PAYLOAD_BYTES: usize = CAPACITY - HEADER;
 pub const BUCKETS: usize = 512;
 pub const MAX_WAL_PAGES: usize = 3;
 const HEADER: usize = 16;
@@ -44,6 +45,8 @@ pub enum PageKind {
     SealedPostings,
     DirectPostings,
     Grouped,
+    Primary,
+    PrimaryMeta,
     Fragment,
     Free,
 }
@@ -229,6 +232,8 @@ impl Page {
                 7 => PageKind::SealedPostings,
                 9 => PageKind::DirectPostings,
                 10 => PageKind::Grouped,
+                11 => PageKind::Primary,
+                12 => PageKind::PrimaryMeta,
                 _ => return Err(CodecError::new(6, ErrorKind::UnknownTag).into()),
             };
             let flags = reader.u8()?;
@@ -249,7 +254,9 @@ impl Page {
     }
 
     fn new(block: u32, kind: PageKind) -> Result<Self> {
-        if block == NO_BLOCK || (block == 0) != (kind == PageKind::Meta) {
+        if block == NO_BLOCK
+            || (block == 0) != matches!(kind, PageKind::Meta | PageKind::PrimaryMeta)
+        {
             return Err(corrupt(8));
         }
         let tag = match kind {
@@ -261,6 +268,8 @@ impl Page {
             PageKind::SealedPostings => 7,
             PageKind::DirectPostings => 9,
             PageKind::Grouped => 10,
+            PageKind::Primary => 11,
+            PageKind::PrimaryMeta => 12,
             PageKind::Fragment => 5,
             PageKind::Free => 6,
         };
@@ -316,6 +325,53 @@ impl Page {
 
     pub fn packed_dictionary_format(&self) -> bool {
         self.kind == PageKind::Dictionary && self.bytes[7] == 1
+    }
+
+    /// creates one private v2 prototype extent page; publication belongs to the caller.
+    pub fn primary(block: u32, payload: &[u8]) -> Result<Self> {
+        if payload.is_empty() || payload.len() > CAPACITY - HEADER {
+            return Err(Error::InvalidParameters);
+        }
+        let mut page = Self::new(block, PageKind::Primary)?;
+        page.len = HEADER + payload.len();
+        page.bytes[HEADER..page.len].copy_from_slice(payload);
+        Ok(page)
+    }
+
+    pub fn primary_metadata(root: crate::primary::PrimaryRoot) -> Result<Self> {
+        let mut page = Self::new(0, PageKind::PrimaryMeta)?;
+        let bytes = root.encode()?;
+        page.len = HEADER + bytes.len();
+        page.bytes[HEADER..page.len].copy_from_slice(&bytes);
+        Ok(page)
+    }
+
+    pub fn primary_root(&self) -> Result<crate::primary::PrimaryRoot> {
+        self.require(PageKind::PrimaryMeta)?;
+        if self.next()? != NO_BLOCK {
+            return Err(corrupt(12));
+        }
+        crate::primary::PrimaryRoot::open(&self.bytes[HEADER..self.len])
+    }
+
+    pub fn primary_payload(&self) -> Result<&[u8]> {
+        self.require(PageKind::Primary)?;
+        if self.len <= HEADER || self.next()? != NO_BLOCK {
+            return Err(corrupt(HEADER));
+        }
+        Ok(&self.bytes[HEADER..self.len])
+    }
+
+    pub fn primary_extent(&self, offset: u16, len: u16) -> Result<&[u8]> {
+        self.primary_payload()?;
+        let start = usize::from(offset);
+        let end = start
+            .checked_add(usize::from(len))
+            .ok_or(Error::InvalidState)?;
+        if start < HEADER || end > self.len || start == end {
+            return Err(corrupt(start));
+        }
+        Ok(&self.bytes[start..end])
     }
 
     pub fn postings(block: u32, term: TermRef) -> Result<Self> {
@@ -406,7 +462,7 @@ impl Page {
             return Ok(());
         }
         self.check_next()?;
-        if (self.block == 0) != (self.kind == PageKind::Meta) {
+        if (self.block == 0) != matches!(self.kind, PageKind::Meta | PageKind::PrimaryMeta) {
             return Err(corrupt(8));
         }
         match self.kind {
@@ -434,6 +490,14 @@ impl Page {
                 }
             }
             PageKind::Grouped => self.validate_grouped(layout)?,
+            PageKind::Primary => {
+                self.primary_payload()?;
+            }
+            PageKind::PrimaryMeta => {
+                if self.primary_root()?.layout != layout {
+                    return Err(corrupt(28));
+                }
+            }
             PageKind::Owners => {
                 let count = self.owner_count()?;
                 let mut payload = OWNER_HEADER + usize::from(count) * OWNER_BYTES;

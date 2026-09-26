@@ -1,0 +1,7 @@
+NOTICE:  caught expected PostgreSQL error XX002: Pin index has an invalid PostgreSQL page header
+DO
+ v2_primary_extent_roundtrip 
+-----------------------------
+ t
+(1 row)
+

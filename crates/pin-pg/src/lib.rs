@@ -18,6 +18,12 @@ mod maintenance;
 mod matching;
 mod native;
 mod parallel;
+#[cfg(feature = "test-hooks")]
+mod primary_am;
+#[cfg(feature = "test-hooks")]
+mod primary_build;
+#[cfg(feature = "test-hooks")]
+mod primary_sort;
 #[path = "storage.rs"]
 mod storage_impl;
 mod storage {
@@ -111,4 +117,18 @@ pgrx::extension_sql!(
     "SELECT pin.abi_check(); CREATE ACCESS METHOD pin TYPE INDEX HANDLER pin.pin_handler;",
     name = "pin_access_method",
     requires = [am::pin_handler, abi_check]
+);
+
+#[cfg(feature = "test-hooks")]
+pgrx::extension_sql!(
+    "CREATE ACCESS METHOD pin2 TYPE INDEX HANDLER pin.pin2_handler;",
+    name = "pin2_access_method",
+    requires = [primary_am::pin2_handler, abi_check]
+);
+
+#[cfg(feature = "test-hooks")]
+pgrx::extension_sql!(
+    "CREATE OPERATOR CLASS pin.text2_ops DEFAULT FOR TYPE text USING pin2 AS OPERATOR 1 pin.@@@ (text, pin.query);",
+    name = "pin2_text_ops",
+    requires = ["pin2_access_method", "pin_text_ops"]
 );

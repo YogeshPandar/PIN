@@ -1482,3 +1482,250 @@ VACUUM liveness handling already present. Build compaction must complete before
 the index becomes searchable. Performance qualification must count the extra
 build CPU, WAL and pages, and compare warm exact Boolean scans before/after
 VACUUM and across lifecycle changes. This is not an MVCC visibility shortcut.
+
+## PRIMARYV2-01: physical page-container directory prototype (2026-09-26)
+
+Module: `crates/pin-core/src/primary/mod.rs`. Authority: PostgreSQL 18
+[database page layout](https://www.postgresql.org/docs/18/storage-page-layout.html)
+and [index AM scan contract](https://www.postgresql.org/docs/18/index-functions.html),
+Rust 1.98.1 [`Vec::try_reserve_exact`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact)
+and [`u16::from_le_bytes`](https://doc.rust-lang.org/std/primitive.u16.html#method.from_le_bytes),
+and Cargo [workspace contract](https://doc.rust-lang.org/cargo/reference/workspaces.html).
+The heap offset maximum still comes from PIN's checked server ABI at the host
+boundary; the pure codec accepts that value through `HeapLayout`.
+
+This safe-Rust prototype encodes a bounded term/group directory and separate
+page offset extents. It validates version, identity, sorted pages, page-mask
+agreement, extent bounds, sparse ordering and dense unused bits. A caller
+fetches only a selected heap page container; the callback receives a private
+64-byte scratch slice and no PostgreSQL pointer. The module is not yet mapped
+to buffers, WAL, a manifest, or SQL. Physical read savings, page ownership,
+crash behavior, and MVCC correctness remain explicit integration gates.
+
+Review status: focused independent set and malformed-format tests passed;
+`pin-core` Clippy passed with warnings denied. No unsafe code or host boundary
+was added. Native performance is unmeasured.
+
+# Primary v2 private page prototype (2026-09-26)
+
+Contracts reviewed: PostgreSQL 18 [generic WAL](https://www.postgresql.org/docs/18/generic-wal.html),
+[page layout](https://www.postgresql.org/docs/18/storage-page-layout.html),
+[index AM scan functions](https://www.postgresql.org/docs/18/index-functions.html), and
+the pinned PostgreSQL [`bufpage.h`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/storage/bufpage.h).
+The existing `pin_storage_read` checks the standard PostgreSQL page header and
+copies its payload under a shared buffer lock. `PgStore::commit` validates each
+private page and uses the existing generic WAL operation, with a full image for
+a newly extended block. The new `pin_storage_read_primary_extent` uses the same
+shared buffer lock, validates the standard page and 16-byte private header, and
+copies only a checked payload subrange before unlocking. It adds one FFI call
+and one guarded unsafe call site, but no new lock order or WAL resource manager.
+The narrow reader releases its buffer lock and pin before raising a format
+error found after acquisition; PostgreSQL still handles errors from its own
+buffer acquisition and locking calls.
+
+Local obligations: `PageKind::Primary` is tag 11 under the existing 16-byte
+`PIN2` private header. It requires a nonempty payload and `NO_BLOCK` successor.
+The codec rejects malformed directories and selected containers; the reader
+checks the caller-supplied complete `GroupKey` before reading a physical block.
+The pure `PageStore` default validates a full private image; `PgStore` overrides
+it with the narrow buffer copy. The v2 root exists, but a manifest must bind
+the group identity and block ownership before SQL integration. The access method must preserve complete
+candidate CTIDs, PostgreSQL MVCC/HOT checks, bitmap lossification rechecks,
+and scan lifetime rules.
+
+Review: independent read-only page/WAL review found no concrete page format or
+generic WAL defect and identified the manifest ownership gate. Independent
+review of the new FFI found no bounds or pointer lifetime defect and flagged
+error cleanup and missing native execution coverage. Explicit unlock-before-error
+addresses the local corruption checks. Focused pure
+round-trip, malformed-format, selected-block, wrong-identity, and wrong-kind
+tests plus a `pin-pg` PG18 build check qualify the pure prototype. The
+[native PG18 qualification](runs/2026-09-26-primary-v2-native/README.md)
+exercised an 8,152-byte page with a 13-byte selected copy and a caught
+`XX002` wrong-kind error followed by another successful read in the same
+backend. V2 crash/restart, concurrent reader/writer, SQL scans, and paired CPU
+tests remain unrun.
+
+## Primary v2 Boolean page consumers (2026-09-26)
+
+No new PostgreSQL, pgrx, FFI, unsafe, or WAL boundary is added. The immutable
+page-summary and checked-container codec above remain the contract. Pure
+`scan_and` intersects presence masks before reading payloads, chooses the
+smallest count as each page's lead, and stops after an empty offset result.
+`scan_or` unions presence masks and reads only terms present on a page. Both
+limit the term fan-in to 32, check the complete expected group identity and
+heap layout before any read, reject invalid final heap block coordinates,
+check interrupts at each selected page, and return work counts only on success.
+Callbacks must discard partial output on error; PostgreSQL SQL integration
+must abort a failed bitmap build rather than publish a partial result.
+
+Review status: focused independent hand-set oracle checks page and offset
+results, read counts, identity rejection, and early stop. `pin-core` tests and
+Clippy qualify the pure functions. Native execution and paired CPU still remain
+open because the access method does not invoke these consumers.
+
+## Primary v2 root page (2026-09-26)
+
+Contracts rechecked: PostgreSQL 18 [generic WAL](https://www.postgresql.org/docs/18/generic-wal.html)
+and [standard page layout](https://www.postgresql.org/docs/18/storage-page-layout.html).
+The existing `PgStore::extend` reserves block zero on an empty physical index;
+the existing `commit` path writes a full standard page image in generic WAL.
+No new C or unsafe code is introduced. A distinct private tag 12 and 48-byte
+`PNR2` root payload prevent a v1 metapage from being misread as v2. The root
+records relation generation, heap layout, publication epoch, and either an
+empty manifest marker or a nonzero manifest block and segment count. Its
+manifest pointer is an incomplete format field until the manifest body,
+publication ordering, and reader retention are implemented.
+
+Review status: pure round-trip and corrupted-version tests, wrong relation
+generation rejection, layout mismatch, duplicate initialization rejection,
+and PG18 compilation are local gates. Native WAL/restart and concurrent
+publication remain unrun. The v2 SQL access method remains disabled.
+
+## Primary v2 disposable PostgreSQL probe (2026-09-26)
+
+Contracts read for the test-only unsafe boundary: pinned PostgreSQL 18.6
+[`index_open` and `index_close`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/access/index/indexam.c),
+pgrx 0.19.2 [`pg_extern`](https://docs.rs/pgrx/0.19.2/pgrx/attr.pg_extern.html)
+and [`Spi::get_one`](https://docs.rs/pgrx/0.19.2/pgrx/spi/struct.Spi.html#method.get_one),
+and the existing guarded `native::call`, `PgStore::with_writer`, and
+`PgStore::read_primary_extent` adapters. The hooks compile only with
+`test-hooks`, require superuser, and revoke PUBLIC execution. On ordinary
+return each `index_open` has one matching `index_close`; PostgreSQL transaction
+error cleanup handles the intentionally raised corruption error in the negative
+probe. The disposable harness supplies a real PIN index OID.
+
+[Raw native run](runs/2026-09-26-primary-v2-native/README.md): PG18.6 package
+and cluster, 8,152-byte private payload, 13-byte selected extent, output
+sentinels, wrong-kind `XX002`, and successful read afterward in one backend.
+The run proves the narrow copy and error recovery on this fixture. It does not
+prove a query CPU gain, crash replay, or v2 index publication. The package
+included local test-hook changes not yet committed when it was built.
+
+## Primary v2 direct-build sort key (2026-09-26)
+
+The proposed host primitive follows the existing PostgreSQL 18.6
+[`tuplesort_begin_datum` contract](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/include/utils/tuplesort.h)
+with `BYTEAOID` and `ByteaLessOperator`, as already used by
+`cshim/pin_grouped.c`. PostgreSQL's heap-build callback continues to supply
+evaluated indexed text and HOT root coordinates. The pure `TermSortRecord`
+encodes one normalized term/root pair per document as UTF-8 bytes, NUL, and
+big-endian `RootTid::key()`. PostgreSQL text cannot contain NUL and the codec
+rejects one explicitly. The term byte limit is 1,024; malformed lengths, roots,
+and UTF-8 fail closed. Independent tuple-order and malformed-input tests pass.
+
+This is a build-input codec. The catalogue, build callback dispatch, DML rejection for a static prototype,
+manifest publication, and SQL bitmap scan remain unimplemented. The record
+omits TF and positions to avoid repeating every token in a document; those
+streams are required before full TIN-like feature coverage.
+
+The host sorter is now implemented in `pin_primary_sort.c`. The pinned
+PostgreSQL 18.6 [`tuplesort.c`](https://github.com/postgres/postgres/blob/724edf9bde9d356724ad384a2e196edc3c9f80f7/src/backend/utils/sort/tuplesort.c)
+copies pass-by-reference inputs on `tuplesort_putdatum`, and a noncopying
+`tuplesort_getdatum` result remains sort-owned until the next read. The guarded
+Rust adapter sends stack-owned encoded keys, copies each output into a bounded
+caller array, and then validates the root and UTF-8 before use. The native
+[PG18 sorter qualification](runs/2026-09-26-primary-v2-sort/README.md) checked
+200,007 unsorted variable-length records against an independent bytewise sort,
+including duplicate terms, distinct roots, EOF and disk spill with 1 MB work
+memory. `cargo clippy` with `pg18 test-hooks` and denied warnings passes.
+This qualifies the sorter API only. It does not establish v2 SQL build, WAL
+publication, crash safety, scan correctness, or query CPU improvement.
+
+The build producer now has `TermSortRecord::visit_document`: it borrows the
+existing normalized analyzer, accounts for its peak and one `&str` per token,
+reserves the reference array fallibly, sorts it in place, deduplicates, and
+emits one lexeme/root pair per document. Rust's
+[`sort_unstable`](https://doc.rust-lang.org/std/primitive.slice.html#method.sort_unstable)
+uses no auxiliary allocation and
+[`try_reserve_exact`](https://doc.rust-lang.org/std/vec/struct.Vec.html#method.try_reserve_exact)
+reports reservation failures. Focused repeated-token, Unicode normalization,
+empty-document, memory-limit, and callback-error checks pass. The direct PG
+build callback still needs to invoke this producer.
+
+The pure `BuildReducer` takes sorted term/root records, checks their order and
+heap layout, and emits one page's sorted offsets at a time. A failed callback
+poisons the reducer; callers must abort the build rather than publish an
+incomplete directory. Duplicate term/root inputs coalesce. Focused stream,
+wrong-order, wrong-layout and callback-failure tests plus Clippy qualify this
+pure stage. Physical page packing and PostgreSQL build publication remain open.
+
+The pure `PrimaryArena` bounds payloads by the existing 8,152-byte private
+page capacity and returns checked 16-bit local extents. A full arena refuses
+the next payload without modifying its bytes. `finish` creates the existing
+validated Primary page for the host WAL adapter. This adds no FFI or new WAL
+call; the builder must choose when to allocate and commit each page, and it
+must publish references only after those pages are durable. Focused packing,
+capacity, and readback tests pass. Native packing policy remains unmeasured.
+
+## Primary v2 inline singleton directory (2026-09-26)
+
+PlanetScale's [TIN architecture](https://planetscale.com/blog/introducing-tin)
+describes direct storage for terms occurring once, rather than forcing a
+bitmap. The existing checked v2 directory has room for one offset within its
+12-byte page descriptor. Kind 3 stores `count=1`, `block=0`, `len=0`, and the
+one-based heap offset in the descriptor's offset field. The decoder validates
+that exact shape and returns the offset mask without calling `PageStore`.
+`scan_and` and `scan_or` count actual posting extents fetched, so a pure
+two-term singleton conjunction has zero such reads. No PostgreSQL, pgrx, WAL,
+unsafe, or SQL boundary changes. Focused malformed-descriptor and independent
+result/read-count oracles pass. This is not yet a backend CPU result because the
+SQL builder and reader do not use v2.
+
+## Primary v2 immutable lexeme catalogue (2026-09-26)
+
+The first direct-build catalogue codec stores sorted `(normalized lexeme,
+256-page group base)` rows and a stable term ordinal shared by all groups of
+one lexeme. It front-compresses lexemes with a restart key every 16 rows, caps
+one catalogue payload at the existing 8,152-byte Primary page limit, and
+returns first/last lexeme fences for a later sparse page index. A term can span
+catalogue pages. Exact and prefix lookups binary-search restart keys within a
+validated page, then decode only the relevant restart span and following rows.
+The builder returns `false` without consuming a row when the current page is
+full. The caller can then extend one physical page, seal with
+`finish_page_at(actual_block)`, commit, and retry the row. This avoids holding
+an uncommitted PostgreSQL extension while the posting writer allocates pages.
+Pure tests cover ordering, repeated lexemes across pages, extent validation,
+corruption, rollover, and one-outstanding-extension behavior; five focused
+tests pass. The catalogue is not yet
+connected to PostgreSQL or a published manifest. The caller must validate
+the decoded directory against the expected relation, segment, and group
+identity before using any posting extent.
+
+## Primary v2 packed direct writer (2026-09-26)
+
+The pure `PrimaryBuildWriter` consumes ordered page runs from `BuildReducer`,
+checks an initialized empty v2 root and relation generation, and packs posting
+payloads and directory records into separate `PrimaryArena` pages. Singleton
+offsets remain inline. It commits a posting arena before any directory that
+references it, then invokes the streamed catalogue callback only after that
+directory page is committed. The callback receives the same `PageStore` with
+no outstanding extension, so it can persist a catalogue page without
+collecting the full vocabulary in memory. Generic WAL commits use one page,
+within the existing PostgreSQL adapter's three-page limit. The shared
+`PageStore` abstraction adds no new FFI or WAL boundary.
+
+The writer queues at most 2,038 group records while filling one posting page.
+Its conservative worst-case queued records need about 8.6 MiB plus metadata
+and reducer scratch; the host must reserve this against
+`maintenance_work_mem` before enabling the direct AM build. Five focused
+tests and Clippy pass, including a `PageStore` that enforces PostgreSQL's
+one-outstanding-extension rule and lets the callback allocate a catalogue
+page. In a pure 220-term fixture with two offsets per term, the writer uses
+one root, one posting page, and three packed directory pages. A naive
+one-directory-page-per-group layout would use one root, one posting page, and
+220 directory pages. This is an allocation result, not an SQL CPU result.
+The manifest, crash/restart proof, reclaim protocol, and query path remain
+unimplemented.
+
+## Primary v2 SQL route decision (2026-09-26)
+
+PostgreSQL 18's [CREATE ACCESS METHOD](https://www.postgresql.org/docs/18/sql-create-access-method.html)
+registers a handler for a named AM, and the
+[index AM functions contract](https://www.postgresql.org/docs/18/index-functions.html)
+lets a bitmap-only method omit `amgettuple` and requires `amcanbuildparallel`
+to be false when its build is serial. The first native v2 benchmark will use a
+distinct experimental `pin2` AM and opclass so persisted `pg_class.relam`
+routes every callback without guessing a page format from block zero. It will
+reject writes and VACUUM while static-only and will not be advertised as a
+production method. This is a design decision, not implemented SQL behavior.

@@ -12,6 +12,16 @@ unsafe extern "C-unwind" {
     pub(crate) fn pin_group_sort_finish(sort: *mut c_void);
     pub(crate) fn pin_group_sort_read(sort: *mut c_void, records: *mut u8, capacity: u32) -> u32;
     pub(crate) fn pin_group_sort_end(sort: *mut c_void) -> bool;
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_primary_sort_begin(reserved_bytes: u64) -> *mut c_void;
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_primary_sort_put(sort: *mut c_void, key: *const u8, length: u32);
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_primary_sort_finish(sort: *mut c_void);
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_primary_sort_read(sort: *mut c_void, key: *mut u8, capacity: u32) -> u32;
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin_primary_sort_end(sort: *mut c_void) -> bool;
     pub(crate) fn pin_parallel_init();
     pub(crate) fn pin_parallel_vacuum_options() -> u8;
     pub(crate) fn pin_parallel_build(
@@ -48,6 +58,13 @@ unsafe extern "C-unwind" {
         capacity: u32,
         strategy: pg_sys::BufferAccessStrategy,
     ) -> u32;
+    pub(crate) fn pin_storage_read_primary_extent(
+        index: pg_sys::Relation,
+        block: u32,
+        offset: u16,
+        out: *mut u8,
+        length: u16,
+    );
     pub(crate) fn pin_storage_remove_owners(
         index: pg_sys::Relation,
         block: u32,
@@ -119,6 +136,8 @@ unsafe extern "C-unwind" {
         direction: pg_sys::ScanDirection::Type,
     ) -> bool;
     pub(crate) fn pin_opclass_validate(opclass: pg_sys::Oid) -> bool;
+    #[cfg(feature = "test-hooks")]
+    pub(crate) fn pin2_opclass_validate(opclass: pg_sys::Oid) -> bool;
     pub(crate) fn pin_opclass_adjust(
         opclass: pg_sys::Oid,
         operators: *mut pg_sys::List,

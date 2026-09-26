@@ -18,6 +18,8 @@ extern uint32 pin_storage_blocks(Relation index);
 extern uint32 pin_storage_extend(Relation index);
 extern uint32 pin_storage_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                                BufferAccessStrategy strategy);
+extern void pin_storage_read_primary_extent(Relation index, uint32 block,
+                                            uint16 offset, uint8 *out, uint16 length);
 extern uint32 pin_storage_owner_read(Relation index, uint32 block, uint8 *out, uint32 capacity,
                                       Buffer *held);
 extern void pin_storage_remove_owners(Relation index, uint32 block,
@@ -48,6 +50,7 @@ extern bool pin_scan_work_claim(IndexScanDesc scan, const uint64 *expected,
                                 const uint64 *next, uint32 count);
 extern bool pin_scan_gettuple(IndexScanDesc scan, ScanDirection direction);
 extern bool pin_opclass_validate(Oid opclass);
+extern bool pin2_opclass_validate(Oid opclass);
 extern void pin_opclass_adjust(Oid opclass, List *operators, List *functions);
 extern void pin_index_cost(struct PlannerInfo *root, struct IndexPath *path, double loops,
                            Cost *startup, Cost *total, Selectivity *selectivity,
